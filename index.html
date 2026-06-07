@@ -1838,6 +1838,9 @@ function coletaDespesasMes(selAno,selMes){
 function despesaTotalMes(ano,mes){
   return coletaDespesasMes(ano,mes).reduce((a,d)=>a+d.vlrMes,0);
 }
+function despesaTotalMesMod(modId,ano,mes){
+  return coletaDespesasMes(ano,mes).filter(d=>d.m.id===modId).reduce((a,d)=>a+d.vlrMes,0);
+}
 
 function setDespObs(modId,item,idx,dKey,obs){
   if(!despPagamentos[modId]) despPagamentos[modId]={};
@@ -1974,9 +1977,9 @@ function buildOverview(){
     <div class="ov-sum-item"><div class="ov-sum-lbl">Lançamentos</div><div class="ov-sum-val">${totalItens}</div></div>
   `;
 
-  // Gráfico comparativo
+  // Gráfico comparativo (despesa e receita do mês selecionado)
   const labels=MODULES.map(m=>m.label.split('—')[0].trim());
-  const tots=MODULES.map(m=>totalMod(m.id));
+  const tots=MODULES.map(m=>despesaTotalMesMod(m.id,selAno,selMes));
   const recs=MODULES.map(m=>recModMes(m.id,selAno,selMes));
   Chart.defaults.color='rgba(240,238,255,.4)';
   if(ovChart)ovChart.destroy();
@@ -1995,10 +1998,11 @@ function buildOverview(){
   // Cards dos módulos
   const maxTot=Math.max(...tots,1);
   g('ov-grid').innerHTML=MODULES.map(m=>{
-    const tot=totalMod(m.id);
+    const totAcum=totalMod(m.id); // investimento acumulado, usado só pro payback
+    const tot=despesaTotalMesMod(m.id,selAno,selMes); // despesa do mês selecionado
     const modRec=recModMes(m.id,selAno,selMes);
-    const pb=modRec>0?(tot/modRec).toFixed(1)+' meses':'sem receita';
-    const pbCls=modRec>0?pbClass(tot/modRec):'pb-neu';
+    const pb=modRec>0?(totAcum/modRec).toFixed(1)+' meses':'sem receita';
+    const pbCls=modRec>0?pbClass(totAcum/modRec):'pb-neu';
     const pct=Math.round((tot/maxTot)*100);
     const unitsHtml=m.items.map(i=>{
       const hasData=(db[m.id][i]||[]).length>0;
@@ -2013,7 +2017,7 @@ function buildOverview(){
       </div>
       <div class="ov-body">
         <div class="ov-kpi-row">
-          <div class="ov-kpi"><div class="ov-kpi-lbl">Despesa</div><div class="ov-kpi-val" style="color:var(--red)">${fk(tot)}</div></div>
+          <div class="ov-kpi"><div class="ov-kpi-lbl">Despesa ${MESES[selMes]}</div><div class="ov-kpi-val" style="color:${tot?'var(--red)':'var(--hint)'}">${tot?fk(tot):'—'}</div></div>
           <div class="ov-kpi"><div class="ov-kpi-lbl">Receita ${MESES[selMes]}</div><div class="ov-kpi-val" style="color:${modRec?'var(--green)':'var(--hint)'}">${modRec?fk(modRec):'—'}</div></div>
           <div class="ov-kpi"><div class="ov-kpi-lbl">Itens</div><div class="ov-kpi-val">${lançamentos}</div></div>
         </div>
