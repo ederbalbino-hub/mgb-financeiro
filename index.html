@@ -1155,7 +1155,7 @@ let modalMode=''; // 'add'|'edit'|'delete'
 // ── UTILS ─────────────────────────────────────────────────────────────────
 const g=id=>document.getElementById(id);
 const f=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fk=v=>v>=1000?'R$'+Math.round(v/1000)+'k':'R$'+Math.round(v);
+const fk=v=>v>=1000?'R$'+(v/1000).toFixed(1).replace('.',',')+'k':'R$'+Math.round(v);
 const mod=()=>MODULES.find(m=>m.id===curMod);
 const items=()=>mod().items;
 const totalOf=(modId,item)=>(db[modId][item]||[]).reduce((a,r)=>a+r.q*r.u,0);
