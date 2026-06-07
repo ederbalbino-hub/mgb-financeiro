@@ -1,0 +1,12 @@
+{
+  "name": "mgb-financeiro-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp bot para lançar despesas, receitas e consultar saldo do MGB Sistema Financeiro",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.79.0"
+  }
+}
