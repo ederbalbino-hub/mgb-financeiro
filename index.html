@@ -746,11 +746,12 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 
   <!-- PAGE: OVERVIEW -->
   <div id="page-overview">
-    <!-- Sub-tabs: Visão Geral | Visão Receita | Visão Despesas -->
+    <!-- Sub-tabs: Visão Geral | Visão Receita | Visão Despesas | Empresa -->
     <div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 22px">
       <div class="mtab on" id="ov-tab-visao" onclick="switchOvTab('visao')">📊 Visão Geral</div>
       <div class="mtab" id="ov-tab-lanc" onclick="switchOvTab('lanc')">💰 Visão Receita</div>
       <div class="mtab" id="ov-tab-desp" onclick="switchOvTab('desp')">💸 Visão Despesas</div>
+      <div class="mtab" id="ov-tab-emp" onclick="switchOvTab('emp')">🏢 Empresa</div>
     </div>
 
     <!-- SUB-PAGE: VISÃO GERAL -->
@@ -858,6 +859,48 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
             </table>
           </div>
           <div class="foot" id="ov-desp-foot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-PAGE: EMPRESA -->
+    <div id="ov-sub-emp" style="display:none">
+      <div class="page-hdr">
+        <div><div class="page-title">🏢 Empresa</div><div class="page-sub">Impostos sobre receita e despesas gerais da empresa (não vinculadas a um módulo)</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="ov-emp-mes-sel" onchange="buildVisaoEmpresa()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+          <select id="ov-emp-ano-sel" onchange="buildVisaoEmpresa()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        </div>
+      </div>
+
+      <!-- KPIs imposto + total empresa -->
+      <div class="ov-summary" id="ov-emp-kpis"></div>
+
+      <!-- Despesas da empresa -->
+      <div style="padding:0 22px 28px">
+        <div class="tcard">
+          <div class="thead3" style="padding:12px 18px">
+            <div class="ttitle">Despesas da empresa (recorrentes)</div>
+            <div style="font-size:10px;color:var(--hint)" id="ov-emp-sum"></div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Descrição</th>
+                <th>Início</th>
+                <th class="tr">Valor/mês</th>
+                <th>Ativo</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="ov-emp-body"></tbody>
+            </table>
+          </div>
+          <div class="arow">
+            <input type="text" id="emp-nome" placeholder="Descrição (ex: Internet escritório)" style="flex:1;min-width:150px">
+            <input type="number" id="emp-valor" placeholder="Valor/mês" step="0.01" min="0" style="width:120px">
+            <input type="month" id="emp-inicio" style="width:140px;color-scheme:dark" title="Mês de início">
+            <button class="badd" onclick="addEmpresaDesp()">+ Adicionar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1214,6 +1257,14 @@ function autoFillFinReceita(year, month){
   // Para não sobrescrever lançamentos manuais, somamos separadamente num campo virtual
   finYear(year)[month]._autoRec=total;
 }
+
+// ── EMPRESA: imposto + despesas gerais ───────────────────────────────────
+const IMPOSTO_ALIQ = 0.0205; // 2,05% sobre receita do mês
+// empresaDespesas = [{id, nome, valor, inicio:'YYYY-MM', ativo:true}]
+let empresaDespesas = [
+  {id:1, nome:'Contador', valor:300, inicio:new Date().toISOString().slice(0,7), ativo:true}
+];
+let empresaDespId = 2;
 
 // ── DESPESAS COMPARTILHADAS (Elevadores) ─────────────────────────────────
 // despesasComp = [{id, nome, forn, valor, inicio, meses, telas:[]}]
@@ -1599,9 +1650,11 @@ function goPage(p){
     if(g('ov-sub-visao')) g('ov-sub-visao').style.display='block';
     if(g('ov-sub-lanc')) g('ov-sub-lanc').style.display='none';
     if(g('ov-sub-desp')) g('ov-sub-desp').style.display='none';
+    if(g('ov-sub-emp')) g('ov-sub-emp').style.display='none';
     if(g('ov-tab-visao')) g('ov-tab-visao').classList.add('on');
     if(g('ov-tab-lanc')) g('ov-tab-lanc').classList.remove('on');
     if(g('ov-tab-desp')) g('ov-tab-desp').classList.remove('on');
+    if(g('ov-tab-emp')) g('ov-tab-emp').classList.remove('on');
     curOvTab='visao';
     buildOverview();
   } else if(p==='home') buildHome();
@@ -1644,11 +1697,14 @@ function switchOvTab(tab){
   g('ov-sub-visao').style.display=tab==='visao'?'block':'none';
   g('ov-sub-lanc').style.display=tab==='lanc'?'block':'none';
   if(g('ov-sub-desp')) g('ov-sub-desp').style.display=tab==='desp'?'block':'none';
+  if(g('ov-sub-emp')) g('ov-sub-emp').style.display=tab==='emp'?'block':'none';
   g('ov-tab-visao').classList.toggle('on',tab==='visao');
   g('ov-tab-lanc').classList.toggle('on',tab==='lanc');
   if(g('ov-tab-desp')) g('ov-tab-desp').classList.toggle('on',tab==='desp');
+  if(g('ov-tab-emp')) g('ov-tab-emp').classList.toggle('on',tab==='emp');
   if(tab==='lanc') buildLancRec();
   else if(tab==='desp') buildVisaoDespesas();
+  else if(tab==='emp') buildVisaoEmpresa();
   else buildOverview();
 }
 
@@ -1807,6 +1863,41 @@ function coletaDespesasMes(selAno,selMes){
       });
     });
   });
+  // Empresa: imposto + despesas gerais (módulo virtual)
+  const empMod={id:'_empresa',label:'Empresa',icon:'🏢',color:'#fbbf24'};
+  // Imposto: 2,05% × receita do mês
+  const recMesTotal=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0);
+  if(recMesTotal>0){
+    out.push({
+      m:empMod,
+      item:'Empresa',
+      idx:'_imposto',
+      r:{d:`Imposto ${(IMPOSTO_ALIQ*100).toFixed(2).replace('.',',')}% sobre receita`,f:'Receita Federal'},
+      vlrMes:recMesTotal*IMPOSTO_ALIQ,
+      tipoLbl:'Imposto',
+      mes:selMes,ano:selAno
+    });
+  }
+  // Despesas recorrentes da empresa
+  empresaDespesas.forEach(ed=>{
+    if(!ed.ativo||!ed.valor) return;
+    if(ed.inicio){
+      const [anoI,mesI]=ed.inicio.split('-').map(Number);
+      const dataInicio=anoI*12+(mesI-1);
+      const dataAtual=selAno*12+selMes;
+      if(dataAtual<dataInicio) return;
+    }
+    out.push({
+      m:empMod,
+      item:'Empresa',
+      idx:`_emp_${ed.id}`,
+      r:{d:ed.nome,f:'—'},
+      vlrMes:ed.valor,
+      tipoLbl:'Empresa',
+      mes:selMes,ano:selAno
+    });
+  });
+
   // Despesas compartilhadas (Elevadores): rateio entre condomínios
   const elevMod=MODULES.find(m=>m.id==='elev');
   if(elevMod){
@@ -1931,6 +2022,99 @@ function buildVisaoDespesas(){
       </td>
     </tr>`;
   }).join('');
+}
+
+// ── VISÃO EMPRESA (sub-aba) ─────────────────────────────────────────────
+function buildVisaoEmpresa(){
+  const now=new Date();
+  const mSel=g('ov-emp-mes-sel'), aSel=g('ov-emp-ano-sel');
+  if(!mSel||!aSel) return;
+  if(!mSel.options.length){
+    MESES.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;mSel.appendChild(o);});
+    for(let y=2025;y<=2027;y++){const o=document.createElement('option');o.value=y;o.textContent=y;aSel.appendChild(o);}
+    mSel.value=now.getMonth(); aSel.value=now.getFullYear();
+  }
+  const selMes=parseInt(mSel.value);
+  const selAno=parseInt(aSel.value);
+
+  const receitaMes=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0);
+  const imposto=receitaMes*IMPOSTO_ALIQ;
+  const despAtivas=empresaDespesas.filter(ed=>ed.ativo&&ed.valor);
+  const totalDespEmpresa=despAtivas.reduce((a,ed)=>{
+    if(ed.inicio){
+      const [aI,mI]=ed.inicio.split('-').map(Number);
+      if(selAno*12+selMes<aI*12+(mI-1)) return a;
+    }
+    return a+ed.valor;
+  },0);
+  const totalEmpresa=imposto+totalDespEmpresa;
+
+  g('ov-emp-kpis').innerHTML=`
+    <div class="ov-sum-item"><div class="ov-sum-lbl">Receita ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${receitaMes?f(receitaMes):'—'}</div></div>
+    <div class="ov-sum-item"><div class="ov-sum-lbl">Imposto ${(IMPOSTO_ALIQ*100).toFixed(2).replace('.',',')}%</div><div class="ov-sum-val" style="color:var(--red)">${imposto?f(imposto):'—'}</div></div>
+    <div class="ov-sum-item"><div class="ov-sum-lbl">Despesas empresa</div><div class="ov-sum-val" style="color:var(--red)">${totalDespEmpresa?f(totalDespEmpresa):'—'}</div></div>
+    <div class="ov-sum-item"><div class="ov-sum-lbl">Total empresa</div><div class="ov-sum-val" style="color:var(--red)">${totalEmpresa?f(totalEmpresa):'—'}</div></div>
+  `;
+
+  g('ov-emp-sum').textContent=`${despAtivas.length} despesa(s) ativa(s) · ${f(totalDespEmpresa)}/mês`;
+  if(!empresaDespesas.length){
+    g('ov-emp-body').innerHTML=`<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--hint);font-size:11px">Nenhuma despesa cadastrada. Use o formulário abaixo.</td></tr>`;
+  } else {
+    g('ov-emp-body').innerHTML=empresaDespesas.map(ed=>{
+      const ativo=ed.ativo!==false;
+      return `<tr style="${ativo?'':'opacity:.45'}">
+        <td style="font-weight:500">${ed.nome}</td>
+        <td style="font-size:10px;color:var(--muted)">${ed.inicio||'—'}</td>
+        <td class="tr mono" style="color:var(--red);font-weight:700">${f(ed.valor||0)}</td>
+        <td>
+          <button onclick="toggleEmpresaDesp(${ed.id})"
+            style="font-size:10px;padding:4px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;
+            background:${ativo?'var(--gd)':'var(--surface2)'};color:${ativo?'var(--green)':'var(--muted)'}">
+            ${ativo?'✓ Ativo':'Inativo'}
+          </button>
+        </td>
+        <td><button class="del" onclick="delEmpresaDesp(${ed.id})" title="Remover">✕</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Preenche mês corrente como sugestão de início
+  if(!g('emp-inicio').value){
+    g('emp-inicio').value=new Date().toISOString().slice(0,7);
+  }
+}
+
+function addEmpresaDesp(){
+  const nome=g('emp-nome').value.trim();
+  const valor=parseFloat(g('emp-valor').value)||0;
+  const inicio=g('emp-inicio').value||new Date().toISOString().slice(0,7);
+  if(!nome){g('emp-nome').focus();return;}
+  if(!valor){g('emp-valor').focus();return;}
+  empresaDespesas.push({id:empresaDespId++, nome, valor, inicio, ativo:true});
+  g('emp-nome').value='';g('emp-valor').value='';
+  buildVisaoEmpresa();
+  buildSidebar();
+  if(curOvTab==='visao') buildOverview();
+  scheduleSave();
+}
+
+function toggleEmpresaDesp(id){
+  const ed=empresaDespesas.find(x=>x.id===id);
+  if(!ed) return;
+  ed.ativo=!ed.ativo;
+  buildVisaoEmpresa();
+  buildSidebar();
+  if(curOvTab==='visao') buildOverview();
+  scheduleSave();
+}
+
+function delEmpresaDesp(id){
+  if(!confirm('Remover essa despesa?')) return;
+  empresaDespesas=empresaDespesas.filter(x=>x.id!==id);
+  buildVisaoEmpresa();
+  buildSidebar();
+  if(curOvTab==='visao') buildOverview();
+  scheduleSave();
 }
 
 function toggleDespPagoOv(modId,item,idx,dKey){
@@ -3205,6 +3389,7 @@ function setSyncStatus(s, msg=''){
 function serializeState(){
   return {
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
+    empresaDespesas, despPagamentos,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -3270,6 +3455,13 @@ function deserializeState(obj){
   }
   if(obj.recPagamentos && typeof obj.recPagamentos==='object'){
     recPagamentos=obj.recPagamentos;
+  }
+  if(obj.empresaDespesas && Array.isArray(obj.empresaDespesas)){
+    empresaDespesas=obj.empresaDespesas;
+    empresaDespId=empresaDespesas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.despPagamentos && typeof obj.despPagamentos==='object'){
+    despPagamentos=obj.despPagamentos;
   }
 }
 
