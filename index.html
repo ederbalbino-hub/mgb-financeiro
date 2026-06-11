@@ -506,8 +506,10 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 /* ── ACCORDION ──────────────────────────────────────────────────────────── */
 .acc-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 22px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background .15s}
 .acc-hdr:hover{background:rgba(255,255,255,.02)}
-.acc-toggle{font-size:11px;color:var(--hint);transition:transform .25s;flex-shrink:0;margin-left:10px;font-family:'DM Mono',monospace}
-.acc-hdr.open .acc-toggle{transform:rotate(90deg)}
+.acc-toggle{font-size:11px;color:var(--muted);flex-shrink:0;margin-left:10px;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);transition:all .15s}
+.acc-hdr:hover .acc-toggle{background:var(--surface3);color:var(--text)}
+.acc-toggle .acc-chev{font-family:'DM Mono',monospace;font-size:10px;transition:transform .25s}
+.acc-hdr.open .acc-toggle .acc-chev{transform:rotate(90deg)}
 .acc-body{overflow:hidden;transition:max-height .35s ease,opacity .25s ease;opacity:1}
 .acc-body.collapsed{max-height:0!important;opacity:0;pointer-events:none}
 
@@ -2622,12 +2624,23 @@ function buildCharts(){
 
 // ── ACCORDION ─────────────────────────────────────────────────────────────
 const accState={}; // {id: true=open, false=collapsed}
+function _accUpdateToggleEl(hdr,isOpen){
+  let t=hdr.querySelector('.acc-toggle'); if(!t) return;
+  t.innerHTML=`<span class="acc-chev">›</span><span>${isOpen?'Recolher':'Expandir'}</span>`;
+}
 function toggleAcc(id){
-  accState[id]=!accState[id];
   const hdr=g('acc-hdr-'+id), body=g('acc-body-'+id);
   if(!hdr||!body) return;
-  hdr.classList.toggle('open', accState[id]);
-  body.classList.toggle('collapsed', !accState[id]);
+  const willOpen=!hdr.classList.contains('open');
+  accState[id]=willOpen;
+  hdr.classList.toggle('open',willOpen);
+  body.classList.toggle('collapsed',!willOpen);
+  _accUpdateToggleEl(hdr,willOpen);
+}
+function refreshAccLabels(){
+  document.querySelectorAll('.acc-hdr').forEach(hdr=>{
+    _accUpdateToggleEl(hdr, hdr.classList.contains('open'));
+  });
 }
 function initAcc(id, openByDefault=true){
   accState[id]=openByDefault;
@@ -2635,12 +2648,7 @@ function initAcc(id, openByDefault=true){
   if(!hdr||!body) return;
   hdr.classList.toggle('open', openByDefault);
   body.classList.toggle('collapsed', !openByDefault);
-  // Set max-height for open bodies
-  if(openByDefault) body.style.maxHeight=body.scrollHeight+'px';
-  hdr.onclick=()=>{
-    toggleAcc(id);
-    if(accState[id]) body.style.maxHeight=body.scrollHeight+2000+'px';
-  };
+  _accUpdateToggleEl(hdr,openByDefault);
 }
 
 // ── DESPESAS COMPARTILHADAS ───────────────────────────────────────────────
@@ -3869,12 +3877,12 @@ function buildHome(){
     }
   }
 
-  // Mensagem aleatória
-  _homeIdx=Math.floor(Math.random()*HOME_MSGS.length);
+  // Mensagem — mantém a atual; só sorteia na primeira renderização
+  if(!buildHome._msgShown){ _homeIdx=Math.floor(Math.random()*HOME_MSGS.length); buildHome._msgShown=true; }
   showMsg(_homeIdx);
 
-  // Partículas
-  buildHomeParticles();
+  // Partículas — só na primeira renderização (recriar a cada toggle pisca a tela)
+  if(!buildHome._partInit){ buildHomeParticles(); buildHome._partInit=true; }
 }
 
 // ── PESSOAL — RENDER ─────────────────────────────────────────────────────
@@ -4172,6 +4180,7 @@ function buildAll(){
   g('pg-title').textContent=`${mod().icon}  ${mod().label}`;
   g('pg-sub').textContent=mod().desc;
   buildKPIs();buildAnunciantes();buildDespComp();buildReceitas();buildPayback();buildCharts();buildParcelas();buildTable();buildFooter();
+  refreshAccLabels();
 }
 function refresh(){
   buildSidebar();buildKPIs();buildAnunciantes();buildDespComp();buildReceitas();buildPayback();buildCharts();buildParcelas();buildTable();buildFooter();
