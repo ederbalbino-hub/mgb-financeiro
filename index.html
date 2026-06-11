@@ -707,6 +707,11 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
         <div class="home-welcome">Seja bem-vindo! 👋</div>
         <div class="home-date-txt" id="home-date"></div>
 
+        <!-- Toggle privacidade -->
+        <button id="home-eye-btn" onclick="togglePrivate()" title="Mostrar/ocultar valores" style="margin:10px 0 18px;background:rgba(26,25,40,.6);backdrop-filter:blur(20px);border:1px solid rgba(139,131,247,.25);color:var(--muted);padding:7px 14px;border-radius:10px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s">
+          <span id="home-eye-ico">👁️</span><span id="home-eye-txt">Mostrar valores</span>
+        </button>
+
         <!-- Métricas -->
         <div class="home-metrics">
           <div class="home-metric">
@@ -1876,11 +1881,12 @@ function buildSidebar(){
   const despMes=finGetDesp(anoAtual,mesAtual);
   const lucroMes=recMes-despMes;
   g('sb-mes-lbl').textContent=MESES[mesAtual]+'/'+anoAtual;
-  g('sb-rec-mes').textContent=f(recMes);
-  g('sb-desp-mes').textContent=f(despMes);
+  const vis=(typeof valuesVisible==='undefined')?false:valuesVisible;
+  g('sb-rec-mes').textContent=vis?f(recMes):MASK;
+  g('sb-desp-mes').textContent=vis?f(despMes):MASK;
   const lEl=g('sb-lucro-mes');
-  lEl.textContent=(lucroMes>=0?'+':'')+f(lucroMes);
-  lEl.style.color=lucroMes>0?'var(--green)':lucroMes<0?'var(--red)':'var(--hint)';
+  lEl.textContent=vis?((lucroMes>=0?'+':'')+f(lucroMes)):MASK;
+  lEl.style.color=vis?(lucroMes>0?'var(--green)':lucroMes<0?'var(--red)':'var(--hint)'):'var(--hint)';
 }
 function escQ(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 function sbClick(modId,item){drillMod(modId);switchItem(item);closeSidebar();}
@@ -2564,15 +2570,15 @@ function buildKPIs(){
   const _n=new Date(), _y=_n.getFullYear(), _m=_n.getMonth();
   const all=allCur();
   const tot=all.reduce((a,r)=>a+r.q*r.u,0);
-  const pro=all.filter(r=>r.t==='Produto').reduce((a,r)=>a+r.q*r.u,0);
-  const ser=all.filter(r=>r.t==='Serviço').reduce((a,r)=>a+r.q*r.u,0);
+  const avista=all.filter(r=>r.t==='Produto'||r.t==='Serviço'||r.t==='À vista').reduce((a,r)=>a+r.q*r.u,0);
+  const recor=all.filter(r=>r.t==='Recorrente').reduce((a,r)=>a+r.q*r.u,0);
   const par=all.filter(r=>r.t==='Parcelado').reduce((a,r)=>a+r.q*r.u,0);
   const lc=items().filter(i=>(db[curMod][i]||[]).length>0).length;
   const recMod=recModMes(curMod,_y,_m);
   g('kpi-row').innerHTML=`
     <div class="kpi kp"><div class="kpi-lbl">Investimento total</div><div class="kpi-val">${f(tot)}</div><div class="kpi-hint">no módulo</div></div>
-    <div class="kpi kg"><div class="kpi-lbl">Produtos</div><div class="kpi-val">${f(pro)}</div><div class="kpi-hint">hardware</div></div>
-    <div class="kpi kpk"><div class="kpi-lbl">Serviços</div><div class="kpi-val">${f(ser)}</div><div class="kpi-hint">mão de obra</div></div>
+    <div class="kpi kg"><div class="kpi-lbl">À vista</div><div class="kpi-val">${f(avista)}</div><div class="kpi-hint">produto / serviço</div></div>
+    <div class="kpi kpk"><div class="kpi-lbl">Recorrente</div><div class="kpi-val">${f(recor)}</div><div class="kpi-hint">mensal</div></div>
     <div class="kpi ka"><div class="kpi-lbl">Parcelado</div><div class="kpi-val">${f(par)}</div><div class="kpi-hint">total</div></div>
     <div class="kpi kb"><div class="kpi-lbl">Receita ${MESES[_m]}</div><div class="kpi-val">${recMod?f(recMod):'—'}</div><div class="kpi-hint">módulo</div></div>
     <div class="kpi kt"><div class="kpi-lbl">Unidades</div><div class="kpi-val">${lc}/${items().length}</div><div class="kpi-hint">com dados</div></div>`;
@@ -3810,24 +3816,39 @@ function buildHomeParticles(){
   }
 }
 
+// Privacidade: esconde valores até clicar no olho. Persistido em localStorage.
+let valuesVisible=(localStorage.getItem('mgb-values-visible')==='1');
+const MASK='••••';
+
+function togglePrivate(){
+  valuesVisible=!valuesVisible;
+  localStorage.setItem('mgb-values-visible', valuesVisible?'1':'0');
+  buildHome();
+  buildSidebar();
+}
+
 function buildHome(){
   const now=new Date();
   g('home-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+
+  // Botão de toggle
+  const eyeIco=g('home-eye-ico'), eyeTxt=g('home-eye-txt');
+  if(eyeIco){ eyeIco.textContent=valuesVisible?'🙈':'👁️'; }
+  if(eyeTxt){ eyeTxt.textContent=valuesVisible?'Ocultar valores':'Mostrar valores'; }
 
   // Métricas — usa o mesmo cálculo do rodapé da sidebar (mês atual)
   const now2=new Date();
   const mesAtual=now2.getMonth(), anoAtual=now2.getFullYear();
   syncFinanceiro();
   const totalRecMes=finGetRec(anoAtual,mesAtual);
-  const totalDespMes=finGetDesp(anoAtual,mesAtual);
   const totalCli=MODULES.reduce((a,m)=>a+m.items.filter(i=>recOfMes(m.id,i,anoAtual,mesAtual)>0).length,0);
   const totalDesp=MODULES.reduce((a,m)=>a+totalMod(m.id),0);
   const modAtivos=MODULES.filter(m=>totalMod(m.id)>0||recModMes(m.id,anoAtual,mesAtual)>0).length;
   const pb=totalRecMes>0?(totalDesp/totalRecMes).toFixed(1)+' m':'—';
-  g('hm-rec').textContent=totalRecMes?fk(totalRecMes):'—';
-  g('hm-cli').textContent=totalCli||'—';
-  g('hm-mod').textContent=modAtivos+'/'+MODULES.length;
-  g('hm-pb').textContent=pb;
+  g('hm-rec').textContent=valuesVisible?(totalRecMes?fk(totalRecMes):'—'):MASK;
+  g('hm-cli').textContent=valuesVisible?(totalCli||'—'):MASK;
+  g('hm-mod').textContent=valuesVisible?(modAtivos+'/'+MODULES.length):MASK;
+  g('hm-pb').textContent=valuesVisible?pb:MASK;
 
   // Saldo Pessoal do mês
   const pesRec=pessoalRecMes(anoAtual,mesAtual);
@@ -3835,11 +3856,17 @@ function buildHome(){
   const pesSaldo=pesRec-pesDesp;
   const pesEl=g('hm-pes-saldo');
   if(pesEl){
-    pesEl.textContent=(pessoalRec.length||pessoalDesp.length)?((pesSaldo>=0?'+':'')+fk(pesSaldo)):'—';
-    pesEl.style.color=pesSaldo>0?'var(--green)':pesSaldo<0?'var(--red)':'var(--hint)';
-    g('hm-pes-sub').textContent=(pessoalRec.length||pessoalDesp.length)
-      ? `↑ ${fk(pesRec)} · ↓ ${fk(pesDesp)}`
-      : 'Clique para configurar';
+    if(valuesVisible){
+      pesEl.textContent=(pessoalRec.length||pessoalDesp.length)?((pesSaldo>=0?'+':'')+fk(pesSaldo)):'—';
+      pesEl.style.color=pesSaldo>0?'var(--green)':pesSaldo<0?'var(--red)':'var(--hint)';
+      g('hm-pes-sub').textContent=(pessoalRec.length||pessoalDesp.length)
+        ? `↑ ${fk(pesRec)} · ↓ ${fk(pesDesp)}`
+        : 'Clique para configurar';
+    } else {
+      pesEl.textContent=MASK;
+      pesEl.style.color='var(--hint)';
+      g('hm-pes-sub').textContent='valores ocultos';
+    }
   }
 
   // Mensagem aleatória
