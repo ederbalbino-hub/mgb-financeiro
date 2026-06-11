@@ -655,6 +655,8 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
     <div class="sb-lbl">Navegação</div>
     <div class="sb-nav-item on" id="nav-home" onclick="goPage('home')">🏠 Início</div>
     <div class="sb-nav-item" id="nav-custos" onclick="goPage('overview')">📊 Overview</div>
+    <div class="sb-lbl" style="margin-top:10px">Pessoal</div>
+    <div class="sb-nav-item" id="nav-pessoal" onclick="goPage('pessoal')">💰 Pessoal</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
     <div id="sb-modules"></div>
   </div>
@@ -727,6 +729,18 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
             <div class="home-metric-val" id="hm-pb" style="color:var(--amber)">—</div>
             <div class="home-metric-lbl">Payback geral</div>
           </div>
+        </div>
+
+        <!-- Saldo Pessoal -->
+        <div class="home-pessoal-card" onclick="goPage('pessoal')" style="cursor:pointer;background:rgba(26,25,40,.7);backdrop-filter:blur(20px);border:1px solid rgba(78,203,141,.2);border-radius:14px;padding:12px 18px;margin-bottom:20px;width:100%;max-width:600px;display:flex;align-items:center;justify-content:space-between;animation:fadeInUp .7s ease .35s both">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">💰</span>
+            <div>
+              <div style="font-size:9px;color:rgba(240,238,255,.35);text-transform:uppercase;letter-spacing:.1em">Saldo Pessoal do mês</div>
+              <div style="font-size:9px;color:var(--hint);margin-top:2px" id="hm-pes-sub">— · —</div>
+            </div>
+          </div>
+          <div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace" id="hm-pes-saldo">—</div>
         </div>
 
         <!-- Mensagem -->
@@ -1133,6 +1147,7 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
         </div>
       </div>
     </div>
+  </div>
   </div><!-- /page-custos -->
 
   <!-- PAGE: FINANCEIRO -->
@@ -1140,6 +1155,138 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 
   <!-- PAGE: ANALYTICS -->
 
+
+  <!-- PAGE: PESSOAL -->
+  <div id="page-pessoal" style="display:none">
+    <div class="page-hdr">
+      <div><div class="page-title">💰 Pessoal</div><div class="page-sub">Receitas e despesas pessoais — separadas dos módulos MGB</div></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <select id="pes-mes-sel" onchange="buildPessoal()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <select id="pes-ano-sel" onchange="buildPessoal()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="ov-summary" id="pes-kpis"></div>
+
+    <!-- Gráfico Jan-Dez -->
+    <div style="padding:0 22px 14px">
+      <div class="cc">
+        <div class="cc-title">Receita × Despesa pessoal — Jan a Dez</div>
+        <div class="cc-sub">comparativo mensal do ano selecionado</div>
+        <div style="position:relative;height:200px"><canvas id="pesChart" aria-label="Pessoal anual"></canvas></div>
+      </div>
+    </div>
+
+    <!-- RECEITAS -->
+    <div style="padding:0 22px 14px">
+      <div class="anunc-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="sec-title" style="color:var(--green)">↑ Receitas</div>
+          <button class="anunc-btn" onclick="togglePesRecForm()" style="color:var(--green);border-color:rgba(78,203,141,.4)">＋ Nova receita</button>
+        </div>
+        <div class="anunc-form" id="pes-rec-form" style="display:none">
+          <div class="anunc-form-row">
+            <div class="anunc-form-field" style="flex:1;min-width:160px">
+              <label class="anunc-form-lbl">Descrição</label>
+              <input class="anunc-form-inp" id="pr-desc" placeholder="ex: Salário, freela X" style="width:100%">
+            </div>
+            <div class="anunc-form-field" style="width:120px">
+              <label class="anunc-form-lbl">Valor mensal (R$)</label>
+              <input class="anunc-form-inp" id="pr-valor" type="number" step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="anunc-form-field" style="width:130px">
+              <label class="anunc-form-lbl">📅 Início</label>
+              <input class="anunc-form-inp" id="pr-inicio" type="month" style="color-scheme:dark">
+            </div>
+            <div class="anunc-form-field" style="width:80px">
+              <label class="anunc-form-lbl">Duração (meses)</label>
+              <input class="anunc-form-inp" id="pr-meses" type="number" min="1" max="600" value="12" placeholder="12">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="savePesRec()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--green);color:#0b0d12;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
+            <button onclick="cancelPesRec()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+        <div class="tcard" style="margin-top:10px">
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Descrição</th>
+                <th>Início</th>
+                <th>Duração</th>
+                <th class="tr">Valor/mês</th>
+                <th>Status do mês</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="pes-rec-body"></tbody>
+            </table>
+          </div>
+          <div class="foot" id="pes-rec-foot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESPESAS -->
+    <div style="padding:0 22px 28px">
+      <div class="anunc-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="sec-title" style="color:var(--red)">↓ Despesas</div>
+          <button class="anunc-btn" onclick="togglePesDespForm()" style="color:var(--red);border-color:rgba(248,113,113,.4)">＋ Nova despesa</button>
+        </div>
+        <div class="anunc-form" id="pes-desp-form" style="display:none">
+          <div class="anunc-form-row">
+            <div class="anunc-form-field" style="flex:1;min-width:160px">
+              <label class="anunc-form-lbl">Descrição</label>
+              <input class="anunc-form-inp" id="pd-desc" placeholder="ex: Aluguel, mercado, Netflix" style="width:100%">
+            </div>
+            <div class="anunc-form-field" style="width:130px">
+              <label class="anunc-form-lbl">Tipo</label>
+              <select class="anunc-form-inp" id="pd-tipo" onchange="pesDespFormUpdate()" style="width:100%">
+                <option value="recorrente">Recorrente</option>
+                <option value="avista">À vista</option>
+                <option value="parcelado">Parcelado</option>
+              </select>
+            </div>
+            <div class="anunc-form-field" style="width:120px">
+              <label class="anunc-form-lbl">Valor (R$)</label>
+              <input class="anunc-form-inp" id="pd-valor" type="number" step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="anunc-form-field" style="width:130px">
+              <label class="anunc-form-lbl">📅 Mês de início</label>
+              <input class="anunc-form-inp" id="pd-inicio" type="month" style="color-scheme:dark">
+            </div>
+            <div class="anunc-form-field" id="pd-meses-wrap" style="width:80px;display:none">
+              <label class="anunc-form-lbl">Parcelas</label>
+              <input class="anunc-form-inp" id="pd-meses" type="number" min="1" max="120" value="12">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="savePesDesp()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--red);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
+            <button onclick="cancelPesDesp()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+        <div class="tcard" style="margin-top:10px">
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Descrição</th>
+                <th>Tipo</th>
+                <th>Início</th>
+                <th>Duração</th>
+                <th class="tr">Valor/mês</th>
+                <th>Status do mês</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="pes-desp-body"></tbody>
+            </table>
+          </div>
+          <div class="foot" id="pes-desp-foot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </main>
 </div>
@@ -1278,6 +1425,53 @@ let catalogo = [];
 // pagamentos[modId][item][ano][mes] = {pago:bool, dataPago:str, obs:str}
 let pagamentos={};
 MODULES.forEach(m=>{pagamentos[m.id]={};m.items.forEach(i=>pagamentos[m.id][i]={});});
+
+// ── PESSOAL ──────────────────────────────────────────────────────────────
+// pessoalRec = [{id, desc, valor, inicio:'YYYY-MM', meses}]
+// pessoalDesp = [{id, desc, valor, tipo:'recorrente'|'avista'|'parcelado', inicio:'YYYY-MM', meses}]
+// pessoalPag[id][YYYY-M] = {pago:bool, dataPago:str}
+let pessoalRec=[], pessoalDesp=[], pessoalPag={}, pessoalRecPag={};
+let pessoalRecId=1, pessoalDespId=1;
+
+function pessoalRecMes(ano,mes){
+  return pessoalRec.reduce((acc,r)=>{
+    if(!r.valor||!r.inicio) return acc;
+    const [aI,mI]=r.inicio.split('-').map(Number);
+    const dur=r.meses||12;
+    for(let k=0;k<dur;k++){
+      const mk=(mI-1+k)%12;
+      const ak=aI+Math.floor((mI-1+k)/12);
+      if(ak===ano&&mk===mes) return acc+r.valor;
+    }
+    return acc;
+  },0);
+}
+function pessoalDespMes(ano,mes){
+  return pessoalDesp.reduce((acc,d)=>{
+    if(!d.valor||!d.inicio) return acc;
+    const [aI,mI]=d.inicio.split('-').map(Number);
+    if(d.tipo==='recorrente'){
+      // Conta a partir de inicio para sempre
+      if(ano>aI||(ano===aI&&mes>=mI-1)) return acc+d.valor;
+      return acc;
+    }
+    if(d.tipo==='avista'){
+      if(ano===aI&&mes===mI-1) return acc+d.valor;
+      return acc;
+    }
+    if(d.tipo==='parcelado'){
+      const dur=d.meses||1;
+      for(let k=0;k<dur;k++){
+        const mk=(mI-1+k)%12;
+        const ak=aI+Math.floor((mI-1+k)/12);
+        if(ak===ano&&mk===mes) return acc+d.valor;
+      }
+      return acc;
+    }
+    return acc;
+  },0);
+}
+function pessoalSaldoMes(ano,mes){ return pessoalRecMes(ano,mes)-pessoalDespMes(ano,mes); }
 
 const NOW=new Date();
 let lancMes=NOW.getMonth(), lancAno=NOW.getFullYear();
@@ -1631,18 +1825,19 @@ function closeSidebar(){
 // ── PAGES ─────────────────────────────────────────────────────────────────
 function goPage(p){
   curPage=p;
-  ['home','overview','custos'].forEach(id=>{
+  ['home','overview','custos','pessoal'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
   var target=document.getElementById('page-'+p);
   if(target) target.style.display='block';
-  ['nav-home','nav-custos'].forEach(id=>{
+  ['nav-home','nav-custos','nav-pessoal'].forEach(id=>{
     var el=document.getElementById(id);
     if(el) el.classList.remove('on');
   });
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
   if(p==='overview'){ var el=document.getElementById('nav-custos'); if(el) el.classList.add('on'); }
+  if(p==='pessoal'){ var el=document.getElementById('nav-pessoal'); if(el) el.classList.add('on'); buildPessoal(); }
   var mt=document.getElementById('mod-tabs');
   if(mt) mt.style.display=p==='custos'?'flex':'none';
   if(p==='overview'){
@@ -3390,6 +3585,7 @@ function serializeState(){
   return {
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, despPagamentos,
+    pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -3463,6 +3659,16 @@ function deserializeState(obj){
   if(obj.despPagamentos && typeof obj.despPagamentos==='object'){
     despPagamentos=obj.despPagamentos;
   }
+  if(obj.pessoalRec && Array.isArray(obj.pessoalRec)){
+    pessoalRec=obj.pessoalRec;
+    pessoalRecId=pessoalRec.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.pessoalDesp && Array.isArray(obj.pessoalDesp)){
+    pessoalDesp=obj.pessoalDesp;
+    pessoalDespId=pessoalDesp.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.pessoalPag && typeof obj.pessoalPag==='object') pessoalPag=obj.pessoalPag;
+  if(obj.pessoalRecPag && typeof obj.pessoalRecPag==='object') pessoalRecPag=obj.pessoalRecPag;
 }
 
 // Salva via Apps Script (POST)
@@ -3600,6 +3806,19 @@ function buildHome(){
   g('hm-mod').textContent=modAtivos+'/'+MODULES.length;
   g('hm-pb').textContent=pb;
 
+  // Saldo Pessoal do mês
+  const pesRec=pessoalRecMes(anoAtual,mesAtual);
+  const pesDesp=pessoalDespMes(anoAtual,mesAtual);
+  const pesSaldo=pesRec-pesDesp;
+  const pesEl=g('hm-pes-saldo');
+  if(pesEl){
+    pesEl.textContent=(pessoalRec.length||pessoalDesp.length)?((pesSaldo>=0?'+':'')+fk(pesSaldo)):'—';
+    pesEl.style.color=pesSaldo>0?'var(--green)':pesSaldo<0?'var(--red)':'var(--hint)';
+    g('hm-pes-sub').textContent=(pessoalRec.length||pessoalDesp.length)
+      ? `↑ ${fk(pesRec)} · ↓ ${fk(pesDesp)}`
+      : 'Clique para configurar';
+  }
+
   // Mensagem aleatória
   _homeIdx=Math.floor(Math.random()*HOME_MSGS.length);
   showMsg(_homeIdx);
@@ -3607,6 +3826,286 @@ function buildHome(){
   // Partículas
   buildHomeParticles();
 }
+
+// ── PESSOAL — RENDER ─────────────────────────────────────────────────────
+let pesChart=null;
+let pesEditRecId=null, pesEditDespId=null;
+
+function initPessoalSelects(){
+  const mSel=g('pes-mes-sel'), aSel=g('pes-ano-sel');
+  if(!mSel.options.length){
+    MESES.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;mSel.appendChild(o);});
+    for(let y=NOW.getFullYear()-1;y<=NOW.getFullYear()+1;y++){const o=document.createElement('option');o.value=y;o.textContent=y;aSel.appendChild(o);}
+    mSel.value=NOW.getMonth();
+    aSel.value=NOW.getFullYear();
+  }
+}
+
+function pesKey(y,m){ return y+'-'+m; }
+
+function pesRecAtivaNoMes(r,y,m){
+  if(!r.valor||!r.inicio) return false;
+  const [aI,mI]=r.inicio.split('-').map(Number);
+  const dur=r.meses||12;
+  for(let k=0;k<dur;k++){
+    const mk=(mI-1+k)%12;
+    const ak=aI+Math.floor((mI-1+k)/12);
+    if(ak===y&&mk===m) return true;
+  }
+  return false;
+}
+function pesDespAtivaNoMes(d,y,m){
+  if(!d.valor||!d.inicio) return false;
+  const [aI,mI]=d.inicio.split('-').map(Number);
+  if(d.tipo==='recorrente') return y>aI||(y===aI&&m>=mI-1);
+  if(d.tipo==='avista')     return y===aI&&m===mI-1;
+  if(d.tipo==='parcelado'){
+    const dur=d.meses||1;
+    for(let k=0;k<dur;k++){
+      const mk=(mI-1+k)%12;
+      const ak=aI+Math.floor((mI-1+k)/12);
+      if(ak===y&&mk===m) return true;
+    }
+    return false;
+  }
+  return false;
+}
+function pesDespParcelaAtual(d,y,m){
+  if(d.tipo!=='parcelado') return null;
+  const [aI,mI]=d.inicio.split('-').map(Number);
+  const dur=d.meses||1;
+  for(let k=0;k<dur;k++){
+    const mk=(mI-1+k)%12;
+    const ak=aI+Math.floor((mI-1+k)/12);
+    if(ak===y&&mk===m) return (k+1)+'/'+dur;
+  }
+  return null;
+}
+
+function buildPessoal(){
+  initPessoalSelects();
+  const y=parseInt(g('pes-ano-sel').value);
+  const m=parseInt(g('pes-mes-sel').value);
+  const rec=pessoalRecMes(y,m);
+  const desp=pessoalDespMes(y,m);
+  const saldo=rec-desp;
+
+  // KPIs
+  g('pes-kpis').innerHTML=`
+    <div class="ov-sum-item"><div class="ov-sum-lbl">💰 Receita ${MESES[m]}</div><div class="ov-sum-val" style="color:var(--green)">${rec?f(rec):'—'}</div></div>
+    <div class="ov-sum-item"><div class="ov-sum-lbl">💸 Despesa ${MESES[m]}</div><div class="ov-sum-val" style="color:var(--red)">${desp?f(desp):'—'}</div></div>
+    <div class="ov-sum-item"><div class="ov-sum-lbl">📊 Saldo ${MESES[m]}</div><div class="ov-sum-val" style="color:${saldo>=0?'var(--green)':'var(--red)'}">${(rec||desp)?((saldo>=0?'+':'')+f(saldo)):'—'}</div></div>
+    <div class="ov-sum-item"><div class="ov-sum-lbl">↑ Receitas cadastradas</div><div class="ov-sum-val">${pessoalRec.length}</div></div>
+    <div class="ov-sum-item"><div class="ov-sum-lbl">↓ Despesas cadastradas</div><div class="ov-sum-val">${pessoalDesp.length}</div></div>
+  `;
+
+  // Gráfico Jan-Dez
+  const recs=MESES.map((_,mi)=>pessoalRecMes(y,mi));
+  const desps=MESES.map((_,mi)=>pessoalDespMes(y,mi));
+  if(pesChart) pesChart.destroy();
+  pesChart=new Chart(g('pesChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:MESES,
+      datasets:[
+        {label:'Receita', data:recs, backgroundColor:'#4ecb8d', borderRadius:6},
+        {label:'Despesa', data:desps, backgroundColor:'#f87171', borderRadius:6}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#cbd5e1', font:{size:10}}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+f(c.parsed.y)}}
+      },
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(148,163,184,.08)'}},
+        y:{ticks:{color:'#94a3b8',font:{size:10},callback:v=>fk(v)},grid:{color:'rgba(148,163,184,.08)'}}
+      }
+    }
+  });
+
+  // Receitas — lista
+  const rb=g('pes-rec-body');
+  const recAtivas=pessoalRec.filter(r=>pesRecAtivaNoMes(r,y,m));
+  if(!pessoalRec.length){
+    rb.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--hint);padding:18px">Nenhuma receita cadastrada. Clique em "Nova receita".</td></tr>`;
+  } else {
+    rb.innerHTML=pessoalRec.map(r=>{
+      const ativa=pesRecAtivaNoMes(r,y,m);
+      const key=pesKey(y,m);
+      const pago=((pessoalRecPag[r.id]||{})[key]||{}).pago;
+      const statusHtml=!ativa?'<span style="color:var(--hint);font-size:10px">—</span>'
+        : pago?'<span class="status-badge status-pago">✓ Recebido</span>'
+        : `<button class="btn-recebido pend" onclick="togglePesRecPago(${r.id})" style="padding:4px 10px;font-size:10px">Marcar recebido</button>`;
+      return `<tr style="${ativa?'':'opacity:.5'}">
+        <td><b>${r.desc||'(sem nome)'}</b></td>
+        <td>${r.inicio?fmtMes(r.inicio):'—'}</td>
+        <td>${r.meses||12} m</td>
+        <td class="tr" style="color:var(--green);font-weight:600">${f(r.valor)}</td>
+        <td>${statusHtml}</td>
+        <td class="tr">
+          <button onclick="editPesRec(${r.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px">✎</button>
+          <button onclick="delPesRec(${r.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 6px">×</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  g('pes-rec-foot').textContent=`${recAtivas.length} receita${recAtivas.length===1?'':'s'} ativa${recAtivas.length===1?'':'s'} em ${MESES[m]}/${y} — total ${f(rec)}`;
+
+  // Despesas — lista
+  const db=g('pes-desp-body');
+  const despAtivas=pessoalDesp.filter(d=>pesDespAtivaNoMes(d,y,m));
+  if(!pessoalDesp.length){
+    db.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--hint);padding:18px">Nenhuma despesa cadastrada. Clique em "Nova despesa".</td></tr>`;
+  } else {
+    const tipoLbl={recorrente:'Recorrente', avista:'À vista', parcelado:'Parcelado'};
+    db.innerHTML=pessoalDesp.map(d=>{
+      const ativa=pesDespAtivaNoMes(d,y,m);
+      const key=pesKey(y,m);
+      const pago=((pessoalPag[d.id]||{})[key]||{}).pago;
+      const statusHtml=!ativa?'<span style="color:var(--hint);font-size:10px">—</span>'
+        : pago?'<span class="status-badge status-pago">✓ Pago</span>'
+        : `<button class="btn-recebido pend" onclick="togglePesDespPago(${d.id})" style="padding:4px 10px;font-size:10px">Marcar pago</button>`;
+      let dur='—';
+      if(d.tipo==='recorrente') dur='∞';
+      else if(d.tipo==='avista') dur='1×';
+      else if(d.tipo==='parcelado') dur=(pesDespParcelaAtual(d,y,m)||(d.meses+'×'));
+      return `<tr style="${ativa?'':'opacity:.5'}">
+        <td><b>${d.desc||'(sem nome)'}</b></td>
+        <td><span class="bdesp" style="padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600">${tipoLbl[d.tipo]||d.tipo}</span></td>
+        <td>${d.inicio?fmtMes(d.inicio):'—'}</td>
+        <td>${dur}</td>
+        <td class="tr" style="color:var(--red);font-weight:600">${f(d.valor)}</td>
+        <td>${statusHtml}</td>
+        <td class="tr">
+          <button onclick="editPesDesp(${d.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px">✎</button>
+          <button onclick="delPesDesp(${d.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 6px">×</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  g('pes-desp-foot').textContent=`${despAtivas.length} despesa${despAtivas.length===1?'':'s'} ativa${despAtivas.length===1?'':'s'} em ${MESES[m]}/${y} — total ${f(desp)}`;
+}
+
+// Receitas — form e CRUD
+function togglePesRecForm(){
+  const f=g('pes-rec-form');
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display==='block'){
+    if(pesEditRecId==null){
+      g('pr-desc').value=''; g('pr-valor').value=''; g('pr-meses').value=12;
+      g('pr-inicio').value=NOW.toISOString().slice(0,7);
+    }
+    g('pr-desc').focus();
+  }
+}
+function cancelPesRec(){ pesEditRecId=null; g('pes-rec-form').style.display='none'; }
+function savePesRec(){
+  const desc=g('pr-desc').value.trim();
+  const valor=parseFloat(g('pr-valor').value)||0;
+  const inicio=g('pr-inicio').value;
+  const meses=parseInt(g('pr-meses').value)||12;
+  if(!desc||!valor||!inicio){ alert('Preencha descrição, valor e mês de início.'); return; }
+  if(pesEditRecId!=null){
+    const r=pessoalRec.find(x=>x.id===pesEditRecId);
+    if(r){ r.desc=desc; r.valor=valor; r.inicio=inicio; r.meses=meses; }
+    pesEditRecId=null;
+  } else {
+    pessoalRec.push({id:pessoalRecId++, desc, valor, inicio, meses});
+  }
+  g('pes-rec-form').style.display='none';
+  buildPessoal(); buildSidebar(); scheduleSave();
+}
+function editPesRec(id){
+  const r=pessoalRec.find(x=>x.id===id); if(!r) return;
+  pesEditRecId=id;
+  g('pr-desc').value=r.desc||''; g('pr-valor').value=r.valor||'';
+  g('pr-inicio').value=r.inicio||''; g('pr-meses').value=r.meses||12;
+  g('pes-rec-form').style.display='block';
+  g('pr-desc').focus();
+}
+function delPesRec(id){
+  const r=pessoalRec.find(x=>x.id===id); if(!r) return;
+  if(!confirm(`Excluir receita "${r.desc}"?`)) return;
+  pessoalRec=pessoalRec.filter(x=>x.id!==id);
+  delete pessoalRecPag[id];
+  buildPessoal(); buildSidebar(); scheduleSave();
+}
+function togglePesRecPago(id){
+  const y=parseInt(g('pes-ano-sel').value), m=parseInt(g('pes-mes-sel').value);
+  const key=pesKey(y,m);
+  if(!pessoalRecPag[id]) pessoalRecPag[id]={};
+  if(!pessoalRecPag[id][key]) pessoalRecPag[id][key]={pago:false,dataPago:''};
+  const p=pessoalRecPag[id][key];
+  p.pago=!p.pago;
+  p.dataPago=p.pago?new Date().toLocaleDateString('pt-BR'):'';
+  buildPessoal(); scheduleSave();
+}
+
+// Despesas — form e CRUD
+function pesDespFormUpdate(){
+  const tipo=g('pd-tipo').value;
+  g('pd-meses-wrap').style.display=tipo==='parcelado'?'block':'none';
+}
+function togglePesDespForm(){
+  const f=g('pes-desp-form');
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display==='block'){
+    if(pesEditDespId==null){
+      g('pd-desc').value=''; g('pd-valor').value=''; g('pd-tipo').value='recorrente';
+      g('pd-meses').value=12; g('pd-inicio').value=NOW.toISOString().slice(0,7);
+    }
+    pesDespFormUpdate();
+    g('pd-desc').focus();
+  }
+}
+function cancelPesDesp(){ pesEditDespId=null; g('pes-desp-form').style.display='none'; }
+function savePesDesp(){
+  const desc=g('pd-desc').value.trim();
+  const valor=parseFloat(g('pd-valor').value)||0;
+  const tipo=g('pd-tipo').value;
+  const inicio=g('pd-inicio').value;
+  const meses=tipo==='parcelado'?(parseInt(g('pd-meses').value)||1):(tipo==='avista'?1:null);
+  if(!desc||!valor||!inicio){ alert('Preencha descrição, valor e mês de início.'); return; }
+  if(pesEditDespId!=null){
+    const d=pessoalDesp.find(x=>x.id===pesEditDespId);
+    if(d){ d.desc=desc; d.valor=valor; d.tipo=tipo; d.inicio=inicio; d.meses=meses; }
+    pesEditDespId=null;
+  } else {
+    pessoalDesp.push({id:pessoalDespId++, desc, valor, tipo, inicio, meses});
+  }
+  g('pes-desp-form').style.display='none';
+  buildPessoal(); buildSidebar(); scheduleSave();
+}
+function editPesDesp(id){
+  const d=pessoalDesp.find(x=>x.id===id); if(!d) return;
+  pesEditDespId=id;
+  g('pd-desc').value=d.desc||''; g('pd-valor').value=d.valor||'';
+  g('pd-tipo').value=d.tipo||'recorrente';
+  g('pd-inicio').value=d.inicio||''; g('pd-meses').value=d.meses||12;
+  g('pes-desp-form').style.display='block';
+  pesDespFormUpdate();
+  g('pd-desc').focus();
+}
+function delPesDesp(id){
+  const d=pessoalDesp.find(x=>x.id===id); if(!d) return;
+  if(!confirm(`Excluir despesa "${d.desc}"?`)) return;
+  pessoalDesp=pessoalDesp.filter(x=>x.id!==id);
+  delete pessoalPag[id];
+  buildPessoal(); buildSidebar(); scheduleSave();
+}
+function togglePesDespPago(id){
+  const y=parseInt(g('pes-ano-sel').value), m=parseInt(g('pes-mes-sel').value);
+  const key=pesKey(y,m);
+  if(!pessoalPag[id]) pessoalPag[id]={};
+  if(!pessoalPag[id][key]) pessoalPag[id][key]={pago:false,dataPago:''};
+  const p=pessoalPag[id][key];
+  p.pago=!p.pago;
+  p.dataPago=p.pago?new Date().toLocaleDateString('pt-BR'):'';
+  buildPessoal(); scheduleSave();
+}
+
 // ── SWITCH ────────────────────────────────────────────────────────────────
 function switchMod(modId){
   drillMod(modId);
@@ -3632,7 +4131,7 @@ function refresh(){
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 document.getElementById('dt').textContent=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-['overview','custos'].forEach(function(id){
+['overview','custos','pessoal'].forEach(function(id){
   var el=document.getElementById('page-'+id); if(el) el.style.display='none';
 });
 document.getElementById('page-home').style.display='block';
