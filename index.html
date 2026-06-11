@@ -2533,13 +2533,13 @@ function setRec(input){
 
 // ── PAYBACK ───────────────────────────────────────────────────────────────
 function buildPayback(){
-  const _n=new Date(), _y=_n.getFullYear(), _m=_n.getMonth();
   const totMod=totalMod(curMod);
   const totItem=totalOf(curMod,curItem);
-  const recItem=recOfMes(curMod,curItem,_y,_m);
-  let recMod=recModMes(curMod,_y,_m);
+  // Payback usa receita mensal recorrente (recOf) — não exige inicio configurado
+  const recItem=recOf(curMod,curItem);
+  let recMod=items().reduce((a,i)=>a+recOf(curMod,i),0);
   let best=null,bestM=Infinity;
-  items().forEach(i=>{const r=recOfMes(curMod,i,_y,_m),t=totalOf(curMod,i);if(r>0){const m=t/r;if(m<bestM){bestM=m;best=i;}}});
+  items().forEach(i=>{const r=recOf(curMod,i),t=totalOf(curMod,i);if(r>0){const m=t/r;if(m<bestM){bestM=m;best=i;}}});
   g('pb-row').innerHTML=`
     <div class="pb-card"><div class="pb-ico">⏱️</div><div class="pb-body">
       <div class="pb-lbl">Payback — ${curItem}</div>
