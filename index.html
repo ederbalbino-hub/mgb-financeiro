@@ -2571,7 +2571,7 @@ function buildPayback(){
 function buildKPIs(){
   const _n=new Date(), _y=_n.getFullYear(), _m=_n.getMonth();
   const all=allCur();
-  const tot=all.reduce((a,r)=>a+r.q*r.u,0);
+  const totUnid=all.reduce((a,r)=>a+r.q*r.u,0);
   const avista=all.filter(r=>r.t==='Produto'||r.t==='Serviço'||r.t==='À vista').reduce((a,r)=>a+r.q*r.u,0);
   const recor=all.filter(r=>r.t==='Recorrente').reduce((a,r)=>a+r.q*r.u,0);
   const par=all.filter(r=>r.t==='Parcelado').reduce((a,r)=>a+r.q*r.u,0);
@@ -2581,11 +2581,12 @@ function buildKPIs(){
   const rateadas=curMod==='elev'
     ? despesasComp.filter(d=>despCompIsAtivo(d)).reduce((a,d)=>a+(d.valor||0),0)
     : 0;
+  const totModulo=totUnid+rateadas;
   const rateadasCard=curMod==='elev'
     ? `<div class="kpi" style="border-color:rgba(244,114,182,.3)"><div class="kpi-lbl">Rateadas</div><div class="kpi-val">${f(rateadas)}</div><div class="kpi-hint">compartilhadas /mês</div></div>`
     : '';
   g('kpi-row').innerHTML=`
-    <div class="kpi kp"><div class="kpi-lbl">Por unidade</div><div class="kpi-val">${f(tot)}</div><div class="kpi-hint">lançamentos diretos</div></div>
+    <div class="kpi kp"><div class="kpi-lbl">Despesa do módulo</div><div class="kpi-val">${f(totModulo)}</div><div class="kpi-hint">${curMod==='elev'?'unidade + rateadas':'total no módulo'}</div></div>
     <div class="kpi kg"><div class="kpi-lbl">À vista</div><div class="kpi-val">${f(avista)}</div><div class="kpi-hint">produto / serviço</div></div>
     <div class="kpi kpk"><div class="kpi-lbl">Recorrente</div><div class="kpi-val">${f(recor)}</div><div class="kpi-hint">mensal</div></div>
     <div class="kpi ka"><div class="kpi-lbl">Parcelado</div><div class="kpi-val">${f(par)}</div><div class="kpi-hint">total</div></div>
