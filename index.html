@@ -1360,8 +1360,34 @@ const totalMod=modId=>Object.keys(db[modId]).reduce((a,i)=>a+totalOf(modId,i),0)
 const allCur=()=>items().flatMap(i=>db[curMod][i]);
 const recOf=(modId,item)=>((rec[modId]||{})[item]||{}).valor||0;
 const recObj=(modId,item)=>(rec[modId]||{})[item]||{valor:0,inicio:'',meses:12};
+// Receita por tela do módulo Elevadores num mês específico — vem dos anunciantes
+function anuncRecByTelaMes(ano,mes){
+  const result={};
+  const elevMod=MODULES.find(m=>m.id==='elev');
+  if(!elevMod) return result;
+  elevMod.items.forEach(t=>result[t]=0);
+  (typeof anunciantes==='undefined'?[]:anunciantes).forEach(a=>{
+    if(!a.telas||!a.telas.length||!a.inicio||!a.valor) return;
+    const [anoI,mesI]=a.inicio.split('-').map(Number);
+    const meses=a.meses||1;
+    let ativo=false;
+    for(let k=0;k<meses;k++){
+      const mk=(mesI-1+k)%12;
+      const ak=anoI+Math.floor((mesI-1+k)/12);
+      if(ak===ano&&mk===mes){ativo=true;break;}
+    }
+    if(!ativo) return;
+    const vlrPorTela=a.valor/a.telas.length;
+    a.telas.forEach(t=>{ if(result[t]!==undefined) result[t]+=vlrPorTela; });
+  });
+  return result;
+}
 // Receita do item no mês específico. Sem inicio configurado: NÃO contabiliza.
 function recOfMes(modId,item,ano,mes){
+  // Elevadores: receita vem dos anunciantes (anunciante tem inicio/meses próprios)
+  if(modId==='elev'){
+    return anuncRecByTelaMes(ano,mes)[item]||0;
+  }
   const ro=recObj(modId,item);
   if(!ro.valor||!ro.inicio) return 0;
   const [anoI,mesI]=ro.inicio.split('-').map(Number);
@@ -1377,6 +1403,7 @@ function recOfMes(modId,item,ano,mes){
 function clientesSemInicio(){
   const out=[];
   MODULES.forEach(m=>{
+    if(m.id==='elev') return; // Elevadores: inicio mora nos anunciantes, não na tela
     m.items.forEach(item=>{
       const ro=recObj(m.id,item);
       if(ro.valor>0&&!ro.inicio) out.push({m,item,valor:ro.valor});
