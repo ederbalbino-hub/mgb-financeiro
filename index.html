@@ -434,6 +434,16 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 .home-hub-card.hub-operacional .home-hub-cta{color:#f472b6}
 @media (max-width:680px){.home-hubs{grid-template-columns:1fr}}
 
+/* Cards do hub Operacional */
+.op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:18px 0 4px}
+.op-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-decoration:none;color:inherit;display:block;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.op-card::after{content:'↗';position:absolute;top:10px;right:12px;font-size:11px;color:var(--hint);opacity:0;transition:opacity .15s}
+.op-card:hover{border-color:rgba(232,25,125,.5);background:rgba(232,25,125,.06);transform:translateY(-2px)}
+.op-card:hover::after{opacity:1}
+.op-ico{font-size:22px;margin-bottom:8px}
+.op-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.op-desc{font-size:11px;color:var(--muted);line-height:1.45}
+
 /* Card mensagem */
 .home-msg-wrap{max-width:640px;width:100%;animation:fadeInUp .7s ease .4s both}
 .home-msg-card{
@@ -1201,14 +1211,57 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 
   <!-- PAGE: OPERACIONAL -->
   <div id="page-operacional" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 22px;border-bottom:1px solid var(--border);background:var(--surface)">
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--text)">🎯 Gestão Operacional</div>
-        <div style="font-size:10px;color:var(--hint);margin-top:2px">Contratos, gerador de spots, blocos rádio, posts — agenciamgb.com.br/contratos</div>
-      </div>
-      <a href="https://agenciamgb.com.br/contratos/" target="_blank" rel="noopener" style="font-size:11px;padding:5px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:5px">↗ Abrir em nova aba</a>
+    <div class="page-hdr">
+      <div><div class="page-title">🎯 Gestão Operacional</div><div class="page-sub">Contratos, gerador de spots, blocos de rádio, posts — hub em agenciamgb.com.br/contratos</div></div>
+      <a href="https://agenciamgb.com.br/contratos/" target="_blank" rel="noopener" style="font-size:11px;padding:7px 14px;border-radius:8px;border:1px solid rgba(232,25,125,.4);background:rgba(232,25,125,.12);color:#f472b6;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:600">↗ Abrir hub completo</a>
     </div>
-    <iframe id="operacional-frame" src="about:blank" data-src="https://agenciamgb.com.br/contratos/" style="width:100%;height:calc(100vh - 56px);border:none;display:block;background:#120520"></iframe>
+    <div style="padding:0 22px 28px">
+      <div class="op-grid">
+        <a class="op-card" href="https://agenciamgb.com.br/contratos/#panel-mercadao" target="_blank" rel="noopener">
+          <div class="op-ico">📄</div>
+          <div class="op-title">Contrato Mercadão</div>
+          <div class="op-desc">Rádio interna — lojistas do Mercadão Prochet</div>
+        </a>
+        <a class="op-card" href="https://agenciamgb.com.br/contratos/#panel-elevador" target="_blank" rel="noopener">
+          <div class="op-ico">🛗</div>
+          <div class="op-title">Contrato Elevador</div>
+          <div class="op-desc">Mídia em telas — condomínios</div>
+        </a>
+        <a class="op-card" href="https://agenciamgb.com.br/contratos/#panel-parceria" target="_blank" rel="noopener">
+          <div class="op-ico">🤝</div>
+          <div class="op-title">Parceria Condomínio</div>
+          <div class="op-desc">Contrato de parceria com CNPJ do síndico</div>
+        </a>
+        <a class="op-card" href="https://agenciamgb.com.br/contratos/#panel-pasta" target="_blank" rel="noopener">
+          <div class="op-ico">🗂️</div>
+          <div class="op-title">Contratos Salvos</div>
+          <div class="op-desc">Pasta Mercadão e Elevador com histórico</div>
+        </a>
+        <a class="op-card" href="https://agenciamgb.com.br/contratos/#panel-gerador" target="_blank" rel="noopener">
+          <div class="op-ico">🎙️</div>
+          <div class="op-title">Gerador de Spots</div>
+          <div class="op-desc">Briefing → roteiro com IA</div>
+        </a>
+        <a class="op-card" href="https://agenciamgb.com.br/contratos/#panel-blocos" target="_blank" rel="noopener">
+          <div class="op-ico">📻</div>
+          <div class="op-title">Blocos Rádio</div>
+          <div class="op-desc">Organização de clientes nos blocos</div>
+        </a>
+        <a class="op-card" href="https://agenciamgb.com.br/contratos/#panel-linkedin-gerar" target="_blank" rel="noopener">
+          <div class="op-ico">✍️</div>
+          <div class="op-title">Gerar Post LinkedIn</div>
+          <div class="op-desc">Post pronto pra publicar</div>
+        </a>
+        <a class="op-card" href="https://agenciamgb.com.br/contratos/#panel-linkedin-plano" target="_blank" rel="noopener">
+          <div class="op-ico">📅</div>
+          <div class="op-title">Plano Semanal</div>
+          <div class="op-desc">Planejamento de conteúdo</div>
+        </a>
+      </div>
+      <div style="margin-top:18px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:11px;color:var(--muted);line-height:1.6">
+        💡 <b>Por que abre em nova aba?</b> O servidor de <code style="color:var(--text)">agenciamgb.com.br</code> envia <code style="color:var(--text)">X-Frame-Options: sameorigin</code>, o que impede embed em iframe. Pra ter o hub embedado direto aqui, é só remover esse cabeçalho no <code style="color:var(--text)">.htaccess</code> do servidor.
+      </div>
+    </div>
   </div>
 
   <!-- PAGE: PESSOAL -->
@@ -1920,12 +1973,7 @@ function goPage(p){
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
   if(p==='overview'){ var el=document.getElementById('nav-custos'); if(el) el.classList.add('on'); }
   if(p==='pessoal'){ var el=document.getElementById('nav-pessoal'); if(el) el.classList.add('on'); buildPessoal(); }
-  if(p==='operacional'){
-    var el=document.getElementById('nav-operacional'); if(el) el.classList.add('on');
-    // Carrega o iframe só na primeira abertura (evita prompt de senha desnecessário)
-    var frame=document.getElementById('operacional-frame');
-    if(frame && frame.src.indexOf('about:blank')===0){ frame.src=frame.dataset.src; }
-  }
+  if(p==='operacional'){ var el=document.getElementById('nav-operacional'); if(el) el.classList.add('on'); }
   var mt=document.getElementById('mod-tabs');
   if(mt) mt.style.display=p==='custos'?'flex':'none';
   if(p==='overview'){
