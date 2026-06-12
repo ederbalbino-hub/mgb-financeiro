@@ -2577,11 +2577,19 @@ function buildKPIs(){
   const par=all.filter(r=>r.t==='Parcelado').reduce((a,r)=>a+r.q*r.u,0);
   const lc=items().filter(i=>(db[curMod][i]||[]).length>0).length;
   const recMod=recModMes(curMod,_y,_m);
+  // Rateadas — só faz sentido em Elevadores (despesas compartilhadas)
+  const rateadas=curMod==='elev'
+    ? despesasComp.filter(d=>despCompIsAtivo(d)).reduce((a,d)=>a+(d.valor||0),0)
+    : 0;
+  const rateadasCard=curMod==='elev'
+    ? `<div class="kpi" style="border-color:rgba(244,114,182,.3)"><div class="kpi-lbl">Rateadas</div><div class="kpi-val">${f(rateadas)}</div><div class="kpi-hint">compartilhadas /mês</div></div>`
+    : '';
   g('kpi-row').innerHTML=`
-    <div class="kpi kp"><div class="kpi-lbl">Investimento total</div><div class="kpi-val">${f(tot)}</div><div class="kpi-hint">no módulo</div></div>
+    <div class="kpi kp"><div class="kpi-lbl">Por unidade</div><div class="kpi-val">${f(tot)}</div><div class="kpi-hint">lançamentos diretos</div></div>
     <div class="kpi kg"><div class="kpi-lbl">À vista</div><div class="kpi-val">${f(avista)}</div><div class="kpi-hint">produto / serviço</div></div>
     <div class="kpi kpk"><div class="kpi-lbl">Recorrente</div><div class="kpi-val">${f(recor)}</div><div class="kpi-hint">mensal</div></div>
     <div class="kpi ka"><div class="kpi-lbl">Parcelado</div><div class="kpi-val">${f(par)}</div><div class="kpi-hint">total</div></div>
+    ${rateadasCard}
     <div class="kpi kb"><div class="kpi-lbl">Receita ${MESES[_m]}</div><div class="kpi-val">${recMod?f(recMod):'—'}</div><div class="kpi-hint">módulo</div></div>
     <div class="kpi kt"><div class="kpi-lbl">Unidades</div><div class="kpi-val">${lc}/${items().length}</div><div class="kpi-hint">com dados</div></div>`;
 }
