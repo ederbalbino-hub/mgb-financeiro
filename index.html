@@ -416,6 +416,24 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 .home-metric-lbl{font-size:9px;color:rgba(240,238,255,.35);margin-top:5px;text-transform:uppercase;letter-spacing:.1em}
 .home-metric-icon{font-size:18px;margin-bottom:6px;display:block}
 
+/* Hubs (Despesas / Operacional) */
+.home-hubs{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:720px;margin-bottom:22px;animation:fadeInUp .7s ease .25s both}
+.home-hub-card{background:rgba(26,25,40,.6);backdrop-filter:blur(20px);border:1px solid rgba(139,131,247,.25);border-radius:16px;padding:22px 22px 18px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;text-align:left}
+.home-hub-card::before{content:'';position:absolute;top:-30%;right:-30%;width:140px;height:140px;border-radius:50%;opacity:.18;filter:blur(28px);transition:transform .35s}
+.home-hub-card.hub-despesas::before{background:#4ecb8d}
+.home-hub-card.hub-operacional::before{background:#e8197d}
+.home-hub-card:hover{transform:translateY(-3px);border-color:rgba(139,131,247,.5)}
+.home-hub-card:hover::before{transform:scale(1.3)}
+.home-hub-card.hub-despesas:hover{border-color:rgba(78,203,141,.55)}
+.home-hub-card.hub-operacional:hover{border-color:rgba(232,25,125,.55)}
+.home-hub-ico{font-size:30px;margin-bottom:8px;position:relative;z-index:1}
+.home-hub-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:6px;position:relative;z-index:1}
+.home-hub-desc{font-size:11px;color:rgba(240,238,255,.6);line-height:1.5;margin-bottom:14px;position:relative;z-index:1}
+.home-hub-cta{font-size:11px;font-weight:600;color:rgba(240,238,255,.85);text-transform:uppercase;letter-spacing:.08em;position:relative;z-index:1}
+.home-hub-card.hub-despesas .home-hub-cta{color:#4ecb8d}
+.home-hub-card.hub-operacional .home-hub-cta{color:#f472b6}
+@media (max-width:680px){.home-hubs{grid-template-columns:1fr}}
+
 /* Card mensagem */
 .home-msg-wrap{max-width:640px;width:100%;animation:fadeInUp .7s ease .4s both}
 .home-msg-card{
@@ -657,6 +675,8 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
     <div class="sb-lbl">Navegação</div>
     <div class="sb-nav-item on" id="nav-home" onclick="goPage('home')">🏠 Início</div>
     <div class="sb-nav-item" id="nav-custos" onclick="goPage('overview')">📊 Overview</div>
+    <div class="sb-lbl" style="margin-top:10px">Operacional</div>
+    <div class="sb-nav-item" id="nav-operacional" onclick="goPage('operacional')">🎯 Contratos & Mídia</div>
     <div class="sb-lbl" style="margin-top:10px">Pessoal</div>
     <div class="sb-nav-item" id="nav-pessoal" onclick="goPage('pessoal')">💰 Pessoal</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
@@ -713,6 +733,22 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
         <button id="home-eye-btn" onclick="togglePrivate()" title="Mostrar/ocultar valores" style="margin:10px 0 18px;background:rgba(26,25,40,.6);backdrop-filter:blur(20px);border:1px solid rgba(139,131,247,.25);color:var(--muted);padding:7px 14px;border-radius:10px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s">
           <span id="home-eye-ico">👁️</span><span id="home-eye-txt">Mostrar valores</span>
         </button>
+
+        <!-- Hubs principais -->
+        <div class="home-hubs">
+          <div class="home-hub-card hub-despesas" onclick="goPage('overview')">
+            <div class="home-hub-ico">💰</div>
+            <div class="home-hub-title">Gestão de Despesas</div>
+            <div class="home-hub-desc">Receita, despesa e payback de todos os módulos · Pessoal · Lançamentos</div>
+            <div class="home-hub-cta">Abrir painel →</div>
+          </div>
+          <div class="home-hub-card hub-operacional" onclick="goPage('operacional')">
+            <div class="home-hub-ico">🎯</div>
+            <div class="home-hub-title">Gestão Operacional</div>
+            <div class="home-hub-desc">Contratos · Gerador de spots · Blocos rádio · Posts LinkedIn · Plano semanal</div>
+            <div class="home-hub-cta">Abrir hub →</div>
+          </div>
+        </div>
 
         <!-- Métricas -->
         <div class="home-metrics">
@@ -1162,6 +1198,18 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 
   <!-- PAGE: ANALYTICS -->
 
+
+  <!-- PAGE: OPERACIONAL -->
+  <div id="page-operacional" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 22px;border-bottom:1px solid var(--border);background:var(--surface)">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text)">🎯 Gestão Operacional</div>
+        <div style="font-size:10px;color:var(--hint);margin-top:2px">Contratos, gerador de spots, blocos rádio, posts — agenciamgb.com.br/contratos</div>
+      </div>
+      <a href="https://agenciamgb.com.br/contratos/" target="_blank" rel="noopener" style="font-size:11px;padding:5px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:5px">↗ Abrir em nova aba</a>
+    </div>
+    <iframe id="operacional-frame" src="about:blank" data-src="https://agenciamgb.com.br/contratos/" style="width:100%;height:calc(100vh - 56px);border:none;display:block;background:#120520"></iframe>
+  </div>
 
   <!-- PAGE: PESSOAL -->
   <div id="page-pessoal" style="display:none">
@@ -1859,19 +1907,25 @@ function closeSidebar(){
 // ── PAGES ─────────────────────────────────────────────────────────────────
 function goPage(p){
   curPage=p;
-  ['home','overview','custos','pessoal'].forEach(id=>{
+  ['home','overview','custos','pessoal','operacional'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
   var target=document.getElementById('page-'+p);
   if(target) target.style.display='block';
-  ['nav-home','nav-custos','nav-pessoal'].forEach(id=>{
+  ['nav-home','nav-custos','nav-pessoal','nav-operacional'].forEach(id=>{
     var el=document.getElementById(id);
     if(el) el.classList.remove('on');
   });
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
   if(p==='overview'){ var el=document.getElementById('nav-custos'); if(el) el.classList.add('on'); }
   if(p==='pessoal'){ var el=document.getElementById('nav-pessoal'); if(el) el.classList.add('on'); buildPessoal(); }
+  if(p==='operacional'){
+    var el=document.getElementById('nav-operacional'); if(el) el.classList.add('on');
+    // Carrega o iframe só na primeira abertura (evita prompt de senha desnecessário)
+    var frame=document.getElementById('operacional-frame');
+    if(frame && frame.src.indexOf('about:blank')===0){ frame.src=frame.dataset.src; }
+  }
   var mt=document.getElementById('mod-tabs');
   if(mt) mt.style.display=p==='custos'?'flex':'none';
   if(p==='overview'){
@@ -4226,7 +4280,7 @@ function refresh(){
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 document.getElementById('dt').textContent=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-['overview','custos','pessoal'].forEach(function(id){
+['overview','custos','pessoal','operacional'].forEach(function(id){
   var el=document.getElementById('page-'+id); if(el) el.style.display='none';
 });
 document.getElementById('page-home').style.display='block';
