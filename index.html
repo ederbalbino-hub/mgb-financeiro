@@ -1415,7 +1415,7 @@ input[readonly]{background:#EAD9FF;cursor:default;color:var(--deep);font-weight:
   #contract-output p{font-size:8px!important;line-height:1.4!important;margin-bottom:4px!important}
   #contract-output [style*=&quot;display:grid&quot;]{gap:8px!important;margin-bottom:6px!important}
   #contract-output [style*=&quot;margin-bottom:14px&quot;]{margin-bottom:6px!important}
-  #contract-output [style*=&quot;margin-bottom:12px&quot;]{margin-bottom:4px!important}
+  #contract-output [style*=&quot;margin-bottom:6px&quot;]{margin-bottom:4px!important}
   #contract-output [style*=&quot;margin-top:14px&quot;]{margin-top:6px!important}
   #contract-output img{border-radius:6px!important}
   #contract-output [style*=&quot;font-size:18px&quot;]{font-size:13px!important}
@@ -1881,7 +1881,7 @@ function gerarContrato() {
   document.getElementById('contract-output').innerHTML =
     '<div style=&quot;margin-bottom:14px&quot;><img src=&quot;data:image/svg+xml;base64,' + svgB64 + '&quot; style=&quot;width:100%;border-radius:10px;display:block&quot;></div>' +
 
-    '<div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px&quot;>' +
+    '<div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px&quot;>' +
       '<div class=&quot;contract-section&quot;><h3>1. Dados do Contratante (Lojista)</h3>' +
       row(isPJ ? 'Razão Social' : 'Nome', isPJ ? gv('razao_social') : gv('nome_pf')) +
       (isPJ &amp;&amp; gv('nome_fantasia') ? row('Nome da Loja / Fantasia', gv('nome_fantasia')) : '') +
@@ -1915,7 +1915,7 @@ function gerarContrato() {
       '</div>' +
     '</div>' +
 
-    '<div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px&quot;>' +
+    '<div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px&quot;>' +
       '<div class=&quot;contract-section&quot;><h3>3. Objeto do Contrato</h3>' +
       '<p style=&quot;font-size:11px;line-height:1.6;margin-bottom:8px&quot;>Veiculação de spot publicitário de áudio na <strong>rádio interna do Mercadão da Prochet</strong>, Av. Harry Prochet, 305 — Londrina/PR, operada pela CONTRATADA.</p>' +
       '<table class=&quot;contract-table&quot;><thead><tr><th>Especificação</th><th>Detalhe</th></tr></thead><tbody>' +
@@ -2530,25 +2530,25 @@ function eGerar(){
   const torTot=sel.reduce((s,c)=>s+(c.torres||0),0);
   const condoTotal='<tr style=&quot;font-weight:700;background:#F0E6FF&quot;><td>TOTAL</td><td></td><td>'+torTot+'</td><td>'+telas+'</td><td>'+pessTot.toLocaleString('pt-BR')+'</td><td>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
 
-  const headerHTML='<div style=&quot;background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#D946EF 100%);padding:18px 28px;border-radius:10px;color:#fff;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:30px&quot;>'+
-    '<div style=&quot;display:flex;align-items:center;gap:14px&quot;>'+
-      '<div style=&quot;width:6px;height:60px;background:#D946EF;border-radius:3px;flex-shrink:0&quot;></div>'+
+  const headerHTML='<div style=&quot;background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#D946EF 100%);padding:12px 22px;border-radius:8px;color:#fff;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
+    '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
+      '<div style=&quot;width:5px;height:44px;background:#D946EF;border-radius:3px;flex-shrink:0&quot;></div>'+
       '<div>'+
-        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px&quot;>MGB Mídia</div>'+
-        '<div style=&quot;font-size:11px;color:rgba(255,255,255,.65);margin-top:3px&quot;>Elevando a sua comunicação</div>'+
+        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.5px&quot;>MGB Mídia</div>'+
+        '<div style=&quot;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px&quot;>Elevando a sua comunicação</div>'+
       '</div>'+
     '</div>'+
-    '<div style=&quot;border-left:1px solid rgba(255,255,255,.15);padding-left:24px;text-align:right&quot;>'+
-      '<div style=&quot;font-size:9px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1.5px;text-transform:uppercase&quot;>Contrato de Veiculação</div>'+
-      '<div style=&quot;font-size:13px;font-weight:700;margin-top:4px&quot;>Mídia em Elevadores</div>'+
-      '<div style=&quot;font-size:10px;color:rgba(255,255,255,.55);margin-top:3px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
+    '<div style=&quot;border-left:1px solid rgba(255,255,255,.15);padding-left:18px;text-align:right&quot;>'+
+      '<div style=&quot;font-size:8px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1.5px;text-transform:uppercase&quot;>Contrato de Veiculação</div>'+
+      '<div style=&quot;font-size:11px;font-weight:700;margin-top:3px&quot;>Mídia em Elevadores</div>'+
+      '<div style=&quot;font-size:9px;color:rgba(255,255,255,.55);margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
     '</div>'+
   '</div>';
   document.getElementById('e-contract-out').innerHTML=
     headerHTML+
 
     // ── Linha 1: Contratante (esq) + Contratada+Plano+Caixa (dir) ──
-    '<div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px&quot;>'+
+    '<div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px&quot;>'+
       '<div class=&quot;contract-section&quot;><h3>1. Dados do Contratante (Anunciante)</h3>'+
       erow(isPJ?'Razão Social':'Nome',isPJ?egv('e-razao'):egv('e-nomepf'))+
       (isPJ&amp;&amp;egv('e-fantasia')?erow('Nome Fantasia',egv('e-fantasia')):'')+
@@ -2566,17 +2566,17 @@ function eGerar(){
       '</div>'+
     '</div>'+
 
-    // ── Linha 2: Pontos+Specs (esq) + Termos (dir) ──
-    '<div style=&quot;display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-bottom:12px&quot;>'+
-      '<div>'+
-        '<div class=&quot;contract-section&quot;><h3>3. Pontos de Veiculação</h3>'+
-        '<table class=&quot;contract-table&quot;><thead><tr><th>Condomínio</th><th>Bairro</th><th>Torres</th><th>Telas</th><th>Pessoas/mês</th><th>Ins./mês</th><th>Impactos/mês</th></tr></thead><tbody>'+
-        condoRows+condoTotal+
-        '</tbody></table>'+
-        '<p style=&quot;font-size:10px;color:#6B21A8;font-weight:600;margin-top:5px&quot;>Pessoas impactadas/mês: '+pessTot.toLocaleString('pt-BR')+' · Frequência média DOOH elevador (3x): '+impTot.toLocaleString('pt-BR')+' impactos/mês</p>'+
-        '</div>'+
-        '<div class=&quot;contract-section&quot; style=&quot;margin-top:10px&quot;><h3>5. Especificações Técnicas</h3>'+erow('Duração',durSpot+'s — Sem áudio'+(mult>1?' ('+mult+'x)':''))+erow('Formato',fmtTxt)+erow('Resolução','1080 x 1100 px')+erow('Exibições','Entrega mínima de '+INS_DIA+' inserções/dia (~'+(INS_DIA*INS_MES).toLocaleString('pt-BR')+'/mês por tela)')+(egv('e-obs')?erow('Observações',egv('e-obs')):'')+'</div>'+
-      '</div>'+
+    // ── Linha 2 (full-width): 3. Pontos de Veiculação ──
+    '<div class=&quot;contract-section&quot; style=&quot;margin-bottom:10px&quot;><h3>3. Pontos de Veiculação</h3>'+
+      '<table class=&quot;contract-table&quot;><thead><tr><th>Condomínio</th><th>Bairro</th><th>Torres</th><th>Telas</th><th>Pessoas/mês</th><th>Ins./mês</th><th>Impactos/mês</th></tr></thead><tbody>'+
+      condoRows+condoTotal+
+      '</tbody></table>'+
+      '<p style=&quot;font-size:9px;color:#6B21A8;font-weight:600;margin-top:4px&quot;>Pessoas impactadas/mês: '+pessTot.toLocaleString('pt-BR')+' · Frequência média DOOH elevador (3x): '+impTot.toLocaleString('pt-BR')+' impactos/mês</p>'+
+    '</div>'+
+
+    // ── Linha 3: 5. Specs (esq) + 6. Termos+Assinaturas (dir) ──
+    '<div style=&quot;display:grid;grid-template-columns:1fr 1.4fr;gap:14px;margin-bottom:6px&quot;>'+
+      '<div class=&quot;contract-section&quot;><h3>5. Especificações Técnicas</h3>'+erow('Duração',durSpot+'s — Sem áudio'+(mult>1?' ('+mult+'x)':''))+erow('Formato',fmtTxt)+erow('Resolução','1080 x 1100 px')+erow('Exibições','Entrega mínima de '+INS_DIA+' inserções/dia (~'+(INS_DIA*INS_MES).toLocaleString('pt-BR')+'/mês por tela)')+(egv('e-obs')?erow('Observações',egv('e-obs')):'')+'</div>'+
 
       '<div class=&quot;clauses&quot;>'+
         '<h3 style=&quot;font-size:9px;font-weight:700;color:#E879B0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #EAD9FF&quot;>6. Termos e Condições</h3>'+
@@ -2587,11 +2587,10 @@ function eGerar(){
         '<h4>6.5. Rescisão</h4><p>Aviso prévio de 30 dias. Antecipada: multa de 20% sobre meses restantes.</p>'+
         '<h4>6.6. Política de Conteúdo</h4><p>A CONTRATADA pode recusar material ilícito, ofensivo, político-partidário ou fora dos padrões técnicos.</p>'+
         '<h4>6.7. Foro</h4><p>Comarca de Londrina/PR.</p>'+
-        '<div class=&quot;sig-area sig-compact&quot; style=&quot;margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-top:4px&quot;>'+
-          '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:3px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:9px;font-weight:600&quot;>'+(nome||'______________________________')+'</div><div class=&quot;srole&quot; style=&quot;font-size:7.5px;color:#6B7280&quot;>CONTRATANTE · '+docLbl+': '+(doc||'_______________')+'</div></div>'+
-          '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:3px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:9px;font-weight:600&quot;>MGB Mídia</div><div class=&quot;srole&quot; style=&quot;font-size:7.5px;color:#6B7280&quot;>CONTRATADA · CNPJ: 23.770.170/0001-50</div></div>'+
+        '<div class=&quot;sig-area sig-compact&quot; style=&quot;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:2px&quot;>'+
+          '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:2px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:8.5px;font-weight:600&quot;>'+(nome||'______________________________')+'</div><div class=&quot;srole&quot; style=&quot;font-size:6.5px;color:#6B7280&quot;>CONTRATANTE · '+docLbl+': '+(doc||'_______________')+' · Londrina/PR, '+today.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})+'</div></div>'+
+          '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:2px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:8.5px;font-weight:600&quot;>MGB Mídia</div><div class=&quot;srole&quot; style=&quot;font-size:6.5px;color:#6B7280&quot;>CONTRATADA · CNPJ: 23.770.170/0001-50</div></div>'+
         '</div>'+
-        '<div style=&quot;text-align:center;margin-top:4px;font-size:7.5px;color:#9CA3AF&quot;>Londrina/PR, '+today.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})+'</div>'+
       '</div>'+
     '</div>';
   salvarSheets(num, meses, total, inicio, fimDate);
@@ -2616,25 +2615,25 @@ function ePrintContract(){
   style.id='e-print-style';
   style.textContent=
     '@page{size:A4 landscape;margin:8mm 10mm}'+
-    '#e-print-clone{display:none;background:#fff;color:#2A1760;font-family:Inter,Arial,sans-serif;padding:0;font-size:9px;line-height:1.4}'+
-    '#e-print-clone h3{font-size:10px;color:#6B21A8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #EAD9FF}'+
-    '#e-print-clone h4{font-size:9px;font-weight:700;color:#2A1760;margin:4px 0 2px}'+
-    '#e-print-clone p{font-size:9px;line-height:1.4;margin-bottom:3px}'+
-    '#e-print-clone .contract-section{margin-bottom:6px}'+
-    '#e-print-clone .contract-row{display:flex;justify-content:space-between;padding:2px 0;font-size:9px;border-bottom:1px dotted #EAD9FF}'+
+    '#e-print-clone{display:none;background:#fff;color:#2A1760;font-family:Inter,Arial,sans-serif;padding:0;font-size:8px;line-height:1.3}'+
+    '#e-print-clone h3{font-size:9px;color:#6B21A8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;padding-bottom:1px;border-bottom:1px solid #EAD9FF}'+
+    '#e-print-clone h4{font-size:8px;font-weight:700;color:#2A1760;margin:1px 0 0}'+
+    '#e-print-clone p{font-size:8px;line-height:1.3;margin-bottom:1px}'+
+    '#e-print-clone .contract-section{margin-bottom:3px}'+
+    '#e-print-clone .contract-row{display:flex;justify-content:space-between;padding:1px 0;font-size:8px;border-bottom:1px dotted #EAD9FF}'+
     '#e-print-clone .contract-row .lbl{color:#6B7280}'+
     '#e-print-clone .contract-row .val{font-weight:600;color:#2A1760;text-align:right;max-width:62%}'+
-    '#e-print-clone .contract-table{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}'+
-    '#e-print-clone .contract-table th{background:#2A1760;color:#fff;padding:3px 5px;text-align:left;font-size:7.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
-    '#e-print-clone .contract-table td{padding:3px 5px;border-bottom:1px solid #EAD9FF}'+
+    '#e-print-clone .contract-table{width:100%;border-collapse:collapse;font-size:7.2px;margin-top:2px}'+
+    '#e-print-clone .contract-table th{background:#2A1760;color:#fff;padding:2px 4px;text-align:left;font-size:6.8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '#e-print-clone .contract-table td{padding:1.5px 4px;border-bottom:1px solid #EAD9FF}'+
     '#e-print-clone .contract-table tr:nth-child(even){background:#F8F5FF;-webkit-print-color-adjust:exact}'+
-    '#e-print-clone .clauses{font-size:8.5px;line-height:1.45}'+
-    '#e-print-clone .clauses h4{font-size:8.5px;margin:3px 0 1px}'+
-    '#e-print-clone .clauses p{font-size:8.5px;margin-bottom:2px}'+
-    '#e-print-clone .sig-area{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:12px;padding-top:8px}'+
-    '#e-print-clone .sig-line{border-top:1px solid #333;padding-top:6px;text-align:center}'+
-    '#e-print-clone .sig-line .sname{font-size:11px;font-weight:600}'+
-    '#e-print-clone .sig-line .srole{font-size:8.5px;color:#6B7280}'+
+    '#e-print-clone .clauses{font-size:6.8px;line-height:1.28}'+
+    '#e-print-clone .clauses h4{font-size:6.8px;margin:1px 0 0}'+
+    '#e-print-clone .clauses p{font-size:6.8px;margin-bottom:0}'+
+    '#e-print-clone .sig-area{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;padding-top:3px}'+
+    '#e-print-clone .sig-line{border-top:1px solid #333;padding-top:2px;text-align:center}'+
+    '#e-print-clone .sig-line .sname{font-size:8.5px;font-weight:600}'+
+    '#e-print-clone .sig-line .srole{font-size:6.5px;color:#6B7280}'+
     '#e-print-clone img{border-radius:6px;-webkit-print-color-adjust:exact}'+
     '@media print{'+
       'body.eprint > *:not(#e-print-clone):not(script):not(style){display:none !important}'+
