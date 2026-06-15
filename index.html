@@ -670,6 +670,32 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 #page-operacional .hub-panel.active{display:block}
 #page-operacional .contract-frame{width:100%;border:none;background:#F8F5FF;min-height:calc(100vh - 110px);display:block}
 
+/* ─── Print do contrato Elevador (A4 paisagem) ─── */
+@media print {
+  body.eprint > *:not(#e-print-clone):not(script):not(style){ display:none !important; }
+  body.eprint{ background:#fff !important; padding:0 !important; margin:0 !important; color:#2A1760; font-family:'Inter',Arial,sans-serif }
+  #e-print-clone{ display:block !important; padding:0 !important; margin:0 !important; background:#fff !important; color:#2A1760 !important; font-size:9px; line-height:1.4 }
+  #e-print-clone h3{ font-size:10px !important; color:#6B21A8 !important; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; padding-bottom:3px; border-bottom:1px solid #EAD9FF }
+  #e-print-clone h4{ font-size:9px !important; font-weight:700; color:#2A1760; margin:4px 0 2px }
+  #e-print-clone p{ font-size:9px !important; line-height:1.4 !important; margin-bottom:3px !important }
+  #e-print-clone .contract-section{ margin-bottom:6px }
+  #e-print-clone .contract-row{ display:flex; justify-content:space-between; padding:2px 0; font-size:9px; border-bottom:1px dotted #EAD9FF }
+  #e-print-clone .contract-row .lbl{ color:#6B7280 }
+  #e-print-clone .contract-row .val{ font-weight:600; color:#2A1760; text-align:right; max-width:62% }
+  #e-print-clone .contract-table{ width:100%; border-collapse:collapse; font-size:8px; margin-top:4px }
+  #e-print-clone .contract-table th{ background:#2A1760 !important; color:#fff !important; padding:3px 5px; text-align:left; font-size:7.5px; -webkit-print-color-adjust:exact; print-color-adjust:exact }
+  #e-print-clone .contract-table td{ padding:3px 5px; border-bottom:1px solid #EAD9FF }
+  #e-print-clone .contract-table tr:nth-child(even){ background:#F8F5FF !important; -webkit-print-color-adjust:exact }
+  #e-print-clone .clauses{ font-size:8.5px; line-height:1.45 }
+  #e-print-clone .clauses h4{ font-size:8.5px !important; margin:3px 0 1px }
+  #e-print-clone .clauses p{ font-size:8.5px !important; margin-bottom:2px !important }
+  #e-print-clone .sig-area{ display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:12px; padding-top:8px }
+  #e-print-clone .sig-line{ border-top:1px solid #333; padding-top:6px; text-align:center }
+  #e-print-clone .sig-line .sname{ font-size:11px; font-weight:600 }
+  #e-print-clone .sig-line .srole{ font-size:8.5px; color:#6B7280 }
+  #e-print-clone img{ border-radius:6px !important; max-height:60px; -webkit-print-color-adjust:exact }
+}
+
 /* ─── HUB OPERACIONAL sessão 2 ─── */
 #page-operacional .gen-wrap { max-width:680px; margin:0 auto; padding:24px 20px; }#page-operacional .gen-hdr { margin-bottom:18px; padding-bottom:14px; border-bottom:0.5px solid rgba(220,100,255,.15); }#page-operacional .gen-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:#fff; }#page-operacional .gen-sub { font-size:12px; color:rgba(255,255,255,.35); margin-top:2px; }#page-operacional .gen-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }#page-operacional .gen-fs { margin-bottom:12px; }#page-operacional .glabel { display:block; font-size:10px; font-weight:600; letter-spacing:1.3px; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:6px; }#page-operacional .ginput, #page-operacional .gselect, #page-operacional .gtextarea { width:100%; background:rgba(255,255,255,.05); border:0.5px solid rgba(220,100,255,.18); border-radius:8px; padding:10px 12px; font-size:13px; color:#f0e8f8; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .15s; }#page-operacional .ginput:focus, #page-operacional .gselect:focus, #page-operacional .gtextarea:focus { border-color:#e8197d; background:rgba(232,25,125,.06); }#page-operacional .gselect option { background:#1a0828; }#page-operacional .gtextarea { resize:vertical; min-height:85px; line-height:1.5; }#page-operacional .ghint { font-size:11px; color:rgba(255,255,255,.22); margin-top:4px; }#page-operacional .gbtn { width:100%; background:linear-gradient(135deg,#e8197d,#9b1dcc); border:none; border-radius:9px; padding:13px; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#fff; cursor:pointer; transition:all .2s; margin-top:4px; }#page-operacional .gbtn:hover { opacity:.88; transform:translateY(-1px); }#page-operacional .gbtn:disabled { opacity:.4; cursor:not-allowed; transform:none; }#page-operacional .gloading { display:none; align-items:center; gap:10px; padding:12px 0; color:rgba(255,255,255,.4); font-size:13px; }#page-operacional .gdot { width:6px; height:6px; border-radius:50%; background:#e8197d; animation:blink 1s infinite; display:inline-block; }#page-operacional .gdot:nth-child(2) {animation-delay:.2s}#page-operacional .gdot:nth-child(3) {animation-delay:.4s}@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
 #page-operacional .gresult { display:none; margin-top:14px; background:rgba(155,29,204,.1); border:0.5px solid rgba(155,29,204,.28); border-radius:12px; padding:18px; }#page-operacional .gresult.show { display:block; }#page-operacional .gres-lbl { font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:#e8197d; margin-bottom:10px; }#page-operacional .gtexto { font-size:14px; color:#f0e8f8; line-height:1.8; white-space:pre-wrap; }#page-operacional .gbtn-row { display:flex; gap:8px; margin-top:12px; }#page-operacional .gcopy, #page-operacional .gnovo { flex:1; padding:9px; background:rgba(232,25,125,.1); border:0.5px solid rgba(232,25,125,.28); border-radius:8px; color:#f472b6; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }#page-operacional .gcopy:hover, #page-operacional .gnovo:hover { background:rgba(232,25,125,.22); color:#fff; }@media(max-width:600px){#page-operacional .hub-nav {padding:10px 14px 0;}#page-operacional .hub-tab {padding:8px 11px;font-size:11px;}#page-operacional .inicio-wrap, #page-operacional .gen-wrap {padding:18px 14px;}#page-operacional .gen-row {grid-template-columns:1fr;}#page-operacional .cards-grid {grid-template-columns:1fr;}
@@ -2494,43 +2520,67 @@ function eGerar(){
   if(inicio){const d=new Date(inicio+'T00:00:00');d.setMonth(d.getMonth()+meses);fimDate=d.toLocaleDateString('pt-BR');}
   const svgH='<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;760&quot; height=&quot;100&quot; viewBox=&quot;0 0 760 100&quot;><defs><linearGradient id=&quot;eg&quot; x1=&quot;0%&quot; y1=&quot;0%&quot; x2=&quot;100%&quot; y2=&quot;0%&quot;><stop offset=&quot;0%&quot; stop-color=&quot;#1E0A3C&quot;/><stop offset=&quot;50%&quot; stop-color=&quot;#6B21A8&quot;/><stop offset=&quot;100%&quot; stop-color=&quot;#D946EF&quot;/></linearGradient></defs><rect width=&quot;760&quot; height=&quot;100&quot; rx=&quot;12&quot; fill=&quot;url(#eg)&quot;/><rect width=&quot;6&quot; height=&quot;60&quot; x=&quot;28&quot; y=&quot;20&quot; rx=&quot;3&quot; fill=&quot;#D946EF&quot;/><text x=&quot;44&quot; y=&quot;45&quot; fill=&quot;white&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;22&quot; font-weight=&quot;800&quot; letter-spacing=&quot;-0.5&quot;>MGB Mídia</text><text x=&quot;44&quot; y=&quot;67&quot; fill=&quot;rgba(255,255,255,.65)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;11&quot;>Elevando a sua comunicação</text><line x1=&quot;380&quot; y1=&quot;20&quot; x2=&quot;380&quot; y2=&quot;80&quot; stroke=&quot;rgba(255,255,255,.12)&quot; stroke-width=&quot;1&quot;/><text x=&quot;400&quot; y=&quot;38&quot; fill=&quot;rgba(255,255,255,.5)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;9&quot; font-weight=&quot;600&quot; letter-spacing=&quot;1.5&quot;>CONTRATO DE VEICULAÇÃO</text><text x=&quot;400&quot; y=&quot;56&quot; fill=&quot;white&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;13&quot; font-weight=&quot;700&quot;>Mídia em Elevadores</text><text x=&quot;400&quot; y=&quot;73&quot; fill=&quot;rgba(255,255,255,.55)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;10&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</text></svg>';
   const b64=btoa(unescape(encodeURIComponent(svgH)));
+  const condoRows=sel.map(c=>{
+    const p=c.publico||c.moradores||0;
+    const ins=(c.telas||1)*INS_DIA*INS_MES;
+    return '<tr><td><strong>'+c.nome+'</strong>'+(c.tipo?' ('+c.tipo+')':'')+'</td><td>'+c.bairro+'</td><td>'+(c.torres||'—')+'</td><td>'+(c.telas||'—')+'</td><td>'+(p?p.toLocaleString('pt-BR'):'—')+'</td><td>'+ins.toLocaleString('pt-BR')+'</td><td>'+(p*FREQ_IMPACTO).toLocaleString('pt-BR')+'</td></tr>';
+  }).join('');
+  const pessTot=sel.reduce((s,c)=>s+(c.publico||c.moradores||0),0);
+  const impTot=pessTot*FREQ_IMPACTO;
+  const torTot=sel.reduce((s,c)=>s+(c.torres||0),0);
+  const condoTotal='<tr style=&quot;font-weight:700;background:#F0E6FF&quot;><td>TOTAL</td><td></td><td>'+torTot+'</td><td>'+telas+'</td><td>'+pessTot.toLocaleString('pt-BR')+'</td><td>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
+
   document.getElementById('e-contract-out').innerHTML=
-    '<div class=&quot;contract-art-header&quot;><img src=&quot;data:image/svg+xml;base64,'+b64+'&quot;></div>'+
-    '<div class=&quot;contract-section&quot;><h3>1. Dados do Contratante</h3>'+
-    erow(isPJ?'Razão Social':'Nome',isPJ?egv('e-razao'):egv('e-nomepf'))+
-    (isPJ&amp;&amp;egv('e-fantasia')?erow('Nome Fantasia',egv('e-fantasia')):'')+
-    erow(docLbl,doc)+(isPJ&amp;&amp;egv('e-ie')?erow('Insc. Estadual',egv('e-ie')):'')+
-    (!isPJ&amp;&amp;egv('e-rg')?erow('RG',egv('e-rg')):'')+erow('Endereço',end)+
-    erow('Responsável',egv('e-resp')+(egv('e-cargo')?' ('+egv('e-cargo')+')':''))+erow('Telefone',egv('e-tel'))+erow('E-mail',egv('e-email'))+'</div>'+
-    '<div class=&quot;contract-section&quot;><h3>2. Dados da Contratada</h3>'+erow('Razão Social','MGB Elevadores Mídia LTDA')+erow('Nome Fantasia','MGB Mídia')+erow('CNPJ','23.770.170/0001-50')+erow('Endereço','Londrina / PR')+erow('Contato','comercial@agenciamgb.com.br · (43) 9.9681-7118')+'</div>'+
-    '<div class=&quot;contract-section&quot;><h3>3. Pontos de Veiculação</h3>'+
-    '<table class=&quot;contract-table&quot;><thead><tr><th>Condomínio</th><th>Bairro</th><th>Torres</th><th>Telas</th><th>Pessoas alcance/mês</th><th>Ins./mês</th><th>Impactos/mês (3x)</th></tr></thead><tbody>'+
-    sel.map(c=>{
-      const p=c.publico||c.moradores||0;
-      const ins=(c.telas||1)*INS_DIA*INS_MES;
-      return '<tr><td><strong>'+c.nome+'</strong>'+(c.tipo?' ('+c.tipo+')':'')+'</td><td>'+c.bairro+'</td><td>'+(c.torres||'—')+'</td><td>'+(c.telas||'—')+'</td><td>'+(p?p.toLocaleString('pt-BR'):'—')+'</td><td>'+ins.toLocaleString('pt-BR')+'</td><td>'+(p*FREQ_IMPACTO).toLocaleString('pt-BR')+'</td></tr>';
-    }).join('')+
-    (function(){
-      const pessTot=sel.reduce((s,c)=>s+(c.publico||c.moradores||0),0);
-      const impTot=pessTot*FREQ_IMPACTO;
-      const torTot=sel.reduce((s,c)=>s+(c.torres||0),0);
-      return '<tr style=&quot;font-weight:700;background:#F0E6FF&quot;><td>TOTAL</td><td></td><td>'+torTot+'</td><td>'+telas+'</td><td>'+pessTot.toLocaleString('pt-BR')+'</td><td>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td>'+impTot.toLocaleString('pt-BR')+'</td></tr>'+
-      '<tr style=&quot;background:#F0E6FF&quot;><td colspan=&quot;7&quot; style=&quot;font-size:10px;color:#6B21A8;font-weight:600&quot;>Pessoas impactadas/mês: '+pessTot.toLocaleString('pt-BR')+' · Frequência média DOOH elevador (3x): '+impTot.toLocaleString('pt-BR')+' impactos/mês</td></tr>';
-    })()+
-    '</tbody></table></div>'+
-    '<div class=&quot;contract-section&quot;><h3>4. Especificações Técnicas</h3>'+erow('Duração',durSpot+'s — Sem áudio'+(mult>1?' ('+mult+'x)':''))+erow('Formato',fmtTxt)+erow('Resolução','1080 x 1100 px')+erow('Exibições','Entrega mínima de '+INS_DIA+' inserções por dia (~'+(INS_DIA*INS_MES).toLocaleString('pt-BR')+'/mês por tela)')+(egv('e-obs')?erow('Observações',egv('e-obs')):'')+'</div>'+
-    '<div class=&quot;contract-section&quot;><h3>5. Plano e Investimento</h3>'+erow('Plano',plano.nome+' ('+meses+(meses===1?' mês':' meses')+')')+erow('Vigência',(inicio?new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR'):'___/___/______')+' a '+(fimDate||'___/___/______'))+erow('Valor base/Tela/Mês','R$ '+vt.toLocaleString('pt-BR',{minimumFractionDigits:2}))+(mult>1?erow('Multiplicador',mult+'x → R$ '+vtM.toLocaleString('pt-BR',{minimumFractionDigits:2})+'/tela'):'')+(desc>0?erow('Desconto',desc+'%'):'')+erow('Pagamento',pgtoTxt)+'</div>'+
-    '<div class=&quot;contract-total&quot;><div class=&quot;small&quot;>Valor Mensal</div><div class=&quot;big&quot;>R$ '+mensal.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div><div class=&quot;small&quot; style=&quot;margin-top:8px&quot;>Total ('+meses+'x)</div><div class=&quot;big&quot; style=&quot;font-size:28px&quot;>R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
-    '<div class=&quot;clauses&quot;><h3 style=&quot;font-size:10px;font-weight:700;color:#6B21A8;text-transform:uppercase;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid #E9E0F5&quot;>6. Termos e Condições</h3>'+
-    '<h4>6.1. Objeto</h4><p>Veiculação de conteúdo publicitário do CONTRATANTE nas telas de mídia digital em elevadores da CONTRATADA, nos condomínios especificados na cláusula 3.</p>'+
-    '<h4>6.2. Obrigações da Contratada</h4><p>a) Garantir a exibição do material nas frequências estabelecidas.<br>b) Manter os equipamentos em funcionamento.<br>c) Fornecer relatórios mensais de veiculação.<br>d) Em caso de problemas técnicos ou de não exibição suficiente do quantitativo contratado, a CONTRATADA veiculará em outros condomínios para compensação, desde que tenham o mesmo perfil de público e mediante alinhamento prévio com o CONTRATANTE.</p>'+
-    '<h4>6.3. Obrigações do Contratante</h4><p>a) Fornecer material dentro das especificações técnicas com mínimo 3 dias úteis de antecedência.<br>b) Efetuar os pagamentos nas datas acordadas.<br>c) Responsabilizar-se pelo conteúdo veiculado.</p>'+
-    '<h4>6.4. Pagamento</h4><p>Pagamento mensal via '+pgtoTxt.toLowerCase()+', vencimento todo dia 15 de cada mês. Atraso acarreta multa de 2% e juros de 1% ao mês.</p>'+
-    '<h4>6.5. Rescisão</h4><p>Rescisão mediante aviso prévio de 30 dias. Rescisão antecipada implica multa de 20% sobre os meses restantes.</p>'+
-    '<h4>6.6. Política de Conteúdo</h4><p>A CONTRATADA pode recusar material ilícito, ofensivo, político-partidário ou fora dos padrões técnicos.</p>'+
-    '<h4>6.7. Foro</h4><p>Foro da comarca de Londrina/PR.</p></div>'+
-    '<div class=&quot;sig-area&quot;><div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>'+(nome||'______________________________')+'</div><div class=&quot;srole&quot;>CONTRATANTE · '+docLbl+': '+(doc||'_______________')+'</div></div><div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>MGB Mídia</div><div class=&quot;srole&quot;>CONTRATADA · CNPJ: 23.770.170/0001-50</div></div></div>'+
-    '<p style=&quot;text-align:center;margin-top:20px;font-size:10px;color:#6B7280&quot;>Londrina/PR, '+today.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})+'</p>';
+    '<div style=&quot;margin-bottom:14px&quot;><img src=&quot;data:image/svg+xml;base64,'+b64+'&quot; style=&quot;width:100%;border-radius:10px;display:block&quot;></div>'+
+
+    // ── Linha 1: Contratante (esq) + Contratada+Plano+Caixa (dir) ──
+    '<div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px&quot;>'+
+      '<div class=&quot;contract-section&quot;><h3>1. Dados do Contratante (Anunciante)</h3>'+
+      erow(isPJ?'Razão Social':'Nome',isPJ?egv('e-razao'):egv('e-nomepf'))+
+      (isPJ&amp;&amp;egv('e-fantasia')?erow('Nome Fantasia',egv('e-fantasia')):'')+
+      erow(docLbl,doc)+(isPJ&amp;&amp;egv('e-ie')?erow('Insc. Estadual',egv('e-ie')):'')+
+      (!isPJ&amp;&amp;egv('e-rg')?erow('RG',egv('e-rg')):'')+erow('Endereço',end)+
+      erow('Responsável',egv('e-resp')+(egv('e-cargo')?' ('+egv('e-cargo')+')':''))+erow('Telefone',egv('e-tel'))+erow('E-mail',egv('e-email'))+'</div>'+
+
+      '<div>'+
+        '<div class=&quot;contract-section&quot;><h3>2. Dados da Contratada</h3>'+erow('Razão Social','MGB Elevadores Mídia LTDA')+erow('Nome Fantasia','MGB Mídia')+erow('CNPJ','23.770.170/0001-50')+erow('Endereço','Londrina / PR')+erow('Contato','comercial@agenciamgb.com.br · (43) 9.9681-7118')+'</div>'+
+        '<div class=&quot;contract-section&quot; style=&quot;margin-top:10px&quot;><h3>4. Plano e Investimento</h3>'+erow('Plano',plano.nome+' ('+meses+(meses===1?' mês':' meses')+')')+erow('Vigência',(inicio?new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR'):'___/___/______')+' a '+(fimDate||'___/___/______'))+erow('Valor/Tela/Mês','R$ '+vtM.toLocaleString('pt-BR',{minimumFractionDigits:2})+(mult>1?' ('+mult+'x)':''))+(desc>0?erow('Desconto',desc+'%'):'')+erow('Pagamento',pgtoTxt)+'</div>'+
+        '<div style=&quot;display:flex;gap:20px;margin-top:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.1));border-radius:8px;border:1px solid rgba(232,121,176,.2)&quot;>'+
+          '<div><div style=&quot;font-size:9px;color:#6B7280;text-transform:uppercase;font-weight:600&quot;>Mensal</div><div style=&quot;font-size:18px;font-weight:800;color:#E879B0&quot;>R$ '+mensal.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
+          '<div><div style=&quot;font-size:9px;color:#6B7280;text-transform:uppercase;font-weight:600&quot;>Total ('+meses+'x)</div><div style=&quot;font-size:18px;font-weight:800;color:#059669&quot;>R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    // ── Linha 2: Pontos+Specs (esq) + Termos (dir) ──
+    '<div style=&quot;display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-bottom:12px&quot;>'+
+      '<div>'+
+        '<div class=&quot;contract-section&quot;><h3>3. Pontos de Veiculação</h3>'+
+        '<table class=&quot;contract-table&quot;><thead><tr><th>Condomínio</th><th>Bairro</th><th>Torres</th><th>Telas</th><th>Pessoas/mês</th><th>Ins./mês</th><th>Impactos/mês</th></tr></thead><tbody>'+
+        condoRows+condoTotal+
+        '</tbody></table>'+
+        '<p style=&quot;font-size:10px;color:#6B21A8;font-weight:600;margin-top:5px&quot;>Pessoas impactadas/mês: '+pessTot.toLocaleString('pt-BR')+' · Frequência média DOOH elevador (3x): '+impTot.toLocaleString('pt-BR')+' impactos/mês</p>'+
+        '</div>'+
+        '<div class=&quot;contract-section&quot; style=&quot;margin-top:10px&quot;><h3>5. Especificações Técnicas</h3>'+erow('Duração',durSpot+'s — Sem áudio'+(mult>1?' ('+mult+'x)':''))+erow('Formato',fmtTxt)+erow('Resolução','1080 x 1100 px')+erow('Exibições','Entrega mínima de '+INS_DIA+' inserções/dia (~'+(INS_DIA*INS_MES).toLocaleString('pt-BR')+'/mês por tela)')+(egv('e-obs')?erow('Observações',egv('e-obs')):'')+'</div>'+
+      '</div>'+
+
+      '<div class=&quot;clauses&quot;>'+
+        '<h3 style=&quot;font-size:9px;font-weight:700;color:#E879B0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #EAD9FF&quot;>6. Termos e Condições</h3>'+
+        '<h4>6.1. Objeto</h4><p>Veiculação de conteúdo publicitário do CONTRATANTE nas telas de mídia digital em elevadores da CONTRATADA, nos condomínios especificados na cláusula 3.</p>'+
+        '<h4>6.2. Obrigações da Contratada</h4><p>a) Garantir a exibição nas frequências estabelecidas. b) Manter os equipamentos em funcionamento. c) Fornecer relatórios mensais. d) Em caso de problemas técnicos ou não-entrega do quantitativo, veicular em outros condomínios de mesmo perfil para compensação, mediante alinhamento prévio com o CONTRATANTE.</p>'+
+        '<h4>6.3. Obrigações do Contratante</h4><p>a) Fornecer material nas especificações com mínimo 3 dias úteis de antecedência. b) Efetuar pagamentos nas datas. c) Responsabilizar-se pelo conteúdo.</p>'+
+        '<h4>6.4. Pagamento</h4><p>Mensal via '+pgtoTxt.toLowerCase()+', vencimento todo dia 15. Atraso: multa 2% + juros 1% ao mês.</p>'+
+        '<h4>6.5. Rescisão</h4><p>Aviso prévio de 30 dias. Antecipada: multa de 20% sobre meses restantes.</p>'+
+        '<h4>6.6. Política de Conteúdo</h4><p>A CONTRATADA pode recusar material ilícito, ofensivo, político-partidário ou fora dos padrões técnicos.</p>'+
+        '<h4>6.7. Foro</h4><p>Comarca de Londrina/PR.</p>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class=&quot;sig-area&quot;>'+
+      '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>'+(nome||'______________________________')+'</div><div class=&quot;srole&quot;>CONTRATANTE · '+docLbl+': '+(doc||'_______________')+'</div></div>'+
+      '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>MGB Mídia</div><div class=&quot;srole&quot;>CONTRATADA · CNPJ: 23.770.170/0001-50</div></div>'+
+    '</div>'+
+    '<p style=&quot;text-align:center;margin-top:14px;font-size:10px;color:#6B7280&quot;>Londrina/PR, '+today.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})+'</p>';
   salvarSheets(num, meses, total, inicio, fimDate);
   eSwitch('contrato');
 }
@@ -2538,10 +2588,61 @@ function ePrintContract(){
   const isPJ=eTipo==='pj';
   const razao=(isPJ?(document.getElementById('e-razao').value||document.getElementById('e-fantasia').value):document.getElementById('e-nomepf').value).trim()||'cliente';
   const slug=razao.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
-  const old=document.title;
-  document.title='mgb mídia_elevadores_'+slug;
-  window.print();
-  setTimeout(()=>{document.title=old;},500);
+  // Imprime através do parent: copia o HTML+CSS do contrato pro documento principal,
+  // isola tudo do parent durante o print, A4 paisagem
+  const parentDoc=window.parent.document;
+  const html=document.getElementById('e-contract-out').innerHTML;
+  // Pega TODOS os <style> deste iframe pra reaplicar no parent (mantém visual)
+  const cssFromIframe=Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n');
+  // Limpa estado anterior se existir
+  const oldClone=parentDoc.getElementById('e-print-clone'); if(oldClone) oldClone.remove();
+  const oldStyle=parentDoc.getElementById('e-print-style'); if(oldStyle) oldStyle.remove();
+  const oldPage=parentDoc.getElementById('e-print-page'); if(oldPage) oldPage.remove();
+  // Style: cópia do CSS do iframe (prefixado pra #e-print-clone) + isolamento de print
+  const style=parentDoc.createElement('style');
+  style.id='e-print-style';
+  style.textContent=
+    '@page{size:A4 landscape;margin:8mm 10mm}'+
+    '#e-print-clone{display:none;background:#fff;color:#2A1760;font-family:Inter,Arial,sans-serif;padding:20px;font-size:9px;line-height:1.4}'+
+    '#e-print-clone h3{font-size:10px;color:#6B21A8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #EAD9FF}'+
+    '#e-print-clone h4{font-size:9px;font-weight:700;color:#2A1760;margin:4px 0 2px}'+
+    '#e-print-clone p{font-size:9px;line-height:1.4;margin-bottom:3px}'+
+    '#e-print-clone .contract-section{margin-bottom:6px}'+
+    '#e-print-clone .contract-row{display:flex;justify-content:space-between;padding:2px 0;font-size:9px;border-bottom:1px dotted #EAD9FF}'+
+    '#e-print-clone .contract-row .lbl{color:#6B7280}'+
+    '#e-print-clone .contract-row .val{font-weight:600;color:#2A1760;text-align:right;max-width:62%}'+
+    '#e-print-clone .contract-table{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}'+
+    '#e-print-clone .contract-table th{background:#2A1760;color:#fff;padding:3px 5px;text-align:left;font-size:7.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '#e-print-clone .contract-table td{padding:3px 5px;border-bottom:1px solid #EAD9FF}'+
+    '#e-print-clone .contract-table tr:nth-child(even){background:#F8F5FF;-webkit-print-color-adjust:exact}'+
+    '#e-print-clone .clauses{font-size:8.5px;line-height:1.45}'+
+    '#e-print-clone .clauses h4{font-size:8.5px;margin:3px 0 1px}'+
+    '#e-print-clone .clauses p{font-size:8.5px;margin-bottom:2px}'+
+    '#e-print-clone .sig-area{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:12px;padding-top:8px}'+
+    '#e-print-clone .sig-line{border-top:1px solid #333;padding-top:6px;text-align:center}'+
+    '#e-print-clone .sig-line .sname{font-size:11px;font-weight:600}'+
+    '#e-print-clone .sig-line .srole{font-size:8.5px;color:#6B7280}'+
+    '#e-print-clone img{border-radius:6px;-webkit-print-color-adjust:exact}'+
+    '@media print{'+
+      'body.eprint > *:not(#e-print-clone):not(script):not(style){display:none !important}'+
+      'body.eprint{background:#fff !important;padding:0 !important;margin:0 !important}'+
+      '#e-print-clone{display:block !important;padding:0 !important;margin:0 !important}'+
+    '}';
+  parentDoc.head.appendChild(style);
+  const clone=parentDoc.createElement('div');
+  clone.id='e-print-clone';
+  clone.innerHTML=html;
+  parentDoc.body.appendChild(clone);
+  parentDoc.body.classList.add('eprint');
+  const oldTitle=parentDoc.title;
+  parentDoc.title='mgb mídia_elevadores_'+slug;
+  window.parent.print();
+  setTimeout(()=>{
+    parentDoc.title=oldTitle;
+    parentDoc.body.classList.remove('eprint');
+    clone.remove();
+    style.remove();
+  },800);
 }
 function eResetForm(){
   if(!confirm('Limpar todos os dados?'))return;
