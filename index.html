@@ -2530,8 +2530,22 @@ function eGerar(){
   const torTot=sel.reduce((s,c)=>s+(c.torres||0),0);
   const condoTotal='<tr style=&quot;font-weight:700;background:#F0E6FF&quot;><td>TOTAL</td><td></td><td>'+torTot+'</td><td>'+telas+'</td><td>'+pessTot.toLocaleString('pt-BR')+'</td><td>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
 
+  const headerHTML='<div style=&quot;background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#D946EF 100%);padding:18px 28px;border-radius:10px;color:#fff;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:30px&quot;>'+
+    '<div style=&quot;display:flex;align-items:center;gap:14px&quot;>'+
+      '<div style=&quot;width:6px;height:60px;background:#D946EF;border-radius:3px;flex-shrink:0&quot;></div>'+
+      '<div>'+
+        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px&quot;>MGB Mídia</div>'+
+        '<div style=&quot;font-size:11px;color:rgba(255,255,255,.65);margin-top:3px&quot;>Elevando a sua comunicação</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style=&quot;border-left:1px solid rgba(255,255,255,.15);padding-left:24px;text-align:right&quot;>'+
+      '<div style=&quot;font-size:9px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1.5px;text-transform:uppercase&quot;>Contrato de Veiculação</div>'+
+      '<div style=&quot;font-size:13px;font-weight:700;margin-top:4px&quot;>Mídia em Elevadores</div>'+
+      '<div style=&quot;font-size:10px;color:rgba(255,255,255,.55);margin-top:3px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
+    '</div>'+
+  '</div>';
   document.getElementById('e-contract-out').innerHTML=
-    '<div style=&quot;margin-bottom:14px&quot;><img src=&quot;data:image/svg+xml;base64,'+b64+'&quot; style=&quot;width:100%;border-radius:10px;display:block&quot;></div>'+
+    headerHTML+
 
     // ── Linha 1: Contratante (esq) + Contratada+Plano+Caixa (dir) ──
     '<div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px&quot;>'+
@@ -2573,14 +2587,13 @@ function eGerar(){
         '<h4>6.5. Rescisão</h4><p>Aviso prévio de 30 dias. Antecipada: multa de 20% sobre meses restantes.</p>'+
         '<h4>6.6. Política de Conteúdo</h4><p>A CONTRATADA pode recusar material ilícito, ofensivo, político-partidário ou fora dos padrões técnicos.</p>'+
         '<h4>6.7. Foro</h4><p>Comarca de Londrina/PR.</p>'+
+        '<div class=&quot;sig-area sig-compact&quot; style=&quot;margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-top:4px&quot;>'+
+          '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:3px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:9px;font-weight:600&quot;>'+(nome||'______________________________')+'</div><div class=&quot;srole&quot; style=&quot;font-size:7.5px;color:#6B7280&quot;>CONTRATANTE · '+docLbl+': '+(doc||'_______________')+'</div></div>'+
+          '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:3px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:9px;font-weight:600&quot;>MGB Mídia</div><div class=&quot;srole&quot; style=&quot;font-size:7.5px;color:#6B7280&quot;>CONTRATADA · CNPJ: 23.770.170/0001-50</div></div>'+
+        '</div>'+
+        '<div style=&quot;text-align:center;margin-top:4px;font-size:7.5px;color:#9CA3AF&quot;>Londrina/PR, '+today.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})+'</div>'+
       '</div>'+
-    '</div>'+
-
-    '<div class=&quot;sig-area&quot;>'+
-      '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>'+(nome||'______________________________')+'</div><div class=&quot;srole&quot;>CONTRATANTE · '+docLbl+': '+(doc||'_______________')+'</div></div>'+
-      '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>MGB Mídia</div><div class=&quot;srole&quot;>CONTRATADA · CNPJ: 23.770.170/0001-50</div></div>'+
-    '</div>'+
-    '<p style=&quot;text-align:center;margin-top:14px;font-size:10px;color:#6B7280&quot;>Londrina/PR, '+today.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})+'</p>';
+    '</div>';
   salvarSheets(num, meses, total, inicio, fimDate);
   eSwitch('contrato');
 }
@@ -2603,7 +2616,7 @@ function ePrintContract(){
   style.id='e-print-style';
   style.textContent=
     '@page{size:A4 landscape;margin:8mm 10mm}'+
-    '#e-print-clone{display:none;background:#fff;color:#2A1760;font-family:Inter,Arial,sans-serif;padding:20px;font-size:9px;line-height:1.4}'+
+    '#e-print-clone{display:none;background:#fff;color:#2A1760;font-family:Inter,Arial,sans-serif;padding:0;font-size:9px;line-height:1.4}'+
     '#e-print-clone h3{font-size:10px;color:#6B21A8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #EAD9FF}'+
     '#e-print-clone h4{font-size:9px;font-weight:700;color:#2A1760;margin:4px 0 2px}'+
     '#e-print-clone p{font-size:9px;line-height:1.4;margin-bottom:3px}'+
