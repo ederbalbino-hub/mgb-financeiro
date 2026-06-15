@@ -2135,7 +2135,7 @@ textarea { resize:vertical; min-height:70px; }
     <p>Mapa de Mídia / Contrato de Veiculação</p>
   </div>
   <div class=&quot;header-actions&quot;>
-    <button class=&quot;btn-hdr&quot; onclick=&quot;window.print()&quot;>🖨️ Imprimir</button>
+    <button class=&quot;btn-hdr&quot; onclick=&quot;ePrintContract()&quot;>🖨️ Imprimir</button>
     <button class=&quot;btn-hdr&quot; onclick=&quot;eResetForm()&quot;>+ Novo</button>
   </div>
 </div>
@@ -2294,24 +2294,24 @@ textarea { resize:vertical; min-height:70px; }
     <div class=&quot;contract-preview&quot; id=&quot;e-contract-out&quot;></div>
     <div class=&quot;actions&quot;>
       <button class=&quot;btn-secondary&quot; onclick=&quot;eSwitch('plano')&quot;>← Voltar e Editar</button>
-      <button class=&quot;btn-primary&quot; onclick=&quot;window.print()&quot;>🖨️ Imprimir / PDF</button>
+      <button class=&quot;btn-primary&quot; onclick=&quot;ePrintContract()&quot;>🖨️ Imprimir / PDF</button>
     </div>
   </div>
 
 </div>
 <script>
 const eCondominios = [
-  { id:'lagoa-dourada',     nome:'Lagoa Dourada',         bairro:'Gleba Palhano, Zona Sul', torres:6,    telas:6,    moradores:1344, status:'ativo' },
-  { id:'lake-portinari',    nome:'Lake Portinari',         bairro:'Gleba Palhano, Zona Sul', torres:2,    telas:2,    moradores:865,  status:'ativo' },
-  { id:'spazio-louvre',     nome:'Spazio Louvre',          bairro:'Centro',                  torres:5,    telas:5,    moradores:1650, status:'ativo' },
-  { id:'terra-parque',      nome:'Terra Parque',           bairro:'Zona Sul',                torres:2,    telas:2,    moradores:450,  status:'ativo' },
-  { id:'res-malaga',        nome:'Residencial Málaga',     bairro:'Zona Sul',                torres:3,    telas:3,    moradores:1290, status:'ativo' },
-  { id:'spot',              nome:'Spot',                   bairro:'Centro de Londrina',      torres:2,    telas:2,    moradores:600,  status:'ativo' },
-  { id:'ed-ayrton-senna-1', nome:'Ed. Ayrton Senna 1',    bairro:'Gleba Palhano, Zona Sul', torres:1,    telas:3,    moradores:800,  status:'ativo', tipo:'Comercial' },
-  { id:'la-scilia',         nome:'Residencial La Scilia',  bairro:'Gleba Palhano, Zona Sul', torres:null, telas:null, moradores:null, status:'expansao' },
-  { id:'ed-ayrton-senna-2', nome:'Ed. Ayrton Senna 2',    bairro:'Gleba Palhano, Zona Sul', torres:null, telas:null, moradores:null, status:'expansao', tipo:'Comercial' },
-  { id:'uptown',            nome:'Uptown',                 bairro:'Gleba Palhano, Zona Sul', torres:null, telas:null, moradores:null, status:'expansao' },
-  { id:'bella-fiori',       nome:'Bella Fiori',            bairro:'Vale dos Tucanos, Zona Sul', torres:null, telas:null, moradores:null, status:'expansao' },
+  // Residenciais
+  { id:'lagoa-dourada',     nome:'Lagoa Dourada',         bairro:'Aquaville, Zona Leste',     torres:5, telas:5, moradores:1344, publico:1344, status:'ativo' },
+  { id:'lake-portinari',    nome:'Lake Portinari',         bairro:'Pioneiros, Zona Leste',     torres:2, telas:2, moradores:865,  publico:865,  status:'ativo' },
+  { id:'spazio-louvre',     nome:'Spazio Louvre',          bairro:'Gleba Palhano, Zona Sul',   torres:5, telas:5, moradores:1650, publico:1650, status:'ativo' },
+  { id:'terra-parque',      nome:'Terra Parque',           bairro:'Champagnat, Zona Oeste',    torres:2, telas:2, moradores:450,  publico:450,  status:'ativo' },
+  { id:'res-malaga',        nome:'Residencial Málaga',     bairro:'Aquaville, Zona Leste',     torres:3, telas:3, moradores:1290, publico:1290, status:'ativo' },
+  { id:'spot',              nome:'Spot',                   bairro:'Centro, Londrina',          torres:2, telas:2, moradores:500,  publico:1200, status:'ativo' },
+  { id:'bella-fiori',       nome:'Resid. Bella Fiori',     bairro:'Vale dos Tucanos, Zona Sul',torres:2, telas:2, moradores:500,  publico:1200, status:'ativo' },
+  // Comerciais
+  { id:'ed-ayrton-senna-1', nome:'Ed. Ayrton Senna 1',    bairro:'Gleba Palhano, Zona Sul',   torres:null, telas:2, moradores:null, publico:30000, status:'ativo', tipo:'Comercial' },
+  { id:'ed-ayrton-senna-2', nome:'Ed. Ayrton Senna 2',    bairro:'Gleba Palhano, Zona Sul',   torres:null, telas:2, moradores:null, publico:35000, status:'ativo', tipo:'Comercial' },
 ];
 const ePlanos = [
   { id:'mensal',     nome:'Mensal',     meses:1,  desc:'Ideal para campanhas pontuais, lançamentos ou datas comemorativas.' },
@@ -2319,7 +2319,7 @@ const ePlanos = [
   { id:'semestral',  nome:'Semestral',  meses:6,  desc:'Ótimo para construção de marca. Frequência gera lembrança.' },
   { id:'anual',      nome:'Anual',      meses:12, desc:'Máxima visibilidade. Sua marca referência nos condomínios.' },
 ];
-const INS_DIA=300, INS_MES=30;
+const INS_DIA=250, INS_MES=30;
 let eTipo='pj', eCondos=new Set(), ePlano=null;
 
 function eSwitch(tab){
@@ -2506,14 +2506,14 @@ function eGerar(){
     sel.map(c=>'<tr><td><strong>'+c.nome+'</strong>'+(c.tipo?' ('+c.tipo+')':'')+'</td><td>'+c.bairro+'</td><td>'+(c.torres||'—')+'</td><td>'+(c.telas||'—')+'</td><td>'+(c.moradores?c.moradores.toLocaleString('pt-BR'):'—')+'</td><td>'+((c.telas||1)*INS_DIA).toLocaleString('pt-BR')+'</td><td>'+((c.telas||1)*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td></tr>').join('')+
     '<tr style=&quot;font-weight:700;background:#F0E6FF&quot;><td>TOTAL</td><td></td><td>'+sel.reduce((s,c)=>s+(c.torres||0),0)+'</td><td>'+telas+'</td><td>'+mor.toLocaleString('pt-BR')+'</td><td>'+(telas*INS_DIA).toLocaleString('pt-BR')+'</td><td>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td></tr>'+
     '<tr style=&quot;background:#F0E6FF&quot;><td colspan=&quot;7&quot; style=&quot;font-size:10px;color:#6B21A8;font-weight:600&quot;>Alcance estimado (1,3x): ~'+Math.round(mor*1.3).toLocaleString('pt-BR')+' pessoas/mês</td></tr></tbody></table></div>'+
-    '<div class=&quot;contract-section&quot;><h3>4. Especificações Técnicas</h3>'+erow('Duração',durSpot+'s — Sem áudio'+(mult>1?' ('+mult+'x)':''))+erow('Formato',fmtTxt)+erow('Resolução','1080 x 1100 px')+erow('Exibições','Mín. '+INS_DIA+' inserções/dia/tela (~'+(INS_DIA*INS_MES).toLocaleString('pt-BR')+'/mês)')+(egv('e-obs')?erow('Observações',egv('e-obs')):'')+'</div>'+
+    '<div class=&quot;contract-section&quot;><h3>4. Especificações Técnicas</h3>'+erow('Duração',durSpot+'s — Sem áudio'+(mult>1?' ('+mult+'x)':''))+erow('Formato',fmtTxt)+erow('Resolução','1080 x 1100 px')+erow('Exibições','Entrega mínima de '+INS_DIA+' inserções por dia (~'+(INS_DIA*INS_MES).toLocaleString('pt-BR')+'/mês por tela)')+(egv('e-obs')?erow('Observações',egv('e-obs')):'')+'</div>'+
     '<div class=&quot;contract-section&quot;><h3>5. Plano e Investimento</h3>'+erow('Plano',plano.nome+' ('+meses+(meses===1?' mês':' meses')+')')+erow('Vigência',(inicio?new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR'):'___/___/______')+' a '+(fimDate||'___/___/______'))+erow('Valor base/Tela/Mês','R$ '+vt.toLocaleString('pt-BR',{minimumFractionDigits:2}))+(mult>1?erow('Multiplicador',mult+'x → R$ '+vtM.toLocaleString('pt-BR',{minimumFractionDigits:2})+'/tela'):'')+(desc>0?erow('Desconto',desc+'%'):'')+erow('Pagamento',pgtoTxt)+'</div>'+
     '<div class=&quot;contract-total&quot;><div class=&quot;small&quot;>Valor Mensal</div><div class=&quot;big&quot;>R$ '+mensal.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div><div class=&quot;small&quot; style=&quot;margin-top:8px&quot;>Total ('+meses+'x)</div><div class=&quot;big&quot; style=&quot;font-size:28px&quot;>R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
     '<div class=&quot;clauses&quot;><h3 style=&quot;font-size:10px;font-weight:700;color:#6B21A8;text-transform:uppercase;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid #E9E0F5&quot;>6. Termos e Condições</h3>'+
     '<h4>6.1. Objeto</h4><p>Veiculação de conteúdo publicitário do CONTRATANTE nas telas de mídia digital em elevadores da CONTRATADA, nos condomínios especificados na cláusula 3.</p>'+
-    '<h4>6.2. Obrigações da Contratada</h4><p>a) Garantir a exibição do material nas frequências estabelecidas.<br>b) Manter os equipamentos em funcionamento.<br>c) Fornecer relatórios mensais de veiculação.</p>'+
+    '<h4>6.2. Obrigações da Contratada</h4><p>a) Garantir a exibição do material nas frequências estabelecidas.<br>b) Manter os equipamentos em funcionamento.<br>c) Fornecer relatórios mensais de veiculação.<br>d) Em caso de problemas técnicos ou de não exibição suficiente do quantitativo contratado, a CONTRATADA veiculará em outros condomínios para compensação, desde que tenham o mesmo perfil de público e mediante alinhamento prévio com o CONTRATANTE.</p>'+
     '<h4>6.3. Obrigações do Contratante</h4><p>a) Fornecer material dentro das especificações técnicas com mínimo 3 dias úteis de antecedência.<br>b) Efetuar os pagamentos nas datas acordadas.<br>c) Responsabilizar-se pelo conteúdo veiculado.</p>'+
-    '<h4>6.4. Pagamento</h4><p>Pagamento mensal via '+pgtoTxt.toLowerCase()+', vencimento todo dia 5 de cada mês. Atraso acarreta multa de 2% e juros de 1% ao mês.</p>'+
+    '<h4>6.4. Pagamento</h4><p>Pagamento mensal via '+pgtoTxt.toLowerCase()+', vencimento todo dia 15 de cada mês. Atraso acarreta multa de 2% e juros de 1% ao mês.</p>'+
     '<h4>6.5. Rescisão</h4><p>Rescisão mediante aviso prévio de 30 dias. Rescisão antecipada implica multa de 20% sobre os meses restantes.</p>'+
     '<h4>6.6. Política de Conteúdo</h4><p>A CONTRATADA pode recusar material ilícito, ofensivo, político-partidário ou fora dos padrões técnicos.</p>'+
     '<h4>6.7. Foro</h4><p>Foro da comarca de Londrina/PR.</p></div>'+
@@ -2521,6 +2521,15 @@ function eGerar(){
     '<p style=&quot;text-align:center;margin-top:20px;font-size:10px;color:#6B7280&quot;>Londrina/PR, '+today.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})+'</p>';
   salvarSheets(num, meses, total, inicio, fimDate);
   eSwitch('contrato');
+}
+function ePrintContract(){
+  const isPJ=eTipo==='pj';
+  const razao=(isPJ?(document.getElementById('e-razao').value||document.getElementById('e-fantasia').value):document.getElementById('e-nomepf').value).trim()||'cliente';
+  const slug=razao.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  const old=document.title;
+  document.title='mgb mídia_elevadores_'+slug;
+  window.print();
+  setTimeout(()=>{document.title=old;},500);
 }
 function eResetForm(){
   if(!confirm('Limpar todos os dados?'))return;
