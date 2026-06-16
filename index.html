@@ -2765,7 +2765,8 @@ document.getElementById('e-inicio').value=new Date().toISOString().split('T')[0]
         </div>
         <div class="parc-fs">
           <label class="parc-label">CNPJ</label>
-          <input class="parc-input" type="text" id="p-cnpj" placeholder="00.000.000/0001-00" maxlength="18" oninput="parcMaskCNPJ(this)"/>
+          <input class="parc-input" type="text" id="p-cnpj" placeholder="00.000.000/0001-00 — digite e preenche automático" maxlength="18" oninput="parcMaskCNPJ(this);parcCNPJAuto(this)"/>
+          <p id="p-cnpj-status" style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;min-height:14px"></p>
         </div>
         <div class="parc-fs">
           <label class="parc-label">Telefone</label>
@@ -2852,6 +2853,75 @@ document.getElementById('e-inicio').value=new Date().toISOString().split('T')[0]
     v=v.replace(/\.(\d{3})(\d)/,'.$1/$2');
     v=v.replace(/(\d{4})(\d)/,'$1-$2');
     el.value=v;
+  };
+  // Auto-preenche dados a partir do CNPJ — tenta 3 APIs públicas em ordem
+  let _parcCNPJtimer=null, _parcCNPJlast='';
+  window.parcCNPJAuto=function(el){
+    clearTimeout(_parcCNPJtimer);
+    const raw=(el.value||'').replace(/\D/g,'');
+    if(raw.length!==14) return;
+    if(raw===_parcCNPJlast) return;
+    _parcCNPJlast=raw;
+    const st=document.getElementById('p-cnpj-status');
+    if(st){ st.textContent='🔎 Buscando dados do CNPJ…'; st.style.color='rgba(232,25,125,.7)'; }
+    _parcCNPJtimer=setTimeout(async()=>{
+      const sources=[
+        ()=>fetch('https://publica.cnpj.ws/cnpj/'+raw).then(r=>r.ok?r.json():Promise.reject()).then(d=>({
+          nome:d.razao_social||'',
+          fantasia:d.estabelecimento?.nome_fantasia||'',
+          logradouro:d.estabelecimento?.logradouro||'',
+          numero:d.estabelecimento?.numero||'',
+          complemento:d.estabelecimento?.complemento||'',
+          bairro:d.estabelecimento?.bairro||'',
+          cidade:d.estabelecimento?.cidade?.nome||'',
+          uf:d.estabelecimento?.estado?.sigla||'',
+          cep:(d.estabelecimento?.cep||'').replace(/\D/g,''),
+          tel:d.estabelecimento?.ddd1&&d.estabelecimento?.telefone1?d.estabelecimento.ddd1+d.estabelecimento.telefone1:'',
+          email:d.estabelecimento?.email||''
+        })),
+        ()=>fetch('https://brasilapi.com.br/api/cnpj/v1/'+raw).then(r=>r.ok?r.json():Promise.reject()).then(d=>({
+          nome:d.razao_social||'',
+          fantasia:d.nome_fantasia||'',
+          logradouro:d.logradouro||'',
+          numero:d.numero||'',
+          complemento:d.complemento||'',
+          bairro:d.bairro||'',
+          cidade:d.municipio||'',
+          uf:d.uf||'',
+          cep:d.cep?String(d.cep).replace(/\D/g,''):'',
+          tel:d.ddd_telefone_1||'',
+          email:d.email||''
+        }))
+      ];
+      let data=null,err=null;
+      for(const fn of sources){
+        try{ data=await fn(); if(data && data.nome){ break; } }catch(e){ err=e; }
+      }
+      if(!data || !data.nome){
+        if(st){ st.textContent='⚠ Não encontrado — preencha manualmente'; st.style.color='rgba(248,113,113,.7)'; }
+        return;
+      }
+      const setIf=(id,v)=>{const e=document.getElementById(id); if(e && !e.value && v) e.value=v;};
+      const setForce=(id,v)=>{const e=document.getElementById(id); if(e && v) e.value=v;};
+      // Razão social do condomínio
+      setForce('p-razao', data.fantasia || data.nome);
+      // Endereço completo
+      const partes=[data.logradouro, data.numero?'nº '+data.numero:'', data.complemento, data.bairro?'Bairro '+data.bairro:'', (data.cidade||'')+(data.uf?'/'+data.uf:''), data.cep?'CEP '+data.cep.replace(/^(\d{5})(\d{3})$/,'$1-$2'):''].filter(Boolean).join(', ');
+      setForce('p-end', partes);
+      // Bairro separado também
+      setForce('p-bairro', data.bairro || '');
+      // Email
+      setIf('p-email', data.email);
+      // Telefone — formato (DDD) NNNNN-NNNN
+      if(data.tel){
+        const t=data.tel.replace(/\D/g,'');
+        let fmt=t;
+        if(t.length===10) fmt='('+t.slice(0,2)+') '+t.slice(2,6)+'-'+t.slice(6);
+        else if(t.length===11) fmt='('+t.slice(0,2)+') '+t.slice(2,7)+'-'+t.slice(7);
+        setIf('p-wpp', fmt);
+      }
+      if(st){ st.textContent='✓ Dados preenchidos — confira e ajuste se necessário'; st.style.color='rgba(78,203,141,.85)'; }
+    },350);
   };
   window.parcMaskCPF=function(el){
     let v=el.value.replace(/\D/g,'').slice(0,11);
