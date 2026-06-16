@@ -740,7 +740,7 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
     <div class="sb-lbl">Navegação</div>
     <div class="sb-nav-item on" id="nav-home" onclick="goPage('home')">🏠 Início</div>
     <div class="sb-nav-item" id="nav-custos" onclick="goPage('overview')">📊 Overview</div>
-    <div class="sb-nav-item" id="nav-relatorios" onclick="goPage('relatorios')">📄 Relatórios</div>
+    <div class="sb-nav-item" id="nav-relatorios" onclick="goPage('relatorios')">📄 Relatórios Mercadão</div>
     <div class="sb-lbl" style="margin-top:10px">Operacional</div>
     <div class="sb-nav-item" id="nav-operacional" onclick="goPage('operacional')">🎯 Contratos & Mídia</div>
     <div class="sb-lbl" style="margin-top:10px">Pessoal</div>
@@ -4395,6 +4395,17 @@ function copiarSpot() {
           </div>
         </div>
         <div id="rel-clientes" style="border:1px solid var(--border);border-radius:9px;padding:10px;background:var(--surface2);max-height:340px;overflow-y:auto"></div>
+
+        <!-- Upload de relatórios de veiculação -->
+        <div style="margin-top:16px;padding:12px 14px;border:1px dashed rgba(232,121,176,.3);border-radius:9px;background:rgba(232,121,176,.04)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+            <div class="sec-title" style="font-size:12px">📎 Relatórios de veiculação (opcional, até 2)</div>
+            <span style="font-size:10px;color:var(--hint)">Aceita .xls do sistema de rádio · agrega meses</span>
+          </div>
+          <input type="file" id="rel-xls" accept=".xls,.xlsx" multiple onchange="relUploadXLS(this)" style="font-size:12px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;cursor:pointer">
+          <div id="rel-xls-info" style="margin-top:8px;font-size:11px;color:var(--muted);min-height:14px"></div>
+        </div>
+
         <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div style="font-size:12px;color:var(--muted)" id="rel-resumo">—</div>
           <button onclick="relGerar()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">✨ Gerar Relatório</button>
@@ -4562,6 +4573,7 @@ function copiarSpot() {
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script>
 // ── HUB OPERACIONAL — switch entre os painéis internos ──
 function showOpPanel(name, btn){
@@ -7525,6 +7537,66 @@ function relAtualizaResumo(){
   const repasse=totalValor*rep/100;
   g('rel-resumo').innerHTML=`<b>${clientes}</b> anunciante${clientes===1?'':'s'} · <b>${totalCotas}</b> cota${totalCotas===1?'':'s'} · Total <b style="color:#4ecb8d">R$ ${totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> · Repasse ${rep}% <b style="color:#f472b6">R$ ${repasse.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b>`;
 }
+// Upload e parse de relatórios de veiculação (.xls do sistema de rádio)
+let _relXLSData=[]; // [{filename, anuncio, veiculacoes:[{data,hora}], periodo:{ini,fim}}]
+async function relUploadXLS(input){
+  const files=Array.from(input.files||[]).slice(0,2);
+  const info=g('rel-xls-info');
+  if(!files.length){ _relXLSData=[]; info.textContent=''; return; }
+  if(typeof XLSX==='undefined'){ info.innerHTML='<span style="color:var(--red)">⚠ Biblioteca XLSX não carregada — recarrega a página</span>'; return; }
+  info.innerHTML='<span style="color:rgba(232,121,176,.7)">⏳ Lendo arquivos…</span>';
+  _relXLSData=[];
+  for(const file of files){
+    try{
+      const buf=await file.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array',cellDates:false});
+      const sh=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(sh,{header:1,defval:''});
+      // Estrutura: cabeçalho em alguma linha do topo (CNPJ, Unidade, ID, Anúncio, Tipo, Bloco, Dia, Horário)
+      let headerIdx=-1, colDia=-1, colHora=-1, colAnuncio=-1, colBloco=-1;
+      for(let i=0;i<Math.min(rows.length,10);i++){
+        const r=rows[i].map(x=>String(x).toLowerCase());
+        const hasD=r.findIndex(c=>c.includes('dia da veicula'));
+        const hasH=r.findIndex(c=>c.includes('rio da veicula')||c.includes('horário'));
+        if(hasD>=0 && hasH>=0){ headerIdx=i; colDia=hasD; colHora=hasH; colAnuncio=r.findIndex(c=>c.includes('nome do an')); colBloco=r.findIndex(c=>c.includes('bloco')); break; }
+      }
+      if(headerIdx<0) continue;
+      const veic=[];
+      const anuncios=new Set();
+      const blocos=new Set();
+      for(let i=headerIdx+1;i<rows.length;i++){
+        const r=rows[i];
+        const dia=String(r[colDia]||'').trim();
+        const hora=String(r[colHora]||'').trim();
+        if(!dia || !/^\d{1,2}\/\d{1,2}\/\d{4}/.test(dia)) continue;
+        veic.push({data:dia, hora});
+        if(colAnuncio>=0 && r[colAnuncio]){
+          let nome=String(r[colAnuncio]).replace(/\.mp3$/i,'').trim();
+          // Filtra entradas que são nome de bloco em vez de anúncio
+          if(nome && !/^bloco\s*\d/i.test(nome)) anuncios.add(nome);
+        }
+        if(colBloco>=0 && r[colBloco]) blocos.add(String(r[colBloco]).trim());
+      }
+      // Período
+      const dts=veic.map(v=>{const[d,m,y]=v.data.split('/');return y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0');}).sort();
+      const fmtP=iso=>{const[y,m,d]=iso.split('-');return d+'/'+m+'/'+y;};
+      _relXLSData.push({
+        filename:file.name,
+        anuncios:[...anuncios],
+        blocos:[...blocos],
+        veiculacoes:veic,
+        periodo:dts.length?{ini:fmtP(dts[0]), fim:fmtP(dts[dts.length-1])}:null
+      });
+    }catch(e){
+      console.error('Erro parse XLS:', e);
+    }
+  }
+  if(!_relXLSData.length){ info.innerHTML='<span style="color:var(--red)">⚠ Nenhum arquivo válido encontrado</span>'; return; }
+  const totalV=_relXLSData.reduce((a,d)=>a+d.veiculacoes.length,0);
+  const anuncs=new Set(); _relXLSData.forEach(d=>d.anuncios.forEach(a=>anuncs.add(a)));
+  info.innerHTML=`<span style="color:rgba(78,203,141,.85)">✓ ${_relXLSData.length} arquivo(s) lido(s) · ${totalV.toLocaleString('pt-BR')} veiculações · ${anuncs.size} anunciante(s): <b>${[...anuncs].join(', ')}</b></span>`;
+}
+
 function relGerar(){
   const lista=relLerBlocos();
   const sel=[];
@@ -7635,6 +7707,8 @@ function relGerar(){
       </div>
     </div>
 
+    ${relProvaVeiculacaoHTML()}
+
     <div style="background:#2A1760;color:#EAD9FF;padding:14px 32px;font-size:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <span><strong>MGB Mídia · Comunicação e Marketing Ltda.</strong> · CNPJ: 23.770.170/0001-50 · Londrina/PR · Emitido em ${hoje}</span>
       <span style="color:#E879B0;font-weight:600">comercial@agenciamgb.com.br · (43) 99696-0078</span>
@@ -7643,6 +7717,74 @@ function relGerar(){
   g('rel-form').style.display='none';
   g('rel-preview').style.display='block';
   window.scrollTo(0,0);
+}
+function relProvaVeiculacaoHTML(){
+  if(!_relXLSData.length) return '';
+  // Agrega tudo
+  const todasVeic=[];
+  const anuncs=new Set();
+  const blocos=new Set();
+  _relXLSData.forEach(d=>{
+    d.veiculacoes.forEach(v=>todasVeic.push(v));
+    d.anuncios.forEach(a=>anuncs.add(a));
+    d.blocos.forEach(b=>blocos.add(b));
+  });
+  if(!todasVeic.length) return '';
+  // Veiculações por dia
+  const porDia={};
+  todasVeic.forEach(v=>{ porDia[v.data]=(porDia[v.data]||0)+1; });
+  const diasSorted=Object.keys(porDia).sort((a,b)=>{
+    const[da,ma,ya]=a.split('/');const[db,mb,yb]=b.split('/');
+    return new Date(ya,ma-1,da)-new Date(yb,mb-1,db);
+  });
+  const totalDias=diasSorted.length;
+  const totalVeic=todasVeic.length;
+  const mediaDia=Math.round(totalVeic/totalDias);
+  // Por hora
+  const porHora={};
+  todasVeic.forEach(v=>{ if(!v.hora) return; const h=v.hora.split(':')[0]; porHora[h]=(porHora[h]||0)+1; });
+  // Período geral
+  const periodoIni=diasSorted[0], periodoFim=diasSorted[diasSorted.length-1];
+  // Barra de veiculações por dia
+  const maxDia=Math.max(...Object.values(porDia));
+  const barras=diasSorted.map(d=>{
+    const n=porDia[d];
+    const h=Math.round((n/maxDia)*60);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:9px;color:#666;font-weight:600">${n}</div><div style="width:100%;height:${h}px;background:linear-gradient(180deg,#E879B0,#9B72CF);border-radius:3px 3px 0 0"></div><div style="font-size:8px;color:#999;writing-mode:vertical-rl;transform:rotate(180deg);padding-top:4px">${d.slice(0,5)}</div></div>`;
+  }).join('');
+  // Tabela detalhada de arquivos
+  const tabelaArquivos=_relXLSData.map((d,i)=>`
+    <tr style="${i%2?'background:#F8F5FF':''}">
+      <td style="padding:8px 12px;font-size:11px;color:#444;font-family:'DM Mono',monospace">${d.filename}</td>
+      <td style="padding:8px 12px;font-size:11px;text-align:center;color:#444">${d.anuncios.join(', ')||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;text-align:center;color:#444">${d.periodo?(d.periodo.ini+' a '+d.periodo.fim):'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;text-align:right;font-weight:700;color:#059669;font-family:'DM Mono',monospace">${d.veiculacoes.length.toLocaleString('pt-BR')}</td>
+    </tr>`).join('');
+  return `
+    <div style="padding:24px 32px 8px;page-break-before:always">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.3px">📊 PROVA DE VEICULAÇÃO · DADOS REAIS DO SISTEMA</div>
+      <div style="height:1px;background:#EAD9FF;margin:6px 0 14px"></div>
+      <p style="font-size:11.5px;color:#444;line-height:1.6;margin:0 0 12px">Relatório de veiculação extraído diretamente do sistema de gerenciamento da rádio interna do Mercadão da Prochet. Cada linha do log representa uma execução real do anúncio nas torres de som do estabelecimento, com data e horário precisos.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.10));border:1px solid rgba(232,121,176,.2);border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Veiculações registradas</div><div style="font-size:26px;font-weight:800;color:#2A1760;margin-top:4px">${totalVeic.toLocaleString('pt-BR')}</div></div>
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.10));border:1px solid rgba(232,121,176,.2);border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Dias com veiculação</div><div style="font-size:26px;font-weight:800;color:#2A1760;margin-top:4px">${totalDias}</div></div>
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.10));border:1px solid rgba(232,121,176,.2);border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Média diária</div><div style="font-size:26px;font-weight:800;color:#2A1760;margin-top:4px">${mediaDia}</div></div>
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.10));border:1px solid rgba(232,121,176,.2);border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Período coberto</div><div style="font-size:13px;font-weight:700;color:#2A1760;margin-top:8px">${periodoIni}<br>a ${periodoFim}</div></div>
+      </div>
+
+      <div style="font-family:Syne,sans-serif;font-size:11px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin:8px 0 6px;text-transform:uppercase">📅 Distribuição diária de inserções</div>
+      <div style="background:#F8F5FF;border:1px solid #EAD9FF;border-radius:10px;padding:14px;display:flex;align-items:flex-end;gap:6px;min-height:120px;overflow-x:auto">${barras}</div>
+
+      <div style="font-family:Syne,sans-serif;font-size:11px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin:16px 0 6px;text-transform:uppercase">📋 Arquivos processados</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#2A1760;color:#fff"><th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Arquivo</th><th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Anunciante</th><th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Período</th><th style="padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Inserções</th></tr></thead>
+        <tbody>${tabelaArquivos}</tbody>
+      </table>
+
+      ${anuncs.size?`<div style="margin-top:14px;padding:12px 14px;background:rgba(78,203,141,.08);border:1px solid rgba(78,203,141,.25);border-radius:9px;font-size:11.5px;color:#444"><strong style="color:#059669">✓ Anunciante(s) com prova de veiculação:</strong> ${[...anuncs].join(', ')}</div>`:''}
+    </div>
+  `;
 }
 function relVoltar(){
   g('rel-form').style.display='block';
