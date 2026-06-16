@@ -740,6 +740,7 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
     <div class="sb-lbl">Navegação</div>
     <div class="sb-nav-item on" id="nav-home" onclick="goPage('home')">🏠 Início</div>
     <div class="sb-nav-item" id="nav-custos" onclick="goPage('overview')">📊 Overview</div>
+    <div class="sb-nav-item" id="nav-relatorios" onclick="goPage('relatorios')">📄 Relatórios</div>
     <div class="sb-lbl" style="margin-top:10px">Operacional</div>
     <div class="sb-nav-item" id="nav-operacional" onclick="goPage('operacional')">🎯 Contratos & Mídia</div>
     <div class="sb-lbl" style="margin-top:10px">Pessoal</div>
@@ -4358,6 +4359,59 @@ function copiarSpot() {
 </script>
 </div>
 
+  <!-- PAGE: RELATÓRIOS -->
+  <div id="page-relatorios" style="display:none">
+    <div class="page-hdr">
+      <div><div class="page-title">📄 Relatórios</div><div class="page-sub">Relatório mensal de anunciantes — Rádio Indoor Mercadão da Prochet</div></div>
+    </div>
+
+    <!-- FORM -->
+    <div id="rel-form" style="padding:0 22px 28px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+          <div>
+            <label class="anunc-form-lbl">📅 Mês de referência</label>
+            <input class="anunc-form-inp" id="rel-mes" type="month" style="color-scheme:dark;width:100%">
+          </div>
+          <div>
+            <label class="anunc-form-lbl">💰 Valor por cota (R$)</label>
+            <input class="anunc-form-inp" id="rel-cota" type="number" min="0" step="0.01" value="100" style="width:100%">
+          </div>
+          <div>
+            <label class="anunc-form-lbl">↩ Repasse Mercadão (%)</label>
+            <input class="anunc-form-inp" id="rel-repasse" type="number" min="0" max="100" step="1" value="20" style="width:100%">
+          </div>
+          <div>
+            <label class="anunc-form-lbl">📻 Inserções/dia por cota</label>
+            <input class="anunc-form-inp" id="rel-ins" type="number" min="1" value="25" style="width:100%">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="sec-title" style="font-size:13px">🏪 Anunciantes ativos (dos Blocos Rádio)</div>
+          <div style="display:flex;gap:8px">
+            <button class="anunc-btn" onclick="relRefresh()">🔄 Atualizar</button>
+            <button class="anunc-btn" onclick="relMarcarTodos(true)">✓ Marcar todos</button>
+            <button class="anunc-btn" onclick="relMarcarTodos(false)">✕ Desmarcar</button>
+          </div>
+        </div>
+        <div id="rel-clientes" style="border:1px solid var(--border);border-radius:9px;padding:10px;background:var(--surface2);max-height:340px;overflow-y:auto"></div>
+        <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div style="font-size:12px;color:var(--muted)" id="rel-resumo">—</div>
+          <button onclick="relGerar()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">✨ Gerar Relatório</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div id="rel-preview" style="display:none;padding:0 22px 28px">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+        <button onclick="relVoltar()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px">← Editar dados</button>
+        <button onclick="relPrint()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">🖨️ Imprimir / PDF</button>
+      </div>
+      <div id="rel-output" style="background:#fff;color:#222;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:'DM Sans',sans-serif"></div>
+    </div>
+  </div>
+
   <!-- PAGE: PESSOAL -->
   <div id="page-pessoal" style="display:none">
     <div class="page-hdr">
@@ -5064,19 +5118,20 @@ function closeSidebar(){
 // ── PAGES ─────────────────────────────────────────────────────────────────
 function goPage(p){
   curPage=p;
-  ['home','overview','custos','pessoal','operacional'].forEach(id=>{
+  ['home','overview','custos','pessoal','operacional','relatorios'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
   var target=document.getElementById('page-'+p);
   if(target) target.style.display='block';
-  ['nav-home','nav-custos','nav-pessoal','nav-operacional'].forEach(id=>{
+  ['nav-home','nav-custos','nav-pessoal','nav-operacional','nav-relatorios'].forEach(id=>{
     var el=document.getElementById(id);
     if(el) el.classList.remove('on');
   });
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
   if(p==='overview'){ var el=document.getElementById('nav-custos'); if(el) el.classList.add('on'); }
   if(p==='pessoal'){ var el=document.getElementById('nav-pessoal'); if(el) el.classList.add('on'); buildPessoal(); }
+  if(p==='relatorios'){ var el=document.getElementById('nav-relatorios'); if(el) el.classList.add('on'); initRelatorios(); }
   if(p==='operacional'){
     var el=document.getElementById('nav-operacional'); if(el) el.classList.add('on');
     // Reseta para o primeiro painel (Mercadão)
@@ -7410,6 +7465,222 @@ function togglePesDespPago(id){
   buildPessoal(); scheduleSave();
 }
 
+// ── RELATÓRIO RÁDIO MERCADÃO ──────────────────────────────────────────────
+function relLerBlocos(){
+  // Lê localStorage mgb_blocos_v4 e agrupa clientes por nome (lowercase) com contagem de cotas
+  let d={};
+  try{ d=JSON.parse(localStorage.getItem('mgb_blocos_v4'))||{}; }catch(e){}
+  const mapa={}; // nome lowercase → {nome:string, cotas:N, tel:string}
+  for(let b=1;b<=8;b++) for(let s=1;s<=3;s++){
+    const k=`b${b}s${s}`;
+    const nome=(d[k+'_nome']||'').trim();
+    if(!nome) continue;
+    const tel=(d[k+'_tel']||'').trim();
+    const key=nome.toLowerCase();
+    if(!mapa[key]) mapa[key]={nome,cotas:0,tel:''};
+    mapa[key].cotas+=1;
+    if(tel && !mapa[key].tel) mapa[key].tel=tel;
+  }
+  return Object.values(mapa).sort((a,b)=>b.cotas-a.cotas || a.nome.localeCompare(b.nome));
+}
+function relRefresh(){
+  const lista=relLerBlocos();
+  const container=g('rel-clientes');
+  if(!lista.length){
+    container.innerHTML='<div style="text-align:center;padding:28px;color:var(--hint);font-size:12px">Nenhum cliente cadastrado nos Blocos Rádio.<br>Vai em Operacional → 📻 Blocos Rádio e preenche os nomes.</div>';
+    g('rel-resumo').textContent='—';
+    return;
+  }
+  container.innerHTML=lista.map((c,i)=>`
+    <label style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(232,121,176,.06)'" onmouseout="this.style.background=''">
+      <input type="checkbox" class="rel-cli-cb" data-i="${i}" checked onchange="relAtualizaResumo()" style="cursor:pointer;width:16px;height:16px;accent-color:#E879B0">
+      <div style="flex:1;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${c.nome}</div>
+          ${c.tel?`<div style="font-size:10px;color:var(--hint);margin-top:2px">${c.tel}</div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="font-size:11px;color:var(--muted)">${c.cotas} ${c.cotas===1?'cota':'cotas'}</div>
+          <div style="font-size:12px;font-weight:700;color:#f472b6;font-family:'DM Mono',monospace" class="rel-cli-val" data-i="${i}">R$ ${(c.cotas*relCotaVal()).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        </div>
+      </div>
+    </label>`).join('');
+  relAtualizaResumo();
+}
+function relCotaVal(){ return parseFloat(g('rel-cota').value)||0; }
+function relMarcarTodos(v){
+  document.querySelectorAll('.rel-cli-cb').forEach(cb=>cb.checked=v);
+  relAtualizaResumo();
+}
+function relAtualizaResumo(){
+  const lista=relLerBlocos();
+  const cota=relCotaVal();
+  const rep=parseFloat(g('rel-repasse').value)||0;
+  let totalCotas=0, totalValor=0, clientes=0;
+  document.querySelectorAll('.rel-cli-cb').forEach(cb=>{
+    const i=parseInt(cb.dataset.i);
+    document.querySelector(`.rel-cli-val[data-i="${i}"]`).textContent='R$ '+(lista[i].cotas*cota).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    if(cb.checked){ clientes++; totalCotas+=lista[i].cotas; totalValor+=lista[i].cotas*cota; }
+  });
+  const repasse=totalValor*rep/100;
+  g('rel-resumo').innerHTML=`<b>${clientes}</b> anunciante${clientes===1?'':'s'} · <b>${totalCotas}</b> cota${totalCotas===1?'':'s'} · Total <b style="color:#4ecb8d">R$ ${totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> · Repasse ${rep}% <b style="color:#f472b6">R$ ${repasse.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b>`;
+}
+function relGerar(){
+  const lista=relLerBlocos();
+  const sel=[];
+  document.querySelectorAll('.rel-cli-cb').forEach(cb=>{ if(cb.checked) sel.push(lista[parseInt(cb.dataset.i)]); });
+  if(!sel.length){ alert('Marca pelo menos um cliente.'); return; }
+  const cota=relCotaVal();
+  const rep=parseFloat(g('rel-repasse').value)||0;
+  const ins=parseInt(g('rel-ins').value)||25;
+  const mesIso=g('rel-mes').value || new Date().toISOString().slice(0,7);
+  const [ano,mes]=mesIso.split('-').map(Number);
+  const mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][mes-1];
+  const totalCotas=sel.reduce((a,c)=>a+c.cotas,0);
+  const totalValor=sel.reduce((a,c)=>a+c.cotas*cota,0);
+  const repasse=totalValor*rep/100;
+  const liquido=totalValor-repasse;
+  const insDia=totalCotas*ins;
+  const insMes=insDia*30;
+  const hoje=new Date().toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+  const numRel='MGB-REL-'+String(ano).slice(-2)+String(mes).padStart(2,'0')+'-'+String(Date.now()).slice(-4);
+  // Audiência mensal estimada do Mercadão da Prochet (~30.000 visitantes/mês)
+  const audMes=30000;
+  const audAno=audMes*12;
+  const tbody=sel.map((c,i)=>`
+    <tr style="${i%2?'background:#F8F5FF':''}">
+      <td style="padding:8px 12px;font-weight:600;color:#2A1760">${c.nome}</td>
+      <td style="padding:8px 12px;text-align:center;color:#444">${c.cotas}</td>
+      <td style="padding:8px 12px;text-align:center;color:#444">${c.cotas*ins}/dia</td>
+      <td style="padding:8px 12px;text-align:center;color:#444">${(c.cotas*ins*30).toLocaleString('pt-BR')}/mês</td>
+      <td style="padding:8px 12px;text-align:right;font-weight:700;color:#059669;font-family:'DM Mono',monospace">R$ ${(c.cotas*cota).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+    </tr>`).join('');
+  g('rel-output').innerHTML=`
+    <div style="background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#E879B0 100%);padding:24px 32px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:6px;height:54px;background:#E879B0;border-radius:3px"></div>
+        <div>
+          <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px">MGB Mídia</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Elevando a sua comunicação · Rádio · TV · Elevadores</div>
+        </div>
+      </div>
+      <div style="border-left:1px solid rgba(255,255,255,.2);padding-left:22px;text-align:right">
+        <div style="font-size:9px;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:1.5px;text-transform:uppercase">Relatório Mensal de Anunciantes</div>
+        <div style="font-size:14px;font-weight:700;margin-top:4px">Rádio Indoor · Mercadão da Prochet</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">${mesNome}/${ano} · Nº ${numRel}</div>
+      </div>
+    </div>
+
+    <div style="padding:24px 32px 12px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin-bottom:6px">RESUMO EXECUTIVO</div>
+      <div style="height:1px;background:#EAD9FF;margin-bottom:14px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px">
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.10));border:1px solid rgba(232,121,176,.2);border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Anunciantes ativos</div><div style="font-size:26px;font-weight:800;color:#2A1760;margin-top:4px">${sel.length}</div></div>
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.10));border:1px solid rgba(232,121,176,.2);border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Cotas vendidas</div><div style="font-size:26px;font-weight:800;color:#2A1760;margin-top:4px">${totalCotas}<span style="font-size:12px;color:#9CA3AF;font-weight:500"> / 24</span></div></div>
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.10));border:1px solid rgba(232,121,176,.2);border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Inserções/mês</div><div style="font-size:26px;font-weight:800;color:#2A1760;margin-top:4px">${insMes.toLocaleString('pt-BR')}</div></div>
+        <div style="background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(16,185,129,.12));border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Faturamento mensal</div><div style="font-size:24px;font-weight:800;color:#059669;margin-top:4px">R$ ${totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      </div>
+    </div>
+
+    <div style="padding:8px 32px 12px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin:14px 0 6px">📣 ANUNCIANTES NO AR · ${mesNome}/${ano}</div>
+      <div style="height:1px;background:#EAD9FF;margin-bottom:10px"></div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#2A1760;color:#fff"><th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Anunciante</th><th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Cotas</th><th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Inserções/dia</th><th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Inserções/mês</th><th style="padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Valor/mês</th></tr></thead>
+        <tbody>${tbody}<tr style="background:#2A1760;color:#fff;font-weight:700"><td style="padding:8px 12px">TOTAL</td><td style="padding:8px 12px;text-align:center">${totalCotas}</td><td style="padding:8px 12px;text-align:center">${insDia}/dia</td><td style="padding:8px 12px;text-align:center">${insMes.toLocaleString('pt-BR')}/mês</td><td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace">R$ ${totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td></tr></tbody>
+      </table>
+    </div>
+
+    <div style="padding:8px 32px 12px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin:14px 0 6px">💼 REPASSE FINANCEIRO</div>
+      <div style="height:1px;background:#EAD9FF;margin-bottom:12px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div style="border:1px solid #EAD9FF;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Faturamento Bruto</div><div style="font-size:22px;font-weight:800;color:#2A1760;margin-top:4px;font-family:'DM Mono',monospace">R$ ${totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.10),rgba(155,114,207,.14));border:1px solid rgba(232,121,176,.3);border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Repasse ao Mercadão (${rep}%)</div><div style="font-size:22px;font-weight:800;color:#E879B0;margin-top:4px;font-family:'DM Mono',monospace">R$ ${repasse.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+        <div style="border:1px solid #EAD9FF;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Líquido MGB</div><div style="font-size:22px;font-weight:800;color:#059669;margin-top:4px;font-family:'DM Mono',monospace">R$ ${liquido.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      </div>
+    </div>
+
+    <div style="padding:8px 32px 12px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin:14px 0 6px">📊 ALCANCE DA RÁDIO INDOOR · MERCADÃO DA PROCHET</div>
+      <div style="height:1px;background:#EAD9FF;margin-bottom:12px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="background:#F8F5FF;border:1px solid #EAD9FF;border-radius:10px;padding:14px"><div style="font-size:24px;font-weight:800;color:#2A1760">~${audMes.toLocaleString('pt-BR')}</div><div style="font-size:11px;color:#6B7280;margin-top:2px">visitantes/mês</div></div>
+        <div style="background:#F8F5FF;border:1px solid #EAD9FF;border-radius:10px;padding:14px"><div style="font-size:24px;font-weight:800;color:#2A1760">~${audAno.toLocaleString('pt-BR')}</div><div style="font-size:11px;color:#6B7280;margin-top:2px">visitantes/ano</div></div>
+        <div style="background:#F8F5FF;border:1px solid #EAD9FF;border-radius:10px;padding:14px"><div style="font-size:24px;font-weight:800;color:#2A1760">12h+</div><div style="font-size:11px;color:#6B7280;margin-top:2px">de exposição diária</div></div>
+      </div>
+      <p style="font-size:12px;color:#444;line-height:1.6;margin:0">A rádio indoor do <strong>Mercadão da Prochet</strong> impacta consumidores no momento em que mais decidem: o ato da compra. Diferente da rádio convencional, o ouvinte está fisicamente no ponto de venda, sem zapping e sem skip — alcance qualificado de público local, classes A/B/C, que frequenta o estabelecimento em média 3x por semana.</p>
+    </div>
+
+    <div style="padding:8px 32px 12px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin:14px 0 6px">⚡ POR QUE FUNCIONA</div>
+      <div style="height:1px;background:#EAD9FF;margin-bottom:12px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;font-size:11.5px">
+        <div style="background:#F8F5FF;border-left:3px solid #E879B0;padding:10px 12px;border-radius:6px"><div style="font-weight:700;color:#2A1760;margin-bottom:3px">🛒 No ponto de venda</div><div style="color:#555;line-height:1.5">Mensagem chega quando a decisão de compra acontece — converte na hora.</div></div>
+        <div style="background:#F8F5FF;border-left:3px solid #E879B0;padding:10px 12px;border-radius:6px"><div style="font-weight:700;color:#2A1760;margin-bottom:3px">🔁 Alta repetição</div><div style="color:#555;line-height:1.5">25 inserções/dia × 30 dias = 750 exposições/mês por cota.</div></div>
+        <div style="background:#F8F5FF;border-left:3px solid #E879B0;padding:10px 12px;border-radius:6px"><div style="font-weight:700;color:#2A1760;margin-bottom:3px">🎯 Público local</div><div style="color:#555;line-height:1.5">Cobertura geográfica precisa — clientes do bairro, vizinhança imediata.</div></div>
+        <div style="background:#F8F5FF;border-left:3px solid #E879B0;padding:10px 12px;border-radius:6px"><div style="font-weight:700;color:#2A1760;margin-bottom:3px">💰 Custo acessível</div><div style="color:#555;line-height:1.5">R$ ${cota.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês por cota — entrada barata pra mídia profissional.</div></div>
+      </div>
+    </div>
+
+    <div style="padding:8px 32px 22px">
+      <div style="background:linear-gradient(135deg,#1E0A3C,#6B21A8);border-radius:12px;padding:18px 22px;color:#fff;margin-top:8px">
+        <div style="font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:#E879B0;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">🏆 MGB Mídia · Mais de 5 anos transformando comunicação</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:10px">
+          <div><div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;color:#fff">+5 anos</div><div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">de mercado</div></div>
+          <div><div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;color:#fff">+50</div><div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">unidades de Rádio Indoor</div></div>
+          <div><div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;color:#fff">dezenas</div><div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">de telas de publicidade</div></div>
+        </div>
+        <p style="font-size:11.5px;color:rgba(255,255,255,.85);line-height:1.55;margin:0">Operação em <strong>Paraná, São Paulo e Santa Catarina</strong>, atendendo redes de supermercados, condomínios residenciais e empreendimentos comerciais. Equipe técnica própria, manutenção contínua e gestão centralizada de conteúdo — comunicação profissional, sem dor de cabeça pra administração.</p>
+      </div>
+    </div>
+
+    <div style="background:#2A1760;color:#EAD9FF;padding:14px 32px;font-size:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span><strong>MGB Mídia · Comunicação e Marketing Ltda.</strong> · CNPJ: 23.770.170/0001-50 · Londrina/PR · Emitido em ${hoje}</span>
+      <span style="color:#E879B0;font-weight:600">comercial@agenciamgb.com.br · (43) 99696-0078</span>
+    </div>
+  `;
+  g('rel-form').style.display='none';
+  g('rel-preview').style.display='block';
+  window.scrollTo(0,0);
+}
+function relVoltar(){
+  g('rel-form').style.display='block';
+  g('rel-preview').style.display='none';
+}
+function relPrint(){
+  const oldTitle=document.title;
+  const mes=g('rel-mes').value||'';
+  document.title='mgb mídia_relatório_radio mercadão_'+mes;
+  const orig=g('rel-output');
+  const clone=orig.cloneNode(true);
+  clone.id='rel-print-clone';
+  document.body.appendChild(clone);
+  document.body.classList.add('relprint');
+  const st=document.createElement('style');
+  st.id='rel-print-style';
+  st.textContent='@page{size:A4;margin:8mm}body.relprint > *:not(#rel-print-clone):not(script):not(style){display:none !important}body.relprint{background:#fff !important;padding:0 !important;margin:0 !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}#rel-print-clone{display:block !important;padding:0 !important;margin:0 !important;background:#fff !important;color:#222 !important;font-family:DM Sans,sans-serif;box-shadow:none !important;border-radius:0 !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}#rel-print-clone *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}';
+  document.head.appendChild(st);
+  window.print();
+  setTimeout(()=>{
+    document.title=oldTitle;
+    document.body.classList.remove('relprint');
+    clone.remove();
+    st.remove();
+  },800);
+}
+function initRelatorios(){
+  // Pré-preenche mês atual
+  const m=g('rel-mes');
+  if(m && !m.value) m.value=new Date().toISOString().slice(0,7);
+  // Liga os recalculadores
+  ['rel-cota','rel-repasse','rel-ins'].forEach(id=>{
+    const el=g(id);
+    if(el && !el.dataset.bound){ el.addEventListener('input',relAtualizaResumo); el.dataset.bound='1'; }
+  });
+  relRefresh();
+}
+
 // ── SWITCH ────────────────────────────────────────────────────────────────
 function switchMod(modId){
   drillMod(modId);
@@ -7436,7 +7707,7 @@ function refresh(){
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 document.getElementById('dt').textContent=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-['overview','custos','pessoal','operacional'].forEach(function(id){
+['overview','custos','pessoal','operacional','relatorios'].forEach(function(id){
   var el=document.getElementById('page-'+id); if(el) el.style.display='none';
 });
 document.getElementById('page-home').style.display='block';
