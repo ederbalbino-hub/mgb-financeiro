@@ -4590,7 +4590,7 @@ const MODULES=[
   {id:'mb',    label:'MB — Móveis Brasília',icon:'🏪',color:'#8b83f7',desc:'Painel de telas — unidades',agrupado:true,
    items:['Benjamin','Saul Elkind','Santa Catarina','Calçadão','Rolândia','Cornélio Procópio']},
   {id:'elev',  label:'Elevadores',icon:'🛗',color:'#4ecb8d',desc:'Mídia em telas de elevador',agrupado:false,
-   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga']},
+   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2']},
   {id:'vaapty',label:'Vaapty',icon:'🚗',color:'#f472b6',desc:'TV Vaapty — franqueados',agrupado:false,
    items:['Franqueado Piloto','Expansão']},
   {id:'radio', label:'Rádio Interna',icon:'📻',color:'#fbbf24',desc:'Rádio interna — clientes',agrupado:false,
@@ -5261,6 +5261,28 @@ function buildLancRec(){
   const linhas=[];
   const _key=recPagKey(selAno,selMes);
   MODULES.forEach(m=>{
+    // Elevadores: lista por ANUNCIANTE (não por condomínio — os condos são só rateio)
+    if(m.id==='elev'){
+      const ativos=(typeof anunciantes!=='undefined'?anunciantes:[]).filter(a=>{
+        if(!a.inicio||!a.valor) return false;
+        const [aI,mI]=a.inicio.split('-').map(Number);
+        const dur=a.meses||1;
+        for(let k=0;k<dur;k++){
+          const mk=(mI-1+k)%12;
+          const ak=aI+Math.floor((mI-1+k)/12);
+          if(ak===selAno&&mk===selMes) return true;
+        }
+        return false;
+      });
+      ativos.forEach(a=>{
+        const item=a.nome; // anunciante vira "item"
+        if(!recPagamentos[m.id]) recPagamentos[m.id]={};
+        if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
+        const pg=recPagamentos[m.id][item][_key]||{pago:false,obs:''};
+        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,obs:pg.obs,key:_key,sub:(a.telas||[]).join(', ')});
+      });
+      return; // pula iteração por items pra elev
+    }
     m.items.forEach(item=>{
       const val=recOfMes(m.id,item,selAno,selMes);
       if(!val) return;
@@ -5270,6 +5292,14 @@ function buildLancRec(){
       linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,obs:pg.obs,key:_key});
     });
   });
+  // Receita manual avulsa do mês (não vinculada a módulo)
+  const manualRec=(fin[selAno]||{})[selMes]?.receita||0;
+  if(manualRec>0){
+    if(!recPagamentos['_manual']) recPagamentos['_manual']={};
+    if(!recPagamentos['_manual']['Receita avulsa']) recPagamentos['_manual']['Receita avulsa']={};
+    const pg=recPagamentos['_manual']['Receita avulsa'][_key]||{pago:false,obs:''};
+    linhas.push({modId:'_manual',modLabel:'Avulsa',modIcon:'➕',item:'Receita avulsa do mês',valor:manualRec,pago:pg.pago,obs:pg.obs,key:_key,sub:'lançada manualmente em fin[ano][mes].receita'});
+  }
 
   const totalPrev=linhas.reduce((a,l)=>a+l.valor,0);
   const totalPago=linhas.filter(l=>l.pago).reduce((a,l)=>a+l.valor,0);
@@ -5292,7 +5322,7 @@ function buildLancRec(){
 
   g('lanc-rec-body').innerHTML=linhas.map((l,i)=>`<tr style="${l.pago?'opacity:.7':''}">
     <td style="font-size:10px;color:var(--muted)">${l.modIcon} ${l.modLabel}</td>
-    <td style="font-weight:500">${l.item}</td>
+    <td style="font-weight:500">${l.item}${l.sub?`<div style="font-size:9px;color:var(--hint);margin-top:2px">${l.sub}</div>`:''}</td>
     <td class="tr mono" style="color:var(--green);font-weight:700">${f(l.valor)}</td>
     <td>
       <button onclick="toggleRecPago('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}',${i})"
