@@ -2548,12 +2548,12 @@ function eGerar(){
   const condoRows=sel.map(c=>{
     const p=c.publico||c.moradores||0;
     const ins=(c.telas||1)*INS_DIA*INS_MES;
-    return '<tr><td><strong>'+c.nome+'</strong>'+(c.tipo?' ('+c.tipo+')':'')+'</td><td>'+c.bairro+'</td><td>'+(c.torres||'—')+'</td><td>'+(c.telas||'—')+'</td><td>'+(p?p.toLocaleString('pt-BR'):'—')+'</td><td>'+ins.toLocaleString('pt-BR')+'</td><td>'+(p*FREQ_IMPACTO).toLocaleString('pt-BR')+'</td></tr>';
+    return '<tr style=&quot;color:#1E0A3C&quot;><td style=&quot;color:#1E0A3C&quot;><strong style=&quot;color:#1E0A3C&quot;>'+c.nome+'</strong>'+(c.tipo?' ('+c.tipo+')':'')+'</td><td style=&quot;color:#1E0A3C&quot;>'+c.bairro+'</td><td style=&quot;color:#1E0A3C&quot;>'+(c.torres||'—')+'</td><td style=&quot;color:#1E0A3C&quot;>'+(c.telas||'—')+'</td><td style=&quot;color:#1E0A3C&quot;>'+(p?p.toLocaleString('pt-BR'):'—')+'</td><td style=&quot;color:#1E0A3C&quot;>'+ins.toLocaleString('pt-BR')+'</td><td style=&quot;color:#1E0A3C&quot;>'+(p*FREQ_IMPACTO).toLocaleString('pt-BR')+'</td></tr>';
   }).join('');
   const pessTot=sel.reduce((s,c)=>s+(c.publico||c.moradores||0),0);
   const impTot=pessTot*FREQ_IMPACTO;
   const torTot=sel.reduce((s,c)=>s+(c.torres||0),0);
-  const condoTotal='<tr style=&quot;font-weight:700;background:#F0E6FF&quot;><td>TOTAL</td><td></td><td>'+torTot+'</td><td>'+telas+'</td><td>'+pessTot.toLocaleString('pt-BR')+'</td><td>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
+  const condoTotal='<tr style=&quot;font-weight:700;background:#F0E6FF;color:#1E0A3C&quot;><td style=&quot;color:#1E0A3C&quot;>TOTAL</td><td style=&quot;color:#1E0A3C&quot;></td><td style=&quot;color:#1E0A3C&quot;>'+torTot+'</td><td style=&quot;color:#1E0A3C&quot;>'+telas+'</td><td style=&quot;color:#1E0A3C&quot;>'+pessTot.toLocaleString('pt-BR')+'</td><td style=&quot;color:#1E0A3C&quot;>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td style=&quot;color:#1E0A3C&quot;>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
 
   const headerHTML='<div style=&quot;background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#D946EF 100%);padding:14px 24px;border-radius:8px 8px 0 0;color:#fff;margin:-32px -32px 12px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
     '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
