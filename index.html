@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- BUILD: 2026-06-23 marcar-pago-fix -->
+<!-- BUILD: 2026-06-24 marcar-pago-idx-string -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MGB Plataforma — Gestão financeira e operacional</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5574,7 +5574,7 @@ function buildVisaoDespesas(){
       <td><span class="bp" style="background:var(--rd);color:var(--red)">${d.tipoLbl}</span></td>
       <td class="tr mono" style="color:var(--red);font-weight:700">${f(d.vlrMes)}</td>
       <td>
-        <button onclick="toggleDespPagoOv('${d.m.id}','${safeItem}',${d.idx},'${dKey}')"
+        <button onclick="toggleDespPagoOv('${d.m.id}','${safeItem}','${d.idx}','${dKey}')"
           style="font-size:10px;padding:4px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;
           background:${pgM.pago?'var(--gd)':'rgba(248,113,113,.15)'};color:${pgM.pago?'var(--green)':'var(--red)'}">
           ${pgM.pago?'✓ Pago':'Marcar Pago'}
@@ -5582,7 +5582,7 @@ function buildVisaoDespesas(){
       </td>
       <td>
         <input type="text" value="${pgM.obs||''}" placeholder="Obs..."
-          onchange="setDespObs('${d.m.id}','${safeItem}',${d.idx},'${dKey}',this.value)"
+          onchange="setDespObs('${d.m.id}','${safeItem}','${d.idx}','${dKey}',this.value)"
           style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;width:140px;outline:none">
       </td>
     </tr>`;
