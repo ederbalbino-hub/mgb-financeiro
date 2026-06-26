@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prova de Veiculação — MGB Mídia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a1530;          /* texto principal */
+    --ink2:#5b5470;          /* texto secundário */
+    --hint:#8c86a0;          /* hints */
+    --purple:#6B21A8;        /* roxo MGB */
+    --purple-d:#1E0A3C;      /* roxo escuro institucional */
+    --lilac:#8b83f7;         /* lilás accent */
+    --bg:#f4f2f9;            /* fundo da página */
+    --card:#ffffff;
+    --line:#ece8f5;
+    --soft:#f6f3fc;
+    --green:#16a34a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'DM Sans',-apple-system,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding:28px 16px;
+  }
+
+  /* ── Barra de ações (some no print) ── */
+  .toolbar{
+    max-width:820px;margin:0 auto 18px;display:flex;gap:10px;justify-content:flex-end;align-items:center;
+  }
+  .toolbar .hint{margin-right:auto;font-size:12px;color:var(--hint)}
+  .btn{
+    font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    padding:9px 16px;border-radius:9px;cursor:pointer;transition:all .15s;
+  }
+  .btn:hover{border-color:var(--lilac);color:var(--purple)}
+  .btn.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+  .btn.primary:hover{background:#581c87;color:#fff}
+
+  /* ── Folha A4 ── */
+  .sheet{
+    max-width:820px;margin:0 auto;background:var(--card);
+    border-radius:18px;overflow:hidden;
+    box-shadow:0 12px 40px rgba(30,10,60,.10);
+  }
+
+  /* ── Cabeçalho ── */
+  .head{
+    background:linear-gradient(135deg,var(--purple-d) 0%,var(--purple) 100%);
+    color:#fff;padding:34px 40px 30px;position:relative;overflow:hidden;
+  }
+  .head::after{
+    content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;
+    background:radial-gradient(circle,rgba(139,131,247,.35),transparent 70%);
+  }
+  .head-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .mark{
+    width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.25);
+    display:flex;align-items:center;justify-content:center;font-size:22px;
+  }
+  .brand .name{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.01em;line-height:1}
+  .brand .sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:3px;letter-spacing:.04em}
+  .doc-tag{
+    font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:600;
+    color:rgba(255,255,255,.75);background:rgba(255,255,255,.1);
+    padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.2);
+  }
+  .head h1{
+    font-family:'Syne',sans-serif;font-weight:700;font-size:27px;letter-spacing:-.02em;
+    margin-top:26px;position:relative;z-index:1;
+  }
+  .head .who{
+    margin-top:7px;font-size:14px;color:rgba(255,255,255,.88);position:relative;z-index:1;
+  }
+  .head .who b{color:#fff;font-weight:600}
+  .head .period{
+    margin-top:14px;display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;font-family:'DM Mono',monospace;color:#fff;
+    background:rgba(255,255,255,.12);padding:7px 14px;border-radius:8px;
+    border:1px solid rgba(255,255,255,.18);position:relative;z-index:1;
+  }
+
+  /* ── KPIs ── */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
+  .kpi{background:var(--card);padding:22px 20px;text-align:center}
+  .kpi .n{font-family:'DM Mono',monospace;font-weight:500;font-size:30px;color:var(--purple);line-height:1}
+  .kpi .l{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--hint);margin-top:8px;font-weight:600}
+  .kpi .x{font-size:11px;color:var(--ink2);margin-top:3px}
+
+  /* ── Corpo ── */
+  .body{padding:30px 40px 14px}
+  .sec{margin-bottom:30px}
+  .sec-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid var(--soft)}
+  .sec-h h2{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--ink);letter-spacing:-.01em}
+  .sec-h .agg{font-size:11px;color:var(--hint)}
+
+  /* barras */
+  .bar{display:flex;align-items:center;gap:14px;padding:7px 0}
+  .bar .l{flex:0 0 210px;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:8px;min-width:0}
+  .bar .l .ico{font-size:13px;flex-shrink:0}
+  .bar .l .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .track{flex:1;height:9px;background:var(--soft);border-radius:6px;overflow:hidden}
+  .bar .track > div{height:100%;background:linear-gradient(90deg,var(--lilac),var(--purple));border-radius:6px}
+  .bar .v{flex:0 0 64px;text-align:right;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--ink)}
+  .bar .v small{color:var(--hint);font-weight:400;font-size:10px}
+
+  /* calendário / dias */
+  .days{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:8px}
+  .day{background:var(--soft);border-radius:9px;padding:11px 12px;border:1px solid var(--line)}
+  .day .d{font-size:11px;color:var(--ink2);font-weight:600}
+  .day .c{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--purple);margin-top:3px}
+  .day .c small{font-size:10px;color:var(--hint);font-weight:400}
+
+  /* tabela mídias */
+  .media-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--soft)}
+  .media-row:last-child{border-bottom:none}
+  .media-row .thumb{width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--soft),#e9e3f7);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .media-row .info{flex:1;min-width:0}
+  .media-row .info .nm{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .media-row .info .id{font-size:10px;color:var(--hint);font-family:'DM Mono',monospace}
+  .media-row .cnt{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--purple)}
+  .media-row .pct{font-size:11px;color:var(--hint);width:46px;text-align:right}
+
+  /* selo de validação */
+  .seal{
+    display:flex;align-items:center;gap:14px;background:var(--soft);
+    border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-top:6px;
+  }
+  .seal .ck{width:40px;height:40px;border-radius:50%;background:rgba(22,163,74,.12);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .seal .tx{font-size:12.5px;color:var(--ink2);line-height:1.5}
+  .seal .tx b{color:var(--ink)}
+
+  /* rodapé */
+  .foot{padding:20px 40px 30px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .foot .l{font-size:11px;color:var(--hint);line-height:1.6}
+  .foot .l b{color:var(--ink2)}
+  .foot .src{font-size:10px;color:var(--hint);display:flex;align-items:center;gap:6px}
+  .foot .src .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+  .empty{color:var(--hint);font-size:12px;padding:6px 0}
+
+  /* ── PRINT / PDF ── */
+  @media print{
+    @page{size:A4;margin:14mm}
+    body{background:#fff;padding:0}
+    .toolbar{display:none}
+    .sheet{box-shadow:none;border-radius:0;max-width:none}
+    .head{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .bar .track>div,.kpi .n,.day .c,.media-row .thumb,.head::after{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .sec{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="hint">Pré-visualização do layout · dados de exemplo</span>
+  <button class="btn" onclick="window.print()">↓ Salvar PDF</button>
+  <button class="btn primary" onclick="window.print()">🖨 Imprimir</button>
+</div>
+
+<div class="sheet" id="sheet"></div>
+
+<script>
+/* ────────────────────────────────────────────────────────────────
+   DADOS — no fluxo real isso vem do campanhas.html:
+   anunciante, período e as "linhas" de exibição do 4YouSee.
+   Aqui uso amostra realista só pra você ver o layout.
+   ──────────────────────────────────────────────────────────────── */
+const SAMPLE = {
+  anunciante: 'Leo Cosméticos',
+  contato: 'Campanha Institucional · Verão 2026',
+  startDate: '2026-06-01',
+  endDate:   '2026-06-15',
+  porTela: {
+    'Lagoa Dourada':      1842,
+    'Spazio Louvre':      1790,
+    'Lake Portinari':     1455,
+    'Residencial Málaga': 1320,
+    'Terra Parque':        980,
+    'Bella Fiori':         910,
+  },
+  porMidia: {
+    'Leo_Verao_15s.mp4':   6210,
+    'Leo_Promo_10s.mp4':   2087,
+  },
+  porDia: {
+    '2026-06-01':520,'2026-06-02':548,'2026-06-03':561,'2026-06-04':540,'2026-06-05':575,
+    '2026-06-06':602,'2026-06-07':598,'2026-06-08':533,'2026-06-09':547,'2026-06-10':556,
+    '2026-06-11':561,'2026-06-12':588,'2026-06-13':604,'2026-06-14':560,'2026-06-15':404,
+  },
+};
+
+/* Dados reais injetados pelo gerador (localStorage['mgb_deck_data']); senão, usa o exemplo. */
+function loadInjected(){
+  try{ if(location.hash.indexOf('#data=')===0) return JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(6))))); }catch(e){}
+  try{ const s=localStorage.getItem('mgb_deck_data'); if(s) return JSON.parse(s); }catch(e){}
+  return null;
+}
+let DATA = loadInjected() || SAMPLE;
+
+/* ── helpers ── */
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtN = n => n.toLocaleString('pt-BR');
+const fmtDate = s => { const [y,m,d]=String(s).split('-'); return `${d}/${m}/${y}`; };
+const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function diffDays(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+function fmtNow(){
+  const d=new Date();
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} às ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function sum(obj){ return Object.values(obj).reduce((a,b)=>a+b,0); }
+
+function bars(map, ico){
+  const ents = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  if(!ents.length) return '<div class="empty">Sem dados para esse agrupamento.</div>';
+  const max = Math.max(...ents.map(e=>e[1]));
+  const tot = sum(map);
+  return ents.map(([k,v])=>`
+    <div class="bar">
+      <div class="l"><span class="ico">${ico}</span><span class="t">${esc(k)}</span></div>
+      <div class="track"><div style="width:${(v/max*100).toFixed(1)}%"></div></div>
+      <div class="v">${fmtN(v)} <small>${(v/tot*100).toFixed(0)}%</small></div>
+    </div>`).join('');
+}
+
+function diasGrid(map){
+  const ents = Object.entries(map).sort((a,b)=>a[0]<b[0]?-1:1);
+  if(!ents.length) return '<div class="empty">Sem dados diários.</div>';
+  return `<div class="days">${ents.map(([k,v])=>{
+    const [,m,d]=k.split('-');
+    return `<div class="day"><div class="d">${d}/${m}</div><div class="c">${fmtN(v)} <small>exib.</small></div></div>`;
+  }).join('')}</div>`;
+}
+
+function mediasList(map){
+  const ents = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  if(!ents.length) return '<div class="empty">Sem mídias registradas.</div>';
+  const tot = sum(map);
+  return ents.map(([k,v])=>`
+    <div class="media-row">
+      <div class="thumb">🎬</div>
+      <div class="info"><div class="nm">${esc(k)}</div><div class="id">criativo veiculado</div></div>
+      <div class="cnt">${fmtN(v)}</div>
+      <div class="pct">${(v/tot*100).toFixed(0)}%</div>
+    </div>`).join('');
+}
+
+/* aplica nomes de exibição (telaMeta) às chaves de porTela */
+function relabel(map, meta){
+  const out = {};
+  for(const [k,v] of Object.entries(map||{})){ const nome = (meta&&meta[k]&&meta[k].nome) || k; out[nome] = (out[nome]||0)+v; }
+  return out;
+}
+function render(d){
+  const META = d.telaMeta || {};
+  const porTelaNamed = relabel(d.porTela, META);
+  const totalExib = sum(d.porTela);
+  const nTelas = Object.keys(d.porTela).length;
+  const nDias  = diffDays(d.startDate,d.endDate)+1;
+  const temMidia = !!d.porMidia;
+  const nMidias = temMidia ? Object.keys(d.porMidia).length : (d.conteudosUnicos||0);
+  const nTelasFis = d.telasTotal || nTelas;
+
+  document.getElementById('sheet').innerHTML = `
+    <div class="head">
+      <div class="head-top">
+        <div class="brand">
+          <div class="mark">📺</div>
+          <div>
+            <div class="name">MGB Mídia</div>
+            <div class="sub">MÍDIA EM ELEVADORES</div>
+          </div>
+        </div>
+        <div class="doc-tag">Prova de Veiculação</div>
+      </div>
+      <h1>Relatório de Exibição</h1>
+      <div class="who">Anunciante: <b>${esc(d.anunciante)}</b>${d.contato?` · ${esc(d.contato)}`:''}</div>
+      <div class="period">📅 ${fmtDate(d.startDate)} — ${fmtDate(d.endDate)}</div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="n">${fmtN(totalExib)}</div><div class="l">Exibições</div><div class="x">veiculações no período</div></div>
+      <div class="kpi"><div class="n">${nTelasFis}</div><div class="l">Telas</div><div class="x">em ${nTelas} condomínio(s)</div></div>
+      <div class="kpi"><div class="n">${nDias}</div><div class="l">Dias</div><div class="x">de campanha ativa</div></div>
+      <div class="kpi"><div class="n">${nMidias}</div><div class="l">Criativos</div><div class="x">${temMidia?'mídias diferentes':'conteúdos únicos'}</div></div>
+    </div>
+
+    <div class="body">
+      <div class="sec">
+        <div class="sec-h"><h2>Exibições por tela</h2><span class="agg">${nTelas} condomínios</span></div>
+        ${bars(porTelaNamed,'📍')}
+      </div>
+
+      <div class="sec">
+        <div class="sec-h"><h2>Exibições por criativo</h2><span class="agg">${temMidia?nMidias+' mídias':'conteúdos únicos'}</span></div>
+        ${temMidia ? mediasList(d.porMidia) : `<div class="empty">O relatório de player do 4YouSee informa apenas a <b>quantidade</b> de conteúdos únicos veiculados (${fmtN(nMidias)}), não a contagem por criativo.</div>`}
+      </div>
+
+      <div class="sec">
+        <div class="sec-h"><h2>Distribuição diária</h2><span class="agg">${nDias} dias</span></div>
+        ${diasGrid(d.porDia)}
+      </div>
+
+      <div class="sec">
+        <div class="seal">
+          <div class="ck">✓</div>
+          <div class="tx"><b>Veiculação confirmada.</b> Este relatório atesta que o material publicitário de <b>${esc(d.anunciante)}</b> foi exibido <b>${fmtN(totalExib)} vezes</b> em <b>${nTelas} telas</b> ao longo de <b>${nDias} dias</b>, conforme registro técnico dos players.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div class="l">
+        <b>MGB Mídia em Elevadores</b><br>
+        Relatório gerado em ${fmtNow()}
+      </div>
+      <div class="src"><span class="dot"></span> Dados via ${esc(d.fonte||'registro técnico')}</div>
+    </div>
+  `;
+}
+
+render(DATA);
+</script>
+</body>
+</html>

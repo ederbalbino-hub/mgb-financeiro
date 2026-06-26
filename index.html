@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- BUILD: 2026-06-24 marcar-pago-idx-string -->
+<!-- BUILD: 2026-06-23 marcar-pago-fix -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MGB Plataforma — Gestão financeira e operacional</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -436,6 +436,9 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 .home-hub-cta{font-size:11px;font-weight:600;color:rgba(240,238,255,.85);text-transform:uppercase;letter-spacing:.08em;position:relative;z-index:1}
 .home-hub-card.hub-despesas .home-hub-cta{color:#4ecb8d}
 .home-hub-card.hub-operacional .home-hub-cta{color:#f472b6}
+.home-hub-card.hub-ger::before{background:#8b83f7}
+.home-hub-card.hub-ger:hover{border-color:rgba(139,131,247,.55)}
+.home-hub-card.hub-ger .home-hub-cta{color:#a78bfa}
 @media (max-width:680px){.home-hubs{grid-template-columns:1fr}}
 
 /* Cards do hub Operacional */
@@ -749,6 +752,8 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
     <div class="sb-nav-item" id="nav-operacional" onclick="goPage('operacional')">🎯 Contratos & Mídia</div>
     <div class="sb-lbl" style="margin-top:10px">Pessoal</div>
     <div class="sb-nav-item" id="nav-pessoal" onclick="goPage('pessoal')">💰 Pessoal</div>
+    <div class="sb-lbl" style="margin-top:10px">Apresentações</div>
+    <div class="sb-nav-item" id="nav-gerador" onclick="openGerador()">📊 Gerar Resultados</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
     <div id="sb-modules"></div>
   </div>
@@ -817,6 +822,12 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
             <div class="home-hub-title">Gestão Operacional</div>
             <div class="home-hub-desc">Contratos · Gerador de spots · Blocos rádio · Posts LinkedIn · Plano semanal</div>
             <div class="home-hub-cta">Abrir hub →</div>
+          </div>
+          <div class="home-hub-card hub-ger" onclick="openGerador()">
+            <div class="home-hub-ico">📊</div>
+            <div class="home-hub-title">Gerar Apresentação</div>
+            <div class="home-hub-desc">Sobe o relatório (4YouSee / ListenPlay) → comprovante + apresentação de resultados</div>
+            <div class="home-hub-cta">Abrir gerador →</div>
           </div>
         </div>
 
@@ -3868,7 +3879,41 @@ Para cada post: gancho forte na 1ª linha, parágrafos curtos, CTA leve no final
 </div>
 </div>
 
-
+<!-- ── Gerador de Apresentação (overlay integrado, mesma aba) ── -->
+<div id="gerador-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(10,6,22,.88);backdrop-filter:blur(4px)">
+  <div style="position:absolute;inset:20px;border-radius:16px;overflow:hidden;background:#0f0820;border:1px solid rgba(139,131,247,.3);display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">
+      <span>📊 Gerar Apresentação de Resultados</span>
+      <button onclick="closeGerador()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:7px 15px;cursor:pointer;font-size:13px;font-family:inherit">✕ Fechar</button>
+    </div>
+    <iframe id="gerador-frame" style="flex:1;border:0;width:100%;background:#0f0820" title="Gerar Apresentação"></iframe>
+  </div>
+</div>
+<script>
+  /* navega na mesma aba (página interna) — robusto em file:// e localhost.
+     Passa o rodapé (Receita/Despesa/Lucro) pela URL, pois localStorage não compartilha bem em file:// */
+  function openGerador(){
+    var h='';
+    try{
+      var le=document.getElementById('sb-lucro-mes');
+      var fd={ mes:(document.getElementById('sb-mes-lbl')||{}).textContent||'',
+               rec:(document.getElementById('sb-rec-mes')||{}).textContent||'',
+               desp:(document.getElementById('sb-desp-mes')||{}).textContent||'',
+               lucro:(le||{}).textContent||'',
+               lucroColor: le?getComputedStyle(le).color:'#4ecb8d' };
+      h='#f='+btoa(unescape(encodeURIComponent(JSON.stringify(fd))));
+    }catch(e){}
+    window.location.href='gerar-apresentacao.html?t='+Date.now()+h;
+  }
+  /* deep-link: voltar do gerador via index.html#pagina (ou #mod-<id>) abre direto */
+  (function(){
+    var h=(location.hash||'').replace('#','');
+    if(!h) return;
+    if(h.indexOf('mod-')===0 && typeof switchMod==='function'){ try{switchMod(h.slice(4));}catch(e){} return; }
+    var ok=['home','overview','custos','pessoal','operacional','relatorios'];
+    if(ok.indexOf(h)>=0 && typeof goPage==='function'){ try{goPage(h);}catch(e){} }
+  })();
+</script>
 
 </body>
 </html>
@@ -5221,6 +5266,7 @@ function buildSidebar(){
   const lEl=g('sb-lucro-mes');
   lEl.textContent=vis?((lucroMes>=0?'+':'')+f(lucroMes)):MASK;
   lEl.style.color=vis?(lucroMes>0?'var(--green)':lucroMes<0?'var(--red)':'var(--hint)'):'var(--hint)';
+  try{ localStorage.setItem('mgb_sb_footer', JSON.stringify({mes:g('sb-mes-lbl').textContent,rec:g('sb-rec-mes').textContent,desp:g('sb-desp-mes').textContent,lucro:lEl.textContent,lucroColor:(!vis?'rgba(240,238,255,.45)':(lucroMes>0?'#4ecb8d':lucroMes<0?'#f87171':'rgba(240,238,255,.45)'))})); }catch(e){}
 }
 function escQ(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 function sbClick(modId,item){drillMod(modId);switchItem(item);closeSidebar();}

@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MGB Campanhas — Gestão de telas e relatórios 4YouSee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Syne:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0e17;--surface:#1a1928;--surface2:#222135;--surface3:#2a2840;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --text:#f0eeff;--muted:rgba(240,238,255,.55);--hint:rgba(240,238,255,.28);
+  --purple:#8b83f7;--pd:rgba(139,131,247,.15);
+  --green:#4ecb8d;--gd:rgba(78,203,141,.15);
+  --pink:#f472b6;--pkd:rgba(244,114,182,.15);
+  --amber:#fbbf24;--ad:rgba(251,191,36,.15);
+  --blue:#60a5fa;--bd:rgba(96,165,250,.15);
+  --teal:#2dd4bf;--td:rgba(45,212,191,.15);
+  --red:#f87171;--rd:rgba(248,113,113,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.mono{font-family:'DM Mono',monospace}
+button{font-family:inherit}
+
+.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.logo{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.logo-badge{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--pink);background:var(--pkd);padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:6px}
+.logo-name{font-size:15px;font-weight:700}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.nav{flex:1;overflow-y:auto;padding:12px 10px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;margin-bottom:3px;user-select:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.on{background:var(--surface2);color:var(--text);font-weight:600}
+.nav-item .ico{font-size:15px;width:18px;text-align:center}
+.nav-foot{padding:12px 16px;border-top:1px solid var(--border)}
+.nav-foot .conn{font-size:11px;color:var(--muted);margin-bottom:4px}
+.nav-foot .conn-state{font-size:12px;font-weight:600}
+.nav-foot .conn-state.ok{color:var(--green)}
+.nav-foot .conn-state.off{color:var(--red)}
+.nav-foot .link-back{display:block;margin-top:9px;font-size:11px;color:var(--hint);text-decoration:none}
+.nav-foot .link-back:hover{color:var(--purple)}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;min-width:0}
+.page-hdr{padding:20px 26px 14px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--border)}
+.page-title{font-size:19px;font-weight:700}
+.page-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.btn{font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface3)}
+.btn.primary{background:var(--purple);border-color:var(--purple);color:#0f0e17}
+.btn.primary:hover{background:#a8a0ff}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--red);border-color:rgba(248,113,113,.3)}
+.btn.sm{font-size:11px;padding:6px 10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* CONTENT */
+.content{padding:18px 26px 60px}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 15px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:-18px;right:-18px;width:60px;height:60px;border-radius:50%;opacity:.16}
+.kp::after{background:var(--purple)}.kg::after{background:var(--green)}.ka::after{background:var(--amber)}.kpk::after{background:var(--pink)}.kt::after{background:var(--teal)}.kr::after{background:var(--red)}
+.kpi-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-weight:600}
+.kpi-val{font-size:21px;font-weight:700;line-height:1;font-family:'DM Mono',monospace}
+.kpi-hint{font-size:10px;color:var(--hint);margin-top:4px}
+
+/* TABLE */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tbl-hdr{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.tbl-title{font-size:13px;font-weight:600}
+.tbl-hint{font-size:11px;color:var(--hint)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:10px 14px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:var(--surface2)}
+tr:last-child td{border-bottom:0}
+td.mono{font-family:'DM Mono',monospace;font-size:11px}
+.pill{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.04em}
+.pill.green{background:var(--gd);color:var(--green)}
+.pill.red{background:var(--rd);color:var(--red)}
+.pill.amber{background:var(--ad);color:var(--amber)}
+.pill.blue{background:var(--bd);color:var(--blue)}
+.pill.purple{background:var(--pd);color:var(--purple)}
+.pill.gray{background:var(--surface3);color:var(--muted)}
+.empty{padding:40px 20px;text-align:center;color:var(--hint);font-size:13px}
+
+/* FORM */
+.field{margin-bottom:12px}
+.field-lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;display:block}
+.input,select.input,textarea.input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:9px 11px;font-size:12px;color:var(--text);outline:none;font-family:inherit;transition:border-color .15s}
+.input:focus{border-color:var(--purple)}
+textarea.input{resize:vertical;min-height:60px;font-family:'DM Mono',monospace}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:640px){.row2,.row3{grid-template-columns:1fr}}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;align-items:flex-start;justify-content:center;padding:60px 20px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:560px;overflow:hidden;animation:popin .2s ease}
+@keyframes popin{from{transform:translateY(-12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.m-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.m-title{font-size:15px;font-weight:700}
+.m-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1}
+.m-close:hover{color:var(--text)}
+.m-body{padding:20px 22px;max-height:60vh;overflow-y:auto}
+.m-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+
+/* MISC */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface3);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;font-size:12px;color:var(--text);z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.4);display:none}
+.toast.show{display:block;animation:slidein .2s ease}
+@keyframes slidein{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast.err{border-color:rgba(248,113,113,.4)}
+.toast.ok{border-color:rgba(78,203,141,.4)}
+
+.hide{display:none!important}
+.help-box{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.help-box strong{color:var(--text)}
+.help-box code{font-family:'DM Mono',monospace;background:var(--bg);padding:1px 6px;border-radius:4px;color:var(--purple);font-size:10px}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.section-title{font-size:14px;font-weight:700;margin:18px 0 10px;color:var(--text)}
+.muted{color:var(--muted)}
+
+/* REPORT VIEWER */
+.report-stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0 18px}
+.bar-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px}
+.bar-row .lbl{flex:0 0 200px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-row .bar{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.bar-row .bar > div{height:100%;background:var(--purple);border-radius:4px}
+.bar-row .val{flex:0 0 60px;text-align:right;font-family:'DM Mono',monospace;font-size:11px}
+
+@media(max-width:880px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:fixed;top:0;left:-260px;width:260px;z-index:60;transition:left .2s}
+  .sidebar.open{left:0}
+  .menu-btn{display:inline-flex!important}
+}
+.menu-btn{display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <span class="logo-badge">MGB</span>
+      <div class="logo-name">Campanhas</div>
+      <div class="logo-sub">Gestão de telas · 4YouSee</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item on" data-view="overview"><span class="ico">📊</span> Visão Geral</div>
+      <div class="nav-item" data-view="telas"><span class="ico">📺</span> Telas</div>
+      <div class="nav-item" data-view="conteudos"><span class="ico">🎬</span> Conteúdos</div>
+      <div class="nav-item" data-view="anunciantes"><span class="ico">👥</span> Anunciantes</div>
+      <div class="nav-item" data-view="relatorios"><span class="ico">📈</span> Relatórios</div>
+      <div class="nav-item" data-view="conexao"><span class="ico">⚙️</span> Conexão</div>
+    </nav>
+    <div class="nav-foot">
+      <div class="conn">Conexão 4YouSee</div>
+      <div class="conn-state off" id="connState">desconectado</div>
+      <a class="link-back" href="index.html">← Voltar ao Financeiro</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="page-hdr">
+      <div>
+        <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <div class="page-title" id="pageTitle">Visão Geral</div>
+        <div class="page-sub" id="pageSub">Resumo da operação</div>
+      </div>
+      <div class="btn-row" id="pageActions"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<!-- MODAL GENÉRICO -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="m-hdr">
+      <div class="m-title" id="modalTitle">—</div>
+      <button class="m-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="m-body" id="modalBody"></div>
+    <div class="m-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ──────────────────────────────────────────────
+   ESTADO + PERSISTÊNCIA
+   ────────────────────────────────────────────── */
+const LS_KEY = 'mgb_campanhas_v1';
+const LS_TOKEN = 'mgb_4yousee_token';
+const LS_PROXY = 'mgb_4yousee_proxy';
+const LS_PLAYERS_CACHE = 'mgb_4y_players_cache';
+const LS_MEDIAS_CACHE  = 'mgb_4y_medias_cache';
+
+const state = {
+  view: 'overview',
+  token: localStorage.getItem(LS_TOKEN) || '',
+  proxy: localStorage.getItem(LS_PROXY) || '',
+  players: [],
+  playersFetchedAt: null,
+  medias: [],
+  mediasFetchedAt: null,
+  anunciantes: [],
+  reports: [],
+  loadingPlayers: false,
+  loadingMedias: false,
+  pollingReports: {},  // { localId: true } pra evitar polling duplicado
+};
+
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      state.anunciantes = d.anunciantes || [];
+      state.reports = d.reports || [];
+    }
+    const pc = localStorage.getItem(LS_PLAYERS_CACHE);
+    if(pc){
+      const d = JSON.parse(pc);
+      state.players = d.data || [];
+      state.playersFetchedAt = d.at || null;
+    }
+    const mc = localStorage.getItem(LS_MEDIAS_CACHE);
+    if(mc){
+      const d = JSON.parse(mc);
+      state.medias = d.data || [];
+      state.mediasFetchedAt = d.at || null;
+    }
+  }catch(e){ console.warn('loadLocal falhou', e) }
+}
+function saveLocal(){
+  localStorage.setItem(LS_KEY, JSON.stringify({
+    anunciantes: state.anunciantes,
+    reports: state.reports,
+  }));
+}
+function savePlayersCache(){
+  localStorage.setItem(LS_PLAYERS_CACHE, JSON.stringify({
+    data: state.players, at: state.playersFetchedAt
+  }));
+}
+function saveMediasCache(){
+  localStorage.setItem(LS_MEDIAS_CACHE, JSON.stringify({
+    data: state.medias, at: state.mediasFetchedAt
+  }));
+}
+
+/* ──────────────────────────────────────────────
+   API 4YOUSEE — fetch centralizado
+   ────────────────────────────────────────────── */
+const API_BASE = 'https://api.4yousee.com.br/v1';
+
+function buildUrl(path){
+  if(state.proxy){
+    // proxy modo: usa proxy como prefixo. Ex: https://meu-worker.workers.dev
+    return state.proxy.replace(/\/$/,'') + path;
+  }
+  return API_BASE + path;
+}
+
+async function fetch4y(method, path, body){
+  if(!state.token){
+    throw new Error('Token não configurado. Vá em Conexão e cole o Secret-Token gerado em 4YouSee.');
+  }
+  const url = buildUrl(path);
+  const opts = {
+    method,
+    headers: {
+      'Secret-Token': state.token,
+      'Accept': 'application/json',
+    }
+  };
+  if(body){
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  let res;
+  try{
+    res = await fetch(url, opts);
+  }catch(err){
+    // CORS ou rede
+    throw new Error('Falha de rede/CORS. Se a API estiver bloqueando CORS do navegador, use um proxy (Conexão → URL do proxy).');
+  }
+  if(!res.ok){
+    let txt = '';
+    try{ txt = await res.text() }catch(_){}
+    throw new Error(`HTTP ${res.status}: ${txt.slice(0,200) || res.statusText}`);
+  }
+  if(res.status === 204) return null;
+  return res.json();
+}
+
+/* ──────────────────────────────────────────────
+   UI HELPERS
+   ────────────────────────────────────────────── */
+function $(sel){ return document.querySelector(sel) }
+function $$(sel){ return [...document.querySelectorAll(sel)] }
+
+let toastTimer;
+function toast(msg, kind='ok'){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (kind==='err'?'err':'ok');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className = 'toast' }, 3800);
+}
+
+function openModal(title, bodyHtml, footHtml){
+  $('#modalTitle').textContent = title;
+  $('#modalBody').innerHTML = bodyHtml;
+  $('#modalFoot').innerHTML = footHtml || '';
+  $('#modalBg').classList.add('open');
+}
+function closeModal(){ $('#modalBg').classList.remove('open') }
+$('#modalBg').addEventListener('click', e=>{ if(e.target.id==='modalBg') closeModal() });
+
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = (d instanceof Date) ? d : new Date(d);
+  if(isNaN(dt)) return String(d);
+  return dt.toLocaleDateString('pt-BR');
+}
+function fmtDateTime(d){
+  if(!d) return '—';
+  const dt = (d instanceof Date) ? d : new Date(d);
+  if(isNaN(dt)) return String(d);
+  return dt.toLocaleString('pt-BR', { dateStyle:'short', timeStyle:'short' });
+}
+function fmtMoney(v){
+  const n = Number(v||0);
+  return 'R$ ' + n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function todayISO(offset=0){
+  const d = new Date(); d.setDate(d.getDate()+offset);
+  return d.toISOString().slice(0,10);
+}
+function diffDays(a,b){
+  const A = new Date(a), B = new Date(b);
+  return Math.round((B-A)/(1000*60*60*24));
+}
+function esc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4) }
+function fmtAgo(iso){
+  if(!iso) return 'nunca';
+  const ms = Date.now() - new Date(iso).getTime();
+  if(isNaN(ms)) return 'nunca';
+  const s = Math.floor(ms/1000);
+  if(s < 60) return 'agora';
+  const m = Math.floor(s/60);
+  if(m < 60) return `há ${m} min`;
+  const h = Math.floor(m/60);
+  if(h < 24) return `há ${h}h`;
+  return `há ${Math.floor(h/24)}d`;
+}
+
+/* ──────────────────────────────────────────────
+   ROUTING
+   ────────────────────────────────────────────── */
+const VIEWS = {
+  overview:    { title:'Visão Geral',  sub:'Resumo da operação' },
+  telas:       { title:'Telas',        sub:'Players sincronizados com 4YouSee' },
+  conteudos:   { title:'Conteúdos',    sub:'Mídias do 4YouSee' },
+  anunciantes: { title:'Anunciantes',  sub:'Cadastro local e vínculo com mídias' },
+  relatorios:  { title:'Relatórios',   sub:'Prova de exibição por anunciante / período' },
+  conexao:     { title:'Conexão',      sub:'Token e proxy 4YouSee' },
+};
+
+function setView(v){
+  state.view = v;
+  $$('.nav-item').forEach(el=>el.classList.toggle('on', el.dataset.view===v));
+  $('#pageTitle').textContent = VIEWS[v].title;
+  $('#pageSub').textContent = VIEWS[v].sub;
+  render();
+  if(window.innerWidth < 880) $('#sidebar').classList.remove('open');
+}
+$$('.nav-item').forEach(el=>el.addEventListener('click', ()=>setView(el.dataset.view)));
+
+function updateConnBadge(){
+  const el = $('#connState');
+  if(state.token){
+    el.textContent = 'token configurado';
+    el.className = 'conn-state ok';
+  }else{
+    el.textContent = 'desconectado';
+    el.className = 'conn-state off';
+  }
+}
+
+function render(){
+  updateConnBadge();
+  const c = $('#content');
+  const acts = $('#pageActions');
+  c.innerHTML = ''; acts.innerHTML = '';
+  switch(state.view){
+    case 'overview':    return renderOverview(c, acts);
+    case 'telas':       return renderTelas(c, acts);
+    case 'conteudos':   return renderConteudos(c, acts);
+    case 'anunciantes': return renderAnunciantes(c, acts);
+    case 'relatorios':  return renderRelatorios(c, acts);
+    case 'conexao':     return renderConexao(c, acts);
+  }
+}
+
+/* ──────────────────────────────────────────────
+   STATUS DE ANUNCIANTE
+   ────────────────────────────────────────────── */
+function anunStatus(a){
+  const hoje = todayISO();
+  if(!a.dataInicio || !a.dataFim) return {key:'sem-periodo', label:'Sem período', cls:'gray'};
+  if(a.dataFim < hoje) return {key:'vencido', label:'Vencido', cls:'red'};
+  if(a.dataInicio > hoje) return {key:'futuro', label:'Futuro', cls:'blue'};
+  const dRest = diffDays(hoje, a.dataFim);
+  if(dRest <= 15) return {key:'vencendo', label:`Vence em ${dRest}d`, cls:'amber'};
+  return {key:'ativo', label:'Ativo', cls:'green'};
+}
+
+/* ──────────────────────────────────────────────
+   VIEW: OVERVIEW
+   ────────────────────────────────────────────── */
+function renderOverview(c){
+  const A = state.anunciantes;
+  const ativos = A.filter(a => anunStatus(a).key==='ativo' || anunStatus(a).key==='vencendo');
+  const vencendo = A.filter(a => anunStatus(a).key==='vencendo');
+  const vencidos = A.filter(a => anunStatus(a).key==='vencido');
+  const receitaMes = ativos.reduce((s,a)=>s+Number(a.valorMes||0),0);
+
+  c.innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi kp"><div class="kpi-lbl">Anunciantes ativos</div><div class="kpi-val">${ativos.length}</div><div class="kpi-hint">${A.length} cadastrados no total</div></div>
+      <div class="kpi ka"><div class="kpi-lbl">Vencendo (15d)</div><div class="kpi-val">${vencendo.length}</div><div class="kpi-hint">renovação a negociar</div></div>
+      <div class="kpi kr"><div class="kpi-lbl">Vencidos</div><div class="kpi-val">${vencidos.length}</div><div class="kpi-hint">contrato expirado</div></div>
+      <div class="kpi kg"><div class="kpi-lbl">Receita mensal ativa</div><div class="kpi-val">${fmtMoney(receitaMes)}</div><div class="kpi-hint">soma dos contratos ativos</div></div>
+      <div class="kpi kt"><div class="kpi-lbl">Telas (4YouSee)</div><div class="kpi-val">${state.players.length || '—'}</div><div class="kpi-hint">${state.players.length?'sincronizado':'sincronize na aba Telas'}</div></div>
+      <div class="kpi kpk"><div class="kpi-lbl">Mídias (4YouSee)</div><div class="kpi-val">${state.medias.length || '—'}</div><div class="kpi-hint">${state.medias.length?'sincronizado':'sincronize na aba Conteúdos'}</div></div>
+    </div>
+
+    <div class="tbl-wrap" style="margin-bottom:18px">
+      <div class="tbl-hdr">
+        <div class="tbl-title">Anunciantes — prioridade</div>
+        <div class="tbl-hint">vencendo primeiro</div>
+      </div>
+      ${
+        A.length === 0
+          ? `<div class="empty">Nenhum anunciante cadastrado ainda.<br><br><button class="btn primary" onclick="setView('anunciantes')">+ Cadastrar anunciante</button></div>`
+          : `<table><thead><tr><th>Anunciante</th><th>Período</th><th>Valor/mês</th><th>Status</th><th>Mídias</th><th></th></tr></thead><tbody>
+            ${A.slice().sort(sortByPriority).slice(0,8).map(a=>{
+              const st = anunStatus(a);
+              return `<tr>
+                <td><strong>${esc(a.nome)}</strong>${a.contato?`<div class="muted" style="font-size:10px">${esc(a.contato)}</div>`:''}</td>
+                <td class="mono">${fmtDate(a.dataInicio)} → ${fmtDate(a.dataFim)}</td>
+                <td class="mono">${fmtMoney(a.valorMes)}</td>
+                <td><span class="pill ${st.cls}">${st.label}</span></td>
+                <td class="mono">${(a.mediaIds||[]).length}</td>
+                <td style="text-align:right"><button class="btn sm" onclick="openAnunciante('${a.id}')">Abrir</button></td>
+              </tr>`;
+            }).join('')}
+          </tbody></table>`
+      }
+    </div>
+  `;
+}
+function sortByPriority(a,b){
+  const order = {vencendo:0, vencido:1, ativo:2, futuro:3, 'sem-periodo':4};
+  return (order[anunStatus(a).key] ?? 9) - (order[anunStatus(b).key] ?? 9);
+}
+
+/* ──────────────────────────────────────────────
+   VIEW: TELAS
+   ────────────────────────────────────────────── */
+function renderTelas(c, acts){
+  acts.innerHTML = `<button class="btn primary" onclick="loadPlayers()">${state.loadingPlayers?'<span class="spinner"></span> Carregando…':'↻ Sincronizar do 4YouSee'}</button>`;
+  if(state.players.length === 0 && !state.loadingPlayers){
+    c.innerHTML = `
+      <div class="help-box">
+        <strong>Telas (Players)</strong> são os dispositivos que reproduzem suas mídias. Clique em <strong>Sincronizar</strong> pra puxar a lista atual da sua conta 4YouSee.
+        Endpoint: <code>GET /v1/players</code>.
+      </div>
+      <div class="empty">Nenhum player carregado ainda.</div>`;
+    return;
+  }
+  c.innerHTML = `
+    <div class="tbl-wrap">
+      <div class="tbl-hdr">
+        <div class="tbl-title">${state.players.length} player${state.players.length===1?'':'s'}</div>
+        <div class="tbl-hint">${state.loadingPlayers?'<span class="spinner"></span> atualizando…':('atualizado '+fmtAgo(state.playersFetchedAt))}</div>
+      </div>
+      <table>
+        <thead><tr><th>Nome</th><th>Grupo</th><th>Plataforma</th><th>Último contato</th><th>Status</th></tr></thead>
+        <tbody>
+          ${state.players.map(p=>{
+            const st = playerStatusInfo(p);
+            return `<tr>
+              <td><strong>${esc(p.name||'(sem nome)')}</strong>${p.description?`<div class="muted" style="font-size:10px">${esc(p.description)}</div>`:''}</td>
+              <td>${esc(p.group?.name || p.group || '—')}</td>
+              <td>${esc(p.platform || '—')}</td>
+              <td class="mono">${fmtUltContato(p)}</td>
+              <td><span class="pill ${st.cls}">${esc(st.label)}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* Status do player conforme 4YouSee:
+   playerStatus.name ∈ {Online, Alert, Offline, Assistance needed, Local assist needed, Never accessed} */
+function playerStatusInfo(p){
+  const raw = (p.playerStatus?.name || p.status || '').toString();
+  const k = raw.toLowerCase();
+  if(k === 'online')                  return { label:'Online',           cls:'green' };
+  if(k === 'alert')                   return { label:'Alerta',           cls:'amber' };
+  if(k === 'offline')                 return { label:'Offline',          cls:'red'   };
+  if(k.includes('assistance'))        return { label:'Atenção',          cls:'red'   };
+  if(k.includes('local assist'))      return { label:'Assist. local',    cls:'amber' };
+  if(k.includes('never'))             return { label:'Nunca acessou',    cls:'gray'  };
+  return { label: raw || '—',          cls:'gray' };
+}
+
+function fmtUltContato(p){
+  // 4YouSee fornece lastContactInMinutes (int) e lastLogReceived (ISO).
+  const mins = p.lastContactInMinutes;
+  const log  = p.lastLogReceived || p.lastConnection || p.lastSync || null;
+  if(mins != null && !isNaN(mins)){
+    if(mins < 60) return `${mins} min atrás`;
+    if(mins < 60*24) return `${Math.floor(mins/60)}h atrás`;
+    return `${Math.floor(mins/(60*24))}d atrás`;
+  }
+  return fmtDateTime(log);
+}
+
+async function loadPlayers(silent){
+  if(state.loadingPlayers) return;
+  state.loadingPlayers = true; if(!silent) render();
+  try{
+    const data = await fetch4y('GET','/players');
+    state.players = Array.isArray(data) ? data : (data.results || data.players || data.items || []);
+    state.playersFetchedAt = new Date().toISOString();
+    savePlayersCache();
+    if(!silent) toast(`${state.players.length} players atualizados`);
+  }catch(e){
+    if(!silent) toast(e.message, 'err');
+  }finally{
+    state.loadingPlayers = false; render();
+  }
+}
+
+/* ──────────────────────────────────────────────
+   VIEW: CONTEÚDOS
+   ────────────────────────────────────────────── */
+function renderConteudos(c, acts){
+  acts.innerHTML = `<button class="btn primary" onclick="loadMedias()">${state.loadingMedias?'<span class="spinner"></span> Carregando…':'↻ Sincronizar do 4YouSee'}</button>`;
+  if(state.medias.length === 0 && !state.loadingMedias){
+    c.innerHTML = `
+      <div class="help-box">
+        <strong>Conteúdos (Mídias)</strong> são os arquivos enviados ao 4YouSee. Cada anunciante terá uma ou mais mídias vinculadas.
+        Endpoint: <code>GET /v1/medias</code>.
+      </div>
+      <div class="empty">Nenhuma mídia carregada ainda.</div>`;
+    return;
+  }
+  c.innerHTML = `
+    <div class="tbl-wrap">
+      <div class="tbl-hdr">
+        <div class="tbl-title">${state.medias.length} mídia${state.medias.length===1?'':'s'}</div>
+        <div class="tbl-hint">${state.loadingMedias?'<span class="spinner"></span> atualizando…':('atualizado '+fmtAgo(state.mediasFetchedAt))}</div>
+      </div>
+      <table>
+        <thead><tr><th>Nome</th><th>Duração</th><th>Categoria</th><th>Agendamento</th><th>Vínculo</th></tr></thead>
+        <tbody>
+          ${state.medias.map(m=>{
+            const sch = m.schedule ? `${fmtDate(m.schedule.startDate)} → ${fmtDate(m.schedule.endDate)}` : '—';
+            const cats = (m.categories||[]).map(c=>c.name||c).join(', ') || '—';
+            const linked = state.anunciantes.find(a => (a.mediaIds||[]).includes(m.id));
+            return `<tr>
+              <td><strong>${esc(m.name||'(sem nome)')}</strong>${m.description?`<div class="muted" style="font-size:10px">${esc(m.description)}</div>`:''}<div class="muted mono" style="font-size:9px">id ${m.id}</div></td>
+              <td class="mono">${m.durationInSeconds||m.duration||'—'}s</td>
+              <td>${esc(cats)}</td>
+              <td class="mono">${sch}</td>
+              <td>${linked
+                ? `<span class="pill purple">${esc(linked.nome)}</span>`
+                : `<button class="btn sm" onclick="linkMediaToAnunciante(${m.id})">+ vincular</button>`
+              }</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+async function loadMedias(silent){
+  if(state.loadingMedias) return;
+  state.loadingMedias = true; if(!silent) render();
+  try{
+    const data = await fetch4y('GET','/medias');
+    state.medias = Array.isArray(data) ? data : (data.results || data.medias || data.items || []);
+    state.mediasFetchedAt = new Date().toISOString();
+    saveMediasCache();
+    if(!silent) toast(`${state.medias.length} mídias atualizadas`);
+  }catch(e){
+    if(!silent) toast(e.message, 'err');
+  }finally{
+    state.loadingMedias = false; render();
+  }
+}
+function linkMediaToAnunciante(mediaId){
+  if(state.anunciantes.length === 0){
+    if(confirm('Você ainda não tem anunciantes cadastrados. Cadastrar agora?')){
+      setView('anunciantes'); setTimeout(()=>openAnunciante(null, [mediaId]), 100);
+    }
+    return;
+  }
+  const opts = state.anunciantes.map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('');
+  openModal('Vincular mídia #'+mediaId, `
+    <div class="field">
+      <label class="field-lbl">Anunciante</label>
+      <select class="input" id="linkSel">${opts}</select>
+    </div>
+  `, `
+    <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="doLinkMedia(${mediaId})">Vincular</button>
+  `);
+}
+function doLinkMedia(mediaId){
+  const aId = $('#linkSel').value;
+  const a = state.anunciantes.find(x=>x.id===aId);
+  if(!a) return;
+  a.mediaIds = a.mediaIds || [];
+  if(!a.mediaIds.includes(mediaId)) a.mediaIds.push(mediaId);
+  saveLocal(); closeModal(); render();
+  toast(`Mídia vinculada a ${a.nome}`);
+}
+
+/* ──────────────────────────────────────────────
+   VIEW: ANUNCIANTES
+   ────────────────────────────────────────────── */
+function renderAnunciantes(c, acts){
+  acts.innerHTML = `<button class="btn primary" onclick="openAnunciante(null)">+ Novo anunciante</button>`;
+  if(state.anunciantes.length === 0){
+    c.innerHTML = `
+      <div class="help-box">
+        Cadastre cada cliente que comprou pacote de mídia. Vincule as <strong>mediaIds do 4YouSee</strong> que pertencem a ele — assim o relatório consegue isolar a prova de exibição daquela marca.
+      </div>
+      <div class="empty">Nenhum anunciante cadastrado.<br><br><button class="btn primary" onclick="openAnunciante(null)">+ Cadastrar primeiro anunciante</button></div>`;
+    return;
+  }
+  c.innerHTML = `
+    <div class="tbl-wrap">
+      <div class="tbl-hdr">
+        <div class="tbl-title">${state.anunciantes.length} anunciante${state.anunciantes.length===1?'':'s'}</div>
+      </div>
+      <table>
+        <thead><tr><th>Nome</th><th>Contato</th><th>Período</th><th>Valor/mês</th><th>Mídias</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${state.anunciantes.slice().sort(sortByPriority).map(a=>{
+            const st = anunStatus(a);
+            const cPath = a.contratoPath || a.propostaUrl || '';
+            return `<tr>
+              <td><strong>${esc(a.nome)}</strong></td>
+              <td>${esc(a.contato||'—')}</td>
+              <td class="mono">${fmtDate(a.dataInicio)} → ${fmtDate(a.dataFim)}</td>
+              <td class="mono">${fmtMoney(a.valorMes)}</td>
+              <td class="mono">${(a.mediaIds||[]).join(', ') || '—'}</td>
+              <td><span class="pill ${st.cls}">${st.label}</span></td>
+              <td style="text-align:right;white-space:nowrap">
+                ${cPath ? `<button class="btn sm" onclick='abrirContrato(${JSON.stringify(cPath)})' title="Abrir contrato">📄</button>` : ''}
+                <button class="btn sm" onclick="openAnunciante('${a.id}')">Editar</button>
+                <button class="btn sm danger" onclick="deleteAnunciante('${a.id}')">×</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function openAnunciante(id, preMediaIds){
+  const a = id ? state.anunciantes.find(x=>x.id===id) : {
+    id:'', nome:'', contato:'', mediaIds: preMediaIds || [], valorMes:'', dataInicio:todayISO(), dataFim:todayISO(90), propostaUrl:'', notas:''
+  };
+  const opts = state.medias.map(m =>
+    `<option value="${m.id}" ${a.mediaIds.includes(m.id)?'selected':''}>#${m.id} — ${esc(m.name||'(sem nome)')}</option>`
+  ).join('');
+  openModal(id?'Editar anunciante':'Novo anunciante', `
+    <div class="field"><label class="field-lbl">Nome do anunciante *</label>
+      <input class="input" id="f_nome" value="${esc(a.nome)}" placeholder="Ex.: Padaria Forneria"></div>
+    <div class="field"><label class="field-lbl">Contato</label>
+      <input class="input" id="f_contato" value="${esc(a.contato)}" placeholder="nome + telefone/e-mail"></div>
+    <div class="row2">
+      <div class="field"><label class="field-lbl">Início *</label>
+        <input class="input" type="date" id="f_inicio" value="${esc(a.dataInicio)}"></div>
+      <div class="field"><label class="field-lbl">Fim *</label>
+        <input class="input" type="date" id="f_fim" value="${esc(a.dataFim)}"></div>
+    </div>
+    <div class="field"><label class="field-lbl">Valor mensal (R$)</label>
+      <input class="input" type="number" step="0.01" id="f_valor" value="${esc(a.valorMes)}"></div>
+    <div class="field"><label class="field-lbl">Mídias vinculadas no 4YouSee</label>
+      ${state.medias.length === 0
+        ? `<div class="muted" style="font-size:11px">Carregue as mídias na aba Conteúdos primeiro, ou digite os IDs manualmente abaixo.</div><input class="input mono" id="f_mediaIds_manual" placeholder="ex: 12, 18, 24" value="${esc((a.mediaIds||[]).join(', '))}">`
+        : `<select class="input" id="f_mediaIds" multiple size="6">${opts}</select><div class="muted" style="font-size:10px;margin-top:4px">Cmd/Ctrl+click pra selecionar várias</div>`
+      }
+    </div>
+    <div class="field"><label class="field-lbl">Contrato (caminho no Mac)</label>
+      <input class="input mono" id="f_contrato" value="${esc(a.contratoPath || a.propostaUrl || '')}" placeholder="/Users/ederbalbino/Documents/MGB Mídia/MGB contratos/Elevadores/nome_do_arquivo.pdf">
+      <div class="muted" style="font-size:10px;margin-top:4px">Pasta padrão: <code style="font-family:'DM Mono',monospace;background:var(--bg);padding:1px 5px;border-radius:3px;color:var(--purple)">~/Documents/MGB Mídia/MGB contratos/Elevadores/</code></div></div>
+    <div class="field"><label class="field-lbl">Notas</label>
+      <textarea class="input" id="f_notas" placeholder="Ex.: cobrança no dia 5 · proposta R$ 800/mês · renovação anual">${esc(a.notas||'')}</textarea></div>
+  `, `
+    <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn primary" onclick="saveAnunciante('${a.id||''}')">Salvar</button>
+  `);
+}
+
+function saveAnunciante(id){
+  const nome = $('#f_nome').value.trim();
+  if(!nome){ toast('Nome obrigatório','err'); return; }
+  let mediaIds = [];
+  if(state.medias.length === 0){
+    const raw = $('#f_mediaIds_manual')?.value || '';
+    mediaIds = raw.split(',').map(s=>parseInt(s.trim(),10)).filter(n=>!isNaN(n));
+  }else{
+    mediaIds = [...$('#f_mediaIds').selectedOptions].map(o => parseInt(o.value,10));
+  }
+  const data = {
+    nome,
+    contato: $('#f_contato').value.trim(),
+    dataInicio: $('#f_inicio').value,
+    dataFim: $('#f_fim').value,
+    valorMes: parseFloat($('#f_valor').value) || 0,
+    mediaIds,
+    contratoPath: $('#f_contrato').value.trim(),
+    notas: $('#f_notas').value.trim(),
+  };
+  if(id){
+    const a = state.anunciantes.find(x=>x.id===id);
+    Object.assign(a, data);
+  }else{
+    state.anunciantes.push({ id: uid(), ...data });
+  }
+  saveLocal(); closeModal(); render();
+  toast(id?'Anunciante atualizado':'Anunciante cadastrado');
+}
+
+function abrirContrato(rawPath){
+  if(!rawPath){ toast('Sem caminho de contrato','err'); return; }
+  // Normaliza ~ → /Users/<user>
+  let p = String(rawPath).trim().replace(/^~/, '/Users/ederbalbino');
+  // Já é URL http(s) ou file:// → abre direto
+  if(/^(https?:|file:)/i.test(p)){
+    window.open(p, '_blank');
+    return;
+  }
+  // Caminho absoluto Mac → vira file:// com encodeURI por segmento
+  if(p.startsWith('/')){
+    const url = 'file://' + p.split('/').map(seg => encodeURIComponent(seg)).join('/');
+    // Tenta abrir. Chrome bloqueia file:// de file:// silenciosamente — fallback abaixo.
+    const w = window.open(url, '_blank');
+    setTimeout(()=>{
+      // Se não conseguiu abrir, mostra modal com instrução
+      openModal('Abrir contrato', `
+        <div class="help-box">Se o navegador bloqueou a abertura do PDF (Chrome bloqueia <code>file://</code> a partir de outra página local por segurança), use uma das opções:</div>
+        <div class="field"><label class="field-lbl">Caminho do arquivo</label>
+          <input class="input mono" id="cp_path" value="${esc(p)}" readonly onclick="this.select()"></div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="copyPath()">📋 Copiar caminho</button>
+          <button class="btn" onclick="revelarNoFinder('${esc(p).replace(/'/g,"\\\\'")}')">🔎 Mostrar no Finder</button>
+        </div>
+      `, `<button class="btn ghost" onclick="closeModal()">Fechar</button>`);
+    }, 350);
+    return;
+  }
+  toast('Caminho inválido: '+p, 'err');
+}
+
+function copyPath(){
+  const inp = document.getElementById('cp_path');
+  if(!inp) return;
+  inp.select();
+  navigator.clipboard?.writeText(inp.value).then(()=>toast('Caminho copiado')).catch(()=>{
+    document.execCommand('copy');
+    toast('Caminho copiado');
+  });
+}
+
+function revelarNoFinder(p){
+  // Tenta abrir só a PASTA (Finder vai dar foco nela). Cole o nome do arquivo nela.
+  const parent = p.replace(/\/[^/]+$/, '');
+  const url = 'file://' + parent.split('/').map(seg => encodeURIComponent(seg)).join('/');
+  window.open(url, '_blank');
+}
+
+function deleteAnunciante(id){
+  const a = state.anunciantes.find(x=>x.id===id);
+  if(!a) return;
+  if(!confirm(`Remover "${a.nome}"?`)) return;
+  state.anunciantes = state.anunciantes.filter(x=>x.id!==id);
+  saveLocal(); render();
+  toast('Removido');
+}
+
+/* ──────────────────────────────────────────────
+   VIEW: RELATÓRIOS
+   ────────────────────────────────────────────── */
+function renderRelatorios(c, acts){
+  autoResumePolling();
+  const opts = state.anunciantes.map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('');
+  c.innerHTML = `
+    <div class="help-box">
+      A API 4YouSee gera relatórios <strong>assíncronos</strong>: POST <code>/v1/reports</code> cria, depois você consulta GET <code>/v1/reports/{id}</code> até ficar pronto.
+      Cada relatório contém a <strong>prova de exibição</strong> (mídia + player + data/hora). Limite: 30 dias por relatório.
+    </div>
+
+    <div class="tbl-wrap" style="margin-bottom:18px">
+      <div class="tbl-hdr"><div class="tbl-title">Gerar novo relatório</div></div>
+      <div style="padding:18px">
+        <div class="row3">
+          <div class="field"><label class="field-lbl">Anunciante</label>
+            <select class="input" id="r_anunciante">
+              <option value="">Todos os anunciantes</option>${opts}
+            </select></div>
+          <div class="field"><label class="field-lbl">Início</label>
+            <input class="input" type="date" id="r_inicio" value="${todayISO(-30)}"></div>
+          <div class="field"><label class="field-lbl">Fim</label>
+            <input class="input" type="date" id="r_fim" value="${todayISO()}"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="gerarRelatorio()">▶ Gerar relatório</button>
+          <span class="muted" style="font-size:11px;align-self:center">Roda em background — você pode continuar usando o sistema</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-hdr"><div class="tbl-title">Histórico de relatórios</div><div class="tbl-hint">guardados localmente</div></div>
+      ${state.reports.length === 0
+        ? `<div class="empty">Nenhum relatório gerado ainda.</div>`
+        : `<table><thead><tr><th>Gerado</th><th>Anunciante</th><th>Período</th><th>Status</th><th>Exibições</th><th></th></tr></thead><tbody>
+          ${state.reports.slice().reverse().map(r=>{
+            const an = state.anunciantes.find(a=>a.id===r.anuncianteId);
+            const isProc = r.status==='processando';
+            const stCls = r.status==='pronto'?'green':(r.status==='erro'||r.status==='timeout')?'red':'amber';
+            return `<tr>
+              <td class="mono">${fmtDateTime(r.createdAt)}</td>
+              <td>${an?esc(an.nome):'<span class="muted">todos</span>'}</td>
+              <td class="mono">${fmtDate(r.startDate)} → ${fmtDate(r.endDate)}</td>
+              <td><span class="pill ${stCls}">${isProc?'<span class="spinner" style="width:10px;height:10px"></span> ':''}${r.status||'?'}</span></td>
+              <td class="mono">${r.totalExibicoes ?? '—'}</td>
+              <td style="text-align:right;white-space:nowrap">
+                ${r.status==='pronto' ? `<button class="btn sm" onclick="verRelatorio('${r.localId}')">Ver</button>` : ''}
+                ${(r.status==='timeout'||r.status==='erro') ? `<button class="btn sm" onclick="retomarRelatorio('${r.localId}')" title="Tentar novamente">↻</button>` : ''}
+                <button class="btn sm danger" onclick="removerRelatorio('${r.localId}')">×</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody></table>`
+      }
+    </div>
+  `;
+}
+
+async function gerarRelatorio(){
+  const anId = $('#r_anunciante').value;
+  const startDate = $('#r_inicio').value;
+  const endDate = $('#r_fim').value;
+  if(!startDate || !endDate){ toast('Defina o período','err'); return; }
+  if(diffDays(startDate, endDate) > 30){ toast('Período máximo é 30 dias','err'); return; }
+
+  const an = anId ? state.anunciantes.find(a=>a.id===anId) : null;
+  const mediaIds = an ? (an.mediaIds||[]) : [];
+  if(anId && mediaIds.length === 0){
+    toast('Esse anunciante não tem mediaIds vinculadas — sem o que filtrar','err');
+    return;
+  }
+
+  const localId = uid();
+  const rec = {
+    localId, anuncianteId: anId || null, startDate, endDate, mediaIds,
+    createdAt: new Date().toISOString(),
+    status:'criando', apiReportId:null, totalExibicoes: null, payload: null,
+  };
+  state.reports.push(rec); saveLocal(); render();
+
+  // Cria no 4YouSee em background; UI já liberou
+  try{
+    const body = {
+      type: 'detailed',
+      filter: {
+        startDate, endDate,
+        startTime: '00:00:00', endTime: '23:59:59',
+        ...(mediaIds.length ? { mediaId: mediaIds } : {}),
+      }
+    };
+    const created = await fetch4y('POST', '/reports', body);
+    rec.apiReportId = created.id || created.reportId || created.report_id || null;
+    if(!rec.apiReportId){
+      throw new Error('API não retornou ID. Resposta: '+JSON.stringify(created).slice(0,200));
+    }
+    rec.status = 'processando'; saveLocal(); render();
+    toast(`Relatório #${rec.apiReportId} em processamento — você pode continuar usando o sistema`);
+    polleiaRelatorio(rec);   // fire-and-forget — não bloqueia
+  }catch(e){
+    rec.status='erro'; rec.erro=e.message; saveLocal(); render();
+    toast(e.message,'err');
+  }
+}
+
+async function polleiaRelatorio(rec){
+  if(!rec || !rec.apiReportId) return;
+  if(state.pollingReports[rec.localId]) return; // já tem polling rodando
+  state.pollingReports[rec.localId] = true;
+  let errosSeguidos = 0;
+  try{
+    for(let i=0; i<120; i++){ // até ~6min (120 × 3s)
+      await new Promise(r=>setTimeout(r,3000));
+      // Encontra rec atualizado (pode ter sido removido pelo user)
+      const cur = state.reports.find(r => r.localId === rec.localId);
+      if(!cur || cur.status === 'pronto') return;
+      try{
+        const r = await fetch4y('GET', '/reports/'+rec.apiReportId);
+        errosSeguidos = 0;
+        const link = r.downloadLink || r.url || r.downloadURL || r.download_link || r.fileUrl || r.file;
+        const inlineArr = Array.isArray(r.data) ? r.data : Array.isArray(r.items) ? r.items : Array.isArray(r.rows) ? r.rows : null;
+        const doneStatuses = ['done','success','complete','completed','ready','finished'];
+        const isDone = doneStatuses.includes(String(r.status||'').toLowerCase()) || link || inlineArr;
+        if(isDone){
+          cur.status='pronto'; cur.payload = r;
+          if(link && !inlineArr){
+            try{
+              cur.payload._rows = await baixarRelatorioExterno(link);
+              delete cur.payload._downloadError;
+            }catch(err){
+              cur.payload._downloadError = err.message;
+            }
+          }
+          cur.totalExibicoes = contaExibicoes(cur.payload);
+          saveLocal(); render();
+          toast(`✓ Relatório #${rec.apiReportId} pronto`);
+          notifyPronto(rec, cur);
+          return;
+        }
+        if(r.status === 'error' || r.status === 'failed'){
+          cur.status='erro'; cur.erro='API reportou falha no processamento';
+          saveLocal(); render(); return;
+        }
+      }catch(e){
+        errosSeguidos++;
+        if(errosSeguidos > 4){
+          const cur = state.reports.find(r => r.localId === rec.localId);
+          if(cur){ cur.status='erro'; cur.erro=e.message; saveLocal(); render(); }
+          toast('Polling falhou: '+e.message,'err');
+          return;
+        }
+      }
+    }
+    const cur = state.reports.find(r => r.localId === rec.localId);
+    if(cur && cur.status === 'processando'){
+      cur.status='timeout'; saveLocal(); render();
+      toast('Timeout — clique em ↻ no histórico pra tentar de novo','err');
+    }
+  } finally {
+    delete state.pollingReports[rec.localId];
+  }
+}
+
+function notifyPronto(rec, cur){
+  // Tenta notificação nativa do SO se permitido
+  if(window.Notification && Notification.permission === 'granted'){
+    const an = state.anunciantes.find(a=>a.id===rec.anuncianteId);
+    new Notification('Relatório pronto', {
+      body: `${an?an.nome:'Todos'} · ${cur.totalExibicoes ?? '?'} exibições`,
+    });
+  }
+}
+
+function retomarRelatorio(localId){
+  const r = state.reports.find(x=>x.localId===localId);
+  if(!r){ return; }
+  if(r.status !== 'processando' && r.status !== 'timeout' && r.status !== 'erro') return;
+  r.status = 'processando'; saveLocal(); render();
+  polleiaRelatorio(r);
+  toast(`Retomando #${r.apiReportId}`);
+}
+
+// Quando abre a aba Relatórios, retoma polling dos que ficaram em "processando"
+function autoResumePolling(){
+  for(const r of state.reports){
+    if(r.status === 'processando' && r.apiReportId && !state.pollingReports[r.localId]){
+      polleiaRelatorio(r);
+    }
+  }
+}
+
+function contaExibicoes(payload){
+  if(!payload) return null;
+  if(Array.isArray(payload.data)) return payload.data.length;
+  if(Array.isArray(payload.items)) return payload.items.length;
+  if(typeof payload.totalRows === 'number') return payload.totalRows;
+  if(typeof payload.count === 'number') return payload.count;
+  return null;
+}
+
+function setProgress(msg){
+  const el = $('#r_progress');
+  if(!el) return;
+  el.innerHTML = msg ? `<span class="spinner"></span> <span style="font-size:12px;color:var(--muted)">${esc(msg)}</span>` : '';
+}
+
+function removerRelatorio(localId){
+  state.reports = state.reports.filter(r=>r.localId!==localId);
+  saveLocal(); render();
+}
+
+function verRelatorio(localId){
+  const r = state.reports.find(x=>x.localId===localId);
+  if(!r || !r.payload){ toast('Sem dados','err'); return; }
+  const an = state.anunciantes.find(a=>a.id===r.anuncianteId);
+  const linhas = extraiLinhas(r.payload);
+  const porPlayer = agruparPor(linhas, 'playerName', 'playerId');
+  const porMedia = agruparPor(linhas, 'mediaName', 'mediaId');
+  const porDia = agruparPorDia(linhas);
+  const dlErr = r.payload._downloadError;
+  const dlUrl = r.payload.url || r.payload.downloadLink;
+
+  const errBox = dlErr ? `
+    <div class="help-box" style="border-color:rgba(248,113,113,.4)">
+      <strong style="color:var(--red)">⚠ Não foi possível baixar o arquivo do relatório</strong><br>
+      A API gerou o relatório como arquivo <code>.gz</code> num S3, mas o navegador bloqueou o download (CORS).<br>
+      Erro: <code>${esc(dlErr)}</code><br><br>
+      <strong>Caminhos pra resolver:</strong><br>
+      • <a href="${esc(dlUrl)}" target="_blank" style="color:var(--purple)">Baixar arquivo .gz manualmente</a> (descompacta, abre o JSON)<br>
+      • Ou: clica em <strong>↻ Re-tentar download</strong> abaixo — se você configurou um proxy CORS na aba Conexão, vai usar ele agora.<br>
+      • Solução definitiva: rodar via <code>python3 -m http.server</code> (vou explicar no chat) ou Cloudflare Worker.
+    </div>
+  ` : '';
+
+  openModal(`Relatório · ${an?an.nome:'todos'} · ${fmtDate(r.startDate)} → ${fmtDate(r.endDate)}`, `
+    ${errBox}
+    <div class="report-stat">
+      <div class="kpi kp"><div class="kpi-lbl">Total exibições</div><div class="kpi-val">${linhas.length}</div></div>
+      <div class="kpi kt"><div class="kpi-lbl">Players atingidos</div><div class="kpi-val">${Object.keys(porPlayer).length}</div></div>
+      <div class="kpi kpk"><div class="kpi-lbl">Mídias diferentes</div><div class="kpi-val">${Object.keys(porMedia).length}</div></div>
+    </div>
+    <div class="section-title">Exibições por player</div>
+    ${renderBars(porPlayer)}
+    <div class="section-title">Exibições por mídia</div>
+    ${renderBars(porMedia)}
+    <div class="section-title">Exibições por dia</div>
+    ${renderBars(porDia)}
+  `, `
+    <button class="btn ghost" onclick="closeModal()">Fechar</button>
+    <button class="btn" onclick='verJsonCru(${JSON.stringify(localId)})'>🔍 JSON cru</button>
+    ${dlErr ? `<button class="btn" onclick='retryDownload(${JSON.stringify(localId)})'>↻ Re-tentar download</button>` : ''}
+    <button class="btn" onclick='exportarCSV(${JSON.stringify(localId)})'>↓ CSV</button>
+    <button class="btn primary" onclick='exportarHTMLCliente(${JSON.stringify(localId)})'>↗ Versão do cliente</button>
+  `);
+}
+
+async function retryDownload(localId){
+  const r = state.reports.find(x=>x.localId===localId);
+  if(!r) return;
+  const link = r.payload?.url || r.payload?.downloadLink;
+  if(!link){ toast('Sem URL pra baixar','err'); return; }
+  toast('Tentando baixar de novo…');
+  try{
+    r.payload._rows = await baixarRelatorioExterno(link);
+    delete r.payload._downloadError;
+    r.totalExibicoes = contaExibicoes(r.payload);
+    saveLocal(); render();
+    closeModal();
+    setTimeout(()=>verRelatorio(localId), 100);
+    toast('✓ Download OK — '+r.totalExibicoes+' exibições');
+  }catch(e){
+    r.payload._downloadError = e.message;
+    saveLocal();
+    toast('Falhou: '+e.message,'err');
+    closeModal();
+    setTimeout(()=>verRelatorio(localId), 100);
+  }
+}
+
+function verJsonCru(localId){
+  const r = state.reports.find(x=>x.localId===localId);
+  if(!r){ return; }
+  const json = JSON.stringify(r.payload, null, 2);
+  const an = state.anunciantes.find(a=>a.id===r.anuncianteId);
+  openModal('JSON cru · #'+r.apiReportId, `
+    <div class="help-box">
+      Resposta bruta da API 4YouSee pra esse relatório. Copia e cola pro Eder caso o relatório esteja vazio — assim a gente identifica o formato real do retorno.
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">
+      Anunciante: ${an?esc(an.nome):'todos'} · período ${fmtDate(r.startDate)} → ${fmtDate(r.endDate)} ·
+      mediaIds filtrados: ${(r.mediaIds||[]).join(', ')||'(nenhum)'}
+    </div>
+    <textarea class="input mono" id="json_raw" readonly style="height:300px;font-size:11px" onclick="this.select()">${esc(json)}</textarea>
+  `, `
+    <button class="btn ghost" onclick="closeModal()">Fechar</button>
+    <button class="btn primary" onclick="copyJsonRaw()">📋 Copiar</button>
+  `);
+}
+function copyJsonRaw(){
+  const ta = document.getElementById('json_raw');
+  if(!ta) return;
+  ta.select();
+  navigator.clipboard?.writeText(ta.value).then(()=>toast('JSON copiado')).catch(()=>{
+    document.execCommand('copy');
+    toast('JSON copiado');
+  });
+}
+
+function extraiLinhas(payload){
+  if(!payload) return [];
+  // Resultado baixado de um downloadLink externo (CSV ou JSON parseado)
+  if(Array.isArray(payload._rows)) return payload._rows;
+  if(Array.isArray(payload)) return payload;
+  if(Array.isArray(payload.data)) return payload.data;
+  if(Array.isArray(payload.items)) return payload.items;
+  if(Array.isArray(payload.rows)) return payload.rows;
+  if(Array.isArray(payload.result)) return payload.result;
+  if(Array.isArray(payload.results)) return payload.results;
+  return [];
+}
+
+let _pakoPromise = null;
+function loadPako(){
+  if(window.pako) return Promise.resolve(window.pako);
+  if(_pakoPromise) return _pakoPromise;
+  _pakoPromise = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js';
+    s.onload = () => res(window.pako);
+    s.onerror = () => rej(new Error('Falha ao carregar pako (descompactador gzip)'));
+    document.head.appendChild(s);
+  });
+  return _pakoPromise;
+}
+
+async function tryFetch(url){
+  // 1ª tentativa: fetch direto
+  try{ return await fetch(url); }
+  catch(e){
+    // 2ª: via proxy configurado, se houver (ex.: Cloudflare Worker que aceita ?url=)
+    if(state.proxy){
+      const proxied = state.proxy.replace(/\/$/,'') + '/?url=' + encodeURIComponent(url);
+      try{ return await fetch(proxied); }
+      catch(e2){ throw new Error('CORS bloqueou e proxy falhou: '+e2.message); }
+    }
+    throw e;
+  }
+}
+
+async function baixarRelatorioExterno(url){
+  const res = await tryFetch(url);
+  if(!res.ok) throw new Error('HTTP '+res.status+' ao baixar '+url);
+
+  const isGz = /\.gz(\?|$)/i.test(url) || (res.headers.get('Content-Type')||'').includes('gzip');
+  let txt;
+  if(isGz){
+    const pako = await loadPako();
+    const buf = await res.arrayBuffer();
+    txt = pako.ungzip(new Uint8Array(buf), { to: 'string' });
+  }else{
+    txt = await res.text();
+  }
+  // Tenta JSON primeiro
+  try{
+    const j = JSON.parse(txt);
+    if(Array.isArray(j)) return j;
+    if(Array.isArray(j.data)) return j.data;
+    if(Array.isArray(j.items)) return j.items;
+    if(Array.isArray(j.rows)) return j.rows;
+    if(Array.isArray(j.results)) return j.results;
+    return [j];
+  }catch(_){ /* tenta CSV */ }
+  return parseCsv(txt);
+}
+
+function parseCsv(txt){
+  const lines = txt.split(/\r?\n/).filter(l=>l.trim().length>0);
+  if(lines.length < 2) return [];
+  // Detecta separador (; ou ,)
+  const sep = (lines[0].match(/;/g)||[]).length > (lines[0].match(/,/g)||[]).length ? ';' : ',';
+  const split = l => {
+    const out = []; let cur = ''; let q = false;
+    for(let i=0;i<l.length;i++){
+      const c = l[i];
+      if(c === '"' && l[i+1] === '"'){ cur += '"'; i++; continue; }
+      if(c === '"'){ q = !q; continue; }
+      if(c === sep && !q){ out.push(cur); cur=''; continue; }
+      cur += c;
+    }
+    out.push(cur);
+    return out;
+  };
+  const headers = split(lines[0]).map(h=>h.trim());
+  return lines.slice(1).map(l=>{
+    const vals = split(l);
+    const obj = {};
+    headers.forEach((h,i)=>{ obj[h] = vals[i]; });
+    return obj;
+  });
+}
+function agruparPor(linhas, nameField, idField){
+  const map = {};
+  for(const l of linhas){
+    const key = l[nameField] || l[idField] || l.mediaName || l.playerName || '(desconhecido)';
+    map[key] = (map[key]||0)+1;
+  }
+  return map;
+}
+function agruparPorDia(linhas){
+  const map = {};
+  for(const l of linhas){
+    const dt = l.date || l.dateTime || l.exhibitedAt || l.start || l.time;
+    if(!dt) continue;
+    const k = String(dt).slice(0,10);
+    map[k] = (map[k]||0)+1;
+  }
+  return map;
+}
+function renderBars(map){
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  if(entries.length === 0) return '<div class="muted" style="font-size:11px">Sem dados para esse agrupamento.</div>';
+  const max = Math.max(...entries.map(e=>e[1]));
+  return entries.map(([k,v])=>`
+    <div class="bar-row">
+      <div class="lbl">${esc(k)}</div>
+      <div class="bar"><div style="width:${(v/max)*100}%"></div></div>
+      <div class="val">${v}</div>
+    </div>`).join('');
+}
+
+function exportarCSV(localId){
+  const r = state.reports.find(x=>x.localId===localId);
+  if(!r) return;
+  const linhas = extraiLinhas(r.payload);
+  if(linhas.length === 0){ toast('Sem dados','err'); return; }
+  const cols = Object.keys(linhas[0]);
+  const csv = [cols.join(';'), ...linhas.map(l => cols.map(c => JSON.stringify(l[c]??'')).join(';'))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `relatorio_${r.startDate}_${r.endDate}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportarHTMLCliente(localId){
+  const r = state.reports.find(x=>x.localId===localId);
+  if(!r) return;
+  const an = state.anunciantes.find(a=>a.id===r.anuncianteId);
+  const linhas = extraiLinhas(r.payload);
+  const porPlayer = agruparPor(linhas, 'playerName', 'playerId');
+  const porDia = agruparPorDia(linhas);
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Relatório de exibição — ${esc(an?an.nome:'MGB')}</title>
+<style>
+  body{font-family:-apple-system,Arial,sans-serif;max-width:780px;margin:0 auto;padding:34px 24px;color:#1a1d23}
+  h1{font-size:24px;margin-bottom:6px;color:#6B21A8}
+  .meta{color:#666;font-size:13px;margin-bottom:24px}
+  .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+  .stat div{background:#F4F0FA;padding:14px;border-radius:8px}
+  .stat .n{font-size:24px;font-weight:700;color:#6B21A8}
+  .stat .l{font-size:11px;text-transform:uppercase;color:#888;letter-spacing:.08em;margin-top:4px}
+  h2{font-size:15px;margin:20px 0 10px;color:#6B21A8}
+  .bar{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px}
+  .bar .l{flex:0 0 200px;color:#555}
+  .bar .b{flex:1;height:7px;background:#eee;border-radius:4px;overflow:hidden}
+  .bar .b > div{height:100%;background:#8b83f7}
+  .bar .v{flex:0 0 50px;text-align:right;font-family:monospace}
+  .foot{margin-top:32px;padding-top:18px;border-top:1px solid #eee;font-size:11px;color:#888}
+</style></head><body>
+<h1>Relatório de exibição</h1>
+<div class="meta">${an?esc(an.nome):'Todos os anunciantes'} · ${fmtDate(r.startDate)} a ${fmtDate(r.endDate)}</div>
+<div class="stat">
+  <div><div class="n">${linhas.length}</div><div class="l">Exibições</div></div>
+  <div><div class="n">${Object.keys(porPlayer).length}</div><div class="l">Telas atingidas</div></div>
+  <div><div class="n">${diffDays(r.startDate,r.endDate)+1}</div><div class="l">Dias</div></div>
+</div>
+<h2>Exibições por tela</h2>
+${barsHTML(porPlayer)}
+<h2>Exibições por dia</h2>
+${barsHTML(porDia)}
+<div class="foot">MGB Mídia Elevadores · gerado em ${fmtDateTime(new Date())} · dados via 4YouSee Manager API</div>
+</body></html>`;
+  const blob = new Blob([html],{type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank');
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+function barsHTML(map){
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  if(entries.length === 0) return '<div style="color:#888;font-size:12px">Sem dados.</div>';
+  const max = Math.max(...entries.map(e=>e[1]));
+  return entries.map(([k,v])=>`
+    <div class="bar"><div class="l">${esc(k)}</div><div class="b"><div style="width:${(v/max)*100}%"></div></div><div class="v">${v}</div></div>
+  `).join('');
+}
+
+/* ──────────────────────────────────────────────
+   VIEW: CONEXÃO
+   ────────────────────────────────────────────── */
+function renderConexao(c){
+  c.innerHTML = `
+    <div class="help-box">
+      <strong>Como pegar o Secret-Token:</strong><br>
+      1. Acesse o seu 4YouSee Manager (manager.4yousee.com.br ou domínio próprio).<br>
+      2. Vá em <strong>Configurações → Integrações</strong>.<br>
+      3. Clique em <strong>Adicionar</strong>, dê um nome (ex.: "Gestor MGB") e copie o token gerado.<br>
+      4. Cole abaixo. O token fica salvo só no seu navegador (localStorage), não sobe pra GitHub.
+    </div>
+
+    <div class="tbl-wrap" style="padding:18px">
+      <div class="field"><label class="field-lbl">Secret-Token</label>
+        <input class="input mono" id="cx_token" value="${esc(state.token)}" placeholder="cole aqui o token"></div>
+
+      <div class="field"><label class="field-lbl">URL do proxy CORS (opcional)</label>
+        <input class="input mono" id="cx_proxy" value="${esc(state.proxy)}" placeholder="ex: https://seu-worker.workers.dev">
+        <div class="muted" style="font-size:10px;margin-top:4px">Use só se a API estiver bloqueando CORS direto do navegador. Deixe em branco pra chamar a API diretamente.</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" onclick="salvarConexao()">Salvar</button>
+        <button class="btn" onclick="testarConexao()">Testar conexão</button>
+        <button class="btn danger" onclick="limparConexao()">Limpar</button>
+      </div>
+      <div id="cx_result" style="margin-top:14px"></div>
+    </div>
+
+    <div class="section-title">Status</div>
+    <div class="kpi-row">
+      <div class="kpi ${state.token?'kg':'kr'}"><div class="kpi-lbl">Token</div><div class="kpi-val" style="font-size:14px">${state.token?'configurado':'ausente'}</div></div>
+      <div class="kpi ${state.proxy?'kb':'kp'}"><div class="kpi-lbl">Modo</div><div class="kpi-val" style="font-size:14px">${state.proxy?'via proxy':'direto'}</div></div>
+      <div class="kpi kpk"><div class="kpi-lbl">Players em cache</div><div class="kpi-val">${state.players.length}</div></div>
+      <div class="kpi kt"><div class="kpi-lbl">Mídias em cache</div><div class="kpi-val">${state.medias.length}</div></div>
+    </div>
+  `;
+}
+
+function salvarConexao(){
+  state.token = $('#cx_token').value.trim();
+  state.proxy = $('#cx_proxy').value.trim();
+  localStorage.setItem(LS_TOKEN, state.token);
+  localStorage.setItem(LS_PROXY, state.proxy);
+  updateConnBadge();
+  toast('Conexão salva');
+  $('#cx_result').innerHTML = '';
+}
+
+async function testarConexao(){
+  salvarConexao();
+  const el = $('#cx_result');
+  el.innerHTML = '<span class="spinner"></span> testando…';
+  try{
+    const data = await fetch4y('GET','/players');
+    const n = Array.isArray(data) ? data.length : (data.results?.length || data.players?.length || 0);
+    el.innerHTML = `<span class="pill green">✓ conectado</span> &nbsp; <span style="font-size:12px">resposta válida — ${n} players visíveis</span>`;
+    toast('Conexão OK');
+  }catch(e){
+    el.innerHTML = `<span class="pill red">✗ falhou</span> &nbsp; <span style="font-size:12px;color:var(--red)">${esc(e.message)}</span>`;
+    toast('Conexão falhou','err');
+  }
+}
+
+function limparConexao(){
+  if(!confirm('Remover token e proxy salvos?')) return;
+  state.token = ''; state.proxy = '';
+  localStorage.removeItem(LS_TOKEN);
+  localStorage.removeItem(LS_PROXY);
+  render();
+  toast('Credenciais removidas');
+}
+
+/* ──────────────────────────────────────────────
+   BOOT
+   ────────────────────────────────────────────── */
+loadLocal();
+render();
+
+if(!state.token){
+  setView('conexao');
+}else{
+  // Auto-refresh em background dos dados do 4YouSee — sem bloquear a UI
+  loadPlayers(true);
+  loadMedias(true);
+  // Retoma polling de relatórios que ficaram pendentes em sessões anteriores
+  autoResumePolling();
+  // Pede permissão de notificação (uma vez) pra avisar quando relatório ficar pronto
+  if(window.Notification && Notification.permission === 'default'){
+    setTimeout(()=>Notification.requestPermission().catch(()=>{}), 2000);
+  }
+}
+</script>
+</body>
+</html>
