@@ -333,6 +333,12 @@ function gerar(file){
 $('btn-deck').onclick=()=>gerar(DECK[CANAL]);
 $('btn-doc').onclick=()=>gerar('relatorio-exibicao.html');
 
+/* cache-bust nos links do menu: garante que o index.html carregue sempre a versão nova (senão o Chrome serve cache antigo e o módulo cai no início) */
+document.querySelectorAll('.sidebar a[href^="index.html#"]').forEach(function(a){
+  var hash=(a.getAttribute('href').split('#')[1]||'');
+  a.setAttribute('href','index.html?t='+Date.now()+'#'+hash);
+});
+
 /* rodapé da sidebar (Receita/Despesa/Lucro) — vem do index via localStorage */
 (function(){
   var d=null;
