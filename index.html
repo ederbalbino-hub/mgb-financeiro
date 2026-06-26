@@ -3905,14 +3905,15 @@ Para cada post: gancho forte na 1ª linha, parágrafos curtos, CTA leve no final
     }catch(e){}
     window.location.href='gerar-apresentacao.html?t='+Date.now()+h;
   }
-  /* deep-link: voltar do gerador via index.html#pagina (ou #mod-<id>) abre direto */
-  (function(){
+  /* deep-link: voltar do gerador via index.html#pagina (ou #mod-<id>) abre direto.
+     Roda no window.load porque goPage/switchMod são definidos mais abaixo no arquivo. */
+  window.addEventListener('pageshow', function(){
     var h=(location.hash||'').replace('#','');
     if(!h) return;
     if(h.indexOf('mod-')===0 && typeof switchMod==='function'){ try{switchMod(h.slice(4));}catch(e){} return; }
     var ok=['home','overview','custos','pessoal','operacional','relatorios'];
     if(ok.indexOf(h)>=0 && typeof goPage==='function'){ try{goPage(h);}catch(e){} }
-  })();
+  });
 </script>
 
 </body>
