@@ -7465,13 +7465,20 @@ function buildPessoal(){
 }
 
 // Receitas — form e CRUD
+// Mês que o usuário está vendo (seletor), em 'YYYY-MM' — usado como início padrão
+// pra a entrada nova NÃO retroagir pro mês real e preservar o histórico.
+function pesMesSelecionado(){
+  var m=parseInt(g('pes-mes-sel').value), y=parseInt(g('pes-ano-sel').value);
+  if(isNaN(m)||isNaN(y)) return NOW.toISOString().slice(0,7);
+  return y+'-'+String(m+1).padStart(2,'0');
+}
 function togglePesRecForm(){
   const f=g('pes-rec-form');
   f.style.display=f.style.display==='none'?'block':'none';
   if(f.style.display==='block'){
     if(pesEditRecId==null){
       g('pr-desc').value=''; g('pr-valor').value=''; g('pr-meses').value=12;
-      g('pr-inicio').value=NOW.toISOString().slice(0,7);
+      g('pr-inicio').value=pesMesSelecionado();
     }
     g('pr-desc').focus();
   }
@@ -7530,7 +7537,7 @@ function togglePesDespForm(){
   if(f.style.display==='block'){
     if(pesEditDespId==null){
       g('pd-desc').value=''; g('pd-valor').value=''; g('pd-tipo').value='recorrente';
-      g('pd-meses').value=12; g('pd-inicio').value=NOW.toISOString().slice(0,7);
+      g('pd-meses').value=12; g('pd-inicio').value=pesMesSelecionado();
     }
     pesDespFormUpdate();
     g('pd-desc').focus();
