@@ -5838,12 +5838,17 @@ function buildVisaoEmpresa(){
   },0);
   const aportesMesQtd=aportesAtivos.filter(er=>{ if(!er.inicio) return false; const [aA,mA]=er.inicio.split('-').map(Number); return selAno===aA&&selMes===mA-1; }).length;
 
+  // Caixa do mês = faturamento clientes + aportes − imposto − despesas empresa
+  const caixaMes=receitaMes+totalAportes-imposto-totalDespEmpresa;
+  const temMov=receitaMes||totalAportes||imposto||totalDespEmpresa;
+
   g('ov-emp-kpis').innerHTML=`
     <div class="ov-sum-item"><div class="ov-sum-lbl">Receita ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${receitaMes?f(receitaMes):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Aportes ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${totalAportes?('+'+f(totalAportes)):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Imposto ${(IMPOSTO_ALIQ*100).toFixed(2).replace('.',',')}%</div><div class="ov-sum-val" style="color:var(--red)">${imposto?f(imposto):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Despesas empresa</div><div class="ov-sum-val" style="color:var(--red)">${totalDespEmpresa?f(totalDespEmpresa):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Total empresa (custos)</div><div class="ov-sum-val" style="color:var(--red)">${totalEmpresa?f(totalEmpresa):'—'}</div></div>
+    <div class="ov-sum-item" title="Faturamento clientes + Aportes − Imposto − Despesas empresa"><div class="ov-sum-lbl">💰 Caixa ${MESES[selMes]}</div><div class="ov-sum-val" style="color:${caixaMes>=0?'var(--green)':'var(--red)'};font-weight:700">${temMov?((caixaMes>=0?'+':'')+f(caixaMes)):'—'}</div></div>
   `;
 
   // Tabela de aportes/receitas
