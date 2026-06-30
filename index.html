@@ -532,6 +532,12 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 .anunc-form-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--hint)}
 .anunc-form-inp{font-size:12px;font-family:'DM Sans',sans-serif;padding:6px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);outline:none}
 .anunc-form-inp:focus{border-color:var(--purple)}
+.pes-cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pes-cat-grp-lbl{width:100%;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin-top:6px;margin-bottom:1px}
+.pes-cat-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;padding:4px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);transition:all .12s;user-select:none}
+.pes-cat-chip:hover{border-color:var(--border);color:var(--text)}
+.pes-cat-chip .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.pes-cat-chip.sel{color:#0b0d12;font-weight:700;border-color:transparent}
 .anunc-tela-check{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .anunc-tela-cb{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);transition:all .15s;user-select:none}
 .anunc-tela-cb.selected{border-color:var(--green);background:var(--gd);color:var(--green);font-weight:600}
@@ -4510,8 +4516,53 @@ function copiarSpot() {
     <!-- KPIs -->
     <div class="ov-summary" id="pes-kpis"></div>
 
-    <!-- Gráfico Jan-Dez -->
+    <!-- Repasse rápido MGB ↔ Pessoal -->
     <div style="padding:0 22px 14px">
+      <div class="anunc-section" style="padding:12px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div style="font-size:12px;color:var(--muted)">🔁 <b style="color:var(--text)">Repasse</b> — dinheiro que você tira ou põe entre a <b>MGB</b> e a conta <b>pessoal</b></div>
+          <button class="anunc-btn" onclick="togglePesRepasseForm()" style="color:#f59e0b;border-color:rgba(245,158,11,.4)">＋ Lançar repasse</button>
+        </div>
+        <div class="anunc-form" id="pes-repasse-form" style="display:none;margin-top:10px">
+          <div class="anunc-form-row">
+            <div class="anunc-form-field" style="width:230px">
+              <label class="anunc-form-lbl">Direção</label>
+              <select class="anunc-form-inp" id="rp-dir" style="width:100%">
+                <option value="entra">MGB → Pessoal (recebo, vira receita)</option>
+                <option value="sai">Pessoal → MGB (coloco, vira despesa)</option>
+              </select>
+            </div>
+            <div class="anunc-form-field" style="width:140px">
+              <label class="anunc-form-lbl">Valor (R$)</label>
+              <input class="anunc-form-inp" id="rp-valor" type="number" step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="anunc-form-field" style="width:150px">
+              <label class="anunc-form-lbl">📅 Mês</label>
+              <input class="anunc-form-inp" id="rp-inicio" type="month" style="color-scheme:dark">
+            </div>
+            <div class="anunc-form-field" style="flex:1;min-width:160px">
+              <label class="anunc-form-lbl">Obs. (opcional)</label>
+              <input class="anunc-form-inp" id="rp-desc" placeholder="ex: pró-labore, aporte de caixa" style="width:100%">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="savePesRepasse()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:#f59e0b;color:#0b0d12;border:none;cursor:pointer;font-weight:700">✓ Lançar</button>
+            <button onclick="cancelPesRepasse()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos: pizza por categoria + Jan-Dez -->
+    <div style="padding:0 22px 14px;display:grid;grid-template-columns:1fr 1fr;gap:12px" id="pes-charts-grid">
+      <div class="cc">
+        <div class="cc-title">🍕 Despesas por categoria — <span id="pes-pizza-mes"></span></div>
+        <div class="cc-sub">gestão à vista do mês (repasses não entram)</div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px">
+          <div style="position:relative;height:200px;width:200px;flex-shrink:0"><canvas id="pesPizza" aria-label="Despesas por categoria"></canvas></div>
+          <div id="pes-pizza-leg" style="flex:1;min-width:160px;font-size:11px"></div>
+        </div>
+      </div>
       <div class="cc">
         <div class="cc-title">Receita × Despesa pessoal — Jan a Dez</div>
         <div class="cc-sub">comparativo mensal do ano selecionado</div>
@@ -4544,6 +4595,11 @@ function copiarSpot() {
               <label class="anunc-form-lbl">Duração (meses)</label>
               <input class="anunc-form-inp" id="pr-meses" type="number" min="1" max="600" value="12" placeholder="12">
             </div>
+          </div>
+          <div style="margin-top:10px">
+            <label class="anunc-form-lbl">Categoria</label>
+            <input type="hidden" id="pr-cat">
+            <div id="pr-cat-chips" class="pes-cat-chips"></div>
           </div>
           <div style="display:flex;gap:8px;margin-top:10px">
             <button onclick="savePesRec()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--green);color:#0b0d12;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
@@ -4603,11 +4659,17 @@ function copiarSpot() {
               <input class="anunc-form-inp" id="pd-meses" type="number" min="1" max="120" value="12">
             </div>
           </div>
+          <div style="margin-top:10px">
+            <label class="anunc-form-lbl">Categoria</label>
+            <input type="hidden" id="pd-cat">
+            <div id="pd-cat-chips" class="pes-cat-chips"></div>
+          </div>
           <div style="display:flex;gap:8px;margin-top:10px">
             <button onclick="savePesDesp()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--red);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
             <button onclick="cancelPesDesp()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
           </div>
         </div>
+        <div id="pes-desp-filtros" class="pes-cat-chips" style="margin-top:10px"></div>
         <div class="tcard" style="margin-top:10px">
           <div style="overflow-x:auto">
             <table>
@@ -4812,16 +4874,21 @@ MODULES.forEach(m=>{pagamentos[m.id]={};m.items.forEach(i=>pagamentos[m.id][i]={
 let pessoalRec=[], pessoalDesp=[], pessoalPag={}, pessoalRecPag={};
 let pessoalRecId=1, pessoalDespId=1;
 
-// Valor efetivo do item no mês (linha do tempo): base (valor no início) até o 1º
-// marco; cada marco em valMes['YYYY-MM'] passa a valer daquele mês pra frente.
-// Meses anteriores ficam congelados → histórico imutável.
+// Valor efetivo do item no mês: cada mês é INDEPENDENTE.
+// valor = base do lançamento (vale para todos os meses não editados).
+// valMes['YYYY-MM'] = ajuste pontual SÓ daquele mês — não afeta nenhum outro
+// mês (nem passado nem futuro). Histórico totalmente imutável.
 function pesValorNoMes(item,ano,mes){
   var base=item.valor||0;
   if(!item.valMes) return base;
   var key=ano+'-'+String(mes+1).padStart(2,'0');
-  var bestKey=null;
-  for(var k in item.valMes){ if(k<=key && (bestKey===null||k>bestKey)) bestKey=k; }
-  return bestKey!==null ? item.valMes[bestKey] : base;
+  return item.valMes[key]!==undefined ? item.valMes[key] : base;
+}
+// Indica se o mês visualizado tem um ajuste pontual (override) diferente da base
+function pesTemAjuste(item,ano,mes){
+  if(!item.valMes) return false;
+  var key=ano+'-'+String(mes+1).padStart(2,'0');
+  return item.valMes[key]!==undefined && item.valMes[key]!==(item.valor||0);
 }
 function pessoalRecMes(ano,mes){
   return pessoalRec.reduce((acc,r)=>{
@@ -4862,6 +4929,60 @@ function pessoalDespMes(ano,mes){
   },0);
 }
 function pessoalSaldoMes(ano,mes){ return pessoalRecMes(ano,mes)-pessoalDespMes(ano,mes); }
+
+// ── CATEGORIAS PESSOAIS ──────────────────────────────────────────────────
+// grupo agrupa no seletor; cor pinta o chip e a fatia da pizza;
+// lado: 'desp' (despesa), 'rec' (receita); repasse:true = transferência MGB↔Pessoal (fora da pizza)
+const PES_CATS=[
+  // 🏠 Casa & Moradia
+  {nome:'Água',                grupo:'🏠 Casa & Moradia', cor:'#38bdf8', lado:'desp'},
+  {nome:'Luz',                 grupo:'🏠 Casa & Moradia', cor:'#fbbf24', lado:'desp'},
+  {nome:'Internet',            grupo:'🏠 Casa & Moradia', cor:'#818cf8', lado:'desp'},
+  {nome:'Cida (doméstica)',    grupo:'🏠 Casa & Moradia', cor:'#22d3ee', lado:'desp'},
+  {nome:'Manutenção da Casa',  grupo:'🏠 Casa & Moradia', cor:'#0ea5e9', lado:'desp'},
+  // 🚗 Transporte
+  {nome:'Transporte (app/ônibus)', grupo:'🚗 Transporte', cor:'#fb923c', lado:'desp'},
+  {nome:'Gasolina Fox',        grupo:'🚗 Transporte', cor:'#f97316', lado:'desp'},
+  {nome:'Gasolina Toro',       grupo:'🚗 Transporte', cor:'#ea580c', lado:'desp'},
+  // 🍽️ Alimentação
+  {nome:'Supermercado',        grupo:'🍽️ Alimentação', cor:'#4ade80', lado:'desp'},
+  {nome:'Alimentação fora de casa', grupo:'🍽️ Alimentação', cor:'#34d399', lado:'desp'},
+  {nome:'Bar',                 grupo:'🍽️ Alimentação', cor:'#a3e635', lado:'desp'},
+  // 🏋️ Saúde & Bem-estar
+  {nome:'Academia',            grupo:'🏋️ Saúde & Bem-estar', cor:'#f472b6', lado:'desp'},
+  {nome:'Personal Eder',       grupo:'🏋️ Saúde & Bem-estar', cor:'#ec4899', lado:'desp'},
+  {nome:'Personal Juliane',    grupo:'🏋️ Saúde & Bem-estar', cor:'#db2777', lado:'desp'},
+  {nome:'Corrida Juliane',     grupo:'🏋️ Saúde & Bem-estar', cor:'#e879f9', lado:'desp'},
+  {nome:'Futebol',             grupo:'🏋️ Saúde & Bem-estar', cor:'#c084fc', lado:'desp'},
+  {nome:'Saúde (plano/médico/farmácia)', grupo:'🏋️ Saúde & Bem-estar', cor:'#f87171', lado:'desp'},
+  // 👨‍👩‍👧 Filhos
+  {nome:'Mesada Manu',         grupo:'👨‍👩‍👧 Filhos', cor:'#2dd4bf', lado:'desp'},
+  {nome:'Psicólogo Crianças',  grupo:'👨‍👩‍👧 Filhos', cor:'#14b8a6', lado:'desp'},
+  {nome:'Natação Crianças',    grupo:'👨‍👩‍👧 Filhos', cor:'#5eead4', lado:'desp'},
+  // 🎉 Lazer & Outros
+  {nome:'Lazer / Streaming',   grupo:'🎉 Lazer & Outros', cor:'#a78bfa', lado:'desp'},
+  {nome:'Educação',            grupo:'🎉 Lazer & Outros', cor:'#60a5fa', lado:'desp'},
+  {nome:'Vestuário',           grupo:'🎉 Lazer & Outros', cor:'#fda4af', lado:'desp'},
+  {nome:'Cartão / Financiamento', grupo:'🎉 Lazer & Outros', cor:'#94a3b8', lado:'desp'},
+  {nome:'Outros',              grupo:'🎉 Lazer & Outros', cor:'#cbd5e1', lado:'desp'},
+  // 🔁 Repasse (transferências — fora da pizza)
+  {nome:'Repasse Pessoal→MGB', grupo:'🔁 Repasse', cor:'#f59e0b', lado:'desp', repasse:true},
+  // Receitas
+  {nome:'Salário',             grupo:'💼 Receitas', cor:'#4ecb8d', lado:'rec'},
+  {nome:'Pró-labore',          grupo:'💼 Receitas', cor:'#34d399', lado:'rec'},
+  {nome:'Freelance / Extra',   grupo:'💼 Receitas', cor:'#22d3ee', lado:'rec'},
+  {nome:'Investimentos',       grupo:'💼 Receitas', cor:'#facc15', lado:'rec'},
+  {nome:'Outros (receita)',    grupo:'💼 Receitas', cor:'#a3e635', lado:'rec'},
+  {nome:'Repasse MGB→Pessoal', grupo:'🔁 Repasse', cor:'#10b981', lado:'rec', repasse:true},
+];
+function pesCatInfo(nome){ return PES_CATS.find(c=>c.nome===nome) || {nome:nome||'Sem categoria', cor:'#64748b', grupo:'—'}; }
+function pesCatsDoLado(lado){ return PES_CATS.filter(c=>c.lado===lado); }
+function pesCatChip(nome){
+  if(!nome) return '';
+  const c=pesCatInfo(nome);
+  return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);margin-top:3px"><span style="width:8px;height:8px;border-radius:50%;background:${c.cor};display:inline-block"></span>${nome}</span>`;
+}
+let pesFiltroCat=null; // categoria selecionada no filtro (despesas)
 
 const NOW=new Date();
 let lancMes=NOW.getMonth(), lancAno=NOW.getFullYear();
@@ -7426,10 +7547,10 @@ function buildPessoal(){
         : pago?'<span class="status-badge status-pago">✓ Recebido</span>'
         : `<button class="btn-recebido pend" onclick="togglePesRecPago(${r.id})" style="padding:4px 10px;font-size:10px">Marcar recebido</button>`;
       return `<tr style="${ativa?'':'opacity:.5'}">
-        <td><b>${r.desc||'(sem nome)'}</b></td>
+        <td><b>${r.desc||'(sem nome)'}</b>${r.categoria?'<br>'+pesCatChip(r.categoria):''}</td>
         <td>${r.inicio?fmtMes(r.inicio):'—'}</td>
         <td>${r.meses||12} m</td>
-        <td class="tr" style="color:var(--green);font-weight:600">${f(pesValorNoMes(r,y,m))}</td>
+        <td class="tr" style="color:var(--green);font-weight:600">${f(pesValorNoMes(r,y,m))}${pesTemAjuste(r,y,m)?' <span title="ajuste pontual só deste mês" style="color:#fbbf24;font-size:10px">✎</span>':''}</td>
         <td>${statusHtml}</td>
         <td class="tr">
           <button onclick="editPesRec(${r.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px">✎</button>
@@ -7440,14 +7561,17 @@ function buildPessoal(){
   }
   g('pes-rec-foot').textContent=`${recAtivas.length} receita${recAtivas.length===1?'':'s'} ativa${recAtivas.length===1?'':'s'} em ${MESES[m]}/${y} — total ${f(rec)}`;
 
-  // Despesas — lista
+  // Despesas — lista (com filtro de categoria)
   const db=g('pes-desp-body');
   const despAtivas=pessoalDesp.filter(d=>pesDespAtivaNoMes(d,y,m));
+  const despListadas=pessoalDesp.filter(d=>!pesFiltroCat || d.categoria===pesFiltroCat);
   if(!pessoalDesp.length){
     db.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--hint);padding:18px">Nenhuma despesa cadastrada. Clique em "Nova despesa".</td></tr>`;
+  } else if(!despListadas.length){
+    db.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--hint);padding:18px">Nenhuma despesa na categoria "${pesFiltroCat}".</td></tr>`;
   } else {
     const tipoLbl={recorrente:'Recorrente', avista:'À vista', parcelado:'Parcelado'};
-    db.innerHTML=pessoalDesp.map(d=>{
+    db.innerHTML=despListadas.map(d=>{
       const ativa=pesDespAtivaNoMes(d,y,m);
       const key=pesKey(y,m);
       const pago=((pessoalPag[d.id]||{})[key]||{}).pago;
@@ -7459,11 +7583,11 @@ function buildPessoal(){
       else if(d.tipo==='avista') dur='1×';
       else if(d.tipo==='parcelado') dur=(pesDespParcelaAtual(d,y,m)||(d.meses+'×'));
       return `<tr style="${ativa?'':'opacity:.5'}">
-        <td><b>${d.desc||'(sem nome)'}</b></td>
+        <td><b>${d.desc||'(sem nome)'}</b>${d.categoria?'<br>'+pesCatChip(d.categoria):''}</td>
         <td><span class="bdesp" style="padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600">${tipoLbl[d.tipo]||d.tipo}</span></td>
         <td>${d.inicio?fmtMes(d.inicio):'—'}</td>
         <td>${dur}</td>
-        <td class="tr" style="color:var(--red);font-weight:600">${f(pesValorNoMes(d,y,m))}</td>
+        <td class="tr" style="color:var(--red);font-weight:600">${f(pesValorNoMes(d,y,m))}${pesTemAjuste(d,y,m)?' <span title="ajuste pontual só deste mês" style="color:#fbbf24;font-size:10px">✎</span>':''}</td>
         <td>${statusHtml}</td>
         <td class="tr">
           <button onclick="editPesDesp(${d.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px">✎</button>
@@ -7472,7 +7596,109 @@ function buildPessoal(){
       </tr>`;
     }).join('');
   }
-  g('pes-desp-foot').textContent=`${despAtivas.length} despesa${despAtivas.length===1?'':'s'} ativa${despAtivas.length===1?'':'s'} em ${MESES[m]}/${y} — total ${f(desp)}`;
+  g('pes-desp-foot').textContent=`${despAtivas.length} despesa${despAtivas.length===1?'':'s'} ativa${despAtivas.length===1?'':'s'} em ${MESES[m]}/${y}${pesFiltroCat?' · filtro: '+pesFiltroCat:''} — total ${f(desp)}`;
+
+  // Pizza por categoria + filtro
+  g('pes-pizza-mes').textContent=MESES[m]+'/'+y;
+  buildPesPizza(y,m);
+  renderPesFiltros(y,m);
+}
+
+// ── PESSOAL — CATEGORIAS, PIZZA, FILTRO, REPASSE ─────────────────────────
+let pesPizza=null;
+// Agrega despesas ATIVAS do mês por categoria (repasses ficam de fora)
+function pesDespPorCategoria(y,m){
+  const mapa={};
+  pessoalDesp.forEach(d=>{
+    if(!pesDespAtivaNoMes(d,y,m)) return;
+    const info=pesCatInfo(d.categoria);
+    if(info.repasse) return;                 // transferência não é gasto
+    const cat=d.categoria||'Sem categoria';
+    mapa[cat]=(mapa[cat]||0)+pesValorNoMes(d,y,m);
+  });
+  return Object.keys(mapa).map(cat=>({cat,valor:mapa[cat],cor:pesCatInfo(cat).cor}))
+                          .sort((a,b)=>b.valor-a.valor);
+}
+function buildPesPizza(y,m){
+  const dados=pesDespPorCategoria(y,m);
+  const leg=g('pes-pizza-leg');
+  if(pesPizza){ pesPizza.destroy(); pesPizza=null; }
+  if(!dados.length){
+    leg.innerHTML='<span style="color:var(--hint)">Sem despesas categorizadas neste mês.</span>';
+    const ctx=g('pesPizza').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    return;
+  }
+  const total=dados.reduce((a,d)=>a+d.valor,0);
+  pesPizza=new Chart(g('pesPizza').getContext('2d'),{
+    type:'doughnut',
+    data:{ labels:dados.map(d=>d.cat), datasets:[{ data:dados.map(d=>d.valor), backgroundColor:dados.map(d=>d.cor), borderColor:'#0b0d12', borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:c=>c.label+': '+f(c.parsed)+' ('+Math.round(c.parsed/total*100)+'%)'}} } }
+  });
+  leg.innerHTML=dados.map(d=>{
+    const pct=Math.round(d.valor/total*100);
+    const ativo=pesFiltroCat===d.cat;
+    return `<div onclick="pesToggleFiltro('${d.cat.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:7px;padding:3px 4px;border-radius:6px;cursor:pointer;${ativo?'background:var(--surface2)':''}">
+      <span style="width:10px;height:10px;border-radius:3px;background:${d.cor};flex-shrink:0"></span>
+      <span style="flex:1;color:var(--text)">${d.cat}</span>
+      <b style="color:var(--text)">${f(d.valor)}</b>
+      <span style="color:var(--hint);width:34px;text-align:right">${pct}%</span>
+    </div>`;
+  }).join('') + `<div style="display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-weight:700"><span style="color:var(--muted)">Total</span><span style="color:var(--red)">${f(total)}</span></div>`;
+}
+function pesToggleFiltro(cat){ pesFiltroCat=(pesFiltroCat===cat?null:cat); buildPessoal(); }
+// Chips de filtro (só categorias que têm despesa no mês)
+function renderPesFiltros(y,m){
+  const box=g('pes-desp-filtros'); if(!box) return;
+  const dados=pesDespPorCategoria(y,m);
+  if(!dados.length){ box.innerHTML=''; return; }
+  let html=`<span class="pes-cat-chip ${pesFiltroCat?'':'sel'}" style="${pesFiltroCat?'':'background:var(--purple)'}" onclick="pesFiltroCat=null;buildPessoal()">Todas</span>`;
+  html+=dados.map(d=>{
+    const sel=pesFiltroCat===d.cat;
+    return `<span class="pes-cat-chip ${sel?'sel':''}" style="${sel?'background:'+d.cor:''}" onclick="pesToggleFiltro('${d.cat.replace(/'/g,"\\'")}')"><span class="dot" style="background:${d.cor}"></span>${d.cat}</span>`;
+  }).join('');
+  box.innerHTML=html;
+}
+// Render dos chips de categoria no formulário (rec/desp), agrupados
+function renderPesCatChips(containerId, hiddenId, lado){
+  const box=g(containerId); if(!box) return;
+  const cats=pesCatsDoLado(lado).filter(c=>!c.repasse); // repasse tem botão próprio
+  const atual=g(hiddenId).value;
+  let html=''; let grupoAtual=null;
+  cats.forEach(c=>{
+    if(c.grupo!==grupoAtual){ grupoAtual=c.grupo; html+=`<div class="pes-cat-grp-lbl">${c.grupo}</div>`; }
+    const sel=atual===c.nome;
+    html+=`<span class="pes-cat-chip ${sel?'sel':''}" style="${sel?'background:'+c.cor:''}" onclick="pesPickCat('${containerId}','${hiddenId}','${c.nome.replace(/'/g,"\\'")}')"><span class="dot" style="background:${c.cor}"></span>${c.nome}</span>`;
+  });
+  box.innerHTML=html;
+}
+function pesPickCat(containerId, hiddenId, nome){
+  const cur=g(hiddenId).value;
+  g(hiddenId).value=(cur===nome?'':nome); // toca de novo p/ desmarcar
+  renderPesCatChips(containerId, hiddenId, containerId==='pr-cat-chips'?'rec':'desp');
+}
+
+// ── REPASSE MGB ↔ Pessoal ────────────────────────────────────────────────
+function togglePesRepasseForm(){
+  const fr=g('pes-repasse-form');
+  fr.style.display=fr.style.display==='none'?'block':'none';
+  if(fr.style.display==='block'){ g('rp-valor').value=''; g('rp-desc').value=''; g('rp-inicio').value=pesMesSelecionado(); g('rp-valor').focus(); }
+}
+function cancelPesRepasse(){ g('pes-repasse-form').style.display='none'; }
+function savePesRepasse(){
+  const dir=g('rp-dir').value;
+  const valor=parseFloat(g('rp-valor').value)||0;
+  const inicio=g('rp-inicio').value;
+  const obs=g('rp-desc').value.trim();
+  if(!valor||!inicio){ alert('Informe valor e mês do repasse.'); return; }
+  if(dir==='entra'){
+    pessoalRec.push({id:pessoalRecId++, desc:'Repasse MGB→Pessoal'+(obs?' · '+obs:''), valor, inicio, meses:1, categoria:'Repasse MGB→Pessoal', valMes:{}});
+  } else {
+    pessoalDesp.push({id:pessoalDespId++, desc:'Repasse Pessoal→MGB'+(obs?' · '+obs:''), valor, tipo:'avista', inicio, meses:1, categoria:'Repasse Pessoal→MGB', valMes:{}});
+  }
+  g('pes-repasse-form').style.display='none';
+  buildPessoal(); buildSidebar(); scheduleSave();
 }
 
 // Receitas — form e CRUD
@@ -7489,8 +7715,9 @@ function togglePesRecForm(){
   if(f.style.display==='block'){
     if(pesEditRecId==null){
       g('pr-desc').value=''; g('pr-valor').value=''; g('pr-meses').value=12;
-      g('pr-inicio').value=pesMesSelecionado();
+      g('pr-inicio').value=pesMesSelecionado(); g('pr-cat').value='';
     }
+    renderPesCatChips('pr-cat-chips','pr-cat','rec');
     g('pr-desc').focus();
   }
 }
@@ -7500,6 +7727,7 @@ function savePesRec(){
   const valor=parseFloat(g('pr-valor').value)||0;
   const inicio=g('pr-inicio').value;
   const meses=parseInt(g('pr-meses').value)||12;
+  const categoria=g('pr-cat').value||'';
   if(!desc||!valor||!inicio){ alert('Preencha descrição, valor e mês de início.'); return; }
   if(pesEditRecId!=null){
     const r=pessoalRec.find(x=>x.id===pesEditRecId);
@@ -7507,15 +7735,15 @@ function savePesRec(){
       var _sm=parseInt(g('pes-mes-sel').value), _sy=parseInt(g('pes-ano-sel').value);
       var selKey=_sy+'-'+String(_sm+1).padStart(2,'0');
       var prevV=pesValorNoMes(r,_sy,_sm);
-      r.desc=desc; r.inicio=inicio; r.meses=meses;
-      if(valor!==prevV){               // valor mudou → vale do mês visualizado pra frente; meses anteriores congelam
-        if(selKey<=inicio){ r.valor=valor; }
-        else { if(!r.valMes) r.valMes={}; r.valMes[selKey]=valor; }
+      r.desc=desc; r.inicio=inicio; r.meses=meses; r.categoria=categoria;
+      if(valor!==prevV){               // ajuste pontual: vale SÓ no mês visualizado
+        if(!r.valMes) r.valMes={};
+        r.valMes[selKey]=valor;
       }
     }
     pesEditRecId=null;
   } else {
-    pessoalRec.push({id:pessoalRecId++, desc, valor, inicio, meses, valMes:{}});
+    pessoalRec.push({id:pessoalRecId++, desc, valor, inicio, meses, categoria, valMes:{}});
   }
   g('pes-rec-form').style.display='none';
   buildPessoal(); buildSidebar(); scheduleSave();
@@ -7525,7 +7753,8 @@ function editPesRec(id){
   pesEditRecId=id;
   var _sm=parseInt(g('pes-mes-sel').value), _sy=parseInt(g('pes-ano-sel').value);
   g('pr-desc').value=r.desc||''; g('pr-valor').value=(isNaN(_sm)||isNaN(_sy))?(r.valor||''):pesValorNoMes(r,_sy,_sm);
-  g('pr-inicio').value=r.inicio||''; g('pr-meses').value=r.meses||12;
+  g('pr-inicio').value=r.inicio||''; g('pr-meses').value=r.meses||12; g('pr-cat').value=r.categoria||'';
+  renderPesCatChips('pr-cat-chips','pr-cat','rec');
   g('pes-rec-form').style.display='block';
   g('pr-desc').focus();
 }
@@ -7558,8 +7787,9 @@ function togglePesDespForm(){
   if(f.style.display==='block'){
     if(pesEditDespId==null){
       g('pd-desc').value=''; g('pd-valor').value=''; g('pd-tipo').value='recorrente';
-      g('pd-meses').value=12; g('pd-inicio').value=pesMesSelecionado();
+      g('pd-meses').value=12; g('pd-inicio').value=pesMesSelecionado(); g('pd-cat').value='';
     }
+    renderPesCatChips('pd-cat-chips','pd-cat','desp');
     pesDespFormUpdate();
     g('pd-desc').focus();
   }
@@ -7571,6 +7801,7 @@ function savePesDesp(){
   const tipo=g('pd-tipo').value;
   const inicio=g('pd-inicio').value;
   const meses=tipo==='parcelado'?(parseInt(g('pd-meses').value)||1):(tipo==='avista'?1:null);
+  const categoria=g('pd-cat').value||'';
   if(!desc||!valor||!inicio){ alert('Preencha descrição, valor e mês de início.'); return; }
   if(pesEditDespId!=null){
     const d=pessoalDesp.find(x=>x.id===pesEditDespId);
@@ -7578,15 +7809,15 @@ function savePesDesp(){
       var _sm=parseInt(g('pes-mes-sel').value), _sy=parseInt(g('pes-ano-sel').value);
       var selKey=_sy+'-'+String(_sm+1).padStart(2,'0');
       var prevV=pesValorNoMes(d,_sy,_sm);
-      d.desc=desc; d.tipo=tipo; d.inicio=inicio; d.meses=meses;
-      if(valor!==prevV){               // valor mudou → vale do mês visualizado pra frente; meses anteriores congelam
-        if(selKey<=inicio){ d.valor=valor; }
-        else { if(!d.valMes) d.valMes={}; d.valMes[selKey]=valor; }
+      d.desc=desc; d.tipo=tipo; d.inicio=inicio; d.meses=meses; d.categoria=categoria;
+      if(valor!==prevV){               // ajuste pontual: vale SÓ no mês visualizado
+        if(!d.valMes) d.valMes={};
+        d.valMes[selKey]=valor;
       }
     }
     pesEditDespId=null;
   } else {
-    pessoalDesp.push({id:pessoalDespId++, desc, valor, tipo, inicio, meses, valMes:{}});
+    pessoalDesp.push({id:pessoalDespId++, desc, valor, tipo, inicio, meses, categoria, valMes:{}});
   }
   g('pes-desp-form').style.display='none';
   buildPessoal(); buildSidebar(); scheduleSave();
@@ -7597,7 +7828,8 @@ function editPesDesp(id){
   var _sm=parseInt(g('pes-mes-sel').value), _sy=parseInt(g('pes-ano-sel').value);
   g('pd-desc').value=d.desc||''; g('pd-valor').value=(isNaN(_sm)||isNaN(_sy))?(d.valor||''):pesValorNoMes(d,_sy,_sm);
   g('pd-tipo').value=d.tipo||'recorrente';
-  g('pd-inicio').value=d.inicio||''; g('pd-meses').value=d.meses||12;
+  g('pd-inicio').value=d.inicio||''; g('pd-meses').value=d.meses||12; g('pd-cat').value=d.categoria||'';
+  renderPesCatChips('pd-cat-chips','pd-cat','desp');
   g('pes-desp-form').style.display='block';
   pesDespFormUpdate();
   g('pd-desc').focus();
