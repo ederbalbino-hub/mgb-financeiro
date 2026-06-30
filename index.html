@@ -4812,6 +4812,17 @@ MODULES.forEach(m=>{pagamentos[m.id]={};m.items.forEach(i=>pagamentos[m.id][i]={
 let pessoalRec=[], pessoalDesp=[], pessoalPag={}, pessoalRecPag={};
 let pessoalRecId=1, pessoalDespId=1;
 
+// Valor efetivo do item no mês (linha do tempo): base (valor no início) até o 1º
+// marco; cada marco em valMes['YYYY-MM'] passa a valer daquele mês pra frente.
+// Meses anteriores ficam congelados → histórico imutável.
+function pesValorNoMes(item,ano,mes){
+  var base=item.valor||0;
+  if(!item.valMes) return base;
+  var key=ano+'-'+String(mes+1).padStart(2,'0');
+  var bestKey=null;
+  for(var k in item.valMes){ if(k<=key && (bestKey===null||k>bestKey)) bestKey=k; }
+  return bestKey!==null ? item.valMes[bestKey] : base;
+}
 function pessoalRecMes(ano,mes){
   return pessoalRec.reduce((acc,r)=>{
     if(!r.valor||!r.inicio) return acc;
@@ -4820,7 +4831,7 @@ function pessoalRecMes(ano,mes){
     for(let k=0;k<dur;k++){
       const mk=(mI-1+k)%12;
       const ak=aI+Math.floor((mI-1+k)/12);
-      if(ak===ano&&mk===mes) return acc+r.valor;
+      if(ak===ano&&mk===mes) return acc+pesValorNoMes(r,ano,mes);
     }
     return acc;
   },0);
@@ -4831,11 +4842,11 @@ function pessoalDespMes(ano,mes){
     const [aI,mI]=d.inicio.split('-').map(Number);
     if(d.tipo==='recorrente'){
       // Conta a partir de inicio para sempre
-      if(ano>aI||(ano===aI&&mes>=mI-1)) return acc+d.valor;
+      if(ano>aI||(ano===aI&&mes>=mI-1)) return acc+pesValorNoMes(d,ano,mes);
       return acc;
     }
     if(d.tipo==='avista'){
-      if(ano===aI&&mes===mI-1) return acc+d.valor;
+      if(ano===aI&&mes===mI-1) return acc+pesValorNoMes(d,ano,mes);
       return acc;
     }
     if(d.tipo==='parcelado'){
@@ -4843,7 +4854,7 @@ function pessoalDespMes(ano,mes){
       for(let k=0;k<dur;k++){
         const mk=(mI-1+k)%12;
         const ak=aI+Math.floor((mI-1+k)/12);
-        if(ak===ano&&mk===mes) return acc+d.valor;
+        if(ak===ano&&mk===mes) return acc+pesValorNoMes(d,ano,mes);
       }
       return acc;
     }
@@ -7418,7 +7429,7 @@ function buildPessoal(){
         <td><b>${r.desc||'(sem nome)'}</b></td>
         <td>${r.inicio?fmtMes(r.inicio):'—'}</td>
         <td>${r.meses||12} m</td>
-        <td class="tr" style="color:var(--green);font-weight:600">${f(r.valor)}</td>
+        <td class="tr" style="color:var(--green);font-weight:600">${f(pesValorNoMes(r,y,m))}</td>
         <td>${statusHtml}</td>
         <td class="tr">
           <button onclick="editPesRec(${r.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px">✎</button>
@@ -7452,7 +7463,7 @@ function buildPessoal(){
         <td><span class="bdesp" style="padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600">${tipoLbl[d.tipo]||d.tipo}</span></td>
         <td>${d.inicio?fmtMes(d.inicio):'—'}</td>
         <td>${dur}</td>
-        <td class="tr" style="color:var(--red);font-weight:600">${f(d.valor)}</td>
+        <td class="tr" style="color:var(--red);font-weight:600">${f(pesValorNoMes(d,y,m))}</td>
         <td>${statusHtml}</td>
         <td class="tr">
           <button onclick="editPesDesp(${d.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px">✎</button>
@@ -7492,10 +7503,19 @@ function savePesRec(){
   if(!desc||!valor||!inicio){ alert('Preencha descrição, valor e mês de início.'); return; }
   if(pesEditRecId!=null){
     const r=pessoalRec.find(x=>x.id===pesEditRecId);
-    if(r){ r.desc=desc; r.valor=valor; r.inicio=inicio; r.meses=meses; }
+    if(r){
+      var _sm=parseInt(g('pes-mes-sel').value), _sy=parseInt(g('pes-ano-sel').value);
+      var selKey=_sy+'-'+String(_sm+1).padStart(2,'0');
+      var prevV=pesValorNoMes(r,_sy,_sm);
+      r.desc=desc; r.inicio=inicio; r.meses=meses;
+      if(valor!==prevV){               // valor mudou → vale do mês visualizado pra frente; meses anteriores congelam
+        if(selKey<=inicio){ r.valor=valor; }
+        else { if(!r.valMes) r.valMes={}; r.valMes[selKey]=valor; }
+      }
+    }
     pesEditRecId=null;
   } else {
-    pessoalRec.push({id:pessoalRecId++, desc, valor, inicio, meses});
+    pessoalRec.push({id:pessoalRecId++, desc, valor, inicio, meses, valMes:{}});
   }
   g('pes-rec-form').style.display='none';
   buildPessoal(); buildSidebar(); scheduleSave();
@@ -7503,7 +7523,8 @@ function savePesRec(){
 function editPesRec(id){
   const r=pessoalRec.find(x=>x.id===id); if(!r) return;
   pesEditRecId=id;
-  g('pr-desc').value=r.desc||''; g('pr-valor').value=r.valor||'';
+  var _sm=parseInt(g('pes-mes-sel').value), _sy=parseInt(g('pes-ano-sel').value);
+  g('pr-desc').value=r.desc||''; g('pr-valor').value=(isNaN(_sm)||isNaN(_sy))?(r.valor||''):pesValorNoMes(r,_sy,_sm);
   g('pr-inicio').value=r.inicio||''; g('pr-meses').value=r.meses||12;
   g('pes-rec-form').style.display='block';
   g('pr-desc').focus();
@@ -7553,10 +7574,19 @@ function savePesDesp(){
   if(!desc||!valor||!inicio){ alert('Preencha descrição, valor e mês de início.'); return; }
   if(pesEditDespId!=null){
     const d=pessoalDesp.find(x=>x.id===pesEditDespId);
-    if(d){ d.desc=desc; d.valor=valor; d.tipo=tipo; d.inicio=inicio; d.meses=meses; }
+    if(d){
+      var _sm=parseInt(g('pes-mes-sel').value), _sy=parseInt(g('pes-ano-sel').value);
+      var selKey=_sy+'-'+String(_sm+1).padStart(2,'0');
+      var prevV=pesValorNoMes(d,_sy,_sm);
+      d.desc=desc; d.tipo=tipo; d.inicio=inicio; d.meses=meses;
+      if(valor!==prevV){               // valor mudou → vale do mês visualizado pra frente; meses anteriores congelam
+        if(selKey<=inicio){ d.valor=valor; }
+        else { if(!d.valMes) d.valMes={}; d.valMes[selKey]=valor; }
+      }
+    }
     pesEditDespId=null;
   } else {
-    pessoalDesp.push({id:pessoalDespId++, desc, valor, tipo, inicio, meses});
+    pessoalDesp.push({id:pessoalDespId++, desc, valor, tipo, inicio, meses, valMes:{}});
   }
   g('pes-desp-form').style.display='none';
   buildPessoal(); buildSidebar(); scheduleSave();
@@ -7564,7 +7594,8 @@ function savePesDesp(){
 function editPesDesp(id){
   const d=pessoalDesp.find(x=>x.id===id); if(!d) return;
   pesEditDespId=id;
-  g('pd-desc').value=d.desc||''; g('pd-valor').value=d.valor||'';
+  var _sm=parseInt(g('pes-mes-sel').value), _sy=parseInt(g('pes-ano-sel').value);
+  g('pd-desc').value=d.desc||''; g('pd-valor').value=(isNaN(_sm)||isNaN(_sy))?(d.valor||''):pesValorNoMes(d,_sy,_sm);
   g('pd-tipo').value=d.tipo||'recorrente';
   g('pd-inicio').value=d.inicio||''; g('pd-meses').value=d.meses||12;
   g('pes-desp-form').style.display='block';
