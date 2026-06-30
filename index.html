@@ -4890,9 +4890,14 @@ function pesTemAjuste(item,ano,mes){
   var key=ano+'-'+String(mes+1).padStart(2,'0');
   return item.valMes[key]!==undefined && item.valMes[key]!==(item.valor||0);
 }
+// Mês removido pontualmente (previsão que não se concretizou) — só aquele mês sai
+function pesPulou(item,ano,mes){
+  if(!item.pulaMes) return false;
+  return !!item.pulaMes[ano+'-'+String(mes+1).padStart(2,'0')];
+}
 function pessoalRecMes(ano,mes){
   return pessoalRec.reduce((acc,r)=>{
-    if(!r.valor||!r.inicio) return acc;
+    if(!r.valor||!r.inicio||pesPulou(r,ano,mes)) return acc;
     const [aI,mI]=r.inicio.split('-').map(Number);
     const dur=r.meses||12;
     for(let k=0;k<dur;k++){
@@ -4905,7 +4910,7 @@ function pessoalRecMes(ano,mes){
 }
 function pessoalDespMes(ano,mes){
   return pessoalDesp.reduce((acc,d)=>{
-    if(!d.valor||!d.inicio) return acc;
+    if(!d.valor||!d.inicio||pesPulou(d,ano,mes)) return acc;
     const [aI,mI]=d.inicio.split('-').map(Number);
     if(d.tipo==='recorrente'){
       // Conta a partir de inicio para sempre
@@ -7451,7 +7456,8 @@ function initPessoalSelects(){
 
 function pesKey(y,m){ return y+'-'+m; }
 
-function pesRecAtivaNoMes(r,y,m){
+// "NoRange" = o lançamento alcança esse mês (ignora remoção pontual)
+function pesRecNoRange(r,y,m){
   if(!r.valor||!r.inicio) return false;
   const [aI,mI]=r.inicio.split('-').map(Number);
   const dur=r.meses||12;
@@ -7462,7 +7468,7 @@ function pesRecAtivaNoMes(r,y,m){
   }
   return false;
 }
-function pesDespAtivaNoMes(d,y,m){
+function pesDespNoRange(d,y,m){
   if(!d.valor||!d.inicio) return false;
   const [aI,mI]=d.inicio.split('-').map(Number);
   if(d.tipo==='recorrente') return y>aI||(y===aI&&m>=mI-1);
@@ -7478,6 +7484,9 @@ function pesDespAtivaNoMes(d,y,m){
   }
   return false;
 }
+// "Ativa" = alcança o mês E não foi removido pontualmente
+function pesRecAtivaNoMes(r,y,m){ return pesRecNoRange(r,y,m) && !pesPulou(r,y,m); }
+function pesDespAtivaNoMes(d,y,m){ return pesDespNoRange(d,y,m) && !pesPulou(d,y,m); }
 function pesDespParcelaAtual(d,y,m){
   if(d.tipo!=='parcelado') return null;
   const [aI,mI]=d.inicio.split('-').map(Number);
@@ -7540,21 +7549,27 @@ function buildPessoal(){
     rb.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--hint);padding:18px">Nenhuma receita cadastrada. Clique em "Nova receita".</td></tr>`;
   } else {
     rb.innerHTML=pessoalRec.map(r=>{
-      const ativa=pesRecAtivaNoMes(r,y,m);
+      const noRange=pesRecNoRange(r,y,m);
+      const pulou=pesPulou(r,y,m);
+      const ativa=noRange&&!pulou;
       const key=pesKey(y,m);
       const pago=((pessoalRecPag[r.id]||{})[key]||{}).pago;
-      const statusHtml=!ativa?'<span style="color:var(--hint);font-size:10px">—</span>'
+      const statusHtml = pulou&&noRange ? `<span style="color:#fbbf24;font-size:10px">🚫 removido em ${MESES[m].slice(0,3)}</span> <button onclick="restaurarPesRec(${r.id})" title="restaurar este mês" style="background:none;border:none;color:var(--green);cursor:pointer;font-size:11px">↩</button>`
+        : !ativa?'<span style="color:var(--hint);font-size:10px">—</span>'
         : pago?'<span class="status-badge status-pago">✓ Recebido</span>'
         : `<button class="btn-recebido pend" onclick="togglePesRecPago(${r.id})" style="padding:4px 10px;font-size:10px">Marcar recebido</button>`;
+      const valHtml = pulou&&noRange ? '<span style="color:var(--hint);text-decoration:line-through">'+f(pesValorNoMes(r,y,m))+'</span>'
+        : f(pesValorNoMes(r,y,m))+(pesTemAjuste(r,y,m)?' <span title="ajuste pontual só deste mês" style="color:#fbbf24;font-size:10px">✎</span>':'');
       return `<tr style="${ativa?'':'opacity:.5'}">
         <td><b>${r.desc||'(sem nome)'}</b>${r.categoria?'<br>'+pesCatChip(r.categoria):''}</td>
         <td>${r.inicio?fmtMes(r.inicio):'—'}</td>
         <td>${r.meses||12} m</td>
-        <td class="tr" style="color:var(--green);font-weight:600">${f(pesValorNoMes(r,y,m))}${pesTemAjuste(r,y,m)?' <span title="ajuste pontual só deste mês" style="color:#fbbf24;font-size:10px">✎</span>':''}</td>
+        <td class="tr" style="color:var(--green);font-weight:600">${valHtml}</td>
         <td>${statusHtml}</td>
-        <td class="tr">
+        <td class="tr" style="white-space:nowrap">
+          ${ativa?`<button onclick="pulaPesRec(${r.id})" title="remover só ${MESES[m]}/${y}" style="background:none;border:none;color:#fbbf24;cursor:pointer;font-size:12px;padding:2px 5px">⊘</button>`:''}
           <button onclick="editPesRec(${r.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px">✎</button>
-          <button onclick="delPesRec(${r.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 6px">×</button>
+          <button onclick="delPesRec(${r.id})" title="excluir TODOS os meses" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 6px">×</button>
         </td>
       </tr>`;
     }).join('');
@@ -7572,26 +7587,32 @@ function buildPessoal(){
   } else {
     const tipoLbl={recorrente:'Recorrente', avista:'À vista', parcelado:'Parcelado'};
     db.innerHTML=despListadas.map(d=>{
-      const ativa=pesDespAtivaNoMes(d,y,m);
+      const noRange=pesDespNoRange(d,y,m);
+      const pulou=pesPulou(d,y,m);
+      const ativa=noRange&&!pulou;
       const key=pesKey(y,m);
       const pago=((pessoalPag[d.id]||{})[key]||{}).pago;
-      const statusHtml=!ativa?'<span style="color:var(--hint);font-size:10px">—</span>'
+      const statusHtml = pulou&&noRange ? `<span style="color:#fbbf24;font-size:10px">🚫 removido em ${MESES[m].slice(0,3)}</span> <button onclick="restaurarPesDesp(${d.id})" title="restaurar este mês" style="background:none;border:none;color:var(--green);cursor:pointer;font-size:11px">↩</button>`
+        : !ativa?'<span style="color:var(--hint);font-size:10px">—</span>'
         : pago?'<span class="status-badge status-pago">✓ Pago</span>'
         : `<button class="btn-recebido pend" onclick="togglePesDespPago(${d.id})" style="padding:4px 10px;font-size:10px">Marcar pago</button>`;
       let dur='—';
       if(d.tipo==='recorrente') dur='∞';
       else if(d.tipo==='avista') dur='1×';
       else if(d.tipo==='parcelado') dur=(pesDespParcelaAtual(d,y,m)||(d.meses+'×'));
+      const valHtml = pulou&&noRange ? '<span style="color:var(--hint);text-decoration:line-through">'+f(pesValorNoMes(d,y,m))+'</span>'
+        : f(pesValorNoMes(d,y,m))+(pesTemAjuste(d,y,m)?' <span title="ajuste pontual só deste mês" style="color:#fbbf24;font-size:10px">✎</span>':'');
       return `<tr style="${ativa?'':'opacity:.5'}">
         <td><b>${d.desc||'(sem nome)'}</b>${d.categoria?'<br>'+pesCatChip(d.categoria):''}</td>
         <td><span class="bdesp" style="padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600">${tipoLbl[d.tipo]||d.tipo}</span></td>
         <td>${d.inicio?fmtMes(d.inicio):'—'}</td>
         <td>${dur}</td>
-        <td class="tr" style="color:var(--red);font-weight:600">${f(pesValorNoMes(d,y,m))}${pesTemAjuste(d,y,m)?' <span title="ajuste pontual só deste mês" style="color:#fbbf24;font-size:10px">✎</span>':''}</td>
+        <td class="tr" style="color:var(--red);font-weight:600">${valHtml}</td>
         <td>${statusHtml}</td>
-        <td class="tr">
+        <td class="tr" style="white-space:nowrap">
+          ${ativa?`<button onclick="pulaPesDesp(${d.id})" title="remover só ${MESES[m]}/${y}" style="background:none;border:none;color:#fbbf24;cursor:pointer;font-size:12px;padding:2px 5px">⊘</button>`:''}
           <button onclick="editPesDesp(${d.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px">✎</button>
-          <button onclick="delPesDesp(${d.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 6px">×</button>
+          <button onclick="delPesDesp(${d.id})" title="excluir TODOS os meses" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px 6px">×</button>
         </td>
       </tr>`;
     }).join('');
@@ -7760,9 +7781,21 @@ function editPesRec(id){
 }
 function delPesRec(id){
   const r=pessoalRec.find(x=>x.id===id); if(!r) return;
-  if(!confirm(`Excluir receita "${r.desc}"?`)) return;
+  if(!confirm(`Excluir TODOS os meses da receita "${r.desc}"?`)) return;
   pessoalRec=pessoalRec.filter(x=>x.id!==id);
   delete pessoalRecPag[id];
+  buildPessoal(); buildSidebar(); scheduleSave();
+}
+// Remover SÓ o mês visualizado (previsão que não rolou) — não toca os outros
+function pesMesKey(){ var m=parseInt(g('pes-mes-sel').value), y=parseInt(g('pes-ano-sel').value); return y+'-'+String(m+1).padStart(2,'0'); }
+function pulaPesRec(id){
+  const r=pessoalRec.find(x=>x.id===id); if(!r) return;
+  if(!r.pulaMes) r.pulaMes={}; r.pulaMes[pesMesKey()]=true;
+  buildPessoal(); buildSidebar(); scheduleSave();
+}
+function restaurarPesRec(id){
+  const r=pessoalRec.find(x=>x.id===id); if(!r||!r.pulaMes) return;
+  delete r.pulaMes[pesMesKey()];
   buildPessoal(); buildSidebar(); scheduleSave();
 }
 function togglePesRecPago(id){
@@ -7836,9 +7869,20 @@ function editPesDesp(id){
 }
 function delPesDesp(id){
   const d=pessoalDesp.find(x=>x.id===id); if(!d) return;
-  if(!confirm(`Excluir despesa "${d.desc}"?`)) return;
+  if(!confirm(`Excluir TODOS os meses da despesa "${d.desc}"?`)) return;
   pessoalDesp=pessoalDesp.filter(x=>x.id!==id);
   delete pessoalPag[id];
+  buildPessoal(); buildSidebar(); scheduleSave();
+}
+// Remover SÓ o mês visualizado (previsão que não rolou) — mantém os outros
+function pulaPesDesp(id){
+  const d=pessoalDesp.find(x=>x.id===id); if(!d) return;
+  if(!d.pulaMes) d.pulaMes={}; d.pulaMes[pesMesKey()]=true;
+  buildPessoal(); buildSidebar(); scheduleSave();
+}
+function restaurarPesDesp(id){
+  const d=pessoalDesp.find(x=>x.id===id); if(!d||!d.pulaMes) return;
+  delete d.pulaMes[pesMesKey()];
   buildPessoal(); buildSidebar(); scheduleSave();
 }
 function togglePesDespPago(id){
