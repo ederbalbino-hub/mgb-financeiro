@@ -4439,15 +4439,17 @@ async function gerarSpot() {
   const load=document.getElementById('g-loading');
   const res=document.getElementById('g-result');
   const txt=document.getElementById('g-texto');
+  const key = getGroqKey();
+  if(!key){ txt.textContent='Chave Groq não informada. Clique em gerar novamente e cole sua chave gsk_...'; res.classList.add('show'); return; }
   btn.disabled=true; load.style.display='flex'; res.classList.remove('show');
   try {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('GROQ_KEY')||'')},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1000,messages:[{role:'user',content:prompt}]})
     });
     const d = await r.json();
-    txt.textContent = d.choices?.[0]?.message?.content || 'Erro. Tente novamente.';
+    txt.textContent = d.choices?.[0]?.message?.content || ('Erro da API: '+(d.error?.message||'sem resposta')+'. Verifique sua chave Groq.');
     res.classList.add('show');
   } catch(e) {
     txt.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
