@@ -1647,6 +1647,10 @@ input[readonly]{background:#EAD9FF;cursor:default;color:var(--deep);font-weight:
           <label>Data de Início</label>
           <input type=&quot;date&quot; id=&quot;data_inicio&quot;>
         </div>
+        <div class=&quot;form-group&quot;>
+          <label>Dia de Vencimento</label>
+          <input type=&quot;number&quot; id=&quot;dia_venc&quot; min=&quot;1&quot; max=&quot;31&quot; value=&quot;5&quot; placeholder=&quot;5&quot;>
+        </div>
       </div>
       <div class=&quot;invest-summary&quot; id=&quot;invest-summary&quot; style=&quot;display:none&quot;>
         <div class=&quot;summary-item&quot;><div class=&quot;summary-label&quot;>Plano</div><div class=&quot;summary-number&quot; id=&quot;inv-plano&quot;>—</div></div>
@@ -1898,6 +1902,7 @@ function gerarContrato() {
 
   const endereco = [gv('logradouro'), gv('numero') ? 'nº ' + gv('numero') : '', gv('complemento'), gv('bairro'), gv('cidade') + (gv('estado') ? '/' + gv('estado') : ''), gv('cep')].filter(Boolean).join(', ');
 
+  const diaVenc = (gv('dia_venc') || '5').toString().trim() || '5';
   let fimDate = '';
   const inicio = gv('data_inicio');
   if (inicio) {
@@ -1957,7 +1962,7 @@ function gerarContrato() {
         row('Plano', plano.nome + ' (' + meses + (meses === 1 ? ' mês' : ' meses') + ')') +
         row('Vigência', (inicio ? new Date(inicio + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______') + ' a ' + (fimDate || '___/___/______')) +
         row('Valor mensal', 'R$ 100,00') +
-        row('Pagamento', 'Boleto bancário · vencimento dia 5') +
+        row('Pagamento', 'Boleto bancário · vencimento dia ' + diaVenc) +
         '</div>' +
         '<div style=&quot;display:flex;gap:20px;margin-top:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.1));border-radius:8px;border:1px solid rgba(232,121,176,.2)&quot;>' +
         '<div><div style=&quot;font-size:9px;color:#6B7280;text-transform:uppercase;font-weight:600&quot;>Mensal</div><div style=&quot;font-size:18px;font-weight:800;color:#E879B0&quot;>R$ 100,00</div></div>' +
@@ -1983,7 +1988,7 @@ function gerarContrato() {
       '<h4>5.1. Objeto</h4><p>Veiculação de spot de áudio do CONTRATANTE na rádio interna do Mercadão da Prochet, conforme cláusula 3.</p>' +
       '<h4>5.2. Obrigações da Contratada</h4><p>a) Garantir a veiculação nas inserções e horários estabelecidos.<br>b) Operar e manter a rádio em funcionamento.</p>' +
       '<h4>5.3. Obrigações do Contratante</h4><p>a) Fornecer spot em MP3/WAV com até 15s, mínimo 3 dias úteis de antecedência.<br>b) Responsabilizar-se pelo conteúdo.<br>c) Caso não possua spot, a CONTRATADA produzirá 1 texto/roteiro por mês gratuitamente.</p>' +
-      '<h4>5.4. Pagamento</h4><p>R$ 100,00 mensais via boleto bancário, vencimento todo dia 5 de cada mês.</p>' +
+      '<h4>5.4. Pagamento</h4><p>R$ 100,00 mensais via boleto bancário, vencimento todo dia ' + diaVenc + ' de cada mês.</p>' +
       '<h4>5.5. Rescisão</h4><p>Aviso prévio de 30 dias por qualquer parte.</p>' +
       '<h4>5.6. Política de Conteúdo</h4><p>A CONTRATADA pode recusar material ilícito, ofensivo, político-partidário ou fora dos padrões técnicos.</p>' +
       '<h4>5.7. Foro</h4><p>Comarca de Londrina/PR.</p>' +
