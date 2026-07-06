@@ -1496,7 +1496,7 @@ input[readonly]{background:#EAD9FF;cursor:default;color:var(--deep);font-weight:
     </div>
   </div>
   <div class=&quot;header-actions&quot;>
-    <button class=&quot;btn-header btn-print&quot; onclick=&quot;window.print()&quot;>🖨️ Imprimir</button>
+    <button class=&quot;btn-header btn-print&quot; onclick=&quot;printMcd()&quot;>🖨️ Imprimir</button>
     <button class=&quot;btn-header btn-new&quot; onclick=&quot;resetForm()&quot;>+ Novo Contrato</button>
   </div>
 </div>
@@ -1675,7 +1675,7 @@ input[readonly]{background:#EAD9FF;cursor:default;color:var(--deep);font-weight:
     <div class=&quot;actions no-print&quot;>
       <button class=&quot;btn-secondary&quot; onclick=&quot;switchTab('plano')&quot;>← Voltar e Editar</button>
       <button class=&quot;btn-primary&quot; onclick=&quot;abrirModal()&quot;>📤 Enviar ao cliente</button>
-      <button class=&quot;btn-primary&quot; onclick=&quot;window.print()&quot;>🖨️ Imprimir / PDF</button>
+      <button class=&quot;btn-primary&quot; onclick=&quot;printMcd()&quot;>🖨️ Imprimir / PDF</button>
     </div>
   </div>
 
@@ -1901,6 +1901,8 @@ function gerarContrato() {
   const num    = 'MGB-MCD-' + today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + String(Math.floor(Math.random()*9000)+1000);
 
   const clienteNome = isPJ ? (gv('nome_fantasia') || gv('razao_social')) : gv('nome_pf');
+  const slugCliente = (clienteNome || 'cliente').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || 'cliente';
+  window._mcdTitle = 'mgb_midia_mercadão_' + slugCliente + '_' + num;
   const clienteDoc  = isPJ ? gv('cnpj') : gv('cpf');
   const docLabel    = isPJ ? 'CNPJ' : 'CPF';
 
@@ -2059,6 +2061,14 @@ function abrirModal() {
 }
 function fecharModal() { document.getElementById('modal-envio').classList.remove('open'); }
 
+// Imprime/salva o contrato do Mercadão usando o nome padronizado mgb_midia_mercadão_<cliente>_<nº>
+function printMcd() {
+  const old = document.title;
+  if (window._mcdTitle) document.title = window._mcdTitle;
+  window.print();
+  setTimeout(() => { document.title = old; }, 800);
+}
+
 function enviarWpp() {
   const num = document.getElementById('envio-wpp').value.replace(/\D/g, '');
   if (!num || num.length < 10) { alert('Informe um WhatsApp válido com DDD.'); return; }
@@ -2066,7 +2076,7 @@ function enviarWpp() {
   const p = planos.find(x => x.id === planoSelecionado);
   const msg = 'Olá, ' + nome + '! 👋\n\nSegue o contrato de anúncio na *Rádio Interna do Mercadão da Prochet*.\n\n📅 Plano: ' + (p ? p.nome : '—') + '\n💰 Valor: R$ 100,00/mês · Boleto bancário\n\nO PDF está sendo enviado em seguida. Por favor, assine e nos retorne.\n\n— MGB Mídia';
   fecharModal();
-  setTimeout(() => { window.print(); window.open('https://wa.me/55' + num + '?text=' + encodeURIComponent(msg), '_blank'); }, 300);
+  setTimeout(() => { printMcd(); window.open('https://wa.me/55' + num + '?text=' + encodeURIComponent(msg), '_blank'); }, 300);
 }
 
 function enviarEmail() {
@@ -2077,7 +2087,7 @@ function enviarEmail() {
   const subj = encodeURIComponent('Contrato Rádio Interna — Mercadão da Prochet');
   const body = encodeURIComponent('Olá, ' + nome + '!\n\nSegue em anexo o contrato de anúncio na Rádio Interna do Mercadão da Prochet.\n\nPlano: ' + (p ? p.nome : '—') + '\nValor: R$ 100,00/mês — Boleto bancário\n\nAtenciosamente,\nMGB Mídia\ncomercial@agenciamgb.com.br');
   fecharModal();
-  setTimeout(() => { window.print(); window.location.href = 'mailto:' + email + '?subject=' + subj + '&amp;body=' + body; }, 300);
+  setTimeout(() => { printMcd(); window.location.href = 'mailto:' + email + '?subject=' + subj + '&amp;body=' + body; }, 300);
 }
 
 // ── INIT ──
