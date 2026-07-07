@@ -681,6 +681,9 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 #page-operacional .hub-tab.active{background:#1a0828;color:#fff;border-color:rgba(232,25,125,.35)}
 #page-operacional .hub-panel{display:none}
 #page-operacional .hub-panel.active{display:block}
+#page-relatorios .rel-tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(220,100,255,.15);color:rgba(255,255,255,.45);transition:all .2s;white-space:nowrap;font-family:'DM Sans',sans-serif}
+#page-relatorios .rel-tab:hover{color:#f472b6;background:rgba(232,25,125,.08)}
+#page-relatorios .rel-tab.active{background:#1a0828;color:#fff;border-color:rgba(232,25,125,.35)}
 #page-operacional .contract-frame{width:100%;border:none;background:#F8F5FF;min-height:calc(100vh - 110px);display:block}
 
 /* ─── Print do contrato Elevador (A4 paisagem) ─── */
@@ -753,7 +756,7 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
     <div class="sb-lbl">Navegação</div>
     <div class="sb-nav-item on" id="nav-home" onclick="goPage('home')">🏠 Início</div>
     <div class="sb-nav-item" id="nav-custos" onclick="goPage('overview')">📊 Overview</div>
-    <div class="sb-nav-item" id="nav-relatorios" onclick="goPage('relatorios')">📄 Relatórios Mercadão</div>
+    <div class="sb-nav-item" id="nav-relatorios" onclick="goPage('relatorios')">📄 Relatórios</div>
     <div class="sb-lbl" style="margin-top:10px">Operacional</div>
     <div class="sb-nav-item" id="nav-operacional" onclick="goPage('operacional')">🎯 Contratos & Mídia</div>
     <div class="sb-lbl" style="margin-top:10px">Pessoal</div>
@@ -943,7 +946,11 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
         <div class="tcard">
           <div class="thead3" style="padding:12px 18px">
             <div class="ttitle" id="lanc-rec-titulo">Clientes — Jun/2026</div>
-            <div style="font-size:10px;color:var(--hint)" id="lanc-rec-sum"></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="font-size:10px;color:var(--hint)" id="lanc-rec-sum"></div>
+              <button onclick="gerarRelContador()" title="Gera um relatório imprimível com os clientes marcados com 'NF?' para enviar ao contador"
+                style="font-size:10px;padding:5px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;white-space:nowrap">📄 Relatório p/ contador</button>
+            </div>
           </div>
           <div style="overflow-x:auto">
             <table>
@@ -952,6 +959,7 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
                 <th>Cliente / Unidade</th>
                 <th class="tr">Valor</th>
                 <th>Status</th>
+                <th title="Marque os clientes que precisam de nota fiscal">NF?</th>
                 <th>Obs.</th>
               </tr></thead>
               <tbody id="lanc-rec-body"></tbody>
@@ -4498,9 +4506,18 @@ function copiarSpot() {
   <!-- PAGE: RELATÓRIOS -->
   <div id="page-relatorios" style="display:none">
     <div class="page-hdr">
-      <div><div class="page-title">📄 Relatórios</div><div class="page-sub">Relatório mensal de anunciantes — Rádio Indoor Mercadão da Prochet</div></div>
+      <div><div class="page-title">📄 Relatórios</div><div class="page-sub" id="rel-page-sub">Relatórios de repasse e prestação de contas</div></div>
     </div>
 
+    <!-- SUB-ABAS -->
+    <div style="padding:0 22px 14px;display:flex;gap:8px;flex-wrap:wrap">
+      <div class="rel-tab active" data-reltab="mercadao" onclick="showRelTab('mercadao',this)">📻 Mercadão</div>
+      <div class="rel-tab" data-reltab="vaapty" onclick="showRelTab('vaapty',this)">🚗 Vaapty</div>
+      <div class="rel-tab" data-reltab="elev" onclick="showRelTab('elev',this)">🛗 Elevadores</div>
+    </div>
+
+    <!-- SUB-ABA: MERCADÃO -->
+    <div id="rel-sub-mercadao">
     <!-- FORM -->
     <div id="rel-form" style="padding:0 22px 28px">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px">
@@ -4556,6 +4573,75 @@ function copiarSpot() {
         <button onclick="relPrint()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">🖨️ Imprimir / PDF</button>
       </div>
       <div id="rel-output" style="background:#fff;color:#222;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:'DM Sans',sans-serif"></div>
+    </div>
+    </div><!-- /rel-sub-mercadao -->
+
+    <!-- SUB-ABA: VAAPTY -->
+    <div id="rel-sub-vaapty" style="display:none">
+      <div style="padding:0 22px 28px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+            <div>
+              <label class="anunc-form-lbl">📅 Mês de referência</label>
+              <input class="anunc-form-inp" id="relv-mes" type="month" style="color-scheme:dark;width:100%">
+            </div>
+            <div>
+              <label class="anunc-form-lbl">↩ Repasse Vaapty (%)</label>
+              <input class="anunc-form-inp" id="relv-repasse" type="number" min="0" max="100" step="1" value="15" style="width:100%">
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--hint);margin-bottom:12px">As receitas vêm direto das unidades lançadas na aba <strong>Vaapty</strong> (Franqueado Piloto, Expansão) para o mês escolhido.</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div style="font-size:12px;color:var(--muted)" id="relv-resumo">—</div>
+            <button onclick="relvGerar()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">✨ Gerar Relatório</button>
+          </div>
+        </div>
+      </div>
+      <div id="relv-preview" style="display:none;padding:0 22px 28px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+          <button onclick="relvVoltar()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px">← Editar dados</button>
+          <button onclick="relvPrint()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">🖨️ Imprimir / PDF</button>
+        </div>
+        <div id="relv-output" style="background:#fff;color:#222;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:'DM Sans',sans-serif"></div>
+      </div>
+    </div><!-- /rel-sub-vaapty -->
+
+    <!-- SUB-ABA: ELEVADORES -->
+    <div id="rel-sub-elev" style="display:none">
+      <div style="padding:0 22px 28px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px">
+          <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px;max-width:280px">
+            <div>
+              <label class="anunc-form-lbl">📅 Mês de referência</label>
+              <input class="anunc-form-inp" id="rele-mes" type="month" style="color-scheme:dark;width:100%">
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--hint);margin-bottom:12px">Relatório de <strong>receitas × despesas × lucro</strong> do módulo Elevadores — para prestar contas com o sócio. Dados vêm dos anunciantes e das despesas lançadas na aba Elevadores.</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div style="font-size:12px;color:var(--muted)" id="rele-resumo">—</div>
+            <button onclick="releGerar()" style="background:linear-gradient(135deg,#4ecb8d,#2dd4bf);border:none;color:#06281c;padding:12px 28px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">✨ Gerar Relatório</button>
+          </div>
+        </div>
+      </div>
+      <div id="rele-preview" style="display:none;padding:0 22px 28px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+          <button onclick="releVoltar()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px">← Editar dados</button>
+          <button onclick="relePrint()" style="background:linear-gradient(135deg,#4ecb8d,#2dd4bf);border:none;color:#06281c;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">🖨️ Imprimir / PDF</button>
+        </div>
+        <div id="rele-output" style="background:#fff;color:#222;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:'DM Sans',sans-serif"></div>
+      </div>
+    </div><!-- /rel-sub-elev -->
+
+  </div>
+
+  <!-- MODAL: RELATÓRIO CONTADOR (notas a emitir) -->
+  <div id="rel-contador-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(10,8,20,.72);align-items:flex-start;justify-content:center;overflow-y:auto;padding:32px 16px">
+    <div style="width:100%;max-width:820px">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+        <button onclick="fecharRelContador()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px">✕ Fechar</button>
+        <button onclick="imprimirRelContador()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">🖨️ Imprimir / PDF</button>
+      </div>
+      <div id="rel-contador-output" style="background:#fff;color:#222;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5);font-family:'DM Sans',sans-serif"></div>
     </div>
   </div>
 
@@ -5528,8 +5614,56 @@ function buildLancRec(){
   // Lista de clientes do mês selecionado
   g('lanc-rec-titulo').textContent=`Clientes — ${MESES[selMes]}/${selAno}`;
 
-  // Coleta todos os itens com receita no mês selecionado
-  // Mesma regra de recOfMes: sem inicio → conta em todos os meses
+  // Coleta todos os itens com receita no mês selecionado (helper reutilizável)
+  const linhas=coletaClientesMes(selAno,selMes);
+
+  const totalPrev=linhas.reduce((a,l)=>a+l.valor,0);
+  const totalPago=linhas.filter(l=>l.pago).reduce((a,l)=>a+l.valor,0);
+  const totalPend=totalPrev-totalPago;
+
+  g('lanc-rec-sum').textContent=`${linhas.filter(l=>l.pago).length}/${linhas.length} recebidos`;
+  const semIni=clientesSemInicio();
+  const semIniHtml=semIni.length?`<span style="font-size:10px;color:var(--amber);background:var(--ad);padding:3px 9px;border-radius:6px;margin-left:auto;cursor:help" title="${semIni.map(s=>s.m.label.split('—')[0].trim()+' › '+s.item+' ('+f(s.valor)+')').join('\n')}">⚠️ ${semIni.length} cliente(s) sem mês de início configurado — não estão sendo contabilizados</span>`:'';
+  g('lanc-rec-foot').innerHTML=`
+    <span>Previsto: <strong style="color:var(--text)">${f(totalPrev)}</strong></span>
+    <span>Recebido: <strong style="color:var(--green)">${f(totalPago)}</strong></span>
+    <span>Pendente: <strong style="color:var(--red)">${f(totalPend)}</strong></span>
+    ${semIniHtml}
+  `;
+
+  if(!linhas.length){
+    g('lanc-rec-body').innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--hint);font-size:11px">Nenhum cliente com receita configurada para ${MESES[selMes]}/${selAno}.</td></tr>`;
+    return;
+  }
+
+  g('lanc-rec-body').innerHTML=linhas.map((l,i)=>`<tr style="${l.pago?'opacity:.7':''}">
+    <td style="font-size:10px;color:var(--muted)">${l.modIcon} ${l.modLabel}</td>
+    <td style="font-weight:500">${l.item}${l.sub?`<div style="font-size:9px;color:var(--hint);margin-top:2px">${l.sub}</div>`:''}</td>
+    <td class="tr mono" style="color:var(--green);font-weight:700">${f(l.valor)}</td>
+    <td>
+      <button onclick="toggleRecPago('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}',${i})"
+        style="font-size:10px;padding:3px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;
+        background:${l.pago?'var(--gd)':'rgba(248,113,113,.15)'};color:${l.pago?'var(--green)':'var(--red)'}">
+        ${l.pago?'✓ Recebido':'Pendente'}
+      </button>
+    </td>
+    <td style="text-align:center">
+      <input type="checkbox" ${l.nota?'checked':''}
+        onchange="toggleNotaFlag('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}')"
+        title="Precisa de nota fiscal"
+        style="cursor:pointer;width:16px;height:16px;accent-color:#8b83f7">
+    </td>
+    <td>
+      <input type="text" value="${l.obs}" placeholder="Obs..."
+        onchange="setRecObs('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}',this.value)"
+        style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:3px 7px;width:120px;outline:none">
+    </td>
+  </tr>`).join('');
+}
+
+// Coleta os clientes com receita num mês (reutilizado pela tabela e pelo relatório do contador)
+// Cada linha: {modId, modLabel, modIcon, item, valor, pago, obs, nota, key, sub?}
+function coletaClientesMes(selAno,selMes){
   const linhas=[];
   const _key=recPagKey(selAno,selMes);
   MODULES.forEach(m=>{
@@ -5550,8 +5684,8 @@ function buildLancRec(){
         const item=a.nome; // anunciante vira "item"
         if(!recPagamentos[m.id]) recPagamentos[m.id]={};
         if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
-        const pg=recPagamentos[m.id][item][_key]||{pago:false,obs:''};
-        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,obs:pg.obs,key:_key,sub:(a.telas||[]).join(', ')});
+        const pg=recPagamentos[m.id][item][_key]||{pago:false,obs:'',nota:false};
+        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,obs:pg.obs,nota:pg.nota||false,key:_key,sub:(a.telas||[]).join(', ')});
       });
       return; // pula iteração por items pra elev
     }
@@ -5560,8 +5694,8 @@ function buildLancRec(){
       if(!val) return;
       if(!recPagamentos[m.id]) recPagamentos[m.id]={};
       if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
-      const pg=recPagamentos[m.id][item][_key]||{pago:false,obs:''};
-      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,obs:pg.obs,key:_key});
+      const pg=recPagamentos[m.id][item][_key]||{pago:false,obs:'',nota:false};
+      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,obs:pg.obs,nota:pg.nota||false,key:_key});
     });
   });
   // Receita manual avulsa do mês (não vinculada a módulo)
@@ -5569,46 +5703,10 @@ function buildLancRec(){
   if(manualRec>0){
     if(!recPagamentos['_manual']) recPagamentos['_manual']={};
     if(!recPagamentos['_manual']['Receita avulsa']) recPagamentos['_manual']['Receita avulsa']={};
-    const pg=recPagamentos['_manual']['Receita avulsa'][_key]||{pago:false,obs:''};
-    linhas.push({modId:'_manual',modLabel:'Avulsa',modIcon:'➕',item:'Receita avulsa do mês',valor:manualRec,pago:pg.pago,obs:pg.obs,key:_key,sub:'lançada manualmente em fin[ano][mes].receita'});
+    const pg=recPagamentos['_manual']['Receita avulsa'][_key]||{pago:false,obs:'',nota:false};
+    linhas.push({modId:'_manual',modLabel:'Avulsa',modIcon:'➕',item:'Receita avulsa do mês',valor:manualRec,pago:pg.pago,obs:pg.obs,nota:pg.nota||false,key:_key,sub:'lançada manualmente em fin[ano][mes].receita'});
   }
-
-  const totalPrev=linhas.reduce((a,l)=>a+l.valor,0);
-  const totalPago=linhas.filter(l=>l.pago).reduce((a,l)=>a+l.valor,0);
-  const totalPend=totalPrev-totalPago;
-
-  g('lanc-rec-sum').textContent=`${linhas.filter(l=>l.pago).length}/${linhas.length} recebidos`;
-  const semIni=clientesSemInicio();
-  const semIniHtml=semIni.length?`<span style="font-size:10px;color:var(--amber);background:var(--ad);padding:3px 9px;border-radius:6px;margin-left:auto;cursor:help" title="${semIni.map(s=>s.m.label.split('—')[0].trim()+' › '+s.item+' ('+f(s.valor)+')').join('\n')}">⚠️ ${semIni.length} cliente(s) sem mês de início configurado — não estão sendo contabilizados</span>`:'';
-  g('lanc-rec-foot').innerHTML=`
-    <span>Previsto: <strong style="color:var(--text)">${f(totalPrev)}</strong></span>
-    <span>Recebido: <strong style="color:var(--green)">${f(totalPago)}</strong></span>
-    <span>Pendente: <strong style="color:var(--red)">${f(totalPend)}</strong></span>
-    ${semIniHtml}
-  `;
-
-  if(!linhas.length){
-    g('lanc-rec-body').innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--hint);font-size:11px">Nenhum cliente com receita configurada para ${MESES[selMes]}/${selAno}.</td></tr>`;
-    return;
-  }
-
-  g('lanc-rec-body').innerHTML=linhas.map((l,i)=>`<tr style="${l.pago?'opacity:.7':''}">
-    <td style="font-size:10px;color:var(--muted)">${l.modIcon} ${l.modLabel}</td>
-    <td style="font-weight:500">${l.item}${l.sub?`<div style="font-size:9px;color:var(--hint);margin-top:2px">${l.sub}</div>`:''}</td>
-    <td class="tr mono" style="color:var(--green);font-weight:700">${f(l.valor)}</td>
-    <td>
-      <button onclick="toggleRecPago('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}',${i})"
-        style="font-size:10px;padding:3px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;
-        background:${l.pago?'var(--gd)':'rgba(248,113,113,.15)'};color:${l.pago?'var(--green)':'var(--red)'}">
-        ${l.pago?'✓ Recebido':'Pendente'}
-      </button>
-    </td>
-    <td>
-      <input type="text" value="${l.obs}" placeholder="Obs..."
-        onchange="setRecObs('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}',this.value)"
-        style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:3px 7px;width:120px;outline:none">
-    </td>
-  </tr>`).join('');
+  return linhas;
 }
 
 function toggleRecPago(modId,item,key,idx){
@@ -5626,6 +5724,75 @@ function setRecObs(modId,item,key,obs){
   const pg=recPagamentos[modId][item][key]||{pago:false,obs:''};
   recPagamentos[modId][item][key]={...pg,obs};
   scheduleSave();
+}
+
+// Marca/desmarca "precisa de nota fiscal" — não re-renderiza a tabela (evita perder o foco)
+function toggleNotaFlag(modId,item,key){
+  if(!recPagamentos[modId]) recPagamentos[modId]={};
+  if(!recPagamentos[modId][item]) recPagamentos[modId][item]={};
+  const pg=recPagamentos[modId][item][key]||{pago:false,obs:''};
+  recPagamentos[modId][item][key]={...pg,nota:!pg.nota};
+  scheduleSave();
+}
+
+// Relatório imprimível dos clientes marcados com "precisa de nota" — para o contador
+function gerarRelContador(){
+  const selMes=parseInt(g('lanc-mes-sel2').value), selAno=parseInt(g('lanc-ano-sel2').value);
+  const marcados=coletaClientesMes(selAno,selMes).filter(l=>l.nota);
+  if(!marcados.length){ alert('Marque pelo menos um cliente na coluna "NF?" antes de gerar o relatório.'); return; }
+  const mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][selMes];
+  const total=marcados.reduce((a,l)=>a+l.valor,0);
+  const hoje=new Date().toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+  const rows=marcados.map((l,i)=>`
+    <tr style="${i%2?'background:#F8F5FF':''}">
+      <td style="padding:8px 12px;font-size:11px;color:#6B21A8;font-weight:600">${l.modLabel}</td>
+      <td style="padding:8px 12px;font-weight:600;color:#2A1760">${l.item}</td>
+      <td style="padding:8px 12px;text-align:right;font-weight:700;color:#059669;font-family:'DM Mono',monospace">R$ ${l.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td style="padding:8px 12px;font-size:11px;color:#555">${l.obs||'—'}${l.pago?' · <span style="color:#059669">recebido</span>':''}</td>
+    </tr>`).join('');
+  g('rel-contador-output').innerHTML=`
+    <div style="background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#E879B0 100%);padding:24px 32px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:6px;height:54px;background:#E879B0;border-radius:3px"></div>
+        <div>
+          <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px">MGB Mídia</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Comunicação e Marketing Ltda. · CNPJ 23.770.170/0001-50</div>
+        </div>
+      </div>
+      <div style="border-left:1px solid rgba(255,255,255,.2);padding-left:22px;text-align:right">
+        <div style="font-size:9px;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:1.5px;text-transform:uppercase">Notas Fiscais a Emitir</div>
+        <div style="font-size:14px;font-weight:700;margin-top:4px">Para o contador</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">${mesNome}/${selAno}</div>
+      </div>
+    </div>
+    <div style="padding:24px 32px 12px">
+      <p style="font-size:12px;color:#444;line-height:1.6;margin:0 0 16px">Clientes que precisam de <strong>nota fiscal</strong> referente a <strong>${mesNome}/${selAno}</strong>. Total de <strong>${marcados.length}</strong> nota(s).</p>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#2A1760;color:#fff">
+          <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Módulo</th>
+          <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Cliente / Unidade</th>
+          <th style="padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Valor</th>
+          <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Obs.</th>
+        </tr></thead>
+        <tbody>${rows}
+          <tr style="background:#2A1760;color:#fff;font-weight:700">
+            <td style="padding:8px 12px" colspan="2">TOTAL</td>
+            <td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+            <td style="padding:8px 12px"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="background:#2A1760;color:#EAD9FF;padding:14px 32px;font-size:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span><strong>MGB Mídia · Comunicação e Marketing Ltda.</strong> · Londrina/PR · Emitido em ${hoje}</span>
+      <span style="color:#E879B0;font-weight:600">comercial@agenciamgb.com.br · (43) 99696-0078</span>
+    </div>`;
+  g('rel-contador-modal').style.display='flex';
+}
+function fecharRelContador(){ g('rel-contador-modal').style.display='none'; }
+function imprimirRelContador(){
+  const mes=g('lanc-mes-sel2').value, ano=g('lanc-ano-sel2').value;
+  relPrintEl('rel-contador-output','mgb mídia_notas a emitir_'+MESES[parseInt(mes)]+'-'+ano);
 }
 
 // ── PÁGINA DESPESAS (aba própria) ────────────────────────────────────────
@@ -8340,11 +8507,12 @@ function relVoltar(){
   g('rel-form').style.display='block';
   g('rel-preview').style.display='none';
 }
-function relPrint(){
+// Helper genérico de impressão — clona o container de saída e imprime só ele
+function relPrintEl(outputId,title){
+  const orig=g(outputId);
+  if(!orig){ window.print(); return; }
   const oldTitle=document.title;
-  const mes=g('rel-mes').value||'';
-  document.title='mgb mídia_relatório_radio mercadão_'+mes;
-  const orig=g('rel-output');
+  if(title) document.title=title;
   const clone=orig.cloneNode(true);
   clone.id='rel-print-clone';
   document.body.appendChild(clone);
@@ -8361,17 +8529,214 @@ function relPrint(){
     st.remove();
   },800);
 }
+function relPrint(){
+  relPrintEl('rel-output','mgb mídia_relatório_radio mercadão_'+(g('rel-mes').value||''));
+}
 function initRelatorios(){
-  // Pré-preenche mês atual
-  const m=g('rel-mes');
-  if(m && !m.value) m.value=new Date().toISOString().slice(0,7);
+  const isoAtual=new Date().toISOString().slice(0,7);
+  // Pré-preenche mês atual nos três relatórios
+  ['rel-mes','relv-mes','rele-mes'].forEach(id=>{ const el=g(id); if(el && !el.value) el.value=isoAtual; });
   // Liga os recalculadores
   ['rel-cota','rel-repasse','rel-ins'].forEach(id=>{
     const el=g(id);
     if(el && !el.dataset.bound){ el.addEventListener('input',relAtualizaResumo); el.dataset.bound='1'; }
   });
+  ['relv-mes','relv-repasse'].forEach(id=>{ const el=g(id); if(el && !el.dataset.bound){ el.addEventListener('input',relvResumo); el.dataset.bound='1'; } });
+  ['rele-mes'].forEach(id=>{ const el=g(id); if(el && !el.dataset.bound){ el.addEventListener('input',releResumo); el.dataset.bound='1'; } });
+  // Reseta pra sub-aba Mercadão
+  showRelTab('mercadao', document.querySelector('#page-relatorios .rel-tab[data-reltab="mercadao"]'));
   relRefresh();
 }
+
+// ── SUB-ABAS DE RELATÓRIOS ────────────────────────────────────────────────
+function showRelTab(id, el){
+  ['mercadao','vaapty','elev'].forEach(t=>{ const p=g('rel-sub-'+t); if(p) p.style.display=(t===id?'block':'none'); });
+  document.querySelectorAll('#page-relatorios .rel-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const subs={mercadao:'Relatório mensal de anunciantes — Rádio Indoor Mercadão da Prochet',
+              vaapty:'Relatório de repasse — TV Vaapty (comissão de franqueados)',
+              elev:'Prestação de contas — Elevadores (receitas × despesas × lucro)'};
+  const sb=g('rel-page-sub'); if(sb) sb.textContent=subs[id]||'';
+  if(id==='vaapty') relvResumo();
+  if(id==='elev') releResumo();
+}
+
+// ── RELATÓRIO VAAPTY (repasse de comissão) ────────────────────────────────
+// Lê a receita das unidades do módulo Vaapty no mês escolhido
+function relvLerUnidades(ano,mes){
+  const vmod=MODULES.find(m=>m.id==='vaapty');
+  if(!vmod) return [];
+  return vmod.items.map(item=>({item, valor:recOfMes('vaapty',item,ano,mes)})).filter(x=>x.valor>0);
+}
+function relvMesAno(){
+  const iso=g('relv-mes').value || new Date().toISOString().slice(0,7);
+  const [ano,mes]=iso.split('-').map(Number);
+  return {ano,mes:mes-1}; // mes 0-based
+}
+function relvResumo(){
+  const {ano,mes}=relvMesAno();
+  const rep=parseFloat(g('relv-repasse').value)||0;
+  const un=relvLerUnidades(ano,mes);
+  const total=un.reduce((a,x)=>a+x.valor,0);
+  const repasse=total*rep/100;
+  g('relv-resumo').innerHTML=`<b>${un.length}</b> unidade${un.length===1?'':'s'} · Total vendido <b style="color:#4ecb8d">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> · Repasse ${rep}% <b style="color:#f472b6">R$ ${repasse.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b>`;
+}
+function relvGerar(){
+  const {ano,mes}=relvMesAno();
+  const rep=parseFloat(g('relv-repasse').value)||0;
+  const un=relvLerUnidades(ano,mes);
+  if(!un.length){ alert('Nenhuma receita lançada nas unidades da Vaapty para esse mês. Lance na aba Vaapty primeiro.'); return; }
+  const mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][mes];
+  const total=un.reduce((a,x)=>a+x.valor,0);
+  const repasse=total*rep/100;
+  const liquido=total-repasse;
+  const hoje=new Date().toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+  const numRel='MGB-VAP-'+String(ano).slice(-2)+String(mes+1).padStart(2,'0');
+  const rows=un.map((x,i)=>`
+    <tr style="${i%2?'background:#F8F5FF':''}">
+      <td style="padding:8px 12px;font-weight:600;color:#2A1760">${x.item}</td>
+      <td style="padding:8px 12px;text-align:right;font-weight:700;color:#059669;font-family:'DM Mono',monospace">R$ ${x.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+    </tr>`).join('');
+  g('relv-output').innerHTML=`
+    <div style="background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#E879B0 100%);padding:24px 32px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:6px;height:54px;background:#E879B0;border-radius:3px"></div>
+        <div>
+          <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px">MGB Mídia</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Elevando a sua comunicação · Rádio · TV · Elevadores</div>
+        </div>
+      </div>
+      <div style="border-left:1px solid rgba(255,255,255,.2);padding-left:22px;text-align:right">
+        <div style="font-size:9px;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:1.5px;text-transform:uppercase">Relatório de Repasse</div>
+        <div style="font-size:14px;font-weight:700;margin-top:4px">TV Vaapty · Franqueados</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">${mesNome}/${ano} · Nº ${numRel}</div>
+      </div>
+    </div>
+    <div style="padding:24px 32px 12px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin-bottom:6px">📊 RECEITA POR UNIDADE · ${mesNome}/${ano}</div>
+      <div style="height:1px;background:#EAD9FF;margin-bottom:10px"></div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#2A1760;color:#fff"><th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Unidade</th><th style="padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Valor vendido/mês</th></tr></thead>
+        <tbody>${rows}<tr style="background:#2A1760;color:#fff;font-weight:700"><td style="padding:8px 12px">TOTAL VENDIDO</td><td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td></tr></tbody>
+      </table>
+    </div>
+    <div style="padding:8px 32px 22px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.3px;margin:8px 0 6px">💼 REPASSE DE COMISSÃO</div>
+      <div style="height:1px;background:#EAD9FF;margin-bottom:12px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div style="border:1px solid #EAD9FF;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Total Vendido</div><div style="font-size:22px;font-weight:800;color:#2A1760;margin-top:4px;font-family:'DM Mono',monospace">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+        <div style="background:linear-gradient(135deg,rgba(232,121,176,.10),rgba(155,114,207,.14));border:1px solid rgba(232,121,176,.3);border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Repasse Vaapty (${rep}%)</div><div style="font-size:22px;font-weight:800;color:#E879B0;margin-top:4px;font-family:'DM Mono',monospace">R$ ${repasse.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+        <div style="border:1px solid #EAD9FF;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Líquido MGB</div><div style="font-size:22px;font-weight:800;color:#059669;margin-top:4px;font-family:'DM Mono',monospace">R$ ${liquido.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      </div>
+    </div>
+    <div style="background:#2A1760;color:#EAD9FF;padding:14px 32px;font-size:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span><strong>MGB Mídia · Comunicação e Marketing Ltda.</strong> · CNPJ: 23.770.170/0001-50 · Londrina/PR · Emitido em ${hoje}</span>
+      <span style="color:#E879B0;font-weight:600">comercial@agenciamgb.com.br · (43) 99696-0078</span>
+    </div>`;
+  g('rel-sub-vaapty').querySelector('#relv-preview').style.display='block';
+  window.scrollTo(0,0);
+}
+function relvVoltar(){ g('relv-preview').style.display='none'; }
+function relvPrint(){ relPrintEl('relv-output','mgb mídia_repasse vaapty_'+(g('relv-mes').value||'')); }
+
+// ── RELATÓRIO ELEVADORES (receitas × despesas × lucro) ────────────────────
+function releDados(ano,mes){
+  // Receitas: anunciantes ativos no mês
+  const receitas=(typeof anunciantes!=='undefined'?anunciantes:[]).filter(a=>{
+    if(!a.inicio||!a.valor) return false;
+    const [aI,mI]=a.inicio.split('-').map(Number);
+    const dur=a.meses||1;
+    for(let k=0;k<dur;k++){ const mk=(mI-1+k)%12; const ak=aI+Math.floor((mI-1+k)/12); if(ak===ano&&mk===mes) return true; }
+    return false;
+  }).map(a=>({nome:a.nome, telas:(a.telas||[]).join(', '), valor:a.valor}));
+  // Despesas: tudo do módulo elev nesse mês (db.elev + rateadas)
+  const despesas=coletaDespesasMes(ano,mes).filter(d=>d.m.id==='elev')
+    .map(d=>({desc:(d.r&&d.r.d)||d.item||'—', forn:(d.r&&d.r.f)||'', tipo:d.tipoLbl||'', valor:d.vlrMes}));
+  const totRec=receitas.reduce((a,x)=>a+x.valor,0);
+  const totDesp=despesas.reduce((a,x)=>a+x.valor,0);
+  return {receitas, despesas, totRec, totDesp, lucro:totRec-totDesp};
+}
+function releMesAno(){
+  const iso=g('rele-mes').value || new Date().toISOString().slice(0,7);
+  const [ano,mes]=iso.split('-').map(Number);
+  return {ano,mes:mes-1};
+}
+function releResumo(){
+  const {ano,mes}=releMesAno();
+  const d=releDados(ano,mes);
+  const cor=d.lucro>=0?'#4ecb8d':'#f87171';
+  g('rele-resumo').innerHTML=`Receita <b style="color:#4ecb8d">R$ ${d.totRec.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> · Despesa <b style="color:#f87171">R$ ${d.totDesp.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> · Lucro <b style="color:${cor}">R$ ${d.lucro.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b>`;
+}
+function releGerar(){
+  const {ano,mes}=releMesAno();
+  const d=releDados(ano,mes);
+  if(!d.receitas.length && !d.despesas.length){ alert('Nenhuma receita ou despesa lançada nos Elevadores para esse mês.'); return; }
+  const mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][mes];
+  const hoje=new Date().toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+  const numRel='MGB-ELV-'+String(ano).slice(-2)+String(mes+1).padStart(2,'0');
+  const cor=d.lucro>=0?'#059669':'#DC2626';
+  const rowsRec=d.receitas.length?d.receitas.map((x,i)=>`
+    <tr style="${i%2?'background:#F0FDF4':''}">
+      <td style="padding:8px 12px;font-weight:600;color:#065F46">${x.nome}${x.telas?`<div style="font-size:9px;color:#6B7280;margin-top:2px">${x.telas}</div>`:''}</td>
+      <td style="padding:8px 12px;text-align:right;font-weight:700;color:#059669;font-family:'DM Mono',monospace">R$ ${x.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+    </tr>`).join(''):`<tr><td colspan="2" style="padding:10px 12px;text-align:center;color:#9CA3AF;font-size:11px">Nenhuma receita neste mês</td></tr>`;
+  const rowsDesp=d.despesas.length?d.despesas.map((x,i)=>`
+    <tr style="${i%2?'background:#FEF2F2':''}">
+      <td style="padding:8px 12px;font-weight:600;color:#7F1D1D">${x.desc}${x.forn?`<div style="font-size:9px;color:#9CA3AF;margin-top:2px">${x.forn}</div>`:''}</td>
+      <td style="padding:8px 12px;text-align:center;font-size:10px;color:#6B7280">${x.tipo}</td>
+      <td style="padding:8px 12px;text-align:right;font-weight:700;color:#DC2626;font-family:'DM Mono',monospace">R$ ${x.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+    </tr>`).join(''):`<tr><td colspan="3" style="padding:10px 12px;text-align:center;color:#9CA3AF;font-size:11px">Nenhuma despesa neste mês</td></tr>`;
+  g('rele-output').innerHTML=`
+    <div style="background:linear-gradient(135deg,#06281c 0%,#0f5132 55%,#4ecb8d 100%);padding:24px 32px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:6px;height:54px;background:#4ecb8d;border-radius:3px"></div>
+        <div>
+          <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px">MGB Mídia</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Mídia em telas de elevador · Londrina/PR</div>
+        </div>
+      </div>
+      <div style="border-left:1px solid rgba(255,255,255,.2);padding-left:22px;text-align:right">
+        <div style="font-size:9px;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:1.5px;text-transform:uppercase">Prestação de Contas</div>
+        <div style="font-size:14px;font-weight:700;margin-top:4px">Elevadores</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">${mesNome}/${ano} · Nº ${numRel}</div>
+      </div>
+    </div>
+    <div style="padding:24px 32px 8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Receita do mês</div><div style="font-size:22px;font-weight:800;color:#059669;margin-top:4px;font-family:'DM Mono',monospace">R$ ${d.totRec.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+        <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Despesa do mês</div><div style="font-size:22px;font-weight:800;color:#DC2626;margin-top:4px;font-family:'DM Mono',monospace">R$ ${d.totDesp.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+        <div style="background:${d.lucro>=0?'#F0FDF4':'#FEF2F2'};border:1px solid ${d.lucro>=0?'#BBF7D0':'#FECACA'};border-radius:10px;padding:14px"><div style="font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600">Lucro do mês</div><div style="font-size:22px;font-weight:800;color:${cor};margin-top:4px;font-family:'DM Mono',monospace">R$ ${d.lucro.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      </div>
+    </div>
+    <div style="padding:16px 32px 8px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#065F46;letter-spacing:.3px;margin-bottom:6px">📈 RECEITAS · ANUNCIANTES ATIVOS</div>
+      <div style="height:1px;background:#BBF7D0;margin-bottom:10px"></div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#065F46;color:#fff"><th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Anunciante</th><th style="padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Valor/mês</th></tr></thead>
+        <tbody>${rowsRec}<tr style="background:#065F46;color:#fff;font-weight:700"><td style="padding:8px 12px">TOTAL RECEITA</td><td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace">R$ ${d.totRec.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td></tr></tbody>
+      </table>
+    </div>
+    <div style="padding:8px 32px 20px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#7F1D1D;letter-spacing:.3px;margin:14px 0 6px">📉 DESPESAS DO MÓDULO</div>
+      <div style="height:1px;background:#FECACA;margin-bottom:10px"></div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#7F1D1D;color:#fff"><th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Descrição</th><th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Tipo</th><th style="padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Valor/mês</th></tr></thead>
+        <tbody>${rowsDesp}<tr style="background:#7F1D1D;color:#fff;font-weight:700"><td style="padding:8px 12px" colspan="2">TOTAL DESPESA</td><td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace">R$ ${d.totDesp.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td></tr></tbody>
+      </table>
+      <div style="margin-top:16px;background:${d.lucro>=0?'linear-gradient(135deg,#06281c,#0f5132)':'linear-gradient(135deg,#450a0a,#7F1D1D)'};border-radius:12px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;color:#fff">
+        <div style="font-family:Syne,sans-serif;font-size:14px;font-weight:700;letter-spacing:.5px">LUCRO DO MÊS · ${mesNome}/${ano}</div>
+        <div style="font-size:26px;font-weight:800;font-family:'DM Mono',monospace">R$ ${d.lucro.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      </div>
+    </div>
+    <div style="background:#06281c;color:#c9f5df;padding:14px 32px;font-size:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span><strong>MGB Mídia · Comunicação e Marketing Ltda.</strong> · CNPJ: 23.770.170/0001-50 · Londrina/PR · Emitido em ${hoje}</span>
+      <span style="color:#4ecb8d;font-weight:600">comercial@agenciamgb.com.br · (43) 99696-0078</span>
+    </div>`;
+  g('rele-preview').style.display='block';
+  window.scrollTo(0,0);
+}
+function releVoltar(){ g('rele-preview').style.display='none'; }
+function relePrint(){ relPrintEl('rele-output','mgb mídia_elevadores_'+(g('rele-mes').value||'')); }
 
 // ── SWITCH ────────────────────────────────────────────────────────────────
 function switchMod(modId){
