@@ -4540,8 +4540,9 @@ function copiarSpot() {
           </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="sec-title" style="font-size:13px">🏪 Anunciantes ativos (dos Blocos Rádio)</div>
+          <div class="sec-title" style="font-size:13px">🏪 Anunciantes (dos Blocos Rádio) · <span style="color:var(--hint);font-weight:400">valor editável · ex: pagou 6 meses adiantado</span></div>
           <div style="display:flex;gap:8px">
+            <button class="anunc-btn" onclick="relAddManual()" style="color:#fbbf24;border-color:rgba(251,191,36,.4)">＋ Lançar manual</button>
             <button class="anunc-btn" onclick="relRefresh()">🔄 Atualizar</button>
             <button class="anunc-btn" onclick="relMarcarTodos(true)">✓ Marcar todos</button>
             <button class="anunc-btn" onclick="relMarcarTodos(false)">✕ Desmarcar</button>
@@ -5239,6 +5240,7 @@ MODULES.forEach(m=>{pagamentos[m.id]={};m.items.forEach(i=>pagamentos[m.id][i]={
 // pessoalPag[id][YYYY-M] = {pago:bool, dataPago:str}
 let pessoalRec=[], pessoalDesp=[], pessoalPag={}, pessoalRecPag={};
 let pessoalRegras=null, pessoalUltimaImport=null;
+let relAjustes={ov:{},man:[]}; // relatório Mercadão: ov=valores editados por cliente, man=lançamentos manuais
 let pessoalRecId=1, pessoalDespId=1;
 
 // Valor efetivo do item no mês: cada mês é INDEPENDENTE.
@@ -7699,7 +7701,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport,
+    pessoalRegras, pessoalUltimaImport, relAjustes,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -7789,6 +7791,7 @@ function deserializeState(obj){
   if(obj.pessoalRecPag && typeof obj.pessoalRecPag==='object') pessoalRecPag=obj.pessoalRecPag;
   if(Array.isArray(obj.pessoalRegras)) pessoalRegras=obj.pessoalRegras;
   if(obj.pessoalUltimaImport) pessoalUltimaImport=obj.pessoalUltimaImport;
+  if(obj.relAjustes && typeof obj.relAjustes==='object') relAjustes=obj.relAjustes;
 }
 
 // Salva via Apps Script (POST)
@@ -8443,28 +8446,57 @@ function relLerBlocos(){
   }
   return Object.values(mapa).sort((a,b)=>b.cotas-a.cotas || a.nome.localeCompare(b.nome));
 }
+// ── Ajustes do relatório: valor editável por cliente + lançamentos manuais ──
+function relAjustesInit(){ if(!relAjustes||typeof relAjustes!=='object')relAjustes={ov:{},man:[]}; if(!relAjustes.ov)relAjustes.ov={}; if(!relAjustes.man)relAjustes.man=[]; }
+function relSaveAjustes(){ try{scheduleSave&&scheduleSave();}catch(e){} }
+function relLista(){ // grade (Blocos) + lançamentos manuais
+  relAjustesInit();
+  const grade=relLerBlocos().map(c=>Object.assign({},c,{manual:false}));
+  const man=relAjustes.man.map((m,idx)=>({nome:m.nome||'',tel:'',cotas:0,manual:true,manIdx:idx,valorFixo:parseFloat(m.valor)||0,obs:m.obs||''}));
+  return grade.concat(man);
+}
+function relTemOverride(c){ relAjustesInit(); return !c.manual && relAjustes.ov[(c.nome||'').toLowerCase()]!=null; }
+function relValorCliente(c){ relAjustesInit();
+  if(c.manual) return parseFloat(c.valorFixo)||0;
+  const k=(c.nome||'').toLowerCase();
+  if(relAjustes.ov[k]!=null && relAjustes.ov[k]!=='') return parseFloat(relAjustes.ov[k])||0;
+  return (c.cotas||0)*relCotaVal();
+}
+function relSetOverride(nome,val){ relAjustesInit(); const k=(nome||'').toLowerCase();
+  if(val===''||val==null){ delete relAjustes.ov[k]; } else { relAjustes.ov[k]=parseFloat(val)||0; }
+  relSaveAjustes(); relRefresh(); }
+function relAddManual(){ relAjustesInit(); relAjustes.man.push({nome:'',valor:0,obs:''}); relSaveAjustes(); relRefresh(); }
+function relDelManual(idx){ relAjustesInit(); relAjustes.man.splice(idx,1); relSaveAjustes(); relRefresh(); }
+function relSetManual(idx,field,val){ relAjustesInit(); if(relAjustes.man[idx]){ relAjustes.man[idx][field]=(field==='valor'?(parseFloat(val)||0):val); relSaveAjustes(); relAtualizaResumo(); } }
 function relRefresh(){
-  const lista=relLerBlocos();
+  const lista=relLista();
   const container=g('rel-clientes');
   if(!lista.length){
-    container.innerHTML='<div style="text-align:center;padding:28px;color:var(--hint);font-size:12px">Nenhum cliente cadastrado nos Blocos Rádio.<br>Vai em Operacional → 📻 Blocos Rádio e preenche os nomes.</div>';
+    container.innerHTML='<div style="text-align:center;padding:24px;color:var(--hint);font-size:12px">Nenhum cliente na grade de Blocos Rádio.<br>Preencha em Operacional → 📻 Blocos Rádio, ou use <b>＋ Lançar manual</b>.</div>';
     g('rel-resumo').textContent='—';
     return;
   }
-  container.innerHTML=lista.map((c,i)=>`
-    <label style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(232,121,176,.06)'" onmouseout="this.style.background=''">
+  container.innerHTML=lista.map((c,i)=>{
+    const val=relValorCliente(c), isMan=c.manual, ov=relTemOverride(c);
+    const nomeEsc=(c.nome||'').replace(/"/g,'&quot;').replace(/'/g,"\\'");
+    const nomeCell=isMan
+      ? `<input value="${(c.nome||'').replace(/"/g,'&quot;')}" placeholder="Nome (manual)" onchange="relSetManual(${c.manIdx},'nome',this.value)" style="font-size:13px;font-weight:600;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);width:100%;max-width:230px">`
+      : `<div style="font-size:13px;font-weight:600;color:var(--text)">${c.nome}${ov?' <span style="font-size:9px;color:#fbbf24">(editado)</span>':''}</div>${c.tel?`<div style="font-size:10px;color:var(--hint);margin-top:2px">${c.tel}</div>`:''}`;
+    const onChg=isMan?`relSetManual(${c.manIdx},'valor',this.value)`:`relSetOverride('${nomeEsc}',this.value)`;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:7px">
       <input type="checkbox" class="rel-cli-cb" data-i="${i}" checked onchange="relAtualizaResumo()" style="cursor:pointer;width:16px;height:16px;accent-color:#E879B0">
-      <div style="flex:1;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-size:13px;font-weight:600;color:var(--text)">${c.nome}</div>
-          ${c.tel?`<div style="font-size:10px;color:var(--hint);margin-top:2px">${c.tel}</div>`:''}
-        </div>
-        <div style="display:flex;align-items:center;gap:14px">
-          <div style="font-size:11px;color:var(--muted)">${c.cotas} ${c.cotas===1?'cota':'cotas'}</div>
-          <div style="font-size:12px;font-weight:700;color:#f472b6;font-family:'DM Mono',monospace" class="rel-cli-val" data-i="${i}">R$ ${(c.cotas*relCotaVal()).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <div style="flex:1;display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div style="flex:1;min-width:0">${nomeCell}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap">${isMan?'<span style="color:#fbbf24">manual</span>':((c.cotas)+(c.cotas===1?' cota':' cotas'))}</span>
+          <span style="font-size:12px;color:var(--muted)">R$</span>
+          <input type="number" step="0.01" value="${val.toFixed(2)}" onchange="${onChg}" style="width:112px;font-size:12px;font-weight:700;color:#f472b6;font-family:'DM Mono',monospace;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;text-align:right">
+          ${isMan?`<button onclick="relDelManual(${c.manIdx})" title="Remover" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px">🗑</button>`
+                 :(ov?`<button onclick="relSetOverride('${nomeEsc}','')" title="Voltar ao valor da grade" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px">↺</button>`:'<span style="width:13px;display:inline-block"></span>')}
         </div>
       </div>
-    </label>`).join('');
+    </div>`;
+  }).join('');
   relAtualizaResumo();
 }
 function relCotaVal(){ return parseFloat(g('rel-cota').value)||0; }
@@ -8473,14 +8505,12 @@ function relMarcarTodos(v){
   relAtualizaResumo();
 }
 function relAtualizaResumo(){
-  const lista=relLerBlocos();
-  const cota=relCotaVal();
+  const lista=relLista();
   const rep=parseFloat(g('rel-repasse').value)||0;
   let totalCotas=0, totalValor=0, clientes=0;
   document.querySelectorAll('.rel-cli-cb').forEach(cb=>{
-    const i=parseInt(cb.dataset.i);
-    document.querySelector(`.rel-cli-val[data-i="${i}"]`).textContent='R$ '+(lista[i].cotas*cota).toLocaleString('pt-BR',{minimumFractionDigits:2});
-    if(cb.checked){ clientes++; totalCotas+=lista[i].cotas; totalValor+=lista[i].cotas*cota; }
+    const i=parseInt(cb.dataset.i); const c=lista[i]; if(!c)return;
+    if(cb.checked){ clientes++; totalCotas+=(c.cotas||0); totalValor+=relValorCliente(c); }
   });
   const repasse=totalValor*rep/100;
   g('rel-resumo').innerHTML=`<b>${clientes}</b> anunciante${clientes===1?'':'s'} · <b>${totalCotas}</b> cota${totalCotas===1?'':'s'} · Total <b style="color:#4ecb8d">R$ ${totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> · Repasse ${rep}% <b style="color:#f472b6">R$ ${repasse.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b>`;
@@ -8546,9 +8576,9 @@ async function relUploadXLS(input){
 }
 
 function relGerar(){
-  const lista=relLerBlocos();
+  const lista=relLista();
   const sel=[];
-  document.querySelectorAll('.rel-cli-cb').forEach(cb=>{ if(cb.checked) sel.push(lista[parseInt(cb.dataset.i)]); });
+  document.querySelectorAll('.rel-cli-cb').forEach(cb=>{ if(cb.checked){ const c=lista[parseInt(cb.dataset.i)]; if(c)sel.push(c); } });
   if(!sel.length){ alert('Marca pelo menos um cliente.'); return; }
   const cota=relCotaVal();
   const rep=parseFloat(g('rel-repasse').value)||0;
@@ -8557,7 +8587,7 @@ function relGerar(){
   const [ano,mes]=mesIso.split('-').map(Number);
   const mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][mes-1];
   const totalCotas=sel.reduce((a,c)=>a+c.cotas,0);
-  const totalValor=sel.reduce((a,c)=>a+c.cotas*cota,0);
+  const totalValor=sel.reduce((a,c)=>a+relValorCliente(c),0);
   const repasse=totalValor*rep/100;
   const liquido=totalValor-repasse;
   const insDia=totalCotas*ins;
@@ -8569,11 +8599,11 @@ function relGerar(){
   const audAno=audMes*12;
   const tbody=sel.map((c,i)=>`
     <tr style="${i%2?'background:#F8F5FF':''}">
-      <td style="padding:8px 12px;font-weight:600;color:#2A1760">${c.nome}</td>
-      <td style="padding:8px 12px;text-align:center;color:#444">${c.cotas}</td>
-      <td style="padding:8px 12px;text-align:center;color:#444">${c.cotas*ins}/dia</td>
-      <td style="padding:8px 12px;text-align:center;color:#444">${(c.cotas*ins*30).toLocaleString('pt-BR')}/mês</td>
-      <td style="padding:8px 12px;text-align:right;font-weight:700;color:#059669;font-family:'DM Mono',monospace">R$ ${(c.cotas*cota).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td style="padding:8px 12px;font-weight:600;color:#2A1760">${c.nome||'(manual)'}</td>
+      <td style="padding:8px 12px;text-align:center;color:#444">${c.cotas?c.cotas:'—'}</td>
+      <td style="padding:8px 12px;text-align:center;color:#444">${c.cotas?(c.cotas*ins)+'/dia':'—'}</td>
+      <td style="padding:8px 12px;text-align:center;color:#444">${c.cotas?(c.cotas*ins*30).toLocaleString('pt-BR')+'/mês':'—'}</td>
+      <td style="padding:8px 12px;text-align:right;font-weight:700;color:#059669;font-family:'DM Mono',monospace">R$ ${relValorCliente(c).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
     </tr>`).join('');
   g('rel-output').innerHTML=`
     <div style="background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#E879B0 100%);padding:24px 32px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px">
