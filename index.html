@@ -4649,9 +4649,30 @@ function copiarSpot() {
   <div id="page-pessoal" style="display:none">
     <div class="page-hdr">
       <div><div class="page-title">💰 Pessoal</div><div class="page-sub">Receitas e despesas pessoais — separadas dos módulos MGB</div></div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <span id="pes-ultima" style="font-size:10px;color:var(--muted);margin-right:2px"></span>
+        <button class="anunc-btn" onclick="importExtratoOpen()" style="color:var(--purple);border-color:rgba(139,92,246,.45)">📥 Importar extrato</button>
         <select id="pes-mes-sel" onchange="buildPessoal()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
         <select id="pes-ano-sel" onchange="buildPessoal()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+      </div>
+    </div>
+
+    <!-- Modal Importar Extrato -->
+    <div id="imp-modal" class="modal-overlay hidden" style="z-index:200">
+      <div class="modal" style="width:820px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="modal-title">📥 Importar extrato bancário</div><div class="modal-sub">Bradesco (PDF) → lança no Pessoal, sem duplicar</div></div>
+          <button onclick="importExtratoClose()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+        </div>
+        <div style="margin:10px 0 12px">
+          <input type="file" id="imp-file" accept="application/pdf,.pdf" onchange="importExtratoFile(this)" style="font-size:12px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;cursor:pointer">
+        </div>
+        <div id="imp-info" style="margin-bottom:10px"></div>
+        <div id="imp-body" style="overflow:auto;flex:1;min-height:0"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <button onclick="importExtratoClose()" style="font-size:12px;padding:9px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Fechar</button>
+          <button id="imp-lancar" onclick="importExtratoLancar()" style="display:none;font-size:12px;padding:9px 20px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Lançar</button>
+        </div>
       </div>
     </div>
 
@@ -4852,6 +4873,176 @@ function copiarSpot() {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+/* ═══════════ IMPORTAR EXTRATO BANCÁRIO → PESSOAL ═══════════ */
+if(window.pdfjsLib){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
+
+const PES_REGRAS_SEED=[
+  {match:"SUPERMERCADO VISCARDI",excl:"SAQUE",categoria:"Supermercado",lado:"desp"},
+  {match:"UBER",categoria:"Transporte (app/ônibus)",lado:"desp"},
+  {match:"ARIZONA CROSS",categoria:"Academia",lado:"desp"},
+  {match:"IFOOD",categoria:"Alimentação fora de casa",lado:"desp"},
+  {match:"ESPETO DO CEBOLA",categoria:"Alimentação fora de casa",lado:"desp"},
+  {match:"RITZ SORVETES",categoria:"Alimentação fora de casa",lado:"desp"},
+  {match:"DUEGUSTI",categoria:"Alimentação fora de casa",lado:"desp"},
+  {match:"BOUTIQUE DO PAO",categoria:"Alimentação fora de casa",lado:"desp"},
+  {match:"RENATO DOS SANTOS BEB",categoria:"Bar",lado:"desp"},
+  {match:"SAO JOAO FARMACIAS",categoria:"Saúde (plano/médico/farmácia)",lado:"desp"},
+  {match:"PRESTACAO DE CRED IMOB",categoria:"Cartão / Financiamento",lado:"desp"},
+  {match:"TIM S A",categoria:"Internet",lado:"desp"},
+  {match:"AUTO POSTO",categoria:"Gasolina Toro",lado:"desp"},
+  {match:"DARF",categoria:"Impostos / IR",lado:"desp"},
+  {match:"LISTENX",categoria:"Repasse Pessoal→MGB",lado:"desp"},
+  {match:"HOSTOO",categoria:"Repasse Pessoal→MGB",lado:"desp"},
+  {match:"TECMAX",categoria:"Repasse Pessoal→MGB",lado:"desp"},
+  {match:"JULIANE MARQUES",categoria:"Juliane",lado:"desp"},
+  {match:"LEO COSMETICOS",categoria:"Juliane",lado:"desp"},
+  {match:"WANDER LUIZ",categoria:"Futebol",lado:"desp"},
+  {match:"LONDRIBAT",categoria:"Outros",lado:"desp"},
+  {match:"PARCELA EXPRESS",categoria:"Outros",lado:"desp"},
+  {match:"DAIANY CRISTINA",categoria:"Juliane",lado:"desp"},
+  {match:"LEONILDA CLARA",categoria:"Juliane",lado:"desp"},
+  {match:"ALONSO E MONSON",categoria:"Juliane",lado:"desp"},
+  {match:"ANDRE GARCIA ARRUDA",categoria:"Juliane",lado:"desp"},
+  {match:"REGINALDO ALVES",categoria:"Juliane",lado:"desp"},
+  {match:"KARLA CAROLINA",categoria:"Juliane",lado:"desp"},
+  {match:"JOSE SILVERIO",categoria:"Juliane",lado:"desp"},
+  {match:"REGINALDO RODRIGUES",categoria:"Juliane",lado:"desp"},
+  {match:"MGB COMUNICACAO",categoria:"Repasse MGB→Pessoal",lado:"rec"},
+  {match:"TED C SAL",categoria:"Salário",lado:"rec"},
+  {match:"PJBANK",categoria:"Aluguel Recebido",lado:"rec"}
+];
+function pesRegrasInit(){ if(!Array.isArray(pessoalRegras)||!pessoalRegras.length){ pessoalRegras=PES_REGRAS_SEED.map(r=>Object.assign({},r)); } }
+function pesNorm(s){ return (s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function catExtrato(hist,lado){
+  pesRegrasInit(); const H=pesNorm(hist);
+  const cand=pessoalRegras.filter(r=>r.lado===lado && H.includes(pesNorm(r.match)) && !(r.excl&&H.includes(pesNorm(r.excl))));
+  cand.sort((a,b)=>pesNorm(b.match).length-pesNorm(a.match).length);
+  return cand.length?cand[0].categoria:'';
+}
+function pesMerchantKey(hist){
+  let h=hist||''; const m=h.match(/DES:\s*(.+)$/i)||h.match(/REM:\s*(.+)$/i); if(m)h=m[1];
+  h=h.replace(/\b\d{2}\/\d{2}(\/\d{4})?\b/g,'').trim();
+  h=h.replace(/^(PIX\s+(ENVIADO|RECEBIDO|QR\s+CODE\s+(DINAMICO|ESTATICO)|SAQUE)|PAGTO\s+ELETRON\s+COBRANCA|PARCELAMENTO\s+DE)\s*/i,'').trim();
+  return h.toUpperCase().replace(/\s+/g,' ').replace(/\s+(LTDA|S\.?A\.?|EIRELI|ME|II|I)$/,'').trim().slice(0,40);
+}
+function pesDescFromHist(h){ const k=pesMerchantKey(h); return k?k.split(' ').map(w=>w.length>2?w[0]+w.slice(1).toLowerCase():w).join(' '):(h||'').slice(0,40); }
+
+async function pesParsePDF(file){
+  const buf=new Uint8Array(await file.arrayBuffer());
+  const doc=await pdfjsLib.getDocument({data:buf}).promise;
+  let periodo=null, rows=[];
+  for(let p=1;p<=doc.numPages;p++){
+    const page=await doc.getPage(p), tc=await page.getTextContent(), byY={};
+    for(const it of tc.items){ const s=it.str; if(!s||!s.trim())continue;
+      const x=Math.round(it.transform[4]), y=Math.round(it.transform[5]), key=p*100000-y;
+      (byY[key]=byY[key]||{y,items:[]}).items.push({x,s});
+      const mp=s.match(/entre:\s*(\d{2}\/\d{2}\/\d{4})\s*e\s*(\d{2}\/\d{2}\/\d{4})/); if(mp)periodo={ini:mp[1],fim:mp[2]};
+    }
+    Object.keys(byY).map(Number).sort((a,b)=>a-b).forEach(k=>rows.push(byY[k]));
+  }
+  const brNum=s=>parseFloat(String(s).replace(/\./g,'').replace(',','.'));
+  const R=rows.map(r=>{ const its=r.items.sort((a,b)=>a.x-b.x); let date=null,hist=[],docto=null,cred=null,deb=null;
+    for(const it of its){ const x=it.x,s=it.s;
+      if(x<95){ if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))date=s; }
+      else if(x<295){ hist.push(s); }
+      else if(x<360){ if(/^\d{5,7}$/.test(s))docto=s; }
+      else if(x<445){ if(/\d,\d{2}/.test(s))cred=brNum(s); }
+      else if(x<505){ if(/\d,\d{2}/.test(s))deb=brNum(s); } }
+    return {y:r.y,date,hist:hist.join(' ').replace(/\s+/g,' ').trim(),docto,cred,deb}; });
+  const txns=[]; let cur=null;
+  for(let i=0;i<R.length;i++){ if(R[i].date)cur=R[i].date; const row=R[i];
+    if(!(row.docto&&(row.cred!=null||row.deb!=null)))continue;
+    let parts=[]; const pv=R[i-1]; if(pv&&!pv.docto&&pv.hist&&Math.abs(pv.y-row.y)<=8)parts.push(pv.hist);
+    if(row.hist)parts.push(row.hist); const nx=R[i+1]; if(nx&&!nx.docto&&nx.hist&&Math.abs(nx.y-row.y)<=8)parts.push(nx.hist);
+    let h=parts.join(' ').replace(/\s+/g,' ').trim(); if(/^COD\. LANC/.test(h))continue;
+    const valor=row.cred!=null?row.cred:row.deb; if(!valor)continue;
+    txns.push({data:cur,docto:row.docto,historico:h,valor:Math.round(valor*100)/100,lado:row.cred!=null?'rec':'desp'}); }
+  return {periodo,txns};
+}
+
+function pesImpDup(docto){ return pessoalDesp.concat(pessoalRec).some(e=>e._imp==='brad-'+docto); }
+function pesUltimaAtualizacao(){
+  let maxd=null; pessoalDesp.concat(pessoalRec).forEach(e=>{ if(e._imp&&e.dataMov&&(!maxd||e.dataMov>maxd))maxd=e.dataMov; });
+  let txt='';
+  if(maxd){ const a=maxd.split('-'); txt='📥 Importado até '+a[2]+'/'+a[1]+'/'+a[0]; }
+  if(pessoalUltimaImport&&pessoalUltimaImport.at) txt+=(txt?' · ':'📥 ')+'última importação '+pessoalUltimaImport.at;
+  return txt||'📥 Nenhum extrato importado ainda';
+}
+function pesRenderUltima(){ const el=document.getElementById('pes-ultima'); if(el)el.textContent=pesUltimaAtualizacao(); }
+
+function pesCatSelectHTML(lado,selected){
+  const grupos={}; pesCatsDoLado(lado).forEach(c=>{ (grupos[c.grupo]=grupos[c.grupo]||[]).push(c); });
+  let o='<option value="">— escolher —</option>';
+  Object.keys(grupos).forEach(g=>{ o+='<optgroup label="'+g+'">'; grupos[g].forEach(c=>{ o+='<option'+(c.nome===selected?' selected':'')+'>'+c.nome+'</option>'; }); o+='</optgroup>'; });
+  return o;
+}
+
+let _pesImp=null;
+function importExtratoOpen(){ document.getElementById('imp-modal').classList.remove('hidden'); document.getElementById('imp-body').innerHTML=''; document.getElementById('imp-file').value=''; document.getElementById('imp-info').innerHTML='<div style="color:var(--muted);font-size:12px">'+pesUltimaAtualizacao()+'</div>'; document.getElementById('imp-lancar').style.display='none'; _pesImp=null; }
+function importExtratoClose(){ document.getElementById('imp-modal').classList.add('hidden'); }
+
+async function importExtratoFile(input){
+  const f=input.files&&input.files[0]; if(!f)return;
+  const info=document.getElementById('imp-info'), body=document.getElementById('imp-body');
+  info.innerHTML='<div style="color:var(--purple);font-size:12px">⏳ Lendo PDF…</div>'; body.innerHTML='';
+  if(!window.pdfjsLib){ info.innerHTML='<div style="color:var(--red)">⚠ pdf.js não carregou — recarregue a página.</div>'; return; }
+  let res; try{ res=await pesParsePDF(f); }catch(e){ info.innerHTML='<div style="color:var(--red)">⚠ Não consegui ler este PDF: '+e.message+'</div>'; return; }
+  if(!res.txns.length){ info.innerHTML='<div style="color:var(--red)">Nenhuma transação reconhecida neste extrato.</div>'; return; }
+  pesRegrasInit();
+  const rows=res.txns.map(t=>{ const dup=pesImpDup(t.docto); const cat=catExtrato(t.historico,t.lado); return Object.assign({},t,{dup,cat,incluir:!dup}); });
+  _pesImp={periodo:res.periodo,rows};
+  const novos=rows.filter(r=>!r.dup).length, dups=rows.length-novos, semCat=rows.filter(r=>!r.dup&&!r.cat).length;
+  let cov=pesUltimaAtualizacao();
+  info.innerHTML='<div style="font-size:12px;line-height:1.7">'
+    +'<b style="color:var(--text)">'+(res.periodo?('Extrato '+res.periodo.ini+' a '+res.periodo.fim):'Extrato')+'</b> · '+res.txns.length+' transações<br>'
+    +'<span style="color:var(--green)">● '+novos+' novas</span> &nbsp; <span style="color:var(--muted)">● '+dups+' já lançadas (puladas)</span>'+(semCat?(' &nbsp; <span style="color:#fbbf24">● '+semCat+' sem categoria — escolha abaixo</span>'):'')+'<br>'
+    +'<span style="color:var(--muted)">'+cov+'</span></div>';
+  // tabela
+  let h='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border)">'
+    +'<th style="padding:6px 4px"></th><th>Data</th><th>Histórico</th><th style="text-align:right">Valor</th><th>Categoria</th></tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    const c=r.lado==='rec'?'var(--green)':'#f472b6', sign=r.lado==='rec'?'+':'−';
+    h+='<tr data-i="'+i+'" style="border-bottom:1px solid var(--border);'+(r.dup?'opacity:.45':'')+'">'
+      +'<td style="padding:7px 4px"><input type="checkbox" '+(r.incluir?'checked':'')+' '+(r.dup?'disabled':'')+' onchange="_pesImp.rows['+i+'].incluir=this.checked;pesImpTotais()"></td>'
+      +'<td style="white-space:nowrap;color:var(--muted)">'+r.data+(r.dup?' <span style="font-size:9px;color:var(--muted)">(já lançado)</span>':'')+'</td>'
+      +'<td style="max-width:280px">'+r.historico+'</td>'
+      +'<td style="text-align:right;white-space:nowrap;color:'+c+';font-family:DM Mono,monospace">'+sign+'R$ '+r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</td>'
+      +'<td><select onchange="_pesImp.rows['+i+'].cat=this.value" style="font-size:11px;padding:4px 6px;border-radius:6px;background:var(--surface2);color:var(--text);border:1px solid '+(r.cat?'var(--border)':'#fbbf24')+';max-width:190px" '+(r.dup?'disabled':'')+'>'+pesCatSelectHTML(r.lado,r.cat)+'</select></td>'
+      +'</tr>';
+  });
+  h+='</tbody></table>';
+  body.innerHTML=h;
+  const btn=document.getElementById('imp-lancar'); btn.style.display=novos?'inline-block':'none'; pesImpTotais();
+}
+function pesImpTotais(){ if(!_pesImp)return; const n=_pesImp.rows.filter(r=>r.incluir&&!r.dup).length; const b=document.getElementById('imp-lancar'); b.textContent='✓ Lançar '+n+' lançamento'+(n===1?'':'s'); b.disabled=!n; b.style.opacity=n?'1':'.5'; }
+
+function pesAprender(hist,cat,lado){ if(!cat)return; const key=pesMerchantKey(hist); if(!key||key.length<3)return; pesRegrasInit();
+  const ex=pessoalRegras.find(r=>pesNorm(r.match)===pesNorm(key)&&r.lado===lado); if(ex){ex.categoria=cat;} else {pessoalRegras.push({match:key,categoria:cat,lado:lado,aprendida:true});} }
+
+function importExtratoLancar(){
+  if(!_pesImp)return;
+  const sel=_pesImp.rows.filter(r=>r.incluir&&!r.dup);
+  const semcat=sel.filter(r=>!r.cat);
+  if(semcat.length){ if(!confirm(semcat.length+' lançamento(s) estão SEM categoria e irão para "Outros". Continuar?')) return; }
+  let aD=0,aR=0;
+  sel.forEach(r=>{
+    const p=r.data.split('/'), dd=p[0], mm=p[1], yy=p[2];
+    const inicio=yy+'-'+mm, pk=yy+'-'+(parseInt(mm)-1), dataMov=yy+'-'+mm+'-'+dd, dataPago=r.data;
+    const cat=r.cat||'Outros', desc=pesDescFromHist(r.historico), imp='brad-'+r.docto;
+    if(r.lado==='rec'){ const id=pessoalRecId++; pessoalRec.push({id:id,desc:desc,valor:r.valor,inicio:inicio,meses:1,categoria:cat,valMes:{},_imp:imp,dataMov:dataMov}); if(!pessoalRecPag[id])pessoalRecPag[id]={}; pessoalRecPag[id][pk]={pago:true,dataPago:dataPago}; aR++; }
+    else { const id=pessoalDespId++; pessoalDesp.push({id:id,desc:desc,valor:r.valor,tipo:'avista',inicio:inicio,meses:1,categoria:cat,valMes:{},_imp:imp,dataMov:dataMov}); if(!pessoalPag[id])pessoalPag[id]={}; pessoalPag[id][pk]={pago:true,dataPago:dataPago}; aD++; }
+    pesAprender(r.historico,r.cat,r.lado);
+  });
+  const now=new Date(); const at=String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear()+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  pessoalUltimaImport={at:at,ini:_pesImp.periodo?_pesImp.periodo.ini:'',fim:_pesImp.periodo?_pesImp.periodo.fim:'',novos:aD+aR};
+  try{buildPessoal();}catch(e){} try{buildSidebar();}catch(e){} try{scheduleSave();}catch(e){} pesRenderUltima();
+  importExtratoClose();
+  alert('✅ Lançado: '+aD+' despesas e '+aR+' receitas.\nJá sincronizando com o Google Sheets.');
+}
+</script>
+
 <script>
 // ── HUB OPERACIONAL — switch entre os painéis internos ──
 function showOpPanel(name, btn){
@@ -5018,6 +5209,7 @@ MODULES.forEach(m=>{pagamentos[m.id]={};m.items.forEach(i=>pagamentos[m.id][i]={
 // pessoalDesp = [{id, desc, valor, tipo:'recorrente'|'avista'|'parcelado', inicio:'YYYY-MM', meses}]
 // pessoalPag[id][YYYY-M] = {pago:bool, dataPago:str}
 let pessoalRec=[], pessoalDesp=[], pessoalPag={}, pessoalRecPag={};
+let pessoalRegras=null, pessoalUltimaImport=null;
 let pessoalRecId=1, pessoalDespId=1;
 
 // Valor efetivo do item no mês: cada mês é INDEPENDENTE.
@@ -7478,6 +7670,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
+    pessoalRegras, pessoalUltimaImport,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -7565,6 +7758,8 @@ function deserializeState(obj){
   }
   if(obj.pessoalPag && typeof obj.pessoalPag==='object') pessoalPag=obj.pessoalPag;
   if(obj.pessoalRecPag && typeof obj.pessoalRecPag==='object') pessoalRecPag=obj.pessoalRecPag;
+  if(Array.isArray(obj.pessoalRegras)) pessoalRegras=obj.pessoalRegras;
+  if(obj.pessoalUltimaImport) pessoalUltimaImport=obj.pessoalUltimaImport;
 }
 
 // Salva via Apps Script (POST)
@@ -7805,6 +8000,7 @@ function pesDespParcelaAtual(d,y,m){
 
 function buildPessoal(){
   initPessoalSelects();
+  try{ pesRenderUltima(); }catch(e){}
   const y=parseInt(g('pes-ano-sel').value);
   const m=parseInt(g('pes-mes-sel').value);
   const rec=pessoalRecMes(y,m);
