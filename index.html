@@ -5091,6 +5091,7 @@ const PES_CATS=[
   {nome:'Internet',            grupo:'🏠 Casa & Moradia', cor:'#818cf8', lado:'desp'},
   {nome:'Cida (doméstica)',    grupo:'🏠 Casa & Moradia', cor:'#22d3ee', lado:'desp'},
   {nome:'Manutenção da Casa',  grupo:'🏠 Casa & Moradia', cor:'#0ea5e9', lado:'desp'},
+  {nome:'Aluguel',             grupo:'🏠 Casa & Moradia', cor:'#0284c7', lado:'desp'},
   // 🚗 Transporte
   {nome:'Transporte (app/ônibus)', grupo:'🚗 Transporte', cor:'#fb923c', lado:'desp'},
   {nome:'Gasolina Fox',        grupo:'🚗 Transporte', cor:'#f97316', lado:'desp'},
@@ -5116,6 +5117,10 @@ const PES_CATS=[
   {nome:'Vestuário',           grupo:'🎉 Lazer & Outros', cor:'#fda4af', lado:'desp'},
   {nome:'Cartão / Financiamento', grupo:'🎉 Lazer & Outros', cor:'#94a3b8', lado:'desp'},
   {nome:'Outros',              grupo:'🎉 Lazer & Outros', cor:'#cbd5e1', lado:'desp'},
+  // 💗 Juliane
+  {nome:'Juliane',             grupo:'💗 Juliane', cor:'#ec4899', lado:'desp'},
+  // 🧾 Impostos
+  {nome:'Impostos / IR',       grupo:'🧾 Impostos', cor:'#9ca3af', lado:'desp'},
   // 🔁 Repasse (transferências — fora da pizza)
   {nome:'Repasse Pessoal→MGB', grupo:'🔁 Repasse', cor:'#f59e0b', lado:'desp', repasse:true},
   // Receitas
@@ -5124,6 +5129,7 @@ const PES_CATS=[
   {nome:'Freelance / Extra',   grupo:'💼 Receitas', cor:'#22d3ee', lado:'rec'},
   {nome:'Investimentos',       grupo:'💼 Receitas', cor:'#facc15', lado:'rec'},
   {nome:'Outros (receita)',    grupo:'💼 Receitas', cor:'#a3e635', lado:'rec'},
+  {nome:'Aluguel Recebido',    grupo:'💼 Receitas', cor:'#2dd4bf', lado:'rec'},
   {nome:'Repasse MGB→Pessoal', grupo:'🔁 Repasse', cor:'#10b981', lado:'rec', repasse:true},
 ];
 function pesCatInfo(nome){ return PES_CATS.find(c=>c.nome===nome) || {nome:nome||'Sem categoria', cor:'#64748b', grupo:'—'}; }
