@@ -4963,6 +4963,28 @@ async function pesParsePDF(file){
 }
 
 function pesImpDup(docto){ return pessoalDesp.concat(pessoalRec).some(e=>e._imp==='brad-'+docto); }
+// Competência: lançamento do ÚLTIMO DIA do mês entra no mês seguinte (dia do salário → orça o próximo mês)
+function pesCompetencia(dataMov){ // 'YYYY-MM-DD' -> {inicio:'YYYY-MM', pk:'YYYY-M'(0-idx), rolou:bool}
+  var a=dataMov.split('-'), y=+a[0], m=+a[1], d=+a[2];
+  var ult=new Date(y,m,0).getDate(); var rolou=false;
+  if(d===ult){ m+=1; if(m>12){m=1;y+=1;} rolou=true; }
+  return {inicio:y+'-'+String(m).padStart(2,'0'), pk:y+'-'+(m-1), rolou:rolou};
+}
+// Corrige lançamentos já importados: move os do último dia do mês para o mês seguinte
+function pesMigrarCompetencia(){
+  var n=0;
+  function fix(arr,pag){ arr.forEach(function(e){
+    if(!e._imp||!e.dataMov) return; var comp=pesCompetencia(e.dataMov);
+    if(e.inicio!==comp.inicio){
+      var ip=e.inicio.split('-'), oldpk=ip[0]+'-'+(parseInt(ip[1])-1);
+      if(pag[e.id]&&pag[e.id][oldpk]){ pag[e.id][comp.pk]=pag[e.id][oldpk]; delete pag[e.id][oldpk]; }
+      e.inicio=comp.inicio; n++;
+    }
+  }); }
+  fix(pessoalDesp,pessoalPag); fix(pessoalRec,pessoalRecPag);
+  if(n){ try{buildPessoal();}catch(e){} try{buildSidebar();}catch(e){} try{scheduleSave();}catch(e){} }
+  return n;
+}
 function pesUltimaAtualizacao(){
   let maxd=null; pessoalDesp.concat(pessoalRec).forEach(e=>{ if(e._imp&&e.dataMov&&(!maxd||e.dataMov>maxd))maxd=e.dataMov; });
   let txt='';
@@ -4995,9 +5017,15 @@ async function importExtratoFile(input){
   _pesImp={periodo:res.periodo,rows};
   const novos=rows.filter(r=>!r.dup).length, dups=rows.length-novos, semCat=rows.filter(r=>!r.dup&&!r.cat).length;
   let cov=pesUltimaAtualizacao();
+  // competência: em que meses os novos vão cair (último dia do mês → mês seguinte)
+  const MESN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const compCnt={}; let rolou=0;
+  rows.filter(r=>!r.dup).forEach(r=>{ const a=r.data.split('/'); const c=pesCompetencia(a[2]+'-'+a[1]+'-'+a[0]); const ci=c.inicio.split('-'); const lbl=MESN[+ci[1]-1]+'/'+ci[0]; compCnt[lbl]=(compCnt[lbl]||0)+1; if(c.rolou)rolou++; });
+  const compTxt=Object.keys(compCnt).map(k=>k+' ('+compCnt[k]+')').join(' · ');
   info.innerHTML='<div style="font-size:12px;line-height:1.7">'
     +'<b style="color:var(--text)">'+(res.periodo?('Extrato '+res.periodo.ini+' a '+res.periodo.fim):'Extrato')+'</b> · '+res.txns.length+' transações<br>'
     +'<span style="color:var(--green)">● '+novos+' novas</span> &nbsp; <span style="color:var(--muted)">● '+dups+' já lançadas (puladas)</span>'+(semCat?(' &nbsp; <span style="color:#fbbf24">● '+semCat+' sem categoria — escolha abaixo</span>'):'')+'<br>'
+    +(novos?('<span style="color:var(--purple)">🗓️ Competência: '+compTxt+'</span>'+(rolou?' <span style="color:var(--muted)">('+rolou+' do último dia do mês → mês seguinte)</span>':'')+'<br>'):'')
     +'<span style="color:var(--muted)">'+cov+'</span></div>';
   // tabela
   let h='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border)">'
@@ -5029,7 +5057,8 @@ function importExtratoLancar(){
   let aD=0,aR=0;
   sel.forEach(r=>{
     const p=r.data.split('/'), dd=p[0], mm=p[1], yy=p[2];
-    const inicio=yy+'-'+mm, pk=yy+'-'+(parseInt(mm)-1), dataMov=yy+'-'+mm+'-'+dd, dataPago=r.data;
+    const dataMov=yy+'-'+mm+'-'+dd, dataPago=r.data;
+    const comp=pesCompetencia(dataMov), inicio=comp.inicio, pk=comp.pk;
     const cat=r.cat||'Outros', desc=pesDescFromHist(r.historico), imp='brad-'+r.docto;
     if(r.lado==='rec'){ const id=pessoalRecId++; pessoalRec.push({id:id,desc:desc,valor:r.valor,inicio:inicio,meses:1,categoria:cat,valMes:{},_imp:imp,dataMov:dataMov}); if(!pessoalRecPag[id])pessoalRecPag[id]={}; pessoalRecPag[id][pk]={pago:true,dataPago:dataPago}; aR++; }
     else { const id=pessoalDespId++; pessoalDesp.push({id:id,desc:desc,valor:r.valor,tipo:'avista',inicio:inicio,meses:1,categoria:cat,valMes:{},_imp:imp,dataMov:dataMov}); if(!pessoalPag[id])pessoalPag[id]={}; pessoalPag[id][pk]={pago:true,dataPago:dataPago}; aD++; }
@@ -8974,7 +9003,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
 </script>
 </body>
 </html>
