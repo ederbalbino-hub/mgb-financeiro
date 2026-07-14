@@ -4859,92 +4859,192 @@ function copiarSpot() {
 
 
   <div id="page-ferramentas" style="display:none">
+    <style>
+      .ferr-tab{display:inline-block;padding:7px 15px;border-radius:8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border:1px solid var(--border);background:var(--surface2);margin-right:6px}
+      .ferr-tab.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+      .ferr-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+      .ferr-t{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+      .ferr-d{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+      .ferr-file{font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer}
+      .ferr-in{font-size:12px;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;width:100%;outline:none}
+      .ferr-btn{font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700}
+      .ferr-info{font-size:11px;color:var(--muted);margin:8px 0;min-height:14px;line-height:1.5}
+      .ferr-grid{padding:0 22px 28px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    </style>
     <div class="page-hdr">
-      <div><div class="page-title">🧰 Ferramentas</div><div class="page-sub">Kit PDF — 100% no seu navegador · nenhum arquivo sobe pra servidor</div></div>
+      <div><div class="page-title">🧰 Ferramentas</div><div class="page-sub">Utilitários — 100% no seu navegador · nada sobe pra servidor</div></div>
     </div>
-    <div style="padding:0 22px 28px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div style="padding:6px 22px 12px">
+      <span class="ferr-tab on" onclick="showFerrTab('pdf',this)">📄 PDF</span>
+      <span class="ferr-tab" onclick="showFerrTab('img',this)">🖼️ Imagem</span>
+      <span class="ferr-tab" onclick="showFerrTab('qr',this)">🔳 QR &amp; Links</span>
+      <span class="ferr-tab" onclick="showFerrTab('calc',this)">🧮 Calculadoras</span>
+    </div>
 
-      <!-- JUNTAR PDF -->
-      <div class="anunc-section" style="padding:16px 18px">
-        <div class="sec-title" style="font-size:13px;margin-bottom:4px">🔗 Juntar PDF</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Combina vários PDFs num só (na ordem que você selecionar).</div>
-        <input type="file" accept="application/pdf" multiple onchange="fJuntarFiles(this)" style="font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
-        <div id="f-juntar-info" style="font-size:11px;color:var(--muted);margin:8px 0;line-height:1.5;min-height:14px"></div>
-        <button id="f-juntar-btn" disabled onclick="fJuntar()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;opacity:.5">Juntar e baixar</button>
-      </div>
-
-      <!-- COMPRIMIR PDF -->
-      <div class="anunc-section" style="padding:16px 18px">
-        <div class="sec-title" style="font-size:13px;margin-bottom:4px">🗜️ Comprimir PDF</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Reduz o tamanho pra enviar por e-mail/WhatsApp.</div>
-        <input type="file" accept="application/pdf" onchange="fCompFile(this)" style="font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
-        <div style="display:flex;gap:14px;margin:10px 0;font-size:11px;color:var(--muted)">
-          <label style="flex:1">Qualidade <input id="f-comp-q" type="range" min="0.3" max="0.9" step="0.05" value="0.6" style="width:100%"></label>
-          <label style="flex:1">Resolução <input id="f-comp-s" type="range" min="1" max="2" step="0.1" value="1.3" style="width:100%"></label>
+    <!-- ══════ PDF ══════ -->
+    <div id="ferr-pdf">
+      <div class="ferr-grid">
+        <div class="ferr-card">
+          <div class="ferr-t">🔗 Juntar PDF</div><div class="ferr-d">Combina vários PDFs num só (na ordem selecionada).</div>
+          <input type="file" accept="application/pdf" multiple onchange="fJuntarFiles(this)" class="ferr-file">
+          <div id="f-juntar-info" class="ferr-info"></div>
+          <button id="f-juntar-btn" disabled onclick="fJuntar()" class="ferr-btn" style="opacity:.5">Juntar e baixar</button>
         </div>
-        <div id="f-comp-info" style="font-size:11px;color:var(--muted);margin-bottom:8px;min-height:14px"></div>
-        <button id="f-comp-btn" disabled onclick="fComprimir()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;opacity:.5">Comprimir e baixar</button>
-      </div>
-
-      <!-- IMAGEM → PDF -->
-      <div class="anunc-section" style="padding:16px 18px">
-        <div class="sec-title" style="font-size:13px;margin-bottom:4px">🖼️ Imagem → PDF</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Junta JPG/PNG/WebP num único PDF (1 imagem por página).</div>
-        <input type="file" accept="image/*" multiple onchange="fImgFiles(this)" style="font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
-        <div id="f-img-info" style="font-size:11px;color:var(--muted);margin:8px 0;min-height:14px"></div>
-        <button id="f-img-btn" disabled onclick="fImgPDF()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;opacity:.5">Gerar PDF</button>
-      </div>
-
-      <!-- PDF → IMAGEM -->
-      <div class="anunc-section" style="padding:16px 18px">
-        <div class="sec-title" style="font-size:13px;margin-bottom:4px">📸 PDF → Imagem (JPG)</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Transforma cada página do PDF numa imagem.</div>
-        <input type="file" accept="application/pdf" onchange="fP2iFile(this)" style="font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
-        <div style="font-size:11px;color:var(--muted);margin:8px 0">Resolução <input id="f-p2i-s" type="range" min="1" max="3" step="0.5" value="2" style="vertical-align:middle"></div>
-        <div id="f-p2i-info" style="font-size:11px;color:var(--muted);margin-bottom:6px;min-height:14px"></div>
-        <button id="f-p2i-btn" disabled onclick="fP2i()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;opacity:.5">Converter</button>
-        <div id="f-p2i-out" style="margin-top:10px"></div>
-      </div>
-
-      <!-- ASSINAR PDF -->
-      <div class="anunc-section" style="padding:16px 18px;grid-column:span 2">
-        <div class="sec-title" style="font-size:13px;margin-bottom:4px">✍️ Assinar PDF</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Assine contratos sem imprimir: desenhe a assinatura, arraste pro lugar e baixe.</div>
-        <input type="file" accept="application/pdf" onchange="fAssFile(this)" style="font-size:11px;color:var(--muted);width:100%;max-width:360px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
-        <div id="f-ass-wrap" style="display:none;margin-top:14px;display:none">
-          <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
-            <!-- coluna esquerda: assinatura -->
-            <div style="width:300px;flex-shrink:0">
-              <div style="font-size:11px;color:var(--muted);margin-bottom:6px">1. Desenhe sua assinatura:</div>
-              <canvas id="f-ass-sig" width="400" height="150" style="width:300px;height:112px;background:#fff;border:1px dashed var(--border2);border-radius:8px;cursor:crosshair;touch-action:none"></canvas>
-              <div style="display:flex;gap:8px;margin-top:8px">
-                <button onclick="fAssSigClear()" style="font-size:11px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Limpar</button>
-                <button onclick="fAssColocar()" style="font-size:11px;padding:6px 12px;border-radius:7px;background:#fbbf24;color:#0b0d12;border:none;cursor:pointer;font-weight:700">2. Colocar no PDF →</button>
+        <div class="ferr-card">
+          <div class="ferr-t">🗜️ Comprimir PDF</div><div class="ferr-d">Reduz o tamanho pra e-mail/WhatsApp.</div>
+          <input type="file" accept="application/pdf" onchange="fCompFile(this)" class="ferr-file">
+          <div style="display:flex;gap:14px;margin:10px 0;font-size:11px;color:var(--muted)">
+            <label style="flex:1">Qualidade <input id="f-comp-q" type="range" min="0.3" max="0.9" step="0.05" value="0.6" style="width:100%"></label>
+            <label style="flex:1">Resolução <input id="f-comp-s" type="range" min="1" max="2" step="0.1" value="1.3" style="width:100%"></label>
+          </div>
+          <div id="f-comp-info" class="ferr-info"></div>
+          <button id="f-comp-btn" disabled onclick="fComprimir()" class="ferr-btn" style="opacity:.5">Comprimir e baixar</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">🖼️ Imagem → PDF</div><div class="ferr-d">JPG/PNG/WebP viram um PDF (1 por página).</div>
+          <input type="file" accept="image/*" multiple onchange="fImgFiles(this)" class="ferr-file">
+          <div id="f-img-info" class="ferr-info"></div>
+          <button id="f-img-btn" disabled onclick="fImgPDF()" class="ferr-btn" style="opacity:.5">Gerar PDF</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">📸 PDF → Imagem (JPG)</div><div class="ferr-d">Cada página do PDF vira imagem.</div>
+          <input type="file" accept="application/pdf" onchange="fP2iFile(this)" class="ferr-file">
+          <div style="font-size:11px;color:var(--muted);margin:8px 0">Resolução <input id="f-p2i-s" type="range" min="1" max="3" step="0.5" value="2" style="vertical-align:middle"></div>
+          <div id="f-p2i-info" class="ferr-info"></div>
+          <button id="f-p2i-btn" disabled onclick="fP2i()" class="ferr-btn" style="opacity:.5">Converter</button>
+          <div id="f-p2i-out" style="margin-top:10px"></div>
+        </div>
+        <div class="ferr-card" style="grid-column:span 2">
+          <div class="ferr-t">✍️ Assinar PDF</div><div class="ferr-d">Desenhe a assinatura, arraste sobre a página e baixe — sem imprimir.</div>
+          <input type="file" accept="application/pdf" onchange="fAssFile(this)" class="ferr-file" style="max-width:360px">
+          <div id="f-ass-wrap" style="display:none;margin-top:14px">
+            <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+              <div style="width:300px;flex-shrink:0">
+                <div style="font-size:11px;color:var(--muted);margin-bottom:6px">1. Desenhe sua assinatura:</div>
+                <canvas id="f-ass-sig" width="400" height="150" style="width:300px;height:112px;background:#fff;border:1px dashed var(--border2);border-radius:8px;cursor:crosshair;touch-action:none"></canvas>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button onclick="fAssSigClear()" style="font-size:11px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Limpar</button>
+                  <button onclick="fAssColocar()" style="font-size:11px;padding:6px 12px;border-radius:7px;background:#fbbf24;color:#0b0d12;border:none;cursor:pointer;font-weight:700">2. Colocar no PDF →</button>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:12px">Tamanho <input type="range" min="80" max="320" value="150" oninput="fAssSize(this.value)" style="width:120px;vertical-align:middle"></div>
+                <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+                  <button onclick="fAssPg(-1)" style="font-size:12px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--text);border:1px solid var(--border);cursor:pointer">‹</button>
+                  <span id="f-ass-pglbl" style="font-size:11px;color:var(--muted)">Página 1 / 1</span>
+                  <button onclick="fAssPg(1)" style="font-size:12px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--text);border:1px solid var(--border);cursor:pointer">›</button>
+                </div>
+                <button onclick="fAssSalvar()" style="margin-top:14px;font-size:13px;padding:10px 22px;border-radius:9px;background:linear-gradient(135deg,#E879B0,#9B72CF);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Assinar e baixar</button>
+                <div id="f-ass-info" class="ferr-info"></div>
               </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:12px">Tamanho <input type="range" min="80" max="320" value="150" oninput="fAssSize(this.value)" style="width:120px;vertical-align:middle"></div>
-              <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
-                <button onclick="fAssPg(-1)" style="font-size:12px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--text);border:1px solid var(--border);cursor:pointer">‹</button>
-                <span id="f-ass-pglbl" style="font-size:11px;color:var(--muted)">Página 1 / 1</span>
-                <button onclick="fAssPg(1)" style="font-size:12px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--text);border:1px solid var(--border);cursor:pointer">›</button>
-              </div>
-              <button onclick="fAssSalvar()" style="margin-top:14px;font-size:13px;padding:10px 22px;border-radius:9px;background:linear-gradient(135deg,#E879B0,#9B72CF);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Assinar e baixar</button>
-              <div id="f-ass-info" style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5;min-height:14px"></div>
-            </div>
-            <!-- coluna direita: preview do PDF com carimbo arrastável -->
-            <div style="flex:1;min-width:280px">
-              <div style="font-size:11px;color:var(--muted);margin-bottom:6px">3. Arraste a assinatura pra posição certa:</div>
-              <div id="f-ass-canwrap" style="position:relative;display:inline-block;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-width:100%">
-                <canvas id="f-ass-canvas" style="display:block;max-width:100%"></canvas>
-                <div id="f-ass-stamp" style="display:none;position:absolute;left:40px;top:40px;width:150px;cursor:move;border:1px dashed rgba(232,121,176,.7);border-radius:4px;background:rgba(255,255,255,.15)">
-                  <img src="" style="width:100%;display:block;pointer-events:none">
+              <div style="flex:1;min-width:280px">
+                <div style="font-size:11px;color:var(--muted);margin-bottom:6px">3. Arraste a assinatura pra posição:</div>
+                <div id="f-ass-canwrap" style="position:relative;display:inline-block;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-width:100%">
+                  <canvas id="f-ass-canvas" style="display:block;max-width:100%"></canvas>
+                  <div id="f-ass-stamp" style="display:none;position:absolute;left:40px;top:40px;width:150px;cursor:move;border:1px dashed rgba(232,121,176,.7);border-radius:4px;background:rgba(255,255,255,.15)"><img src="" style="width:100%;display:block;pointer-events:none"></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
     </div>
+
+    <!-- ══════ IMAGEM ══════ -->
+    <div id="ferr-img" style="display:none">
+      <div class="ferr-grid">
+        <div class="ferr-card">
+          <div class="ferr-t">🗜️ Comprimir imagem</div><div class="ferr-d">Reduz o peso preservando a qualidade.</div>
+          <input type="file" accept="image/*" onchange="iCompFile(this)" class="ferr-file">
+          <div style="font-size:11px;color:var(--muted);margin:8px 0">Qualidade <input id="i-comp-q" type="range" min="0.3" max="0.95" step="0.05" value="0.7" style="vertical-align:middle"></div>
+          <div id="i-comp-info" class="ferr-info"></div>
+          <button id="i-comp-btn" disabled onclick="iComprimir()" class="ferr-btn" style="opacity:.5">Comprimir e baixar</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">🔄 Converter imagem</div><div class="ferr-d">Troca entre JPG, PNG e WebP.</div>
+          <input type="file" accept="image/*" onchange="iConvFile(this)" class="ferr-file">
+          <div style="margin:8px 0"><select id="i-conv-fmt" class="ferr-in" style="width:auto"><option value="jpeg">JPG</option><option value="png">PNG</option><option value="webp">WebP</option></select></div>
+          <div id="i-conv-info" class="ferr-info"></div>
+          <button id="i-conv-btn" disabled onclick="iConverter()" class="ferr-btn" style="opacity:.5">Converter e baixar</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">📐 Redimensionar</div><div class="ferr-d">Ajusta a largura (mantém a proporção).</div>
+          <input type="file" accept="image/*" onchange="iResFile(this)" class="ferr-file">
+          <div style="margin:8px 0;font-size:11px;color:var(--muted)">Largura (px) <input id="i-res-w" type="number" value="800" class="ferr-in" style="width:90px;display:inline-block"></div>
+          <div id="i-res-info" class="ferr-info"></div>
+          <button id="i-res-btn" disabled onclick="iRedim()" class="ferr-btn" style="opacity:.5">Redimensionar</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">💧 Marca d'água</div><div class="ferr-d">Escreve um texto discreto no canto.</div>
+          <input type="file" accept="image/*" onchange="iWmFile(this)" class="ferr-file">
+          <div style="margin:8px 0"><input id="i-wm-txt" class="ferr-in" placeholder="Texto (ex: MGB Mídia)" value="MGB Mídia"></div>
+          <div id="i-wm-info" class="ferr-info"></div>
+          <button id="i-wm-btn" disabled onclick="iMarca()" class="ferr-btn" style="opacity:.5">Aplicar e baixar</button>
+        </div>
+        <div class="ferr-card" style="grid-column:span 2">
+          <div class="ferr-t">🌫️ Pixelar (cobrir rosto/placa · LGPD)</div><div class="ferr-d">Suba a foto e arraste sobre as áreas que quer cobrir.</div>
+          <input type="file" accept="image/*" onchange="iPixFile(this)" class="ferr-file" style="max-width:360px">
+          <div id="i-pix-wrap" style="display:none;margin-top:12px">
+            <div style="border:1px solid var(--border);border-radius:6px;display:inline-block;overflow:hidden"><canvas id="i-pix-canvas" style="display:block;max-width:100%;cursor:crosshair;touch-action:none"></canvas></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button onclick="iPixLimpar()" style="font-size:11px;padding:7px 14px;border-radius:7px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Limpar áreas</button>
+              <button onclick="iPixBaixar()" class="ferr-btn">Baixar imagem</button>
+            </div>
+            <div id="i-pix-info" class="ferr-info"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ QR & LINKS ══════ -->
+    <div id="ferr-qr" style="display:none">
+      <div class="ferr-grid">
+        <div class="ferr-card">
+          <div class="ferr-t">🔳 Gerador de QR Code</div><div class="ferr-d">Link/texto, cobrança PIX (copia-e-cola) ou Wi-Fi.</div>
+          <select id="f-qr-tipo" class="ferr-in" onchange="fQrTipo()" style="margin-bottom:10px"><option value="texto">Link ou texto</option><option value="pix">PIX (cobrança)</option><option value="wifi">Wi-Fi</option></select>
+          <div id="f-qr-texto"><input id="f-qr-texto-v" class="ferr-in" placeholder="https://... ou qualquer texto"></div>
+          <div id="f-qr-pix" style="display:none">
+            <input id="f-qr-pix-key" class="ferr-in" placeholder="Chave PIX (CPF/CNPJ/e-mail/tel/aleatória)" style="margin-bottom:6px">
+            <div style="display:flex;gap:6px;margin-bottom:6px"><input id="f-qr-pix-nome" class="ferr-in" placeholder="Recebedor" value="MGB MIDIA"><input id="f-qr-pix-cidade" class="ferr-in" placeholder="Cidade" value="LONDRINA"></div>
+            <input id="f-qr-pix-valor" class="ferr-in" type="number" step="0.01" placeholder="Valor (opcional)">
+            <div id="f-qr-pix-copiabox" style="display:none;margin-top:8px"><textarea id="f-qr-pix-copia" readonly class="ferr-in" style="height:52px;font-size:10px;font-family:monospace" onclick="fPixCopiar()"></textarea><div style="font-size:10px;color:var(--muted)">clique pra copiar o "copia-e-cola"</div></div>
+          </div>
+          <div id="f-qr-wifi" style="display:none">
+            <input id="f-qr-wifi-ssid" class="ferr-in" placeholder="Nome da rede (SSID)" style="margin-bottom:6px">
+            <input id="f-qr-wifi-senha" class="ferr-in" placeholder="Senha">
+          </div>
+          <button onclick="fQrGerar()" class="ferr-btn" style="margin-top:10px">Gerar QR</button>
+          <div id="f-qr-out" style="margin-top:12px;text-align:center"></div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">💬 Link de WhatsApp</div><div class="ferr-d">Cria link wa.me com mensagem pronta (+ QR).</div>
+          <input id="f-wpp-num" class="ferr-in" placeholder="Número com DDD (ex: 43999960078)" style="margin-bottom:6px">
+          <textarea id="f-wpp-msg" class="ferr-in" placeholder="Mensagem (opcional)" style="height:70px"></textarea>
+          <button onclick="fWppGerar()" class="ferr-btn" style="margin-top:10px">Gerar link</button>
+          <div id="f-wpp-out" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ CALCULADORAS ══════ -->
+    <div id="ferr-calc" style="display:none">
+      <div class="ferr-grid">
+        <div class="ferr-card">
+          <div class="ferr-t">％ Porcentagem</div><div class="ferr-d">Quanto é B% de A, com acréscimo e desconto.</div>
+          <div style="display:flex;gap:6px;align-items:center"><input id="c-pct-a" type="number" class="ferr-in" placeholder="Valor A" oninput="calcPct()"><span style="color:var(--muted)">e</span><input id="c-pct-b" type="number" class="ferr-in" placeholder="% B" oninput="calcPct()"></div>
+          <div id="c-pct-out" class="ferr-info" style="color:var(--text);margin-top:10px"></div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">📈 Juros compostos</div><div class="ferr-d">Simula investimento/financiamento.</div>
+          <div style="display:flex;gap:6px"><input id="c-j-p" type="number" class="ferr-in" placeholder="Capital R$" oninput="calcJuros()"><input id="c-j-i" type="number" class="ferr-in" placeholder="% ao mês" oninput="calcJuros()"><input id="c-j-n" type="number" class="ferr-in" placeholder="meses" oninput="calcJuros()"></div>
+          <div id="c-j-out" class="ferr-info" style="color:var(--text);margin-top:10px"></div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">➗ Regra de 3</div><div class="ferr-d">A está para B, assim como C está para X.</div>
+          <div style="display:flex;gap:6px;align-items:center"><input id="c-r3-a" type="number" class="ferr-in" placeholder="A" oninput="calcR3()"><span style="color:var(--muted)">→</span><input id="c-r3-b" type="number" class="ferr-in" placeholder="B" oninput="calcR3()"></div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="c-r3-c" type="number" class="ferr-in" placeholder="C" oninput="calcR3()"><span style="color:var(--muted)">→</span><span style="flex:1;color:var(--text)" id="c-r3-out" class="ferr-info"></span></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </main>
@@ -4968,6 +5068,7 @@ function copiarSpot() {
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script>
 /* ═══════════ FERRAMENTAS · KIT PDF + ASSINAR ═══════════ */
 function ferrDL(bytes, filename, mime){
@@ -5119,6 +5220,96 @@ async function fAssSalvar(){ if(!ferrLibOk())return; const st=document.getElemen
 }
 document.addEventListener('DOMContentLoaded',function(){ try{ fAssSigInit(); fAssStampInit(); }catch(e){} });
 </script>
+<script>
+/* ═══════════ FERRAMENTAS FASE 2 · Imagem · QR & Links · Calculadoras ═══════════ */
+function showFerrTab(t, el){
+  ['pdf','img','qr','calc'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
+}
+/* ---- IMAGEM helpers ---- */
+function fImgLoad(file){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=URL.createObjectURL(file); }); }
+function fCanvasFrom(img,w,h){ const cv=document.createElement('canvas'); cv.width=w||img.naturalWidth; cv.height=h||img.naturalHeight; cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); return cv; }
+function fBase(name){ return (name||'imagem').replace(/\.[^.]+$/,''); }
+
+/* Comprimir imagem */
+let _iComp=null;
+function iCompFile(input){ _iComp=input.files&&input.files[0]; document.getElementById('i-comp-btn').disabled=!_iComp; ferrMsg('i-comp-info',_iComp?(_iComp.name+' · '+ferrKB(_iComp.size)):'',''); }
+async function iComprimir(){ if(!_iComp)return; const q=parseFloat(document.getElementById('i-comp-q').value)||0.7;
+  const img=await fImgLoad(_iComp); const cv=fCanvasFrom(img);
+  cv.toBlob(bl=>{ ferrDL(bl,fBase(_iComp.name)+'-comprimida.jpg','image/jpeg'); ferrMsg('i-comp-info','✅ '+ferrKB(_iComp.size)+' → '+ferrKB(bl.size)+' ('+Math.max(0,Math.round((1-bl.size/_iComp.size)*100))+'% menor)','var(--green)'); }, 'image/jpeg', q); }
+
+/* Converter imagem */
+let _iConv=null;
+function iConvFile(input){ _iConv=input.files&&input.files[0]; document.getElementById('i-conv-btn').disabled=!_iConv; ferrMsg('i-conv-info',_iConv?_iConv.name:'',''); }
+async function iConverter(){ if(!_iConv)return; const fmt=document.getElementById('i-conv-fmt').value; const img=await fImgLoad(_iConv); const cv=fCanvasFrom(img); const mime='image/'+fmt;
+  cv.toBlob(bl=>{ if(!bl){ ferrMsg('i-conv-info','⚠ Formato não suportado neste navegador.','var(--red)'); return; } ferrDL(bl,fBase(_iConv.name)+'.'+(fmt==='jpeg'?'jpg':fmt),mime); ferrMsg('i-conv-info','✅ '+fmt.toUpperCase()+' · '+ferrKB(bl.size),'var(--green)'); }, mime, 0.92); }
+
+/* Redimensionar */
+let _iRes=null;
+function iResFile(input){ _iRes=input.files&&input.files[0]; document.getElementById('i-res-btn').disabled=!_iRes; ferrMsg('i-res-info',_iRes?_iRes.name:'',''); }
+async function iRedim(){ if(!_iRes)return; const w=parseInt(document.getElementById('i-res-w').value)||800; const img=await fImgLoad(_iRes); const h=Math.round(img.naturalHeight*w/img.naturalWidth); const cv=fCanvasFrom(img,w,h);
+  cv.toBlob(bl=>{ ferrDL(bl,fBase(_iRes.name)+'-'+w+'px.jpg','image/jpeg'); ferrMsg('i-res-info','✅ '+w+'×'+h+' · '+ferrKB(bl.size),'var(--green)'); }, 'image/jpeg',0.92); }
+
+/* Marca d'água */
+let _iWm=null;
+function iWmFile(input){ _iWm=input.files&&input.files[0]; document.getElementById('i-wm-btn').disabled=!_iWm; ferrMsg('i-wm-info',_iWm?_iWm.name:'',''); }
+async function iMarca(){ if(!_iWm)return; const txt=document.getElementById('i-wm-txt').value||'MGB Mídia'; const img=await fImgLoad(_iWm); const cv=fCanvasFrom(img); const ctx=cv.getContext('2d');
+  const fs=Math.max(16, Math.round(cv.width/24)); ctx.font='700 '+fs+'px Arial'; ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+  ctx.lineWidth=Math.max(1,fs/10); ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.fillStyle='rgba(255,255,255,.6)';
+  const x=cv.width-fs*0.6, y=cv.height-fs*0.6; ctx.strokeText(txt,x,y); ctx.fillText(txt,x,y);
+  cv.toBlob(bl=>{ ferrDL(bl,fBase(_iWm.name)+'-marca.jpg','image/jpeg'); ferrMsg('i-wm-info','✅ Marca aplicada · '+ferrKB(bl.size),'var(--green)'); }, 'image/jpeg',0.92); }
+
+/* Pixelar (área arrastável — LGPD: rostos/placas) */
+let _iPix={img:null, rects:[], drawing:false, sx:0, sy:0, scale:1, file:null};
+function iPixFile(input){ const f=input.files&&input.files[0]; if(!f)return; fImgLoad(f).then(img=>{ _iPix.img=img; _iPix.rects=[]; _iPix.file=f; document.getElementById('i-pix-wrap').style.display='block'; iPixRender(); ferrMsg('i-pix-info','Arraste sobre a área a cobrir (rosto, placa…). Pode marcar várias.','var(--muted)'); }); }
+function iPixApply(ctx,r,s){ const x=r.x*s,y=r.y*s,w=r.w*s,h=r.h*s; const block=Math.max(5, Math.round(Math.min(w,h)/8));
+  const tw=Math.max(1,Math.round(w/block)), th=Math.max(1,Math.round(h/block)); const tmp=document.createElement('canvas'); tmp.width=tw; tmp.height=th;
+  tmp.getContext('2d').drawImage(ctx.canvas, x,y,w,h, 0,0,tw,th); ctx.imageSmoothingEnabled=false; ctx.drawImage(tmp,0,0,tw,th, x,y,w,h); ctx.imageSmoothingEnabled=true; }
+function iPixRender(){ const cv=document.getElementById('i-pix-canvas'); const img=_iPix.img; if(!img)return; const maxW=Math.min(520,(cv.parentElement.clientWidth||520)-4); const s=Math.min(1, maxW/img.naturalWidth); _iPix.scale=s; cv.width=Math.round(img.naturalWidth*s); cv.height=Math.round(img.naturalHeight*s); const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,cv.width,cv.height); _iPix.rects.forEach(r=>iPixApply(ctx,r,s)); }
+function iPixInit(){ const cv=document.getElementById('i-pix-canvas'); if(!cv||cv._init)return; cv._init=1;
+  function pos(e){ const r=cv.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return {x:(t.clientX-r.left)*(cv.width/r.width), y:(t.clientY-r.top)*(cv.height/r.height)}; }
+  function down(e){ _iPix.drawing=true; const p=pos(e); _iPix.sx=p.x; _iPix.sy=p.y; e.preventDefault(); }
+  function move(e){ if(!_iPix.drawing)return; const p=pos(e); iPixRender(); const ctx=cv.getContext('2d'); ctx.strokeStyle='#E879B0'; ctx.lineWidth=2; ctx.strokeRect(_iPix.sx,_iPix.sy,p.x-_iPix.sx,p.y-_iPix.sy); e.preventDefault(); }
+  function up(e){ if(!_iPix.drawing)return; _iPix.drawing=false; const p=pos(e); const s=_iPix.scale; const x=Math.min(_iPix.sx,p.x)/s,y=Math.min(_iPix.sy,p.y)/s,w=Math.abs(p.x-_iPix.sx)/s,h=Math.abs(p.y-_iPix.sy)/s; if(w>4&&h>4){ _iPix.rects.push({x,y,w,h}); iPixRender(); } }
+  cv.addEventListener('mousedown',down); cv.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:false}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up); }
+function iPixLimpar(){ _iPix.rects=[]; iPixRender(); }
+function iPixBaixar(){ if(!_iPix.img)return; const img=_iPix.img; const cv=document.createElement('canvas'); cv.width=img.naturalWidth; cv.height=img.naturalHeight; const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0); _iPix.rects.forEach(r=>iPixApply(ctx,r,1));
+  cv.toBlob(bl=>{ ferrDL(bl,fBase(_iPix.file.name)+'-pixelada.jpg','image/jpeg'); ferrMsg('i-pix-info','✅ '+_iPix.rects.length+' área(s) cobertas · baixado','var(--green)'); }, 'image/jpeg',0.92); }
+
+/* ---- QR & LINKS ---- */
+function fCRC16(str){ let crc=0xFFFF; for(let i=0;i<str.length;i++){ crc^=str.charCodeAt(i)<<8; for(let j=0;j<8;j++){ crc=(crc&0x8000)?((crc<<1)^0x1021):(crc<<1); crc&=0xFFFF; } } return crc.toString(16).toUpperCase().padStart(4,'0'); }
+function fEmv(id,val){ return id+String(val.length).padStart(2,'0')+val; }
+function fPixPayload(key,name,city,amount,txid){ name=(name||'MGB MIDIA').substring(0,25); city=(city||'LONDRINA').substring(0,15);
+  const mai=fEmv('00','br.gov.bcb.pix')+fEmv('01',key);
+  let p=fEmv('00','01')+fEmv('26',mai)+fEmv('52','0000')+fEmv('53','986');
+  if(amount&&parseFloat(amount)>0) p+=fEmv('54', parseFloat(amount).toFixed(2));
+  p+=fEmv('58','BR')+fEmv('59',name)+fEmv('60',city)+fEmv('62',fEmv('05',(txid||'***').substring(0,25)))+'6304';
+  return p+fCRC16(p); }
+function fQrRender(text){ const box=document.getElementById('f-qr-out'); if(!text){ box.innerHTML=''; return; }
+  try{ const qr=qrcode(0,'M'); qr.addData(text); qr.make(); const url=qr.createDataURL(6,8);
+    box.innerHTML='<img src="'+url+'" style="width:200px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:6px"><br><a download="qrcode.png" href="'+url+'" style="font-size:12px;color:var(--purple);text-decoration:none">⬇ Baixar QR</a>';
+  }catch(e){ box.innerHTML='<span style="color:var(--red);font-size:11px">Conteúdo muito longo pro QR.</span>'; } }
+function fQrTipo(){ const t=document.getElementById('f-qr-tipo').value; ['texto','pix','wifi'].forEach(k=>{ const el=document.getElementById('f-qr-'+k); if(el)el.style.display=(k===t)?'block':'none'; }); }
+function fQrGerar(){ const t=document.getElementById('f-qr-tipo').value; let text='';
+  if(t==='texto') text=document.getElementById('f-qr-texto-v').value.trim();
+  else if(t==='pix'){ const k=document.getElementById('f-qr-pix-key').value.trim(); if(!k){ alert('Informe a chave PIX.'); return; } text=fPixPayload(k, document.getElementById('f-qr-pix-nome').value.trim(), document.getElementById('f-qr-pix-cidade').value.trim(), document.getElementById('f-qr-pix-valor').value,''); document.getElementById('f-qr-pix-copia').value=text; document.getElementById('f-qr-pix-copiabox').style.display='block'; }
+  else if(t==='wifi'){ const s=document.getElementById('f-qr-wifi-ssid').value.trim(); if(!s){ alert('Informe o nome da rede.'); return; } text='WIFI:T:WPA;S:'+s+';P:'+document.getElementById('f-qr-wifi-senha').value+';;'; }
+  if(!text){ alert('Preencha os dados.'); return; } fQrRender(text); }
+function fPixCopiar(){ const el=document.getElementById('f-qr-pix-copia'); el.select(); try{ navigator.clipboard.writeText(el.value); }catch(e){} }
+function fWppGerar(){ let num=document.getElementById('f-wpp-num').value.replace(/\D/g,''); if(!num){ alert('Informe o número.'); return; } if(num.length<=11) num='55'+num;
+  const msg=encodeURIComponent(document.getElementById('f-wpp-msg').value||''); const link='https://wa.me/'+num+(msg?('?text='+msg):'');
+  const box=document.getElementById('f-wpp-out'); box.innerHTML='<div style="word-break:break-all;font-size:12px"><a href="'+link+'" target="_blank" style="color:var(--purple)">'+link+'</a></div><button onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+link+'\');this.textContent=\'✓ copiado\'" style="margin-top:6px;font-size:11px;padding:5px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer">copiar link</button>';
+  try{ const qr=qrcode(0,'M'); qr.addData(link); qr.make(); box.innerHTML+='<br><img src="'+qr.createDataURL(5,8)+'" style="width:150px;margin-top:10px;background:#fff;padding:6px;border-radius:8px">'; }catch(e){} }
+
+/* ---- CALCULADORAS ---- */
+function calcPct(){ const a=parseFloat(document.getElementById('c-pct-a').value), b=parseFloat(document.getElementById('c-pct-b').value); const out=document.getElementById('c-pct-out'); if(isNaN(a)||isNaN(b)){ out.innerHTML=''; return; }
+  const f2=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2}); out.innerHTML='<b>'+f2(a*b/100)+'</b> é '+b+'% de '+a+'<br>'+a+' + '+b+'% = <b>'+f2(a*(1+b/100))+'</b> · − '+b+'% = <b>'+f2(a*(1-b/100))+'</b>'; }
+function calcJuros(){ const p=parseFloat(document.getElementById('c-j-p').value)||0, i=parseFloat(document.getElementById('c-j-i').value)||0, n=parseInt(document.getElementById('c-j-n').value)||0; const m=p*Math.pow(1+i/100,n); const f2=x=>x.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('c-j-out').innerHTML='Montante: <b>R$ '+f2(m)+'</b> · Juros: <b>R$ '+f2(m-p)+'</b>'; }
+function calcR3(){ const a=parseFloat(document.getElementById('c-r3-a').value), b=parseFloat(document.getElementById('c-r3-b').value), c=parseFloat(document.getElementById('c-r3-c').value); const out=document.getElementById('c-r3-out'); if(isNaN(a)||isNaN(b)||isNaN(c)||a===0){ out.innerHTML=''; return; } out.innerHTML='X = <b>'+(b*c/a).toLocaleString('pt-BR',{maximumFractionDigits:4})+'</b>'; }
+document.addEventListener('DOMContentLoaded',function(){ try{ iPixInit(); fQrTipo(); }catch(e){} });
+</script>
+
 
 <script>
 /* ═══════════ IMPORTAR EXTRATO BANCÁRIO → PESSOAL ═══════════ */
