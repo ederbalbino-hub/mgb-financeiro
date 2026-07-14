@@ -4879,6 +4879,7 @@ function copiarSpot() {
       <span class="ferr-tab" onclick="showFerrTab('img',this)">🖼️ Imagem</span>
       <span class="ferr-tab" onclick="showFerrTab('qr',this)">🔳 QR &amp; Links</span>
       <span class="ferr-tab" onclick="showFerrTab('calc',this)">🧮 Calculadoras</span>
+      <span class="ferr-tab" onclick="showFerrTab('backup',this)">🛡️ Backup</span>
     </div>
 
     <!-- ══════ PDF ══════ -->
@@ -5047,6 +5048,26 @@ function copiarSpot() {
           <div class="ferr-t">➗ Regra de 3</div><div class="ferr-d">A está para B, assim como C está para X.</div>
           <div style="display:flex;gap:6px;align-items:center"><input id="c-r3-a" type="number" class="ferr-in" placeholder="A" oninput="calcR3()"><span style="color:var(--muted)">→</span><input id="c-r3-b" type="number" class="ferr-in" placeholder="B" oninput="calcR3()"></div>
           <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="c-r3-c" type="number" class="ferr-in" placeholder="C" oninput="calcR3()"><span style="color:var(--muted)">→</span><span style="flex:1;color:var(--text)" id="c-r3-out" class="ferr-info"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ BACKUP ══════ -->
+    <div id="ferr-backup" style="display:none">
+      <div class="ferr-grid">
+        <div class="ferr-card">
+          <div class="ferr-t">⬇ Baixar backup completo</div>
+          <div class="ferr-d">Salva <b>tudo</b> (Financeiro, Pessoal, Blocos Rádio, regras e ajustes) num arquivo <code>.json</code>. Guarde no PC ou no Google Drive.</div>
+          <button onclick="mgbBackupBaixar()" class="ferr-btn">⬇ Baixar backup agora</button>
+          <div id="bkp-info" class="ferr-info"></div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">♻ Restaurar backup</div>
+          <div class="ferr-d" style="color:#fbbf24">⚠ Substitui todos os dados atuais pelos do arquivo. Use só pra recuperar.</div>
+          <input type="file" accept="application/json,.json" onchange="mgbBackupRestaurar(this)" class="ferr-file">
+        </div>
+        <div class="ferr-card" style="grid-column:span 2">
+          <div style="font-size:11px;color:var(--muted);line-height:1.6">💡 <b>Como funciona:</b> o sistema já sincroniza sozinho no Google Sheets (Financeiro/Pessoal) e no servidor (Blocos). O backup é a sua <b>cópia offline</b> — protege se a planilha, a conta Google ou a hospedagem cair. Recomendo baixar um a cada semana, ou antes de mexer em algo grande.</div>
         </div>
       </div>
     </div>
@@ -5229,7 +5250,7 @@ document.addEventListener('DOMContentLoaded',function(){ try{ fAssSigInit(); fAs
 <script>
 /* ═══════════ FERRAMENTAS FASE 2 · Imagem · QR & Links · Calculadoras ═══════════ */
 function showFerrTab(t, el){
-  ['pdf','img','qr','calc'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  ['pdf','img','qr','calc','backup'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
   document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
 }
 /* ---- IMAGEM helpers ---- */
@@ -5329,6 +5350,29 @@ function calcPct(){ const a=parseFloat(document.getElementById('c-pct-a').value)
   const f2=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2}); out.innerHTML='<b>'+f2(a*b/100)+'</b> é '+b+'% de '+a+'<br>'+a+' + '+b+'% = <b>'+f2(a*(1+b/100))+'</b> · − '+b+'% = <b>'+f2(a*(1-b/100))+'</b>'; }
 function calcJuros(){ const p=parseFloat(document.getElementById('c-j-p').value)||0, i=parseFloat(document.getElementById('c-j-i').value)||0, n=parseInt(document.getElementById('c-j-n').value)||0; const m=p*Math.pow(1+i/100,n); const f2=x=>x.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('c-j-out').innerHTML='Montante: <b>R$ '+f2(m)+'</b> · Juros: <b>R$ '+f2(m-p)+'</b>'; }
 function calcR3(){ const a=parseFloat(document.getElementById('c-r3-a').value), b=parseFloat(document.getElementById('c-r3-b').value), c=parseFloat(document.getElementById('c-r3-c').value); const out=document.getElementById('c-r3-out'); if(isNaN(a)||isNaN(b)||isNaN(c)||a===0){ out.innerHTML=''; return; } out.innerHTML='X = <b>'+(b*c/a).toLocaleString('pt-BR',{maximumFractionDigits:4})+'</b>'; }
+/* ---- BACKUP / RESTAURAR ---- */
+function mgbBackupBaixar(){ const el=document.getElementById('bkp-info');
+  try{ let blocos={}; try{ blocos=JSON.parse(localStorage.getItem('mgb_blocos_v4')||'{}'); }catch(e){}
+    const bkp={ _mgb_backup:true, versao:1, data:new Date().toLocaleString('pt-BR'), estado:serializeState(), blocos:blocos };
+    const d=new Date(); const nome='mgb-backup-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.json';
+    ferrDL(new Blob([JSON.stringify(bkp)],{type:'application/json'}), nome, 'application/json');
+    el.style.color='var(--green)'; el.innerHTML='✅ Backup baixado ('+nome+'). Guarde no PC ou no Drive.';
+  }catch(e){ el.style.color='var(--red)'; el.textContent='⚠ Erro: '+e.message; } }
+async function mgbBackupRestaurar(input){ const f=input.files&&input.files[0]; if(!f)return; const el=document.getElementById('bkp-info');
+  let bkp; try{ bkp=JSON.parse(await f.text()); }catch(e){ alert('Arquivo inválido (não é JSON).'); input.value=''; return; }
+  if(!bkp||!bkp._mgb_backup||!bkp.estado){ alert('Este arquivo não é um backup do MGB.'); input.value=''; return; }
+  if(!confirm('Isto vai SUBSTITUIR todos os dados atuais pelos do backup de '+(bkp.data||'?')+'.\n\nTem certeza?')){ input.value=''; return; }
+  el.style.color='var(--purple)'; el.textContent='⏳ Restaurando…';
+  try{
+    deserializeState(bkp.estado);
+    if(bkp.blocos&&typeof bkp.blocos==='object'){ try{ localStorage.setItem('mgb_blocos_v4', JSON.stringify(bkp.blocos)); }catch(e){} }
+    try{ syncFinanceiro(); }catch(e){} try{ buildSidebar(); }catch(e){}
+    await saveToSheets();
+    try{ await fetch('https://agenciamgb.com.br/contratos/api_blocos.php?action=salvar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({blocos:bkp.blocos||{}})}); }catch(e){}
+    el.style.color='var(--green)'; el.textContent='✅ Restaurado e sincronizado! Recarregando…';
+    setTimeout(()=>location.reload(), 1600);
+  }catch(e){ el.style.color='var(--red)'; el.textContent='⚠ Erro ao restaurar: '+e.message; }
+  input.value=''; }
 document.addEventListener('DOMContentLoaded',function(){ try{ iPixInit(); fQrTipo(); }catch(e){} });
 </script>
 
