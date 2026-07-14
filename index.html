@@ -763,6 +763,8 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
     <div class="sb-nav-item" id="nav-pessoal" onclick="goPage('pessoal')">💰 Pessoal</div>
     <div class="sb-lbl" style="margin-top:10px">Apresentações</div>
     <div class="sb-nav-item" id="nav-gerador" onclick="openGerador()">📊 Gerar Resultados</div>
+    <div class="sb-lbl" style="margin-top:10px">Ferramentas</div>
+    <div class="sb-nav-item" id="nav-ferramentas" onclick="goPage('ferramentas')">🧰 Ferramentas</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
     <div id="sb-modules"></div>
   </div>
@@ -4855,6 +4857,96 @@ function copiarSpot() {
     </div>
   </div>
 
+
+  <div id="page-ferramentas" style="display:none">
+    <div class="page-hdr">
+      <div><div class="page-title">🧰 Ferramentas</div><div class="page-sub">Kit PDF — 100% no seu navegador · nenhum arquivo sobe pra servidor</div></div>
+    </div>
+    <div style="padding:0 22px 28px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+      <!-- JUNTAR PDF -->
+      <div class="anunc-section" style="padding:16px 18px">
+        <div class="sec-title" style="font-size:13px;margin-bottom:4px">🔗 Juntar PDF</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Combina vários PDFs num só (na ordem que você selecionar).</div>
+        <input type="file" accept="application/pdf" multiple onchange="fJuntarFiles(this)" style="font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
+        <div id="f-juntar-info" style="font-size:11px;color:var(--muted);margin:8px 0;line-height:1.5;min-height:14px"></div>
+        <button id="f-juntar-btn" disabled onclick="fJuntar()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;opacity:.5">Juntar e baixar</button>
+      </div>
+
+      <!-- COMPRIMIR PDF -->
+      <div class="anunc-section" style="padding:16px 18px">
+        <div class="sec-title" style="font-size:13px;margin-bottom:4px">🗜️ Comprimir PDF</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Reduz o tamanho pra enviar por e-mail/WhatsApp.</div>
+        <input type="file" accept="application/pdf" onchange="fCompFile(this)" style="font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
+        <div style="display:flex;gap:14px;margin:10px 0;font-size:11px;color:var(--muted)">
+          <label style="flex:1">Qualidade <input id="f-comp-q" type="range" min="0.3" max="0.9" step="0.05" value="0.6" style="width:100%"></label>
+          <label style="flex:1">Resolução <input id="f-comp-s" type="range" min="1" max="2" step="0.1" value="1.3" style="width:100%"></label>
+        </div>
+        <div id="f-comp-info" style="font-size:11px;color:var(--muted);margin-bottom:8px;min-height:14px"></div>
+        <button id="f-comp-btn" disabled onclick="fComprimir()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;opacity:.5">Comprimir e baixar</button>
+      </div>
+
+      <!-- IMAGEM → PDF -->
+      <div class="anunc-section" style="padding:16px 18px">
+        <div class="sec-title" style="font-size:13px;margin-bottom:4px">🖼️ Imagem → PDF</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Junta JPG/PNG/WebP num único PDF (1 imagem por página).</div>
+        <input type="file" accept="image/*" multiple onchange="fImgFiles(this)" style="font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
+        <div id="f-img-info" style="font-size:11px;color:var(--muted);margin:8px 0;min-height:14px"></div>
+        <button id="f-img-btn" disabled onclick="fImgPDF()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;opacity:.5">Gerar PDF</button>
+      </div>
+
+      <!-- PDF → IMAGEM -->
+      <div class="anunc-section" style="padding:16px 18px">
+        <div class="sec-title" style="font-size:13px;margin-bottom:4px">📸 PDF → Imagem (JPG)</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Transforma cada página do PDF numa imagem.</div>
+        <input type="file" accept="application/pdf" onchange="fP2iFile(this)" style="font-size:11px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
+        <div style="font-size:11px;color:var(--muted);margin:8px 0">Resolução <input id="f-p2i-s" type="range" min="1" max="3" step="0.5" value="2" style="vertical-align:middle"></div>
+        <div id="f-p2i-info" style="font-size:11px;color:var(--muted);margin-bottom:6px;min-height:14px"></div>
+        <button id="f-p2i-btn" disabled onclick="fP2i()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;opacity:.5">Converter</button>
+        <div id="f-p2i-out" style="margin-top:10px"></div>
+      </div>
+
+      <!-- ASSINAR PDF -->
+      <div class="anunc-section" style="padding:16px 18px;grid-column:span 2">
+        <div class="sec-title" style="font-size:13px;margin-bottom:4px">✍️ Assinar PDF</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Assine contratos sem imprimir: desenhe a assinatura, arraste pro lugar e baixe.</div>
+        <input type="file" accept="application/pdf" onchange="fAssFile(this)" style="font-size:11px;color:var(--muted);width:100%;max-width:360px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;cursor:pointer">
+        <div id="f-ass-wrap" style="display:none;margin-top:14px;display:none">
+          <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+            <!-- coluna esquerda: assinatura -->
+            <div style="width:300px;flex-shrink:0">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px">1. Desenhe sua assinatura:</div>
+              <canvas id="f-ass-sig" width="400" height="150" style="width:300px;height:112px;background:#fff;border:1px dashed var(--border2);border-radius:8px;cursor:crosshair;touch-action:none"></canvas>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button onclick="fAssSigClear()" style="font-size:11px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Limpar</button>
+                <button onclick="fAssColocar()" style="font-size:11px;padding:6px 12px;border-radius:7px;background:#fbbf24;color:#0b0d12;border:none;cursor:pointer;font-weight:700">2. Colocar no PDF →</button>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:12px">Tamanho <input type="range" min="80" max="320" value="150" oninput="fAssSize(this.value)" style="width:120px;vertical-align:middle"></div>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+                <button onclick="fAssPg(-1)" style="font-size:12px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--text);border:1px solid var(--border);cursor:pointer">‹</button>
+                <span id="f-ass-pglbl" style="font-size:11px;color:var(--muted)">Página 1 / 1</span>
+                <button onclick="fAssPg(1)" style="font-size:12px;padding:6px 12px;border-radius:7px;background:var(--surface);color:var(--text);border:1px solid var(--border);cursor:pointer">›</button>
+              </div>
+              <button onclick="fAssSalvar()" style="margin-top:14px;font-size:13px;padding:10px 22px;border-radius:9px;background:linear-gradient(135deg,#E879B0,#9B72CF);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Assinar e baixar</button>
+              <div id="f-ass-info" style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5;min-height:14px"></div>
+            </div>
+            <!-- coluna direita: preview do PDF com carimbo arrastável -->
+            <div style="flex:1;min-width:280px">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px">3. Arraste a assinatura pra posição certa:</div>
+              <div id="f-ass-canwrap" style="position:relative;display:inline-block;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-width:100%">
+                <canvas id="f-ass-canvas" style="display:block;max-width:100%"></canvas>
+                <div id="f-ass-stamp" style="display:none;position:absolute;left:40px;top:40px;width:150px;cursor:move;border:1px dashed rgba(232,121,176,.7);border-radius:4px;background:rgba(255,255,255,.15)">
+                  <img src="" style="width:100%;display:block;pointer-events:none">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </main>
 </div>
 
@@ -4875,6 +4967,159 @@ function copiarSpot() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>
+/* ═══════════ FERRAMENTAS · KIT PDF + ASSINAR ═══════════ */
+function ferrDL(bytes, filename, mime){
+  const blob = bytes instanceof Blob ? bytes : new Blob([bytes], {type:mime||'application/octet-stream'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+function ferrKB(n){ return n>1048576 ? (n/1048576).toFixed(2)+' MB' : Math.max(1,Math.round(n/1024))+' KB'; }
+function ferrMsg(id,html,color){ const el=document.getElementById(id); if(el){ el.innerHTML=html; el.style.color=color||'var(--muted)'; } }
+function ferrLibOk(){ if(typeof PDFLib==='undefined'){ alert('A biblioteca de PDF ainda não carregou — recarregue a página (⌘⇧R).'); return false;} return true; }
+function initFerramentas(){}
+
+/* ---- 1. JUNTAR PDF ---- */
+let _fJuntar=[];
+function fJuntarFiles(input){ _fJuntar=Array.from(input.files||[]);
+  ferrMsg('f-juntar-info', _fJuntar.length? _fJuntar.map((f,i)=>(i+1)+'. '+f.name).join('<br>') : '', 'var(--muted)');
+  document.getElementById('f-juntar-btn').disabled=_fJuntar.length<2;
+}
+async function fJuntar(){ if(_fJuntar.length<2||!ferrLibOk())return;
+  ferrMsg('f-juntar-info','⏳ Juntando…','var(--purple)');
+  try{
+    const out=await PDFLib.PDFDocument.create();
+    for(const f of _fJuntar){ const src=await PDFLib.PDFDocument.load(await f.arrayBuffer()); const pgs=await out.copyPages(src, src.getPageIndices()); pgs.forEach(p=>out.addPage(p)); }
+    const bytes=await out.save();
+    ferrDL(bytes,'juntado.pdf','application/pdf');
+    ferrMsg('f-juntar-info','✅ Pronto! '+out.getPageCount()+' páginas · '+ferrKB(bytes.length),'var(--green)');
+  }catch(e){ ferrMsg('f-juntar-info','⚠ Erro: '+e.message,'var(--red)'); }
+}
+
+/* ---- 2. COMPRIMIR PDF (rasteriza) ---- */
+let _fComp=null;
+function fCompFile(input){ _fComp=input.files&&input.files[0]; document.getElementById('f-comp-btn').disabled=!_fComp; ferrMsg('f-comp-info', _fComp?(_fComp.name+' · '+ferrKB(_fComp.size)):'',''); }
+async function fComprimir(){ if(!_fComp||!ferrLibOk())return;
+  const q=parseFloat(document.getElementById('f-comp-q').value)||0.6, scale=parseFloat(document.getElementById('f-comp-s').value)||1.3;
+  ferrMsg('f-comp-info','⏳ Comprimindo…','var(--purple)');
+  try{
+    const buf=new Uint8Array(await _fComp.arrayBuffer());
+    const doc=await pdfjsLib.getDocument({data:buf.slice(0)}).promise;
+    const out=await PDFLib.PDFDocument.create();
+    for(let i=1;i<=doc.numPages;i++){ const page=await doc.getPage(i); const vp=page.getViewport({scale});
+      const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise;
+      const img=await out.embedJpg(cv.toDataURL('image/jpeg', q));
+      out.addPage([vp.width, vp.height]).drawImage(img,{x:0,y:0,width:vp.width,height:vp.height});
+    }
+    const bytes=await out.save(); const antes=_fComp.size, depois=bytes.length, red=Math.round((1-depois/antes)*100);
+    ferrDL(bytes,'comprimido.pdf','application/pdf');
+    ferrMsg('f-comp-info','✅ '+ferrKB(antes)+' → '+ferrKB(depois)+(red>0?(' ('+red+'% menor)'):' (já estava leve)'),'var(--green)');
+  }catch(e){ ferrMsg('f-comp-info','⚠ Erro: '+e.message,'var(--red)'); }
+}
+
+/* ---- 3. IMAGEM → PDF ---- */
+let _fImg=[];
+function fImgFiles(input){ _fImg=Array.from(input.files||[]); document.getElementById('f-img-btn').disabled=!_fImg.length; ferrMsg('f-img-info', _fImg.length?(_fImg.length+' imagem(ns)'):'',''); }
+function ferrToJpg(file){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>{ const cv=document.createElement('canvas'); cv.width=img.naturalWidth; cv.height=img.naturalHeight; cv.getContext('2d').drawImage(img,0,0); res(cv.toDataURL('image/jpeg',0.92)); }; img.onerror=rej; img.src=URL.createObjectURL(file); }); }
+async function fImgPDF(){ if(!_fImg.length||!ferrLibOk())return;
+  ferrMsg('f-img-info','⏳ Gerando PDF…','var(--purple)');
+  try{
+    const out=await PDFLib.PDFDocument.create();
+    for(const f of _fImg){ let img;
+      if(/\.png$/i.test(f.name)||/png/i.test(f.type)) img=await out.embedPng(await f.arrayBuffer());
+      else if(/\.jpe?g$/i.test(f.name)||/jpe?g/i.test(f.type)) img=await out.embedJpg(await f.arrayBuffer());
+      else img=await out.embedJpg(await ferrToJpg(f));
+      out.addPage([img.width, img.height]).drawImage(img,{x:0,y:0,width:img.width,height:img.height});
+    }
+    const bytes=await out.save(); ferrDL(bytes,'imagens.pdf','application/pdf');
+    ferrMsg('f-img-info','✅ PDF com '+out.getPageCount()+' página(s) · '+ferrKB(bytes.length),'var(--green)');
+  }catch(e){ ferrMsg('f-img-info','⚠ Erro: '+e.message,'var(--red)'); }
+}
+
+/* ---- 4. PDF → IMAGEM ---- */
+let _fP2i=null;
+function fP2iFile(input){ _fP2i=input.files&&input.files[0]; document.getElementById('f-p2i-btn').disabled=!_fP2i; document.getElementById('f-p2i-out').innerHTML=''; ferrMsg('f-p2i-info', _fP2i?_fP2i.name:'',''); }
+async function fP2i(){ if(!_fP2i)return;
+  const scale=parseFloat(document.getElementById('f-p2i-s').value)||2;
+  ferrMsg('f-p2i-info','⏳ Convertendo…','var(--purple)'); const out=document.getElementById('f-p2i-out'); out.innerHTML='';
+  try{
+    const buf=new Uint8Array(await _fP2i.arrayBuffer()); const doc=await pdfjsLib.getDocument({data:buf}).promise; const base=_fP2i.name.replace(/\.pdf$/i,'');
+    for(let i=1;i<=doc.numPages;i++){ const page=await doc.getPage(i); const vp=page.getViewport({scale});
+      const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise;
+      const url=cv.toDataURL('image/jpeg',0.92);
+      const div=document.createElement('div'); div.style.cssText='display:inline-block;margin:6px;text-align:center';
+      div.innerHTML='<img src="'+url+'" style="width:88px;border:1px solid var(--border);border-radius:6px;display:block"><a download="'+base+'-p'+i+'.jpg" href="'+url+'" style="font-size:10px;color:var(--purple);text-decoration:none">⬇ p'+i+'</a>';
+      out.appendChild(div);
+    }
+    ferrMsg('f-p2i-info','✅ '+doc.numPages+' página(s) — clique pra baixar','var(--green)');
+  }catch(e){ ferrMsg('f-p2i-info','⚠ Erro: '+e.message,'var(--red)'); }
+}
+
+/* ---- 5. ASSINAR PDF ---- */
+let _fAss={bytes:null, page:1, numPages:1, scale:1, sigDraw:false};
+function fAssFile(input){ const f=input.files&&input.files[0]; if(!f)return;
+  f.arrayBuffer().then(async ab=>{ _fAss.bytes=new Uint8Array(ab);
+    const doc=await pdfjsLib.getDocument({data:_fAss.bytes.slice(0)}).promise; _fAss.numPages=doc.numPages; _fAss.page=1;
+    document.getElementById('f-ass-wrap').style.display='block';
+    document.getElementById('f-ass-stamp').style.display='none';
+    await fAssRender();
+  });
+}
+async function fAssRender(){
+  const doc=await pdfjsLib.getDocument({data:_fAss.bytes.slice(0)}).promise; const page=await doc.getPage(_fAss.page);
+  const cont=document.getElementById('f-ass-canwrap'); const maxW=Math.min((cont.parentElement.clientWidth||520)-4, 520);
+  const vp0=page.getViewport({scale:1}); const scale=maxW/vp0.width; _fAss.scale=scale; const vp=page.getViewport({scale});
+  const cv=document.getElementById('f-ass-canvas'); cv.width=vp.width; cv.height=vp.height;
+  cont.style.width=vp.width+'px'; cont.style.height=vp.height+'px';
+  await page.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise;
+  document.getElementById('f-ass-pglbl').textContent='Página '+_fAss.page+' / '+_fAss.numPages;
+}
+function fAssPg(d){ _fAss.page=Math.max(1,Math.min(_fAss.numPages,_fAss.page+d)); fAssRender(); }
+function fAssSigInit(){ const cv=document.getElementById('f-ass-sig'); if(!cv||cv._init)return; cv._init=1; const ctx=cv.getContext('2d');
+  ctx.strokeStyle='#0a1a3a'; ctx.lineWidth=2.6; ctx.lineCap='round'; ctx.lineJoin='round';
+  let drawing=false,last=null;
+  function pos(e){ const r=cv.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return {x:(t.clientX-r.left)*(cv.width/r.width), y:(t.clientY-r.top)*(cv.height/r.height)}; }
+  function down(e){ drawing=true; last=pos(e); _fAss.sigDraw=true; e.preventDefault(); }
+  function move(e){ if(!drawing)return; const p=pos(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; e.preventDefault(); }
+  function up(){ drawing=false; }
+  cv.addEventListener('mousedown',down); cv.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:false}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up);
+}
+function fAssSigClear(){ const cv=document.getElementById('f-ass-sig'); cv.getContext('2d').clearRect(0,0,cv.width,cv.height); _fAss.sigDraw=false; }
+function fAssStampInit(){ const st=document.getElementById('f-ass-stamp'); if(!st||st._init)return; st._init=1; let dragging=false,ox=0,oy=0;
+  function down(e){ dragging=true; const t=e.touches?e.touches[0]:e; ox=t.clientX-st.offsetLeft; oy=t.clientY-st.offsetTop; e.preventDefault(); }
+  function move(e){ if(!dragging)return; const t=e.touches?e.touches[0]:e; const wrap=document.getElementById('f-ass-canwrap');
+    let x=t.clientX-ox, y=t.clientY-oy; x=Math.max(0,Math.min(x, wrap.clientWidth-st.offsetWidth)); y=Math.max(0,Math.min(y, wrap.clientHeight-st.offsetHeight));
+    st.style.left=x+'px'; st.style.top=y+'px'; e.preventDefault(); }
+  function up(){ dragging=false; }
+  st.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  st.addEventListener('touchstart',down,{passive:false}); window.addEventListener('touchmove',move,{passive:false}); window.addEventListener('touchend',up);
+}
+function fAssColocar(){ if(!_fAss.sigDraw){ ferrMsg('f-ass-info','✍️ Desenhe a assinatura primeiro.','var(--red)'); return; }
+  const url=document.getElementById('f-ass-sig').toDataURL('image/png');
+  const st=document.getElementById('f-ass-stamp'); st.querySelector('img').src=url; st.style.display='block'; st.style.left='40px'; st.style.top='40px';
+  ferrMsg('f-ass-info','👉 Arraste a assinatura pro lugar, ajuste o tamanho, e clique "Assinar e baixar".','var(--muted)');
+}
+function fAssSize(v){ document.getElementById('f-ass-stamp').style.width=v+'px'; }
+async function fAssSalvar(){ if(!ferrLibOk())return; const st=document.getElementById('f-ass-stamp');
+  if(st.style.display==='none'||!st.querySelector('img').src){ ferrMsg('f-ass-info','Coloque a assinatura primeiro.','var(--red)'); return; }
+  ferrMsg('f-ass-info','⏳ Assinando…','var(--purple)');
+  try{
+    const pdf=await PDFLib.PDFDocument.load(_fAss.bytes); const png=await pdf.embedPng(st.querySelector('img').src);
+    const page=pdf.getPages()[_fAss.page-1]; const ph=page.getHeight(); const s=_fAss.scale;
+    const x=st.offsetLeft/s, w=st.offsetWidth/s, h=st.offsetHeight/s, y=ph-(st.offsetTop/s)-h;
+    page.drawImage(png,{x, y, width:w, height:h});
+    const bytes=await pdf.save(); ferrDL(bytes,'assinado.pdf','application/pdf');
+    ferrMsg('f-ass-info','✅ Assinado na página '+_fAss.page+' · '+ferrKB(bytes.length),'var(--green)');
+  }catch(e){ ferrMsg('f-ass-info','⚠ Erro: '+e.message,'var(--red)'); }
+}
+document.addEventListener('DOMContentLoaded',function(){ try{ fAssSigInit(); fAssStampInit(); }catch(e){} });
+</script>
+
 <script>
 /* ═══════════ IMPORTAR EXTRATO BANCÁRIO → PESSOAL ═══════════ */
 if(window.pdfjsLib){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
@@ -5716,16 +5961,17 @@ function closeSidebar(){
 // ── PAGES ─────────────────────────────────────────────────────────────────
 function goPage(p){
   curPage=p;
-  ['home','overview','custos','pessoal','operacional','relatorios'].forEach(id=>{
+  ['home','overview','custos','pessoal','operacional','relatorios','ferramentas'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
   var target=document.getElementById('page-'+p);
   if(target) target.style.display='block';
-  ['nav-home','nav-custos','nav-pessoal','nav-operacional','nav-relatorios'].forEach(id=>{
+  ['nav-home','nav-custos','nav-pessoal','nav-operacional','nav-relatorios','nav-ferramentas'].forEach(id=>{
     var el=document.getElementById(id);
     if(el) el.classList.remove('on');
   });
+  if(p==='ferramentas'){ var elf=document.getElementById('nav-ferramentas'); if(elf) elf.classList.add('on'); try{initFerramentas();}catch(e){} }
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
   if(p==='overview'){ var el=document.getElementById('nav-custos'); if(el) el.classList.add('on'); }
   if(p==='pessoal'){ var el=document.getElementById('nav-pessoal'); if(el) el.classList.add('on'); buildPessoal(); }
