@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<script src="coi-serviceworker.min.js"></script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4877,6 +4878,7 @@ function copiarSpot() {
     <div style="padding:6px 22px 12px">
       <span class="ferr-tab on" onclick="showFerrTab('pdf',this)">📄 PDF</span>
       <span class="ferr-tab" onclick="showFerrTab('img',this)">🖼️ Imagem</span>
+      <span class="ferr-tab" onclick="showFerrTab('video',this)">🎬 Vídeo</span>
       <span class="ferr-tab" onclick="showFerrTab('qr',this)">🔳 QR &amp; Links</span>
       <span class="ferr-tab" onclick="showFerrTab('calc',this)">🧮 Calculadoras</span>
       <span class="ferr-tab" onclick="showFerrTab('backup',this)">🛡️ Backup</span>
@@ -5001,6 +5003,51 @@ function copiarSpot() {
       </div>
     </div>
 
+
+    <!-- ══════ VÍDEO ══════ -->
+    <div id="ferr-video" style="display:none">
+      <div style="padding:2px 22px 8px;font-size:11px;color:var(--muted)">🎬 Processa vídeo no próprio navegador. Na 1ª vez baixa o motor (~30 MB); depois fica rápido. Ideal pra vídeos curtos.</div>
+      <div class="ferr-grid">
+        <div class="ferr-card">
+          <div class="ferr-t">📲 Comprimir p/ WhatsApp</div><div class="ferr-d">Reduz pra enviar sem erro (720p, leve).</div>
+          <input type="file" accept="video/*" onchange="vFile(this,'Comp')" class="ferr-file">
+          <div id="v-comp-info" class="ferr-info"></div>
+          <button id="v-comp-btn" disabled onclick="vComprimir()" class="ferr-btn" style="opacity:.5">Comprimir e baixar</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">🎵 Extrair áudio (MP3)</div><div class="ferr-d">Tira só o som — útil pra spots de rádio.</div>
+          <input type="file" accept="video/*" onchange="vFile(this,'Aud')" class="ferr-file">
+          <div id="v-aud-info" class="ferr-info"></div>
+          <button id="v-aud-btn" disabled onclick="vAudio()" class="ferr-btn" style="opacity:.5">Extrair MP3</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">🎞️ Vídeo → GIF</div><div class="ferr-d">Transforma um trecho em GIF animado.</div>
+          <input type="file" accept="video/*" onchange="vFile(this,'Gif')" class="ferr-file">
+          <div style="font-size:11px;color:var(--muted);margin:8px 0">Duração (s) <input id="v-gif-seg" type="number" value="6" min="1" max="15" class="ferr-in" style="width:70px;display:inline-block"></div>
+          <div id="v-gif-info" class="ferr-info"></div>
+          <button id="v-gif-btn" disabled onclick="vGif()" class="ferr-btn" style="opacity:.5">Gerar GIF</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">🔄 Converter para MP4</div><div class="ferr-d">Qualquer formato (mov, avi, mkv…) vira MP4.</div>
+          <input type="file" accept="video/*" onchange="vFile(this,'Conv')" class="ferr-file">
+          <div id="v-conv-info" class="ferr-info"></div>
+          <button id="v-conv-btn" disabled onclick="vConverter()" class="ferr-btn" style="opacity:.5">Converter</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">✂️ Cortar vídeo</div><div class="ferr-d">Recorta um trecho (formato mm:ss ou segundos).</div>
+          <input type="file" accept="video/*" onchange="vFile(this,'Cut')" class="ferr-file">
+          <div style="display:flex;gap:8px;margin:8px 0;font-size:11px;color:var(--muted)"><label style="flex:1">Início <input id="v-cut-ini" class="ferr-in" placeholder="00:00"></label><label style="flex:1">Fim <input id="v-cut-fim" class="ferr-in" placeholder="00:30"></label></div>
+          <div id="v-cut-info" class="ferr-info"></div>
+          <button id="v-cut-btn" disabled onclick="vCortar()" class="ferr-btn" style="opacity:.5">Cortar e baixar</button>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">🖥️ Gravar tela</div><div class="ferr-d">Grava a tela (e áudio) — reuniões, tutoriais. Salva em .webm.</div>
+          <button id="v-rec-btn" onclick="vRecToggle()" class="ferr-btn" style="background:#c0392b">● Gravar tela</button>
+          <div id="v-rec-info" class="ferr-info"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══════ QR & LINKS ══════ -->
     <div id="ferr-qr" style="display:none">
       <div class="ferr-grid">
@@ -5092,7 +5139,7 @@ function copiarSpot() {
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
@@ -5250,7 +5297,7 @@ document.addEventListener('DOMContentLoaded',function(){ try{ fAssSigInit(); fAs
 <script>
 /* ═══════════ FERRAMENTAS FASE 2 · Imagem · QR & Links · Calculadoras ═══════════ */
 function showFerrTab(t, el){
-  ['pdf','img','qr','calc','backup'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  ['pdf','img','video','qr','calc','backup'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
   document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
 }
 /* ---- IMAGEM helpers ---- */
@@ -5375,6 +5422,58 @@ async function mgbBackupRestaurar(input){ const f=input.files&&input.files[0]; i
   input.value=''; }
 document.addEventListener('DOMContentLoaded',function(){ try{ iPixInit(); fQrTipo(); }catch(e){} });
 </script>
+<script>
+/* ═══════════ FERRAMENTAS · VÍDEO (ffmpeg.wasm 0.11 + coi-serviceworker) ═══════════ */
+let _ff=null,_ffLoading=null;
+function vScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('não baixou '+src)); document.head.appendChild(s); }); }
+async function vFFmpeg(){
+  if(_ff&&_ff.isLoaded&&_ff.isLoaded()) return _ff; if(_ffLoading) return _ffLoading;
+  _ffLoading=(async()=>{
+    if(!self.crossOriginIsolated) throw new Error('recurso de vídeo ainda inicializando — recarregue a página (⌘⇧R) e tente de novo');
+    if(typeof FFmpeg==='undefined') await vScript('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
+    const { createFFmpeg }=FFmpeg;
+    const ff=createFFmpeg({ log:false, corePath:'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+      progress:({ratio})=>{ const el=document.getElementById('v-prog'); if(el&&ratio>=0&&ratio<=1) el.textContent='⏳ Processando… '+Math.round(ratio*100)+'%'; } });
+    await ff.load(); _ff=ff; return ff;
+  })();
+  return _ffLoading;
+}
+async function vRun(file, outName, args, statusId){
+  if(!file) return; const info=document.getElementById(statusId); info.style.color='var(--purple)'; info.innerHTML='<span id="v-prog">⏳ Carregando motor de vídeo (~25 MB na 1ª vez)…</span>';
+  try{
+    const ff=await vFFmpeg(); const { fetchFile }=FFmpeg;
+    const inName='in.'+((file.name.split('.').pop()||'mp4').replace(/[^\w]/g,''));
+    ff.FS('writeFile', inName, await fetchFile(file));
+    const pr=document.getElementById('v-prog'); if(pr)pr.textContent='⏳ Processando…';
+    await ff.run('-i', inName, ...args, outName);
+    const data=ff.FS('readFile', outName);
+    const mime=outName.endsWith('.mp3')?'audio/mpeg':(outName.endsWith('.gif')?'image/gif':'video/mp4');
+    ferrDL(new Blob([data.buffer],{type:mime}), outName, mime);
+    info.style.color='var(--green)'; info.textContent='✅ Pronto! '+ferrKB(data.length)+(file.size?(' (era '+ferrKB(file.size)+')'):'');
+    try{ ff.FS('unlink',inName); ff.FS('unlink',outName); }catch(e){}
+  }catch(e){ info.style.color='var(--red)'; info.textContent='⚠ '+(e&&e.message||'erro ao processar'); }
+}
+let _vSel={};
+function vFile(input,which){ _vSel[which]=input.files&&input.files[0]; const map={Comp:'v-comp',Aud:'v-aud',Gif:'v-gif',Conv:'v-conv',Cut:'v-cut'}; const f=_vSel[which]; const btn=document.getElementById(map[which]+'-btn'); if(btn)btn.disabled=!f; ferrMsg(map[which]+'-info', f?(f.name+' · '+ferrKB(f.size)):'',''); }
+function vComprimir(){ vRun(_vSel.Comp,'video-whatsapp.mp4',['-vf','scale=-2:720','-c:v','libx264','-crf','30','-preset','veryfast','-c:a','aac','-b:a','96k','-movflags','+faststart'],'v-comp-info'); }
+function vAudio(){ vRun(_vSel.Aud,'audio.mp3',['-vn','-c:a','libmp3lame','-q:a','4'],'v-aud-info'); }
+function vGif(){ const s=parseInt(document.getElementById('v-gif-seg').value)||6; vRun(_vSel.Gif,'video.gif',['-t',String(s),'-vf','fps=10,scale=360:-1:flags=lanczos'],'v-gif-info'); }
+function vConverter(){ vRun(_vSel.Conv,'convertido.mp4',['-c:v','libx264','-c:a','aac','-preset','veryfast','-movflags','+faststart'],'v-conv-info'); }
+function vCortar(){ const ini=document.getElementById('v-cut-ini').value.trim()||'0'; const fim=document.getElementById('v-cut-fim').value.trim(); const args=['-ss',ini]; if(fim)args.push('-to',fim); args.push('-c','copy'); vRun(_vSel.Cut,'cortado.mp4',args,'v-cut-info'); }
+let _recStream=null,_recorder=null,_recChunks=[];
+function vRecToggle(){
+  if(_recorder&&_recorder.state==='recording'){ _recorder.stop(); return; }
+  navigator.mediaDevices.getDisplayMedia({video:true, audio:true}).then(stream=>{
+    _recStream=stream; _recChunks=[]; let mime='video/webm'; try{ if(!MediaRecorder.isTypeSupported(mime))mime=''; }catch(e){}
+    _recorder=new MediaRecorder(stream, mime?{mimeType:mime}:undefined);
+    _recorder.ondataavailable=e=>{ if(e.data&&e.data.size)_recChunks.push(e.data); };
+    _recorder.onstop=()=>{ const blob=new Blob(_recChunks,{type:'video/webm'}); ferrDL(blob,'gravacao.webm','video/webm'); try{ _recStream.getTracks().forEach(t=>t.stop()); }catch(e){} document.getElementById('v-rec-btn').textContent='● Gravar tela'; document.getElementById('v-rec-info').style.color='var(--green)'; document.getElementById('v-rec-info').textContent='✅ Gravação baixada (.webm)'; };
+    stream.getVideoTracks()[0].onended=()=>{ if(_recorder&&_recorder.state!=='inactive')_recorder.stop(); };
+    _recorder.start(); document.getElementById('v-rec-btn').textContent='■ Parar e baixar'; document.getElementById('v-rec-info').style.color='var(--red)'; document.getElementById('v-rec-info').textContent='🔴 Gravando…';
+  }).catch(e=>{ document.getElementById('v-rec-info').style.color='var(--muted)'; document.getElementById('v-rec-info').textContent='Gravação cancelada.'; });
+}
+</script>
+
 
 
 <script>
