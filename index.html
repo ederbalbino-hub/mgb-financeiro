@@ -4952,6 +4952,12 @@ function copiarSpot() {
     <div id="ferr-img" style="display:none">
       <div class="ferr-grid">
         <div class="ferr-card">
+          <div class="ferr-t">📱 HEIC → JPG</div><div class="ferr-d">Abre foto de iPhone (.heic) em qualquer lugar. A 1ª conversão baixa o conversor (~1,5 MB).</div>
+          <input type="file" accept=".heic,.heif,image/heic,image/heif" onchange="iHeicFile(this)" class="ferr-file">
+          <div id="i-heic-info" class="ferr-info"></div>
+          <button id="i-heic-btn" disabled onclick="iHeicConv()" class="ferr-btn" style="opacity:.5">Converter para JPG</button>
+        </div>
+        <div class="ferr-card">
           <div class="ferr-t">🗜️ Comprimir imagem</div><div class="ferr-d">Reduz o peso preservando a qualidade.</div>
           <input type="file" accept="image/*" onchange="iCompFile(this)" class="ferr-file">
           <div style="font-size:11px;color:var(--muted);margin:8px 0">Qualidade <input id="i-comp-q" type="range" min="0.3" max="0.95" step="0.05" value="0.7" style="vertical-align:middle"></div>
@@ -5230,6 +5236,22 @@ function showFerrTab(t, el){
 function fImgLoad(file){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=URL.createObjectURL(file); }); }
 function fCanvasFrom(img,w,h){ const cv=document.createElement('canvas'); cv.width=w||img.naturalWidth; cv.height=h||img.naturalHeight; cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); return cv; }
 function fBase(name){ return (name||'imagem').replace(/\.[^.]+$/,''); }
+
+/* HEIC → JPG (lazy-load heic2any/libheif) */
+let _heicLoading=null;
+function iHeicLib(){ if(window.heic2any) return Promise.resolve(); if(_heicLoading) return _heicLoading;
+  _heicLoading=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'; s.onload=()=>res(); s.onerror=()=>rej(new Error('conversor não carregou (sem internet?)')); document.head.appendChild(s); });
+  return _heicLoading; }
+let _iHeic=null;
+function iHeicFile(input){ _iHeic=input.files&&input.files[0]; document.getElementById('i-heic-btn').disabled=!_iHeic; ferrMsg('i-heic-info', _iHeic?_iHeic.name:'',''); }
+async function iHeicConv(){ if(!_iHeic)return; ferrMsg('i-heic-info','⏳ Carregando conversor…','var(--purple)');
+  try{ await iHeicLib(); ferrMsg('i-heic-info','⏳ Convertendo…','var(--purple)');
+    const out=await heic2any({blob:_iHeic, toType:'image/jpeg', quality:0.92});
+    const blob=Array.isArray(out)?out[0]:out;
+    ferrDL(blob, fBase(_iHeic.name)+'.jpg','image/jpeg');
+    ferrMsg('i-heic-info','✅ Convertido para JPG · '+ferrKB(blob.size),'var(--green)');
+  }catch(e){ ferrMsg('i-heic-info','⚠ '+(e.message||'não consegui ler este HEIC'),'var(--red)'); }
+}
 
 /* Comprimir imagem */
 let _iComp=null;
