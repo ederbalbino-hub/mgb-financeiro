@@ -1086,6 +1086,31 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
           </div>
         </div>
       </div>
+
+      <!-- Movimentações do banco (C6) — realizados importados via Open Finance -->
+      <div style="padding:0 22px 28px">
+        <div class="tcard">
+          <div class="thead3" style="padding:12px 18px">
+            <div class="ttitle">🏦 Movimentações do banco (C6)</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font-size:10px;color:var(--hint)" id="ov-empmov-sum"></div>
+              <button class="badd" onclick="bancoModalOpen()" style="background:var(--purple);color:#fff">📥 Importar do banco</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Conta</th>
+                <th class="tr">Valor</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="ov-empmov-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4680,6 +4705,22 @@ function copiarSpot() {
       </div>
     </div>
 
+    <div id="banco-modal" class="modal-overlay hidden" style="z-index:200">
+      <div class="modal" style="width:820px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="modal-title">🏦 Importar do banco (C6)</div><div class="modal-sub">Open Finance via Pluggy → lança na Empresa, sem duplicar</div></div>
+          <button onclick="bancoModalClose()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+        </div>
+        <div id="banco-accounts" style="margin:10px 0 12px"></div>
+        <div id="banco-info" style="margin-bottom:10px"></div>
+        <div id="banco-body" style="overflow:auto;flex:1;min-height:0"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <button onclick="bancoModalClose()" style="font-size:12px;padding:9px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Fechar</button>
+          <button id="banco-lancar" onclick="bancoImportLancar()" style="display:none;font-size:12px;padding:9px 20px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Lançar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- KPIs -->
     <div class="ov-summary" id="pes-kpis"></div>
 
@@ -5821,6 +5862,10 @@ let empresaDespId = 2;
 // [{id, nome, valor, inicio:'YYYY-MM', ativo:true}]
 let empresaReceitas = [];
 let empresaRecId = 1;
+// Movimentos reais importados do banco (C6) — despesas e receitas datadas (separado da projeção)
+// [{id, desc, valor, lado:'desp'|'rec', data:'YYYY-MM-DD', mes:'YYYY-MM', _imp:'c6-<docto>', conta}]
+let empresaMovimentos = [];
+let empresaMovId = 1;
 
 // ── DESPESAS COMPARTILHADAS (Elevadores) ─────────────────────────────────
 // despesasComp = [{id, nome, forn, valor, inicio, meses, telas:[]}]
@@ -6928,7 +6973,142 @@ function buildVisaoEmpresa(){
   if(!g('emp-inicio').value){
     g('emp-inicio').value=new Date().toISOString().slice(0,7);
   }
+
+  // ── Movimentações do banco (C6) — realizados importados, filtrados pelo mês selecionado ──
+  if(g('ov-empmov-body')){
+    const mesSel=`${selAno}-${String(selMes+1).padStart(2,'0')}`;
+    const movMes=empresaMovimentos.filter(mv=>mv.mes===mesSel).sort((a,b)=>a.data<b.data?-1:(a.data>b.data?1:0));
+    const movEnt=movMes.filter(mv=>mv.lado==='rec').reduce((a,mv)=>a+(mv.valor||0),0);
+    const movSai=movMes.filter(mv=>mv.lado==='desp').reduce((a,mv)=>a+(mv.valor||0),0);
+    const liq=movEnt-movSai;
+    g('ov-empmov-sum').textContent=`${movMes.length} lançamento(s) · +${f(movEnt)} / −${f(movSai)} · líquido ${(liq>=0?'+':'')}${f(liq)}`;
+    if(!movMes.length){
+      g('ov-empmov-body').innerHTML=`<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--hint);font-size:11px">Nenhum movimento neste mês. Use "Importar do banco" acima.</td></tr>`;
+    } else {
+      g('ov-empmov-body').innerHTML=movMes.map(mv=>{
+        const isRec=mv.lado==='rec'; const p=(mv.data||'').split('-');
+        return `<tr>
+          <td style="font-size:10px;color:var(--muted);white-space:nowrap">${p[2]}/${p[1]}</td>
+          <td style="font-weight:500">${mv.desc}</td>
+          <td style="font-size:10px;color:var(--muted)">${mv.conta||'—'}</td>
+          <td class="tr mono" style="color:${isRec?'var(--green)':'var(--red)'};font-weight:700">${isRec?'+':'−'}${f(mv.valor||0)}</td>
+          <td><button class="del" onclick="delEmpresaMov(${mv.id})" title="Remover">✕</button></td>
+        </tr>`;
+      }).join('');
+    }
+  }
 }
+
+// ══ IMPORTAR DO BANCO (Pluggy/Open Finance) → Empresa ══════════════════════
+let _bancoImp=null; // {rows:[{...txn, _imp, dup, incluir}]}
+
+function bancoItems(){ try{ return JSON.parse(localStorage.getItem('mgb_banco_items')||'[]'); }catch(e){ return []; } }
+function bancoSaveItem(it){ const arr=bancoItems().filter(x=>x.itemId!==it.itemId); arr.push(it); localStorage.setItem('mgb_banco_items',JSON.stringify(arr)); }
+
+function bancoModalOpen(){
+  document.getElementById('banco-modal').classList.remove('hidden');
+  document.getElementById('banco-info').innerHTML='';
+  document.getElementById('banco-body').innerHTML='';
+  document.getElementById('banco-lancar').style.display='none';
+  _bancoImp=null;
+  bancoRenderAccounts();
+}
+function bancoModalClose(){ document.getElementById('banco-modal').classList.add('hidden'); }
+
+function bancoRenderAccounts(){
+  const el=document.getElementById('banco-accounts');
+  if(!BANCO_API_URL){
+    el.innerHTML='<div style="font-size:12px;color:#fbbf24;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">⚙ Backend ainda não configurado. Defina <code>BANCO_API_URL</code> no index.html (URL do bot no Vercel) para ativar a conexão.</div>';
+    return;
+  }
+  const items=bancoItems();
+  let h='<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">';
+  h+='<button onclick="bancoConnectC6()" style="font-size:12px;padding:9px 16px;border-radius:8px;background:var(--green);color:#0b0d12;border:none;cursor:pointer;font-weight:700">+ Conectar banco (C6)</button>';
+  items.forEach(it=>{
+    h+=`<button onclick="bancoImportFetch('${it.itemId}')" style="font-size:12px;padding:9px 14px;border-radius:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer">📥 ${it.banco||'Conta'} — importar</button>`;
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function bancoConnectC6(){
+  if(!BANCO_API_URL){ alert('Configure BANCO_API_URL no index.html primeiro.'); return; }
+  const info=document.getElementById('banco-info');
+  info.innerHTML='<div style="color:var(--purple);font-size:12px">⏳ Preparando conexão segura…</div>';
+  const start=(token)=>{
+    const pc=new PluggyConnect({
+      connectToken:token, includeSandbox:true,
+      onSuccess:(data)=>{
+        const item=data&&data.item; if(!item){ info.innerHTML='<div style="color:var(--red);font-size:12px">Conexão retornou sem item.</div>'; return; }
+        bancoSaveItem({itemId:item.id, banco:(item.connector&&item.connector.name)||'Banco', src:'c6', at:new Date().toISOString()});
+        info.innerHTML='<div style="color:var(--green);font-size:12px">✅ Conta conectada. Clique em "importar" para puxar os lançamentos.</div>';
+        bancoRenderAccounts();
+      },
+      onError:(err)=>{ info.innerHTML='<div style="color:var(--red);font-size:12px">Erro na conexão: '+((err&&err.message)||JSON.stringify(err))+'</div>'; }
+    });
+    pc.init();
+  };
+  const go=()=>fetch(BANCO_API_URL+'?action=connect-token').then(r=>r.json()).then(j=>{
+    if(!j.accessToken){ info.innerHTML='<div style="color:var(--red);font-size:12px">Não consegui gerar o token (verifique backend/env vars).</div>'; return; }
+    start(j.accessToken);
+  }).catch(e=>{ info.innerHTML='<div style="color:var(--red);font-size:12px">Falha ao falar com o backend: '+e.message+'</div>'; });
+  if(window.PluggyConnect){ go(); }
+  else {
+    const s=document.createElement('script');
+    s.src='https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js';
+    s.onload=go; s.onerror=()=>{ info.innerHTML='<div style="color:var(--red);font-size:12px">Não consegui carregar o widget do Pluggy (sem internet?).</div>'; };
+    document.head.appendChild(s);
+  }
+}
+
+async function bancoImportFetch(itemId){
+  const info=document.getElementById('banco-info'), body=document.getElementById('banco-body');
+  info.innerHTML='<div style="color:var(--purple);font-size:12px">⏳ Baixando lançamentos…</div>'; body.innerHTML='';
+  document.getElementById('banco-lancar').style.display='none';
+  let data;
+  try{ data=await fetch(BANCO_API_URL+'?action=transactions&itemId='+encodeURIComponent(itemId)).then(r=>r.json()); }
+  catch(e){ info.innerHTML='<div style="color:var(--red);font-size:12px">Falha na conexão: '+e.message+'</div>'; return; }
+  if(data.error){ info.innerHTML='<div style="color:var(--red);font-size:12px">Erro: '+data.error+'</div>'; return; }
+  const txns=data.txns||[];
+  if(!txns.length){ info.innerHTML='<div style="color:var(--muted);font-size:12px">Nenhum lançamento no período.</div>'; return; }
+  const rows=txns.map(t=>{ const _imp=(t.src||'c6')+'-'+t.docto; const dup=empresaMovimentos.some(m=>m._imp===_imp); return Object.assign({},t,{_imp,dup,incluir:!dup}); });
+  _bancoImp={rows};
+  const novos=rows.filter(r=>!r.dup).length, dups=rows.length-novos;
+  info.innerHTML='<div style="font-size:12px;line-height:1.7"><b style="color:var(--text)">'+(data.banco||'Banco')+'</b> · '+(data.periodo?(data.periodo.ini+' a '+data.periodo.fim):'')+' · '+txns.length+' lançamentos<br>'
+    +'<span style="color:var(--green)">● '+novos+' novos</span> &nbsp; <span style="color:var(--muted)">● '+dups+' já lançados (pulados)</span></div>';
+  let h='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border)">'
+    +'<th style="padding:6px 4px"></th><th>Data</th><th>Descrição</th><th>Conta</th><th style="text-align:right">Valor</th></tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    const isRec=r.lado==='rec', c=isRec?'var(--green)':'#f472b6', sign=isRec?'+':'−';
+    h+='<tr style="border-bottom:1px solid var(--border);'+(r.dup?'opacity:.45':'')+'">'
+      +'<td style="padding:7px 4px"><input type="checkbox" '+(r.incluir?'checked':'')+' '+(r.dup?'disabled':'')+' onchange="_bancoImp.rows['+i+'].incluir=this.checked;bancoImpTotais()"></td>'
+      +'<td style="white-space:nowrap;color:var(--muted)">'+r.data+(r.dup?' <span style="font-size:9px">(já lançado)</span>':'')+'</td>'
+      +'<td style="max-width:280px">'+r.historico+'</td>'
+      +'<td style="font-size:10px;color:var(--muted)">'+(r.conta||'—')+'</td>'
+      +'<td style="text-align:right;white-space:nowrap;color:'+c+';font-family:DM Mono,monospace">'+sign+f(r.valor)+'</td>'
+      +'</tr>';
+  });
+  h+='</tbody></table>';
+  body.innerHTML=h;
+  const btn=document.getElementById('banco-lancar'); btn.style.display=novos?'inline-block':'none'; bancoImpTotais();
+}
+
+function bancoImpTotais(){ if(!_bancoImp)return; const n=_bancoImp.rows.filter(r=>r.incluir&&!r.dup).length; const b=document.getElementById('banco-lancar'); b.textContent='✓ Lançar '+n+' movimento'+(n===1?'':'s'); b.disabled=!n; b.style.opacity=n?'1':'.5'; }
+
+function bancoImportLancar(){
+  if(!_bancoImp)return;
+  const sel=_bancoImp.rows.filter(r=>r.incluir&&!r.dup);
+  if(!sel.length){ return; }
+  sel.forEach(r=>{
+    const p=r.data.split('/'); const iso=p[2]+'-'+p[1]+'-'+p[0];
+    empresaMovimentos.push({ id:empresaMovId++, desc:pesDescFromHist(r.historico), valor:r.valor, lado:r.lado, data:iso, mes:iso.slice(0,7), _imp:r._imp, conta:r.conta||'' });
+  });
+  try{buildVisaoEmpresa();}catch(e){} try{scheduleSave();}catch(e){}
+  bancoModalClose();
+  alert('✅ Lançado: '+sel.length+' movimento(s) na Empresa.\nSincronizando com o Google Sheets.');
+}
+
+function delEmpresaMov(id){ if(!confirm('Remover este movimento?'))return; empresaMovimentos=empresaMovimentos.filter(m=>m.id!==id); try{buildVisaoEmpresa();}catch(e){} try{scheduleSave();}catch(e){} }
 
 function addEmpresaDesp(){
   const nome=g('emp-nome').value.trim();
@@ -8278,6 +8458,8 @@ function buildFinDashboard(){
 
 // ── GOOGLE SHEETS CONFIG (via Apps Script) ───────────────────────────────
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwD9L4gj8zr9vwOBZxn4-71khw5yhoXwJTFfsWizP-okmZZQWlumQs93seg-H2USa8D/exec';
+// Backend do Pluggy (bot no Vercel). Preencher quando publicar: 'https://<bot>.vercel.app/api/banco'
+const BANCO_API_URL = '';
 
 let saveTimer = null;
 let syncStatus = 'idle';
@@ -8301,7 +8483,7 @@ function setSyncStatus(s, msg=''){
 function serializeState(){
   return {
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
-    empresaDespesas, empresaReceitas, despPagamentos,
+    empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
     pessoalRegras, pessoalUltimaImport, relAjustes,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
@@ -8377,6 +8559,10 @@ function deserializeState(obj){
   if(obj.empresaReceitas && Array.isArray(obj.empresaReceitas)){
     empresaReceitas=obj.empresaReceitas;
     empresaRecId=empresaReceitas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.empresaMovimentos && Array.isArray(obj.empresaMovimentos)){
+    empresaMovimentos=obj.empresaMovimentos;
+    empresaMovId=empresaMovimentos.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
   }
   if(obj.despPagamentos && typeof obj.despPagamentos==='object'){
     despPagamentos=obj.despPagamentos;
