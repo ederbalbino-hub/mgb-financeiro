@@ -2,6 +2,11 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<script>
+// Isolação (COOP/COEP) só quando a ferramenta de Vídeo precisar (flag mgb_coi).
+// Isolada o tempo todo ela bloqueia widgets externos (ex.: Pluggy Connect do banco).
+window.coi={shouldRegister:()=>localStorage.getItem('mgb_coi')==='1',shouldDeregister:()=>localStorage.getItem('mgb_coi')!=='1'};
+</script>
 <script src="coi-serviceworker.min.js"></script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -5472,7 +5477,7 @@ function vScript(src){ return new Promise((res,rej)=>{ const s=document.createEl
 async function vFFmpeg(){
   if(_ff&&_ff.isLoaded&&_ff.isLoaded()) return _ff; if(_ffLoading) return _ffLoading;
   _ffLoading=(async()=>{
-    if(!self.crossOriginIsolated) throw new Error('recurso de vídeo ainda inicializando — recarregue a página (⌘⇧R) e tente de novo');
+    if(!self.crossOriginIsolated){ localStorage.setItem('mgb_coi','1'); _ffLoading=null; setTimeout(()=>location.reload(),1600); throw new Error('ativando o motor de vídeo — a página vai recarregar sozinha; depois clique de novo'); }
     if(typeof FFmpeg==='undefined') await vScript('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
     const { createFFmpeg }=FFmpeg;
     const ff=createFFmpeg({ log:false, corePath:'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
@@ -7049,6 +7054,7 @@ function bancoRenderAccounts(){
 
 function bancoConnectC6(){
   if(!BANCO_API_URL){ alert('Configure BANCO_API_URL no index.html primeiro.'); return; }
+  if(self.crossOriginIsolated){ localStorage.setItem('mgb_coi','0'); alert('Preparando a conexão segura — a página vai recarregar 1x. Depois clique em Conectar de novo.'); location.reload(); return; }
   const info=document.getElementById('banco-info');
   info.innerHTML='<div style="color:var(--purple);font-size:12px">⏳ Preparando conexão segura…</div>';
   const start=(token)=>{
@@ -7132,6 +7138,7 @@ function bancoSrc(name){ name=(name||'').toLowerCase(); if(name.indexOf('bradesc
 // Conexão genérica a qualquer banco (Pluggy Connect). onDone() roda após conectar.
 function bancoConnect(onDone){
   if(!BANCO_API_URL){ alert('Backend do banco não configurado (BANCO_API_URL).'); return; }
+  if(self.crossOriginIsolated){ localStorage.setItem('mgb_coi','0'); alert('Preparando a conexão segura — a página vai recarregar 1x. Depois clique em Conectar de novo.'); location.reload(); return; }
   const start=(token)=>{ new PluggyConnect({ connectToken:token, includeSandbox:true,
     onSuccess:(data)=>{ const item=data&&data.item; if(item) bancoSaveItem({itemId:item.id, banco:(item.connector&&item.connector.name)||'Banco', src:bancoSrc(item.connector&&item.connector.name), at:new Date().toISOString()}); if(onDone)onDone(); },
     onError:(err)=>{ alert('Erro na conexão: '+((err&&err.message)||JSON.stringify(err))); } }).init(); };
