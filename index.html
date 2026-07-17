@@ -7059,7 +7059,7 @@ function bancoConnectC6(){
   info.innerHTML='<div style="color:var(--purple);font-size:12px">⏳ Preparando conexão segura…</div>';
   const start=(token)=>{
     const pc=new PluggyConnect({
-      connectToken:token, includeSandbox:true,
+      connectToken:token, includeSandbox:false,
       onSuccess:(data)=>{
         const item=data&&data.item; if(!item){ info.innerHTML='<div style="color:var(--red);font-size:12px">Conexão retornou sem item.</div>'; return; }
         bancoSaveItem({itemId:item.id, banco:(item.connector&&item.connector.name)||'Banco', src:bancoSrc(item.connector&&item.connector.name), at:new Date().toISOString()});
@@ -7139,7 +7139,7 @@ function bancoSrc(name){ name=(name||'').toLowerCase(); if(name.indexOf('bradesc
 function bancoConnect(onDone){
   if(!BANCO_API_URL){ alert('Backend do banco não configurado (BANCO_API_URL).'); return; }
   if(self.crossOriginIsolated){ localStorage.setItem('mgb_coi','0'); alert('Preparando a conexão segura — a página vai recarregar 1x. Depois clique em Conectar de novo.'); location.reload(); return; }
-  const start=(token)=>{ new PluggyConnect({ connectToken:token, includeSandbox:true,
+  const start=(token)=>{ new PluggyConnect({ connectToken:token, includeSandbox:false,
     onSuccess:(data)=>{ const item=data&&data.item; if(item) bancoSaveItem({itemId:item.id, banco:(item.connector&&item.connector.name)||'Banco', src:bancoSrc(item.connector&&item.connector.name), at:new Date().toISOString()}); if(onDone)onDone(); },
     onError:(err)=>{ alert('Erro na conexão: '+((err&&err.message)||JSON.stringify(err))); } }).init(); };
   const go=()=>fetch(BANCO_API_URL+'?action=connect-token').then(r=>r.json()).then(j=>{ if(j.accessToken)start(j.accessToken); else alert('Não consegui gerar o token (backend/env vars).'); }).catch(e=>alert('Falha ao falar com o backend: '+e.message));
