@@ -5647,8 +5647,8 @@ function pesCatSelectHTML(lado,selected){
 }
 
 let _pesImp=null;
-function importExtratoOpen(){ document.getElementById('imp-modal').classList.remove('hidden'); document.getElementById('imp-body').innerHTML=''; document.getElementById('imp-file').value=''; document.getElementById('imp-info').innerHTML='<div style="color:var(--muted);font-size:12px">'+pesUltimaAtualizacao()+'</div>'; document.getElementById('imp-lancar').style.display='none'; _pesImp=null; }
-function importExtratoClose(){ document.getElementById('imp-modal').classList.add('hidden'); }
+function importExtratoOpen(){ const m=document.getElementById('imp-modal'); m.classList.remove('hidden'); m.classList.add('open'); m.style.display='flex'; document.getElementById('imp-body').innerHTML=''; document.getElementById('imp-file').value=''; document.getElementById('imp-info').innerHTML='<div style="color:var(--muted);font-size:12px">'+pesUltimaAtualizacao()+'</div>'; document.getElementById('imp-lancar').style.display='none'; _pesImp=null; }
+function importExtratoClose(){ const m=document.getElementById('imp-modal'); m.classList.add('hidden'); m.classList.remove('open'); m.style.display='none'; }
 
 async function importExtratoFile(input){
   const f=input.files&&input.files[0]; if(!f)return;
@@ -7018,14 +7018,14 @@ function bancoItems(){ try{ return JSON.parse(localStorage.getItem('mgb_banco_it
 function bancoSaveItem(it){ const arr=bancoItems().filter(x=>x.itemId!==it.itemId); arr.push(it); localStorage.setItem('mgb_banco_items',JSON.stringify(arr)); }
 
 function bancoModalOpen(){
-  document.getElementById('banco-modal').classList.remove('hidden');
+  const m=document.getElementById('banco-modal'); m.classList.remove('hidden'); m.classList.add('open'); m.style.display='flex';
   document.getElementById('banco-info').innerHTML='';
   document.getElementById('banco-body').innerHTML='';
   document.getElementById('banco-lancar').style.display='none';
   _bancoImp=null;
   bancoRenderAccounts();
 }
-function bancoModalClose(){ document.getElementById('banco-modal').classList.add('hidden'); }
+function bancoModalClose(){ const m=document.getElementById('banco-modal'); m.classList.add('hidden'); m.classList.remove('open'); m.style.display='none'; }
 
 function bancoRenderAccounts(){
   const el=document.getElementById('banco-accounts');
