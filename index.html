@@ -4687,7 +4687,7 @@ function copiarSpot() {
     </div>
 
     <!-- Modal Importar Extrato -->
-    <div id="imp-modal" class="modal-overlay hidden" style="z-index:200">
+    <div id="imp-modal" class="modal-overlay hidden" style="z-index:100000">
       <div class="modal" style="width:820px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div><div class="modal-title">📥 Importar extrato bancário</div><div class="modal-sub">Banco (Open Finance) ou PDF → lança no Pessoal, sem duplicar</div></div>
@@ -4707,7 +4707,7 @@ function copiarSpot() {
       </div>
     </div>
 
-    <div id="banco-modal" class="modal-overlay hidden" style="z-index:200">
+    <div id="banco-modal" class="modal-overlay hidden" style="z-index:100000">
       <div class="modal" style="width:820px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div><div class="modal-title">🏦 Importar do banco (C6)</div><div class="modal-sub">Open Finance via Pluggy → lança na Empresa, sem duplicar</div></div>
@@ -5647,7 +5647,7 @@ function pesCatSelectHTML(lado,selected){
 }
 
 let _pesImp=null;
-function importExtratoOpen(){ const m=document.getElementById('imp-modal'); m.classList.remove('hidden'); m.classList.add('open'); m.style.display='flex'; document.getElementById('imp-body').innerHTML=''; document.getElementById('imp-file').value=''; document.getElementById('imp-info').innerHTML='<div style="color:var(--muted);font-size:12px">'+pesUltimaAtualizacao()+'</div>'; document.getElementById('imp-lancar').style.display='none'; _pesImp=null; }
+function importExtratoOpen(){ const m=document.getElementById('imp-modal'); if(m.parentNode!==document.body) document.body.appendChild(m); m.classList.remove('hidden'); m.classList.add('open'); m.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)'; document.getElementById('imp-body').innerHTML=''; document.getElementById('imp-file').value=''; document.getElementById('imp-info').innerHTML='<div style="color:var(--muted);font-size:12px">'+pesUltimaAtualizacao()+'</div>'; document.getElementById('imp-lancar').style.display='none'; _pesImp=null; }
 function importExtratoClose(){ const m=document.getElementById('imp-modal'); m.classList.add('hidden'); m.classList.remove('open'); m.style.display='none'; }
 
 async function importExtratoFile(input){
@@ -7018,7 +7018,11 @@ function bancoItems(){ try{ return JSON.parse(localStorage.getItem('mgb_banco_it
 function bancoSaveItem(it){ const arr=bancoItems().filter(x=>x.itemId!==it.itemId); arr.push(it); localStorage.setItem('mgb_banco_items',JSON.stringify(arr)); }
 
 function bancoModalOpen(){
-  const m=document.getElementById('banco-modal'); m.classList.remove('hidden'); m.classList.add('open'); m.style.display='flex';
+  const m=document.getElementById('banco-modal');
+  if(m.parentNode!==document.body) document.body.appendChild(m); // tira de dentro de page-pessoal (oculto na aba Empresa)
+  m.classList.remove('hidden'); m.classList.add('open');
+  // força overlay tela-cheia inline (evita conflito de CSS que deixava position:static)
+  m.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)';
   document.getElementById('banco-info').innerHTML='';
   document.getElementById('banco-body').innerHTML='';
   document.getElementById('banco-lancar').style.display='none';
