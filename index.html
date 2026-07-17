@@ -1088,7 +1088,7 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
       </div>
 
       <!-- Movimentações do banco (C6) — realizados importados via Open Finance -->
-      <div style="padding:0 22px 28px">
+      <div id="ov-empmov-card" style="padding:0 22px 28px;display:none">
         <div class="tcard">
           <div class="thead3" style="padding:12px 18px">
             <div class="ttitle">🏦 Movimentações do banco (C6)</div>
@@ -6975,6 +6975,8 @@ function buildVisaoEmpresa(){
   }
 
   // ── Movimentações do banco (C6) — realizados importados, filtrados pelo mês selecionado ──
+  const _movCard=g('ov-empmov-card');
+  if(_movCard) _movCard.style.display=(BANCO_API_URL||empresaMovimentos.length)?'':'none'; // só aparece quando configurado (ou já há dados)
   if(g('ov-empmov-body')){
     const mesSel=`${selAno}-${String(selMes+1).padStart(2,'0')}`;
     const movMes=empresaMovimentos.filter(mv=>mv.mes===mesSel).sort((a,b)=>a.data<b.data?-1:(a.data>b.data?1:0));
