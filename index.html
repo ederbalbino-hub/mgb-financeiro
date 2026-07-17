@@ -4690,10 +4690,12 @@ function copiarSpot() {
     <div id="imp-modal" class="modal-overlay hidden" style="z-index:200">
       <div class="modal" style="width:820px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div><div class="modal-title">📥 Importar extrato bancário</div><div class="modal-sub">Bradesco (PDF) → lança no Pessoal, sem duplicar</div></div>
+          <div><div class="modal-title">📥 Importar extrato bancário</div><div class="modal-sub">Banco (Open Finance) ou PDF → lança no Pessoal, sem duplicar</div></div>
           <button onclick="importExtratoClose()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
         </div>
-        <div style="margin:10px 0 12px">
+        <div style="margin:10px 0 12px;display:flex;flex-direction:column;gap:8px">
+          <button onclick="importExtratoBancoOpen()" style="font-size:12.5px;padding:10px 12px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700;text-align:left">🏦 Importar do banco (Open Finance) — Bradesco, C6…</button>
+          <div style="font-size:10px;color:var(--muted);text-align:center">— ou envie o PDF do extrato —</div>
           <input type="file" id="imp-file" accept="application/pdf,.pdf" onchange="importExtratoFile(this)" style="font-size:12px;color:var(--muted);width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;cursor:pointer">
         </div>
         <div id="imp-info" style="margin-bottom:10px"></div>
@@ -5605,7 +5607,7 @@ async function pesParsePDF(file){
   return {periodo,txns};
 }
 
-function pesImpDup(docto){ return pessoalDesp.concat(pessoalRec).some(e=>e._imp==='brad-'+docto); }
+function pesImpDup(docto,src){ const pre=src?'of-':'brad-'; return pessoalDesp.concat(pessoalRec).some(e=>e._imp===pre+docto); }
 // Competência: lançamento do ÚLTIMO DIA do mês entra no mês seguinte (dia do salário → orça o próximo mês)
 function pesCompetencia(dataMov){ // 'YYYY-MM-DD' -> {inicio:'YYYY-MM', pk:'YYYY-M'(0-idx), rolou:bool}
   var a=dataMov.split('-'), y=+a[0], m=+a[1], d=+a[2];
@@ -5645,8 +5647,8 @@ function pesCatSelectHTML(lado,selected){
 }
 
 let _pesImp=null;
-function importExtratoOpen(){ document.getElementById('imp-modal').classList.remove('hidden'); document.getElementById('imp-body').innerHTML=''; document.getElementById('imp-file').value=''; document.getElementById('imp-info').innerHTML='<div style="color:var(--muted);font-size:12px">'+pesUltimaAtualizacao()+'</div>'; document.getElementById('imp-lancar').style.display='none'; _pesImp=null; }
-function importExtratoClose(){ document.getElementById('imp-modal').classList.add('hidden'); }
+function importExtratoOpen(){ const m=document.getElementById('imp-modal'); m.classList.remove('hidden'); m.classList.add('open'); m.style.display='flex'; document.getElementById('imp-body').innerHTML=''; document.getElementById('imp-file').value=''; document.getElementById('imp-info').innerHTML='<div style="color:var(--muted);font-size:12px">'+pesUltimaAtualizacao()+'</div>'; document.getElementById('imp-lancar').style.display='none'; _pesImp=null; }
+function importExtratoClose(){ const m=document.getElementById('imp-modal'); m.classList.add('hidden'); m.classList.remove('open'); m.style.display='none'; }
 
 async function importExtratoFile(input){
   const f=input.files&&input.files[0]; if(!f)return;
@@ -5655,8 +5657,16 @@ async function importExtratoFile(input){
   if(!window.pdfjsLib){ info.innerHTML='<div style="color:var(--red)">⚠ pdf.js não carregou — recarregue a página.</div>'; return; }
   let res; try{ res=await pesParsePDF(f); }catch(e){ info.innerHTML='<div style="color:var(--red)">⚠ Não consegui ler este PDF: '+e.message+'</div>'; return; }
   if(!res.txns.length){ info.innerHTML='<div style="color:var(--red)">Nenhuma transação reconhecida neste extrato.</div>'; return; }
+  importExtratoShow(res);
+}
+
+// Renderiza a prévia de import (PDF ou banco/Pluggy) — dedup, categoriza, competência, tabela.
+// res = {periodo, txns:[{data:'DD/MM/YYYY', historico, valor, lado, docto, src?}]}
+function importExtratoShow(res){
+  const info=document.getElementById('imp-info'), body=document.getElementById('imp-body');
+  if(!res.txns.length){ info.innerHTML='<div style="color:var(--red)">Nenhuma transação encontrada no período.</div>'; body.innerHTML=''; document.getElementById('imp-lancar').style.display='none'; return; }
   pesRegrasInit();
-  const rows=res.txns.map(t=>{ const dup=pesImpDup(t.docto); const cat=catExtrato(t.historico,t.lado); return Object.assign({},t,{dup,cat,incluir:!dup}); });
+  const rows=res.txns.map(t=>{ const dup=pesImpDup(t.docto,t.src); const cat=catExtrato(t.historico,t.lado); return Object.assign({},t,{dup,cat,incluir:!dup}); });
   _pesImp={periodo:res.periodo,rows};
   const novos=rows.filter(r=>!r.dup).length, dups=rows.length-novos, semCat=rows.filter(r=>!r.dup&&!r.cat).length;
   let cov=pesUltimaAtualizacao();
@@ -5702,7 +5712,7 @@ function importExtratoLancar(){
     const p=r.data.split('/'), dd=p[0], mm=p[1], yy=p[2];
     const dataMov=yy+'-'+mm+'-'+dd, dataPago=r.data;
     const comp=pesCompetencia(dataMov), inicio=comp.inicio, pk=comp.pk;
-    const cat=r.cat||'Outros', desc=pesDescFromHist(r.historico), imp='brad-'+r.docto;
+    const cat=r.cat||'Outros', desc=pesDescFromHist(r.historico), imp=(r.src?'of-':'brad-')+r.docto;
     if(r.lado==='rec'){ const id=pessoalRecId++; pessoalRec.push({id:id,desc:desc,valor:r.valor,inicio:inicio,meses:1,categoria:cat,valMes:{},_imp:imp,dataMov:dataMov}); if(!pessoalRecPag[id])pessoalRecPag[id]={}; pessoalRecPag[id][pk]={pago:true,dataPago:dataPago}; aR++; }
     else { const id=pessoalDespId++; pessoalDesp.push({id:id,desc:desc,valor:r.valor,tipo:'avista',inicio:inicio,meses:1,categoria:cat,valMes:{},_imp:imp,dataMov:dataMov}); if(!pessoalPag[id])pessoalPag[id]={}; pessoalPag[id][pk]={pago:true,dataPago:dataPago}; aD++; }
     pesAprender(r.historico,r.cat,r.lado);
@@ -7008,14 +7018,14 @@ function bancoItems(){ try{ return JSON.parse(localStorage.getItem('mgb_banco_it
 function bancoSaveItem(it){ const arr=bancoItems().filter(x=>x.itemId!==it.itemId); arr.push(it); localStorage.setItem('mgb_banco_items',JSON.stringify(arr)); }
 
 function bancoModalOpen(){
-  document.getElementById('banco-modal').classList.remove('hidden');
+  const m=document.getElementById('banco-modal'); m.classList.remove('hidden'); m.classList.add('open'); m.style.display='flex';
   document.getElementById('banco-info').innerHTML='';
   document.getElementById('banco-body').innerHTML='';
   document.getElementById('banco-lancar').style.display='none';
   _bancoImp=null;
   bancoRenderAccounts();
 }
-function bancoModalClose(){ document.getElementById('banco-modal').classList.add('hidden'); }
+function bancoModalClose(){ const m=document.getElementById('banco-modal'); m.classList.add('hidden'); m.classList.remove('open'); m.style.display='none'; }
 
 function bancoRenderAccounts(){
   const el=document.getElementById('banco-accounts');
@@ -7042,7 +7052,7 @@ function bancoConnectC6(){
       connectToken:token, includeSandbox:true,
       onSuccess:(data)=>{
         const item=data&&data.item; if(!item){ info.innerHTML='<div style="color:var(--red);font-size:12px">Conexão retornou sem item.</div>'; return; }
-        bancoSaveItem({itemId:item.id, banco:(item.connector&&item.connector.name)||'Banco', src:'c6', at:new Date().toISOString()});
+        bancoSaveItem({itemId:item.id, banco:(item.connector&&item.connector.name)||'Banco', src:bancoSrc(item.connector&&item.connector.name), at:new Date().toISOString()});
         info.innerHTML='<div style="color:var(--green);font-size:12px">✅ Conta conectada. Clique em "importar" para puxar os lançamentos.</div>';
         bancoRenderAccounts();
       },
@@ -7111,6 +7121,40 @@ function bancoImportLancar(){
 }
 
 function delEmpresaMov(id){ if(!confirm('Remover este movimento?'))return; empresaMovimentos=empresaMovimentos.filter(m=>m.id!==id); try{buildVisaoEmpresa();}catch(e){} try{scheduleSave();}catch(e){} }
+
+// deriva a sigla de origem a partir do nome do banco (dedup/rotulagem)
+function bancoSrc(name){ name=(name||'').toLowerCase(); if(name.indexOf('bradesco')>=0)return 'brad'; if(name.indexOf('c6')>=0)return 'c6'; return 'of'; }
+
+// Conexão genérica a qualquer banco (Pluggy Connect). onDone() roda após conectar.
+function bancoConnect(onDone){
+  if(!BANCO_API_URL){ alert('Backend do banco não configurado (BANCO_API_URL).'); return; }
+  const start=(token)=>{ new PluggyConnect({ connectToken:token, includeSandbox:true,
+    onSuccess:(data)=>{ const item=data&&data.item; if(item) bancoSaveItem({itemId:item.id, banco:(item.connector&&item.connector.name)||'Banco', src:bancoSrc(item.connector&&item.connector.name), at:new Date().toISOString()}); if(onDone)onDone(); },
+    onError:(err)=>{ alert('Erro na conexão: '+((err&&err.message)||JSON.stringify(err))); } }).init(); };
+  const go=()=>fetch(BANCO_API_URL+'?action=connect-token').then(r=>r.json()).then(j=>{ if(j.accessToken)start(j.accessToken); else alert('Não consegui gerar o token (backend/env vars).'); }).catch(e=>alert('Falha ao falar com o backend: '+e.message));
+  if(window.PluggyConnect) go(); else { const s=document.createElement('script'); s.src='https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js'; s.onload=go; s.onerror=()=>alert('Não carregou o widget do Pluggy.'); document.head.appendChild(s); }
+}
+
+// ── Importar do banco no PESSOAL (Open Finance → MESMA pipeline do PDF) ──
+function importExtratoBancoOpen(){
+  const info=document.getElementById('imp-info'), body=document.getElementById('imp-body');
+  body.innerHTML=''; document.getElementById('imp-lancar').style.display='none'; _pesImp=null;
+  if(!BANCO_API_URL){ info.innerHTML='<div style="font-size:12px;color:#fbbf24">Backend do banco ainda não configurado.</div>'; return; }
+  const items=bancoItems();
+  let h='<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">';
+  h+='<button onclick="bancoConnect(importExtratoBancoOpen)" style="font-size:12px;padding:9px 14px;border-radius:8px;background:var(--green);color:#0b0d12;border:none;cursor:pointer;font-weight:700">+ Conectar banco</button>';
+  items.forEach(it=>{ h+=`<button onclick="importExtratoBancoFetch('${it.itemId}')" style="font-size:12px;padding:9px 14px;border-radius:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer">📥 ${it.banco||'Conta'} — importar</button>`; });
+  h+='</div><div style="font-size:11px;color:var(--muted);margin-top:8px">Conecte seu banco (ex.: Bradesco) e importe — mesma categorização, competência e dedup do extrato PDF.</div>';
+  info.innerHTML=h;
+}
+async function importExtratoBancoFetch(itemId){
+  const info=document.getElementById('imp-info');
+  info.innerHTML='<div style="color:var(--purple);font-size:12px">⏳ Baixando lançamentos do banco…</div>';
+  let data; try{ data=await fetch(BANCO_API_URL+'?action=transactions&itemId='+encodeURIComponent(itemId)).then(r=>r.json()); }
+  catch(e){ info.innerHTML='<div style="color:var(--red);font-size:12px">Falha na conexão: '+e.message+'</div>'; return; }
+  if(data.error){ info.innerHTML='<div style="color:var(--red);font-size:12px">Erro: '+data.error+'</div>'; return; }
+  importExtratoShow({periodo:data.periodo, txns:data.txns||[]});
+}
 
 function addEmpresaDesp(){
   const nome=g('emp-nome').value.trim();
