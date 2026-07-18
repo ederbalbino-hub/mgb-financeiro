@@ -8,22 +8,22 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-  :root{--bg:#0f0820;--card:#171029;--card2:#1f1638;--line:#2c2147;--txt:#ede9f7;--mut:#a79fc4;--hint:#7c7398;--purple:#8b83f7;--purple-d:#6B21A8;--green:#34d399;--amber:#fbbf24;--red:#f87171}
+  :root{--bg:#EFEBF7;--card:#FFFFFF;--card2:#F1EDF9;--line:rgba(76,45,142,.16);--txt:#1D1430;--mut:rgba(29,20,48,.75);--hint:rgba(29,20,48,.52);--purple:#6C55DB;--purple-d:#4E38B2;--green:#118A5D;--amber:#D97706;--red:#DC2626}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',-apple-system,Arial,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
   .shell{display:flex;min-height:100vh}
   /* sidebar idêntica à plataforma (index.html) */
-  .sidebar{width:248px;flex-shrink:0;background:#1a1928;border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:hidden}
-  .logo-area{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
-  .logo-badge{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#f472b6;background:rgba(244,114,182,.15);padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:6px}
-  .logo-name{font-size:15px;font-weight:700;color:#f0eeff}
-  .logo-sub{font-size:11px;color:rgba(240,238,255,.5);margin-top:1px}
+  .sidebar{width:248px;flex-shrink:0;background:#FFFFFF;border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:hidden}
+  .logo-area{padding:18px 16px 14px;border-bottom:1px solid var(--line);flex-shrink:0}
+  .logo-badge{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#D6367F;background:rgba(214,54,127,.10);padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:6px}
+  .logo-name{font-size:15px;font-weight:700;color:var(--txt)}
+  .logo-sub{font-size:11px;color:var(--hint);margin-top:1px}
   .sb-scroll{flex:1;overflow-y:auto;padding:10px 8px}
-  .sb-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,238,255,.22);padding:0 8px;margin-bottom:6px;margin-top:4px}
-  .sb-nav-item{display:flex;align-items:center;gap:8px;padding:10px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:rgba(240,238,255,.5);transition:all .15s;margin-bottom:2px;text-decoration:none}
-  .sb-nav-item:hover{background:#222135;color:#f0eeff}
-  .sb-nav-item.on{background:#222135;color:#f0eeff;font-weight:600}
-  .sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+  .sb-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(29,20,48,.45);padding:0 8px;margin-bottom:6px;margin-top:4px}
+  .sb-nav-item{display:flex;align-items:center;gap:8px;padding:10px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--mut);transition:all .15s;margin-bottom:2px;text-decoration:none}
+  .sb-nav-item:hover{background:var(--card2);color:var(--txt)}
+  .sb-nav-item.on{background:var(--card2);color:var(--txt);font-weight:600}
+  .sb-footer{padding:12px 16px;border-top:1px solid var(--line);flex-shrink:0}
   .gmain{flex:1;min-width:0;padding:34px 40px;overflow-y:auto;zoom:1}
   @media(max-width:760px){.sidebar{display:none}}
   .wrap{max-width:1100px;margin:0 auto}
@@ -35,11 +35,12 @@
   .step{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);margin-bottom:12px;display:flex;align-items:center;gap:8px}
   .step .nbr{width:20px;height:20px;border-radius:50%;background:var(--purple-d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px}
   .chans{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:640px){.chans{grid-template-columns:1fr}}
   .chan{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;text-align:center;transition:.15s}
-  .chan:hover{border-color:#3c2f63}.chan.on{border-color:var(--purple);background:#241a40}
+  .chan:hover{border-color:rgba(108,85,219,.45)}.chan.on{border-color:var(--purple);background:rgba(108,85,219,.08)}
   .chan .ic{font-size:24px}.chan .nm{font-weight:700;font-size:13px;margin-top:6px}.chan .ds{font-size:11px;color:var(--hint);margin-top:3px}
   .drop{border:2px dashed var(--line);border-radius:14px;padding:30px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--card2)}
-  .drop:hover,.drop.over{border-color:var(--purple);background:#241a40}
+  .drop:hover,.drop.over{border-color:var(--purple);background:rgba(108,85,219,.08)}
   .drop .ic{font-size:32px;margin-bottom:8px}.drop .t{font-weight:600;font-size:14px}.drop .h{font-size:12px;color:var(--hint);margin-top:6px}
   input[type=file]{display:none}
   .ok{color:var(--green)}.warn{color:var(--amber)}.err{color:var(--red)}
@@ -53,7 +54,7 @@
   .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .telas{display:flex;flex-direction:column;gap:7px}
   .tela{display:flex;align-items:center;gap:11px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;transition:.12s}
-  .tela.sel{border-color:var(--purple);background:#241a40}
+  .tela.sel{border-color:var(--purple);background:rgba(108,85,219,.08)}
   .tela input[type=checkbox]{width:18px;height:18px;accent-color:var(--purple);cursor:pointer;flex-shrink:0}
   .tela .pic{width:42px;height:42px;border-radius:8px;object-fit:cover;background:var(--line);flex-shrink:0}
   .tela .info{flex:1;min-width:0}.tela .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tela .mt{font-size:11px;color:var(--hint)}
@@ -347,11 +348,11 @@ document.querySelectorAll('.sidebar a[href^="index.html#"]').forEach(function(a)
   var ft=$('gfooter'); if(!ft) return;
   if(!d){ ft.style.display='none'; return; }
   ft.style.display='block';
-  ft.innerHTML='<div style="font-size:9px;color:rgba(240,238,255,.22);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">'+(d.mes||'')+'</div>'+
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:9px;color:#4ecb8d">↑ Receita</span><span style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:#4ecb8d">'+(d.rec||'')+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:9px;color:#f87171">↓ Despesa</span><span style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:#f87171">'+(d.desp||'')+'</span></div>'+
-    '<div style="height:1px;background:rgba(255,255,255,.07);margin:5px 0"></div>'+
-    '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:9px;color:rgba(240,238,255,.22)">Lucro mês</span><span style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:'+(d.lucroColor||'#4ecb8d')+'">'+(d.lucro||'')+'</span></div>';
+  ft.innerHTML='<div style="font-size:9px;color:rgba(29,20,48,.45);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">'+(d.mes||'')+'</div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:9px;color:#118A5D">↑ Receita</span><span style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:#118A5D">'+(d.rec||'')+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:9px;color:#DC2626">↓ Despesa</span><span style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:#DC2626">'+(d.desp||'')+'</span></div>'+
+    '<div style="height:1px;background:rgba(76,45,142,.16);margin:5px 0"></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:9px;color:rgba(29,20,48,.45)">Lucro mês</span><span style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:'+(d.lucroColor||'#118A5D')+'">'+(d.lucro||'')+'</span></div>';
 })();
 </script>
 </body>
