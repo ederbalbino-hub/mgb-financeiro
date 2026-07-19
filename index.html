@@ -39,9 +39,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sb-toggle-btn{position:fixed;top:20px;left:234px;z-index:130;width:26px;height:26px;background:var(--surface);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(30,10,60,.12);transition:left .22s ease,color .15s,border-color .15s;color:var(--hint)}
 .sb-toggle-btn:hover{color:var(--purple);border-color:var(--purple)}
 @media(min-width:769px){
-  .shell.sb-collapsed{grid-template-columns:0px 1fr}
-  .shell.sb-collapsed .sidebar{opacity:0;pointer-events:none;border-right:none}
-  .shell.sb-collapsed .sb-toggle-btn{left:10px}
+  /* recolhido = trilho só de ícones (não some de vez, fica sempre clicável) */
+  .shell.sb-collapsed{grid-template-columns:60px 1fr}
+  .shell.sb-collapsed .sb-toggle-btn{left:46px}
+  .shell.sb-collapsed .logo-area,
+  .shell.sb-collapsed .sb-lbl,
+  .shell.sb-collapsed .sb-footer{display:none}
+  .shell.sb-collapsed .sb-scroll{padding:14px 8px}
+  .shell.sb-collapsed .sb-nav-item{justify-content:center;padding:11px 0;gap:0;font-size:0}
+  .shell.sb-collapsed #sb-modules .mod-item{justify-content:center;padding:9px 0;gap:0}
+  .shell.sb-collapsed #sb-modules .mod-item span:not(.mod-dot){display:none}
 }
 @media(max-width:768px){.sb-toggle-btn{display:none}}
 
@@ -803,20 +810,20 @@ body{-webkit-font-smoothing:antialiased}
     <div class="logo-sub">Gestão financeira e operacional</div>
   </div>
   <div class="sb-scroll">
-    <div class="sb-nav-item on" id="nav-home" onclick="goPage('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Início</div>
+    <div class="sb-nav-item on" id="nav-home" title="Início" onclick="goPage('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Início</div>
     <div class="sb-lbl" style="margin-top:10px">Financeiro</div>
-    <div class="sb-nav-item" id="nav-custos" onclick="goPage('overview')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20v-7M11 20V5M17 20v-10"/><path d="M3 20h18"/></svg>Financeiro MGB</div>
-    <div class="sb-nav-item" id="nav-pessoal" onclick="goPage('pessoal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>Pessoal</div>
+    <div class="sb-nav-item" id="nav-custos" title="Financeiro MGB" onclick="goPage('overview')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20v-7M11 20V5M17 20v-10"/><path d="M3 20h18"/></svg>Financeiro MGB</div>
+    <div class="sb-nav-item" id="nav-pessoal" title="Pessoal" onclick="goPage('pessoal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>Pessoal</div>
     <div class="sb-lbl" style="margin-top:10px">Operação</div>
-    <div class="sb-nav-item" id="nav-contratos" onclick="goOperacional('contratos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>Contratos</div>
-    <div class="sb-nav-item" id="nav-estudio" onclick="goOperacional('estudio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Estúdio</div>
-    <div class="sb-nav-item" id="nav-relatorios" onclick="goPage('relatorios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9.5 8.5h5M9.5 12.5h5"/></svg>Cobrança Mensal</div>
-    <div class="sb-nav-item" id="nav-gerador" onclick="openGerador()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 10h4M3 15h4M17 10h4M17 15h4"/></svg>Gerar Resultados</div>
-    <div class="sb-nav-item" id="nav-midiakit" onclick="goPage('midiakit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Proposta Elevadores</div>
-    <div class="sb-nav-item" id="nav-apresmgb" onclick="goPage('apresmgb')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Apresentação MGB</div>
-    <div class="sb-nav-item" id="nav-sindicos" onclick="goPage('sindicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg>Síndicos</div>
+    <div class="sb-nav-item" id="nav-contratos" title="Contratos" onclick="goOperacional('contratos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>Contratos</div>
+    <div class="sb-nav-item" id="nav-estudio" title="Estúdio" onclick="goOperacional('estudio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Estúdio</div>
+    <div class="sb-nav-item" id="nav-relatorios" title="Cobrança Mensal" onclick="goPage('relatorios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9.5 8.5h5M9.5 12.5h5"/></svg>Cobrança Mensal</div>
+    <div class="sb-nav-item" id="nav-gerador" title="Gerar Resultados" onclick="openGerador()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 10h4M3 15h4M17 10h4M17 15h4"/></svg>Gerar Resultados</div>
+    <div class="sb-nav-item" id="nav-midiakit" title="Proposta Elevadores" onclick="goPage('midiakit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Proposta Elevadores</div>
+    <div class="sb-nav-item" id="nav-apresmgb" title="Apresentação MGB" onclick="goPage('apresmgb')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Apresentação MGB</div>
+    <div class="sb-nav-item" id="nav-sindicos" title="Síndicos" onclick="goPage('sindicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg>Síndicos</div>
     <div class="sb-lbl" style="margin-top:10px">Apoio</div>
-    <div class="sb-nav-item" id="nav-ferramentas" onclick="goPage('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.6 4.6 0 0 0-5.9 5.9L3 18l3 3 5.8-5.8a4.6 4.6 0 0 0 5.9-5.9l-2.9 2.9-2.1-.9-.9-2.1z"/></svg>Ferramentas</div>
+    <div class="sb-nav-item" id="nav-ferramentas" title="Ferramentas" onclick="goPage('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.6 4.6 0 0 0-5.9 5.9L3 18l3 3 5.8-5.8a4.6 4.6 0 0 0 5.9-5.9l-2.9 2.9-2.1-.9-.9-2.1z"/></svg>Ferramentas</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
     <div id="sb-modules"></div>
   </div>
@@ -6614,7 +6621,7 @@ function buildSidebar(){
   let html='';
   MODULES.forEach(m=>{
     const on=m.id===curMod&&curPage==='custos';
-    html+=`<div class="mod-item${on?' on':''}" onclick="switchMod('${m.id}')">
+    html+=`<div class="mod-item${on?' on':''}" title="${m.label}" onclick="switchMod('${m.id}')">
       <span class="mod-dot" style="background:${m.color}"></span><span style="flex:1;font-size:11px">${m.label}</span>
     </div>`;
   });
