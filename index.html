@@ -8059,20 +8059,22 @@ function buildAnunciantes(){
       </div>`).join('');
   }
 
-  // Grid de anunciantes (respeita o mês/ano selecionado no cabeçalho)
+  // Grid de anunciantes — só mostra quem está ativo no mês/ano selecionado no cabeçalho
   const amSel=g('mod-mes-sel'), aaSel=g('mod-ano-sel');
   const selMesA=parseInt(amSel?amSel.value:new Date().getMonth());
   const selAnoA=parseInt(aaSel?aaSel.value:new Date().getFullYear());
   const grid=g('anunc-grid');
+  const ativosList=anunciantes.filter(x=>anuncIsAtivo(x,selAnoA,selMesA));
   if(!anunciantes.length){
     grid.innerHTML=`<div class="anunc-empty">Nenhum anunciante cadastrado ainda.<br><span style="font-size:10px">Clique em "+ Novo anunciante" para começar.</span></div>`;
     g('anunc-sum').textContent='';
+  } else if(!ativosList.length){
+    grid.innerHTML=`<div class="anunc-empty">Nenhum anunciante ativo em ${MESES[selMesA]}/${selAnoA}.<br><span style="font-size:10px">Troque o mês no cabeçalho pra ver outros contratos.</span></div>`;
+    g('anunc-sum').textContent=`0 ativo(s) em ${MESES[selMesA]}/${selAnoA}`;
   } else {
-    const totalMes=anunciantes.reduce((a,x)=>a+(anuncIsAtivo(x,selAnoA,selMesA)?x.valor:0),0);
-    const ativos=anunciantes.filter(x=>anuncIsAtivo(x,selAnoA,selMesA)).length;
-    g('anunc-sum').textContent=`${ativos} ativo(s) em ${MESES[selMesA]}/${selAnoA} · ${f(totalMes)}/mês`;
-    grid.innerHTML=anunciantes.map(a=>{
-      const ativo=anuncIsAtivo(a,selAnoA,selMesA);
+    const totalMes=ativosList.reduce((a,x)=>a+x.valor,0);
+    g('anunc-sum').textContent=`${ativosList.length} ativo(s) em ${MESES[selMesA]}/${selAnoA} · ${f(totalMes)}/mês`;
+    grid.innerHTML=ativosList.map(a=>{
       const vlrTela=a.telas?.length?a.valor/a.telas.length:0;
       const inicio=a.inicio?fmtMes(a.inicio):'—';
       const dur=a.meses||1;
@@ -8083,8 +8085,8 @@ function buildAnunciantes(){
         return fmtMes(`${anoI+Math.floor(tf/12)}-${String(tf%12+1).padStart(2,'0')}`);
       };
       const fim=getFim();
-      return `<div class="anunc-card${ativo?' ativo':''}">
-        <div class="anunc-status ${ativo?'ativo':'encerrado'}">${ativo?'● Ativo':'Encerrado'}</div>
+      return `<div class="anunc-card ativo">
+        <div class="anunc-status ativo">● Ativo</div>
         <div class="anunc-nome">${a.nome}</div>
         <div class="anunc-valor">${f(a.valor)}<span>/mês</span></div>
         <div class="anunc-info">${inicio} → ${fim} · ${dur} ${dur===1?'mês':'meses'} · ${a.telas?.length||0} tela(s)</div>
