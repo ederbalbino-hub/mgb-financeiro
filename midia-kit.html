@@ -689,7 +689,7 @@ body.has-logo .mock-nome{font-size:17px}
 
 <div class="footer no-print"><span><b>MGB Mídia Elevadores</b></span><span>Mídia Kit interativo · 2026/2027</span><span>Londrina – PR</span></div>
 
-<a class="wa-float no-print" id="wa-float" target="_blank" rel="noopener">💬 Falar com a MGB</a>
+<a class="wa-float no-print" id="wa-float" target="_blank" rel="noopener">📤 Enviar ao cliente</a>
 
 <div class="simbar no-print" id="simbar">
   <span><b id="sb-telas">0</b> telas · <b id="sb-pess">0</b> pessoas/mês</span>
@@ -1016,8 +1016,20 @@ function render(){
   }else{
     msg=`Olá! Vi o mídia kit da MGB Elevadores e quero saber mais.${nome}${segTxt}`;
   }
-  const wa=`https://wa.me/${WA_NUM}?text=${msg.replace(/ /g,'%20')}`;
-  ['btn-wa-sim','wa-float','btn-wa-final'].forEach(id=>$(id).href=wa);
+  /* CTA final (cliente fala com a MGB) */
+  $('btn-wa-final').href=`https://wa.me/${WA_NUM}?text=${msg.replace(/ /g,'%20')}`;
+  /* botões de ENVIO ao cliente (Eder escolhe o contato no WhatsApp) */
+  const oi=state.cliente?`Olá, ${state.cliente}! 😊`:'Olá! 😊';
+  const segT=state.seg!=='generico'?` pensada pro segmento de ${SEGMENTOS[state.seg].label}`:'';
+  let envio;
+  if(sel.length){
+    envio=`${oi} Aqui é o Eder, da MGB Mídia. Preparei a proposta da sua campanha nos elevadores${segT}:%0A%0A• ${sel.map(c=>c.nome).join(', ')}%0A• ${telas} telas · ${fmtN(pubEst)} pessoas/mês · ${fmtN(ots)} impactos%0A• ${state.semanas} semanas · ${fmtR(total)}${negOn?' (valor especial negociado)':''}%0A%0AEstou te enviando o PDF completo na sequência. Vamos colocar sua marca no ar? 🚀%0A%0AEder · MGB Mídia · (43) 99696-0078`;
+  }else{
+    envio=`${oi} Aqui é o Eder, da MGB Mídia. Estou te enviando nossa apresentação de mídia em elevadores${segT} — telas digitais vistas por +80 mil pessoas todos os meses em Londrina, sem como pular o anúncio. 📺✨ Dá uma olhada no PDF a seguir e me diz o que achou!%0A%0AEder · MGB Mídia · (43) 99696-0078`;
+  }
+  const waEnvio=`https://wa.me/?text=${envio.replace(/ /g,'%20')}`;
+  $('wa-float').href=waEnvio;
+  $('btn-wa-sim').href=waEnvio;
 
   /* cta final personalizado */
   $('final-h2').innerHTML=state.cliente?`${state.cliente}, pronto para<br>aparecer onde importa?`:'Pronto para aparecer<br>onde importa?';

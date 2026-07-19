@@ -806,8 +806,9 @@ body{-webkit-font-smoothing:antialiased}
     <div class="sb-nav-item" id="nav-estudio" onclick="goOperacional('estudio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Estúdio</div>
     <div class="sb-nav-item" id="nav-relatorios" onclick="goPage('relatorios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9.5 8.5h5M9.5 12.5h5"/></svg>Cobrança Mensal</div>
     <div class="sb-nav-item" id="nav-gerador" onclick="openGerador()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 10h4M3 15h4M17 10h4M17 15h4"/></svg>Gerar Resultados</div>
-    <div class="sb-nav-item" id="nav-midiakit" onclick="goPage('midiakit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Mídia Kit</div>
+    <div class="sb-nav-item" id="nav-midiakit" onclick="goPage('midiakit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Proposta Elevadores</div>
     <div class="sb-nav-item" id="nav-apresmgb" onclick="goPage('apresmgb')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Apresentação MGB</div>
+    <div class="sb-nav-item" id="nav-sindicos" onclick="goPage('sindicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg>Síndicos</div>
     <div class="sb-lbl" style="margin-top:10px">Apoio</div>
     <div class="sb-nav-item" id="nav-ferramentas" onclick="goPage('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.6 4.6 0 0 0-5.9 5.9L3 18l3 3 5.8-5.8a4.6 4.6 0 0 0 5.9-5.9l-2.9 2.9-2.1-.9-.9-2.1z"/></svg>Ferramentas</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
@@ -1401,6 +1402,11 @@ body{-webkit-font-smoothing:antialiased}
   <!-- PAGE: APRESENTAÇÃO INSTITUCIONAL MGB (apresentacao-mgb.html embutida) -->
   <div id="page-apresmgb" style="display:none">
     <iframe id="apresmgb-frame" style="width:100%;height:calc(100vh - 4px);border:none;display:block;background:#FDFBFF"></iframe>
+  </div>
+
+  <!-- PAGE: APRESENTAÇÃO SÍNDICOS (sindicos.html embutida) -->
+  <div id="page-sindicos" style="display:none">
+    <iframe id="sindicos-frame" style="width:100%;height:calc(100vh - 4px);border:none;display:block;background:#FDFBFF"></iframe>
   </div>
 
   <!-- PAGE: FINANCEIRO -->
@@ -6473,13 +6479,13 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 function goPage(p){
   curPage=p;
-  ['home','overview','custos','pessoal','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb'].forEach(id=>{
+  ['home','overview','custos','pessoal','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
   var target=document.getElementById('page-'+p);
   if(target) target.style.display='block';
-  ['nav-home','nav-custos','nav-pessoal','nav-contratos','nav-estudio','nav-relatorios','nav-ferramentas','nav-gerador','nav-midiakit','nav-apresmgb'].forEach(id=>{
+  ['nav-home','nav-custos','nav-pessoal','nav-contratos','nav-estudio','nav-relatorios','nav-ferramentas','nav-gerador','nav-midiakit','nav-apresmgb','nav-sindicos'].forEach(id=>{
     var el=document.getElementById(id);
     if(el) el.classList.remove('on');
   });
@@ -6493,6 +6499,11 @@ function goPage(p){
     var ela=document.getElementById('nav-apresmgb'); if(ela) ela.classList.add('on');
     var fa=document.getElementById('apresmgb-frame');
     if(fa && !fa.src) fa.src='apresentacao-mgb.html?t='+Date.now(); // lazy + cache-bust
+  }
+  if(p==='sindicos'){
+    var els=document.getElementById('nav-sindicos'); if(els) els.classList.add('on');
+    var fs=document.getElementById('sindicos-frame');
+    if(fs && !fs.src) fs.src='sindicos.html?t='+Date.now(); // lazy + cache-bust
   }
   if(p==='ferramentas'){ var elf=document.getElementById('nav-ferramentas'); if(elf) elf.classList.add('on'); try{initFerramentas();}catch(e){} }
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
