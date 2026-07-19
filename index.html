@@ -1225,8 +1225,8 @@ body{-webkit-font-smoothing:antialiased}
     <div class="page-hdr">
       <div><div class="page-title" id="pg-title">—</div><div class="page-sub" id="pg-sub">—</div></div>
       <div style="display:flex;align-items:center;gap:8px">
-        <select id="mod-mes-sel" onchange="buildKPIs();buildCharts()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
-        <select id="mod-ano-sel" onchange="buildKPIs();buildCharts()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <select id="mod-mes-sel" onchange="buildKPIs();buildCharts();buildAnunciantes()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <select id="mod-ano-sel" onchange="buildKPIs();buildCharts();buildAnunciantes()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
         <div class="date-chip" id="dt"></div>
       </div>
     </div>
@@ -8026,14 +8026,17 @@ function anuncRecByTela(){
   return result;
 }
 
-function anuncIsAtivo(a){
+function anuncIsAtivo(a,ano,mes){
   if(!a.inicio) return false;
   const [anoI,mesI]=a.inicio.split('-').map(Number);
   const meses=a.meses||1;
-  const now=new Date();
+  if(ano===undefined||mes===undefined){ const now=new Date(); ano=now.getFullYear(); mes=now.getMonth(); }
+  const anoInicio=anoI, mesInicio=mesI-1;
   const anoFim=anoI+Math.floor((mesI-1+meses-1)/12);
   const mesFim=(mesI-1+meses-1)%12;
-  return (anoFim>now.getFullYear()||(anoFim===now.getFullYear()&&mesFim>=now.getMonth()));
+  const antesDoFim=(anoFim>ano||(anoFim===ano&&mesFim>=mes));
+  const depoisDoInicio=(anoInicio<ano||(anoInicio===ano&&mesInicio<=mes));
+  return antesDoFim&&depoisDoInicio;
 }
 
 function buildAnunciantes(){
@@ -8056,17 +8059,20 @@ function buildAnunciantes(){
       </div>`).join('');
   }
 
-  // Grid de anunciantes
+  // Grid de anunciantes (respeita o mês/ano selecionado no cabeçalho)
+  const amSel=g('mod-mes-sel'), aaSel=g('mod-ano-sel');
+  const selMesA=parseInt(amSel?amSel.value:new Date().getMonth());
+  const selAnoA=parseInt(aaSel?aaSel.value:new Date().getFullYear());
   const grid=g('anunc-grid');
   if(!anunciantes.length){
     grid.innerHTML=`<div class="anunc-empty">Nenhum anunciante cadastrado ainda.<br><span style="font-size:10px">Clique em "+ Novo anunciante" para começar.</span></div>`;
     g('anunc-sum').textContent='';
   } else {
-    const totalMes=anunciantes.reduce((a,x)=>a+(anuncIsAtivo(x)?x.valor:0),0);
-    const ativos=anunciantes.filter(anuncIsAtivo).length;
-    g('anunc-sum').textContent=`${ativos} ativo(s) · ${f(totalMes)}/mês`;
+    const totalMes=anunciantes.reduce((a,x)=>a+(anuncIsAtivo(x,selAnoA,selMesA)?x.valor:0),0);
+    const ativos=anunciantes.filter(x=>anuncIsAtivo(x,selAnoA,selMesA)).length;
+    g('anunc-sum').textContent=`${ativos} ativo(s) em ${MESES[selMesA]}/${selAnoA} · ${f(totalMes)}/mês`;
     grid.innerHTML=anunciantes.map(a=>{
-      const ativo=anuncIsAtivo(a);
+      const ativo=anuncIsAtivo(a,selAnoA,selMesA);
       const vlrTela=a.telas?.length?a.valor/a.telas.length:0;
       const inicio=a.inicio?fmtMes(a.inicio):'—';
       const dur=a.meses||1;
