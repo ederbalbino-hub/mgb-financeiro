@@ -1217,7 +1217,11 @@ body{-webkit-font-smoothing:antialiased}
   <div id="page-custos">
     <div class="page-hdr">
       <div><div class="page-title" id="pg-title">—</div><div class="page-sub" id="pg-sub">—</div></div>
-      <div class="date-chip" id="dt"></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <select id="mod-mes-sel" onchange="buildKPIs();buildCharts()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <select id="mod-ano-sel" onchange="buildKPIs();buildCharts()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <div class="date-chip" id="dt"></div>
+      </div>
     </div>
     <div class="kpi-row" id="kpi-row"></div>
 
@@ -7666,7 +7670,16 @@ function buildPayback(){
 
 // ── KPIs ──────────────────────────────────────────────────────────────────
 function buildKPIs(){
-  const _n=new Date(), _y=_n.getFullYear(), _m=_n.getMonth();
+  // Seletor de mês/ano do módulo (compartilhado entre todos os módulos)
+  const mSel=g('mod-mes-sel'), aSel=g('mod-ano-sel');
+  if(mSel&&!mSel.options.length){
+    MESES.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;mSel.appendChild(o);});
+    for(let y=2025;y<=2027;y++){const o=document.createElement('option');o.value=y;o.textContent=y;aSel.appendChild(o);}
+    const now=new Date();
+    mSel.value=now.getMonth(); aSel.value=now.getFullYear();
+  }
+  const _m=parseInt(mSel?mSel.value:new Date().getMonth());
+  const _y=parseInt(aSel?aSel.value:new Date().getFullYear());
   const all=allCur();
   const totUnid=all.reduce((a,r)=>a+r.q*r.u,0);
   const avista=all.filter(r=>r.t==='Produto'||r.t==='Serviço'||r.t==='À vista').reduce((a,r)=>a+r.q*r.u,0);
@@ -7696,7 +7709,10 @@ function buildKPIs(){
 function buildCharts(){
   const labels=items();
   const desp=labels.map(i=>totalOf(curMod,i));
-  const recMes=labels.map(i=>recOf(curMod,i));
+  const cMesSel=g('mod-mes-sel'), cAnoSel=g('mod-ano-sel');
+  const cMes=parseInt(cMesSel?cMesSel.value:new Date().getMonth());
+  const cAno=parseInt(cAnoSel?cAnoSel.value:new Date().getFullYear());
+  const recMes=labels.map(i=>recOfMes(curMod,i,cAno,cMes));
   Chart.defaults.color='rgba(36,26,56,0.8)';
   if(lChart)lChart.destroy();
   const opts={responsive:true,maintainAspectRatio:false,
@@ -7719,7 +7735,7 @@ function buildCharts(){
     type:'bar',
     data:{labels,datasets:[
       {label:'Despesa acumulada',data:desp,backgroundColor:'rgba(248,113,113,.7)',borderColor:'#f87171',borderWidth:1,borderRadius:5,borderSkipped:false},
-      {label:'Receita mensal',data:recMes,backgroundColor:'rgba(24,154,102,.7)',borderColor:'#189A66',borderWidth:1,borderRadius:5,borderSkipped:false}
+      {label:'Receita '+MESES[cMes],data:recMes,backgroundColor:'rgba(24,154,102,.7)',borderColor:'#189A66',borderWidth:1,borderRadius:5,borderSkipped:false}
     ]},
     options:opts
   });
