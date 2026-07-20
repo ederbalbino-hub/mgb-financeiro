@@ -110,6 +110,9 @@ section{position:relative}
 .footer b{color:#fff}
 .wa-float{position:fixed;right:22px;bottom:22px;z-index:80;background:#25D366;color:#fff;border-radius:999px;padding:14px 22px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:9px;text-decoration:none;box-shadow:0 12px 30px rgba(37,211,102,.4);transition:.18s}
 .wa-float:hover{transform:translateY(-2px)}
+.mgb-toast{position:fixed;right:22px;bottom:82px;z-index:90;max-width:280px;background:var(--deep);color:#fff;font-size:12.5px;line-height:1.5;padding:13px 16px;border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.3);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none}
+.mgb-toast.show{opacity:1;transform:translateY(0)}
+.mgb-toast b{color:#ffd9ef}
 
 @media(max-width:960px){
   .hero-in{grid-template-columns:1fr}
@@ -322,9 +325,18 @@ section{position:relative}
 
 <div class="footer no-print"><span><b>MGB Mídia</b></span><span>Apresentação para Síndicos</span><span>Londrina – PR</span></div>
 
-<a class="wa-float no-print" href="https://wa.me/?text=Ol%C3%A1%21%20%F0%9F%98%8A%20Aqui%20%C3%A9%20o%20Eder%2C%20da%20MGB%20M%C3%ADdia.%20Temos%20um%20projeto%20de%20tecnologia%20e%20inova%C3%A7%C3%A3o%20pros%20elevadores%20do%20seu%20condom%C3%ADnio%3A%20tela%20digital%20com%20comunicados%20da%20administra%C3%A7%C3%A3o%2C%20not%C3%ADcias%20e%20conte%C3%BAdo%20%C3%BAtil%20pros%20moradores%20%E2%80%94%20sem%20NENHUM%20custo%20pro%20condom%C3%ADnio%2C%20nunca.%20Estou%20te%20enviando%20a%20apresenta%C3%A7%C3%A3o%20em%20PDF%20na%20sequ%C3%AAncia.%20Se%20fizer%20sentido%2C%20apresento%20ao%20conselho%20quando%20quiserem%21%20Eder%20%C2%B7%20MGB%20M%C3%ADdia%20%C2%B7%20%2843%29%2099696-0078" target="_blank" rel="noopener">📤 Enviar ao síndico</a>
+<a class="wa-float no-print" href="https://wa.me/?text=Ol%C3%A1%21%20%F0%9F%98%8A%20Aqui%20%C3%A9%20o%20Eder%2C%20da%20MGB%20M%C3%ADdia.%20Temos%20um%20projeto%20de%20tecnologia%20e%20inova%C3%A7%C3%A3o%20pros%20elevadores%20do%20seu%20condom%C3%ADnio%3A%20tela%20digital%20com%20comunicados%20da%20administra%C3%A7%C3%A3o%2C%20not%C3%ADcias%20e%20conte%C3%BAdo%20%C3%BAtil%20pros%20moradores%20%E2%80%94%20sem%20NENHUM%20custo%20pro%20condom%C3%ADnio%2C%20nunca.%20Estou%20te%20enviando%20a%20apresenta%C3%A7%C3%A3o%20em%20PDF%20na%20sequ%C3%AAncia.%20Se%20fizer%20sentido%2C%20apresento%20ao%20conselho%20quando%20quiserem%21%20Eder%20%C2%B7%20MGB%20M%C3%ADdia%20%C2%B7%20%2843%29%2099696-0078" target="_blank" rel="noopener" onclick="mgbLembretePdf()">📤 Enviar ao síndico</a>
 
 <script>
+function mgbLembretePdf(){
+  document.querySelectorAll('.mgb-toast').forEach(t=>t.remove());
+  const t=document.createElement('div');
+  t.className='mgb-toast';
+  t.innerHTML='📎 <b>Não esqueça:</b> anexe o PDF (botão "PDF" no topo) na conversa que vai abrir.';
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},5500);
+}
 window.addEventListener('beforeprint',()=>{document.title='Apresentacao Sindicos MGB - Tela Digital no Elevador';document.querySelectorAll('details.acc').forEach(d=>d.open=true);});
 window.addEventListener('afterprint',()=>{document.title='MGB Mídia — Apresentação para Síndicos';});
 </script>

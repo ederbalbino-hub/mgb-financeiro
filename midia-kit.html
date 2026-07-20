@@ -276,6 +276,9 @@ body.has-logo .mock-nome{font-size:17px}
 /* whatsapp float */
 .wa-float{position:fixed;right:22px;bottom:22px;z-index:80;background:#25D366;color:#fff;border-radius:999px;padding:14px 22px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:9px;text-decoration:none;box-shadow:0 12px 30px rgba(37,211,102,.4);transition:.18s}
 .wa-float:hover{transform:translateY(-2px)}
+.mgb-toast{position:fixed;right:22px;bottom:82px;z-index:90;max-width:280px;background:var(--deep);color:#fff;font-size:12.5px;line-height:1.5;padding:13px 16px;border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.3);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none}
+.mgb-toast.show{opacity:1;transform:translateY(0)}
+.mgb-toast b{color:#ffd9ef}
 
 /* barra resumo flutuante do simulador */
 .simbar{position:fixed;left:50%;transform:translateX(-50%) translateY(120%);bottom:18px;z-index:70;background:var(--deep);color:#fff;border-radius:999px;padding:11px 12px 11px 22px;display:flex;align-items:center;gap:16px;box-shadow:0 16px 40px rgba(30,10,60,.4);transition:transform .25s;font-size:13.5px;white-space:nowrap}
@@ -596,7 +599,7 @@ body.has-logo .mock-nome{font-size:17px}
         <div class="skpi big"><span class="l">Total · <span id="s-per-lbl">4 semanas</span></span><span class="v" id="s-total">R$ 0</span></div>
         <div class="sim-note">Valores de tabela cheia. Descontos e condições especiais conforme volume e prazo — solicite proposta. Produção do material não inclusa.</div>
         <div class="sim-cta no-print">
-          <a class="btn btn-wa" id="btn-wa-sim" target="_blank" rel="noopener">💬 Envie esta campanha pelo Whats</a>
+          <a class="btn btn-wa" id="btn-wa-sim" target="_blank" rel="noopener" onclick="mgbLembretePdf()">💬 Envie esta campanha pelo Whats</a>
           <button class="btn btn-pdf" onclick="window.print()">⬇ Baixar esta simulação em PDF</button>
         </div>
       </div>
@@ -689,7 +692,7 @@ body.has-logo .mock-nome{font-size:17px}
 
 <div class="footer no-print"><span><b>MGB Mídia Elevadores</b></span><span>Mídia Kit interativo · 2026/2027</span><span>Londrina – PR</span></div>
 
-<a class="wa-float no-print" id="wa-float" target="_blank" rel="noopener">📤 Enviar ao cliente</a>
+<a class="wa-float no-print" id="wa-float" target="_blank" rel="noopener" onclick="mgbLembretePdf()">📤 Enviar ao cliente</a>
 
 <div class="simbar no-print" id="simbar">
   <span><b id="sb-telas">0</b> telas · <b id="sb-pess">0</b> pessoas/mês</span>
@@ -1090,6 +1093,17 @@ if(state.instit)$('btn-instit').classList.add('on');
 if(state.negVal)$('in-negval').value=state.negVal;
 $('in-negbase').value=state.negBase;
 render();
+
+/* Lembrete: WhatsApp não deixa anexar arquivo via link — o PDF precisa ser anexado à mão */
+function mgbLembretePdf(){
+  document.querySelectorAll('.mgb-toast').forEach(t=>t.remove());
+  const t=document.createElement('div');
+  t.className='mgb-toast';
+  t.innerHTML='📎 <b>Não esqueça:</b> anexe o PDF (botão "Gerar PDF" no topo) na conversa que vai abrir.';
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},5500);
+}
 </script>
 </body>
 </html>
