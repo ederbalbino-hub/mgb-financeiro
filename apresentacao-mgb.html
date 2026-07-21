@@ -264,7 +264,7 @@ section{position:relative}
     <div class="nav-links">
       <a href="#sec-jornada">A jornada</a><a href="#sec-b1e">Mídia MGB</a><a href="#sec-b2">Projetos corporativos</a><a href="#sec-vaapty">TV Vaapty</a><a href="#sec-combos">Canais</a><a href="#sec-prova">Resultados</a><a href="#sec-como">Como trabalhamos</a>
     </div>
-    <button class="btn btn-grad btn-sm" onclick="window.print()">⬇ Gerar PDF</button>
+    <button class="btn btn-grad btn-sm" onclick="mgbSmartPrint()">⬇ Gerar PDF</button>
   </div>
 </nav>
 
@@ -504,6 +504,22 @@ window.addEventListener('afterprint',()=>{
   document.title=T_NORMAL;
   try{ if(parentT0!==null){ window.parent.document.title=parentT0; parentT0=null; } }catch(e){}
 });
+
+/* iOS Safari: window.print() dentro de iframe embutido na plataforma imprime a
+   pagina de FORA inteira (bug do motor). Se estivermos num iframe, sai pra
+   pagina isolada antes de imprimir (o estado salvo em localStorage acompanha). */
+function mgbSmartPrint(){
+  if(window.self!==window.top){
+    var url=location.pathname.split('/').pop()+location.search;
+    var sep=url.indexOf('?')>=0?'&':'?';
+    window.top.location.href=url+sep+'autoprint=1';
+    return;
+  }
+  window.print();
+}
+if(/[?&]autoprint=1/.test(location.search)){
+  window.addEventListener('load',function(){ setTimeout(function(){ window.print(); },700); });
+}
 </script>
 </body>
 </html>

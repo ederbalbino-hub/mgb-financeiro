@@ -181,7 +181,7 @@ section{position:relative}
     <div class="nav-links">
       <a href="#sec-oque">A tela</a><a href="#sec-cond">Pro condomínio</a><a href="#sec-mor">Pros moradores</a><a href="#sec-como">Como funciona</a><a href="#sec-faq">Dúvidas</a>
     </div>
-    <button class="btn btn-grad btn-sm no-print" onclick="window.print()">⬇ PDF</button>
+    <button class="btn btn-grad btn-sm no-print" onclick="mgbSmartPrint()">⬇ PDF</button>
   </div>
 </nav>
 
@@ -342,6 +342,22 @@ function mgbLembretePdf(){
 }
 window.addEventListener('beforeprint',()=>{document.title='Apresentacao Sindicos MGB - Tela Digital no Elevador';document.querySelectorAll('details.acc').forEach(d=>d.open=true);});
 window.addEventListener('afterprint',()=>{document.title='MGB Mídia — Apresentação para Síndicos';});
+
+/* iOS Safari: window.print() dentro de iframe embutido na plataforma imprime a
+   pagina de FORA inteira (bug do motor). Se estivermos num iframe, sai pra
+   pagina isolada antes de imprimir (o estado salvo em localStorage acompanha). */
+function mgbSmartPrint(){
+  if(window.self!==window.top){
+    var url=location.pathname.split('/').pop()+location.search;
+    var sep=url.indexOf('?')>=0?'&':'?';
+    window.top.location.href=url+sep+'autoprint=1';
+    return;
+  }
+  window.print();
+}
+if(/[?&]autoprint=1/.test(location.search)){
+  window.addEventListener('load',function(){ setTimeout(function(){ window.print(); },700); });
+}
 </script>
 </body>
 </html>

@@ -389,7 +389,7 @@ body.has-logo .mock-nome{font-size:17px}
     <div class="nav-links">
       <a href="#sec-why">Por quê</a><a href="#sec-setor">Seu setor</a><a href="#sec-mock">Sua marca</a><a href="#sec-rede">A rede</a><a href="#sec-sim">Simulador</a><a href="#sec-cond">Condições</a>
     </div>
-    <button class="btn btn-grad btn-sm" onclick="window.print()">⬇ Gerar PDF</button>
+    <button class="btn btn-grad btn-sm" onclick="mgbSmartPrint()">⬇ Gerar PDF</button>
   </div>
 </nav>
 
@@ -603,7 +603,7 @@ body.has-logo .mock-nome{font-size:17px}
         <div class="sim-note">Valores de tabela cheia. Descontos e condições especiais conforme volume e prazo — solicite proposta. Produção do material não inclusa.</div>
         <div class="sim-cta no-print">
           <a class="btn btn-wa" id="btn-wa-sim" target="_blank" rel="noopener" onclick="mgbLembretePdf()">💬 Envie esta campanha pelo Whats</a>
-          <button class="btn btn-pdf" onclick="window.print()">⬇ Baixar esta simulação em PDF</button>
+          <button class="btn btn-pdf" onclick="mgbSmartPrint()">⬇ Baixar esta simulação em PDF</button>
         </div>
       </div>
     </div>
@@ -1106,6 +1106,22 @@ function mgbLembretePdf(){
   document.body.appendChild(t);
   requestAnimationFrame(()=>t.classList.add('show'));
   setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},5500);
+}
+
+/* iOS Safari: window.print() dentro de iframe embutido na plataforma imprime a
+   pagina de FORA inteira (bug do motor). Se estivermos num iframe, sai pra
+   pagina isolada antes de imprimir (o estado salvo em localStorage acompanha). */
+function mgbSmartPrint(){
+  if(window.self!==window.top){
+    var url=location.pathname.split('/').pop()+location.search;
+    var sep=url.indexOf('?')>=0?'&':'?';
+    window.top.location.href=url+sep+'autoprint=1';
+    return;
+  }
+  window.print();
+}
+if(/[?&]autoprint=1/.test(location.search)){
+  window.addEventListener('load',function(){ setTimeout(function(){ window.print(); },700); });
 }
 </script>
 </body>
