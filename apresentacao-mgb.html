@@ -188,9 +188,12 @@ section{position:relative}
 /* ═══ PRINT (1280×800, seções preenchem a página — mesma engenharia do mídia kit) ═══ */
 @media print{
   @page{size:1280px 800px;margin:0}
+  /* iOS Safari ignora @page size custom (usa A4) e tem bug conhecido com vh no print —
+     por isso a cadeia de altura usa % em vez de vh (mais confiável entre navegadores) */
+  html,body{height:100%}
   body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .nav,.wa-float,.no-print{display:none!important}
-  section,.hero{page-break-after:always;break-after:page;padding:0;min-height:99vh;box-sizing:border-box}
+  section,.hero{page-break-after:always;break-after:page;padding:0;min-height:100%;box-sizing:border-box}
   section:last-of-type{page-break-after:avoid;break-after:avoid}
   .hero{display:flex;align-items:center}
   .hero-in{padding:40px 70px;max-width:none;align-items:center;width:100%;grid-template-columns:1.15fr .85fr}

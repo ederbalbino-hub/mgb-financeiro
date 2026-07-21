@@ -312,11 +312,14 @@ body.has-logo .mock-nome{font-size:17px}
 /* ═══════════ PRINT / PDF (1280×800 paisagem, estilo slides) ═══════════ */
 @media print{
   @page{size:1280px 800px;margin:0}
+  /* iOS Safari ignora @page size custom (usa A4) e tem bug conhecido com vh no print —
+     por isso a cadeia de altura usa % em vez de vh (mais confiável entre navegadores) */
+  html,body{height:100%}
   body{background:#fff}
   .nav,.perso,.wa-float,.simbar,.rede-tools,.mock-ctrl,.setor-select,.sim-cta,.condo .add,.no-print{display:none!important}
-  /* cada seção = 1 página: min-height em vh acompanha a área útil da página (qualquer margem),
+  /* cada seção = 1 página: min-height acompanha a área útil da página (qualquer margem),
      e o fundo preenche até o pé — sem rodapé branco e sem página em branco */
-  section,.hero{page-break-after:always;break-after:page;padding:0;min-height:99vh;box-sizing:border-box}
+  section,.hero{page-break-after:always;break-after:page;padding:0;min-height:100%;box-sizing:border-box}
   section:last-of-type{page-break-after:avoid;break-after:avoid}
   .hero{display:flex;align-items:center}
   .hero-in{padding:40px 70px;max-width:none;align-items:center;width:100%}
