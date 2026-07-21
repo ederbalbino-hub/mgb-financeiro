@@ -133,8 +133,12 @@ section{position:relative}
   html,body{height:100%}
   body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .nav,.wa-float,.no-print{display:none!important}
-  section,.hero{page-break-after:always;break-after:page;padding:0;min-height:100%;box-sizing:border-box}
+  section,.hero{page-break-after:always;break-after:page;padding:0;min-height:96%;box-sizing:border-box}
   section:last-of-type{page-break-after:avoid;break-after:avoid}
+  /* blobs decorativos somem no print: em alguns motores (iOS Safari) eles não
+     respeitam o overflow:hidden e acabam sobrepondo o texto, ou empurram a
+     altura da seção e criam página extra em branco */
+  .sec::before,.sec::after{display:none!important}
   .hero{display:flex;align-items:center}
   .hero-in{padding:40px 70px;max-width:none;align-items:center;width:100%;grid-template-columns:1.15fr .85fr}
   .sec{padding:0;display:flex;align-items:center;overflow:visible}

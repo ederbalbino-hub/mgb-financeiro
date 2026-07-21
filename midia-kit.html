@@ -319,8 +319,24 @@ body.has-logo .mock-nome{font-size:17px}
   .nav,.perso,.wa-float,.simbar,.rede-tools,.mock-ctrl,.setor-select,.sim-cta,.condo .add,.no-print{display:none!important}
   /* cada seção = 1 página: min-height acompanha a área útil da página (qualquer margem),
      e o fundo preenche até o pé — sem rodapé branco e sem página em branco */
-  section,.hero{page-break-after:always;break-after:page;padding:0;min-height:100%;box-sizing:border-box}
+  section,.hero{page-break-after:always;break-after:page;padding:0;min-height:96%;box-sizing:border-box}
   section:last-of-type{page-break-after:avoid;break-after:avoid}
+  /* blobs decorativos somem no print: em alguns motores (iOS Safari) eles não
+     respeitam o overflow:hidden e acabam sobrepondo o texto, ou empurram a
+     altura da seção e criam página extra em branco */
+  #sec-mock::before,#sec-mock::after,#sec-spec::before,#sec-spec::after{display:none!important}
+  /* margem extra de segurança em seções densas — motores diferentes medem
+     texto de jeitos ligeiramente diferentes, isso evita estourar 1 página */
+  .why-grid{gap:10px}
+  .why{padding:14px}
+  .why h3{font-size:12.5px;margin:6px 0 4px}
+  .why p{font-size:11px;line-height:1.35}
+  .count-row{margin-top:16px;gap:10px}
+  .cmp-table table{table-layout:fixed;font-size:11.5px}
+  .cmp-table th,.cmp-table td{padding:9px 8px;word-break:break-word}
+  .faq{gap:8px}
+  .acc summary{padding:10px 12px;font-size:11.5px}
+  .acc .bd{padding:0 12px 10px;font-size:10px}
   .hero{display:flex;align-items:center}
   .hero-in{padding:40px 70px;max-width:none;align-items:center;width:100%}
   .hero h1{font-size:58px}
