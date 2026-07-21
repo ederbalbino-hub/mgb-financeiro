@@ -261,6 +261,11 @@ section{position:relative}
   #sec-b2 .b2-card p{font-size:11.8px}
   #sec-b2 .b2-modelo{font-size:13px;padding:12px 20px;margin-top:12px}
   #sec-b2 .braco-badge{margin-bottom:8px}
+  /* margem de segurança extra em TODAS as páginas (não só as densas): o Mídia
+     Kit mostrou no PDF real do iPhone que até seções "normais" (sem nenhum
+     ajuste específico) vazavam por uma sobra pequena — o Chrome de mesa nunca
+     reproduz isso, então mais folga aqui é puramente preventivo */
+  .sec>.wrap{padding:30px 60px 26px!important}
 }
 </style>
 </head>
@@ -526,7 +531,24 @@ function mgbSmartPrint(){
   window.print();
 }
 if(/[?&]autoprint=1/.test(location.search)){
-  window.addEventListener('load',function(){ setTimeout(function(){ window.print(); },700); });
+  window.addEventListener('load',function(){ mgbWaitImagesThenPrint(); });
+}
+/* espera todas as fotos (inclusive background-image) carregarem antes de
+   imprimir — em conexão de celular, 700ms fixos não bastavam */
+function mgbWaitImagesThenPrint(){
+  var imgs=Array.prototype.slice.call(document.images);
+  document.querySelectorAll('[style*="background-image"]').forEach(function(el){
+    var m=/url\(['"]?([^'")]+)['"]?\)/.exec(el.style.backgroundImage);
+    if(m&&m[1]){ var im=new Image(); im.src=m[1]; imgs.push(im); }
+  });
+  var pending=imgs.filter(function(im){ return !im.complete; });
+  var done=false;
+  function go(){ if(done)return; done=true; setTimeout(function(){ window.print(); },250); }
+  if(!pending.length){ go(); return; }
+  var remaining=pending.length;
+  function check(){ remaining--; if(remaining<=0) go(); }
+  pending.forEach(function(im){ im.addEventListener('load',check); im.addEventListener('error',check); });
+  setTimeout(go,4000);
 }
 </script>
 </body>

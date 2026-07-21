@@ -393,6 +393,36 @@ body.has-logo .mock-nome{font-size:17px}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .mock-grid{grid-template-columns:380px 1fr;gap:40px}
   body:not(.is-perso) #sec-mock{display:none}
+  /* ── AJUSTES FINAIS DE COMPACTAÇÃO (por último de propósito, com !important) ──
+     havia regras de FAQ/acordeão repetidas mais acima neste mesmo bloco que
+     brigavam entre si (mesma especificidade, a última sempre vencia) e
+     anulavam silenciosamente a compactação — por isso o FAQ ainda estourava
+     página mesmo já tendo sido "corrigido". Daqui pra frente, qualquer ajuste
+     de compactação do print entra AQUI, no fim, pra nunca mais ser pisado. */
+  .faq{grid-template-columns:repeat(3,1fr)!important;gap:8px!important}
+  .acc summary{padding:9px 12px!important;font-size:11px!important}
+  .acc .bd{padding:0 12px 9px!important;font-size:9.5px!important}
+  .why-grid{gap:8px!important}
+  .why{padding:12px!important}
+  .why h3{font-size:12px!important;margin:5px 0 3px!important}
+  .why p{font-size:10.5px!important;line-height:1.3!important}
+  .count-row{margin-top:14px!important;gap:8px!important}
+  .cmp-table table{table-layout:fixed!important;font-size:10.5px!important}
+  .cmp-table th{padding:10px 8px!important}
+  .cmp-table td{padding:7px 8px!important;word-break:break-word!important}
+  #sec-rede .condo .ph{height:52px!important}
+  #sec-rede .condo .bd{padding:8px 10px 7px!important}
+  #sec-rede .condo h3{font-size:11px!important}
+  #sec-rede .rede-grid{gap:6px!important}
+  #sec-rede .urg{margin-top:12px!important;padding:8px 12px!important;font-size:10px!important}
+  .pp-invest{padding:20px!important}
+  .pp-kpis .tile{padding:11px 10px!important}
+  .pp-kpis .tile .n{font-size:21px!important}
+  .pp-line{padding:6px 0!important;font-size:12px!important}
+  .pp-line b{font-size:14px!important}
+  .pp-line.pp-total b{font-size:21px!important}
+  .pp-note{margin-top:10px!important;font-size:9.5px!important}
+  .sec>.wrap{padding:30px 60px 26px!important}
 }
 </style>
 </head>
@@ -1137,7 +1167,25 @@ function mgbSmartPrint(){
   window.print();
 }
 if(/[?&]autoprint=1/.test(location.search)){
-  window.addEventListener('load',function(){ setTimeout(function(){ window.print(); },700); });
+  window.addEventListener('load',function(){ mgbWaitImagesThenPrint(); });
+}
+/* espera todas as fotos (inclusive background-image setadas via JS, como a
+   defesa do setor) carregarem antes de imprimir — em conexão de celular,
+   700ms fixos não bastavam e a foto saía em branco/preta no PDF do iOS */
+function mgbWaitImagesThenPrint(){
+  var imgs=Array.prototype.slice.call(document.images);
+  document.querySelectorAll('[style*="background-image"]').forEach(function(el){
+    var m=/url\(['"]?([^'")]+)['"]?\)/.exec(el.style.backgroundImage);
+    if(m&&m[1]){ var im=new Image(); im.src=m[1]; imgs.push(im); }
+  });
+  var pending=imgs.filter(function(im){ return !im.complete; });
+  var done=false;
+  function go(){ if(done)return; done=true; setTimeout(function(){ window.print(); },250); }
+  if(!pending.length){ go(); return; }
+  var remaining=pending.length;
+  function check(){ remaining--; if(remaining<=0) go(); }
+  pending.forEach(function(im){ im.addEventListener('load',check); im.addEventListener('error',check); });
+  setTimeout(go,4000);
 }
 </script>
 </body>

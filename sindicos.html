@@ -174,6 +174,10 @@ section{position:relative}
   .chip{font-size:14.5px;padding:8px 18px}
   .final h2{font-size:44px}.final p{font-size:17px}
   .final .btn-wa{align-self:center}
+  /* margem de segurança extra em TODAS as páginas — o Mídia Kit mostrou no PDF
+     real do iPhone que até seções sem ajuste específico vazavam por uma sobra
+     pequena; o Chrome de mesa nunca reproduz isso, então é puramente preventivo */
+  .sec>.wrap{padding:30px 60px 26px!important}
 }
 </style>
 </head>
@@ -360,7 +364,24 @@ function mgbSmartPrint(){
   window.print();
 }
 if(/[?&]autoprint=1/.test(location.search)){
-  window.addEventListener('load',function(){ setTimeout(function(){ window.print(); },700); });
+  window.addEventListener('load',function(){ mgbWaitImagesThenPrint(); });
+}
+/* espera todas as fotos (inclusive background-image) carregarem antes de
+   imprimir — em conexão de celular, 700ms fixos não bastavam */
+function mgbWaitImagesThenPrint(){
+  var imgs=Array.prototype.slice.call(document.images);
+  document.querySelectorAll('[style*="background-image"]').forEach(function(el){
+    var m=/url\(['"]?([^'")]+)['"]?\)/.exec(el.style.backgroundImage);
+    if(m&&m[1]){ var im=new Image(); im.src=m[1]; imgs.push(im); }
+  });
+  var pending=imgs.filter(function(im){ return !im.complete; });
+  var done=false;
+  function go(){ if(done)return; done=true; setTimeout(function(){ window.print(); },250); }
+  if(!pending.length){ go(); return; }
+  var remaining=pending.length;
+  function check(){ remaining--; if(remaining<=0) go(); }
+  pending.forEach(function(im){ im.addEventListener('load',check); im.addEventListener('error',check); });
+  setTimeout(go,4000);
 }
 </script>
 </body>
