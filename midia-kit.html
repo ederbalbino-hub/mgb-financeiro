@@ -261,20 +261,12 @@ body.has-logo .mock-nome{font-size:17px}
 .footer{background:#160b2e;color:#9c8cc4;font-size:12px;padding:16px 28px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .footer b{color:#fff}
 
-/* proposta (página do PDF) */
+/* proposta (página do PDF) — mesmo painel .sim-right/.skpi da tela, só com largura contida */
 .print-proposta{display:none}
 .pp-condos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
-.pp-grid{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:stretch}
-.pp-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-.pp-kpis .tile .n{font-size:26px}
-.pp-invest{background:var(--deep);border-radius:18px;padding:26px;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.pp-invest .t{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#b9a8dd;margin-bottom:14px}
-.pp-line{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px;color:#cbbfe6}
-.pp-line b{font-family:'DM Mono';font-size:16px;color:#fff;font-weight:500}
-.pp-line.pp-total b{font-family:'Poppins';font-weight:800;font-size:25px;color:#ffd9ef}
-.pp-line b s{color:#8d7bb5;font-size:11px;margin-right:7px;font-weight:400}
-.pp-note{font-size:10.5px;color:#9c8cc4;margin-top:14px;line-height:1.6}
-.pp-desc-badge{display:inline-block;background:rgba(14,159,110,.2);color:#5eead4;font-size:10px;font-weight:800;letter-spacing:.06em;border-radius:999px;padding:3px 10px;margin-left:8px;text-transform:uppercase}
+.pp-foot{display:flex;gap:24px;align-items:flex-start}
+.pp-invest{flex:0 0 460px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pp-foot .pp-metod{flex:1;margin-top:0}
 
 /* whatsapp float */
 .wa-float{position:fixed;right:22px;bottom:22px;z-index:80;background:#25D366;color:#fff;border-radius:999px;padding:14px 22px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:9px;text-decoration:none;box-shadow:0 12px 30px rgba(37,211,102,.4);transition:.18s}
@@ -351,12 +343,11 @@ body.has-logo .mock-nome{font-size:17px}
   #sec-rede .rede-grid{gap:8px}
   #sec-rede .condo .ph{height:64px}
   .urg{font-size:11px;padding:10px 14px;margin-top:14px}
-  .pp-kpis .tile{padding:16px 12px}
   .final{display:flex;flex-direction:column;justify-content:center}
   .print-proposta{display:block}
   #sec-sim{display:none}
   .mock-stats,.spec-extra{break-inside:avoid}
-  .pp-grid,.pp-kpis,.pp-invest{break-inside:avoid}
+  .pp-invest{break-inside:avoid}
   /* metodologia sai da página da rede (estourava) e entra na página da proposta */
   #sec-rede .metod{display:none}
   .pp-metod{display:block;margin-top:26px;font-size:11.5px;break-inside:avoid}
@@ -418,13 +409,12 @@ body.has-logo .mock-nome{font-size:17px}
   #sec-rede .condo h3{font-size:11px!important}
   #sec-rede .rede-grid{gap:6px!important}
   #sec-rede .urg{margin-top:12px!important;padding:8px 12px!important;font-size:10px!important}
-  .pp-invest{padding:20px!important}
-  .pp-kpis .tile{padding:11px 10px!important}
-  .pp-kpis .tile .n{font-size:21px!important}
-  .pp-line{padding:6px 0!important;font-size:12px!important}
-  .pp-line b{font-size:14px!important}
-  .pp-line.pp-total b{font-size:21px!important}
-  .pp-note{margin-top:10px!important;font-size:9.5px!important}
+  #sec-proposta .sim-right{padding:20px!important}
+  #sec-proposta .skpi{padding:7px 0!important}
+  #sec-proposta .skpi .l{font-size:11.5px!important}
+  #sec-proposta .skpi .v{font-size:14px!important}
+  #sec-proposta .skpi.big .v{font-size:22px!important}
+  #sec-proposta .sim-note{margin-top:10px!important;font-size:9.5px!important}
   .sec>.wrap{padding:30px 60px 26px!important}
 }
 </style>
@@ -586,24 +576,23 @@ body.has-logo .mock-nome{font-size:17px}
     <h2 id="pp-title">Investimento da Campanha</h2>
     <p class="sec-sub" id="pp-meta"></p>
     <div class="pp-condos" id="pp-condos"></div>
-    <div class="pp-grid">
-      <div class="pp-kpis">
-        <div class="tile"><div class="n" id="pp-telas">0</div><div class="l">Telas</div></div>
-        <div class="tile"><div class="n" id="pp-pub">0</div><div class="l">Público/mês c/ visitantes</div></div>
-        <div class="tile"><div class="n" id="pp-ins">0</div><div class="l">Inserções do anúncio/mês</div></div>
-        <div class="tile"><div class="n" id="pp-ots">0</div><div class="l">Impactos/mês (OTS)</div></div>
-        <div class="tile"><div class="n" id="pp-cpm">—</div><div class="l">CPM equivalente</div></div>
-        <div class="tile"><div class="n" id="pp-cpp">—</div><div class="l">Custo por pessoa/mês</div></div>
+    <div class="pp-foot">
+      <!-- mesmo painel .sim-right/.skpi da tela (simulador) — idêntico de propósito -->
+      <div class="sim-right pp-invest" id="pp-invest">
+        <div class="t">Sua proposta</div>
+        <div class="skpi"><span class="l">Condomínios</span><span class="v" id="pp-cond">0</span></div>
+        <div class="skpi"><span class="l">Telas</span><span class="v" id="pp-telas">0</span></div>
+        <div class="skpi"><span class="l">Público c/ visitantes e prestadores</span><span class="v" id="pp-pub">0</span></div>
+        <div class="skpi"><span class="l">Inserções do anúncio/mês</span><span class="v" id="pp-ins">0</span></div>
+        <div class="skpi"><span class="l">Impactos/mês (OTS · metodologia OOH)</span><span class="v" id="pp-ots">0</span></div>
+        <div class="skpi"><span class="l">CPM equivalente</span><span class="v" id="pp-cpm">—</span></div>
+        <div class="skpi"><span class="l">Custo por pessoa/mês</span><span class="v" id="pp-cpp">—</span></div>
+        <div class="skpi"><span class="l">Investimento/semana<span id="pp-neg-badge"></span></span><span class="v" id="pp-sem">R$ 0</span></div>
+        <div class="skpi big"><span class="l">Total · <span id="pp-per">4 semanas</span></span><span class="v" id="pp-total">R$ 0</span></div>
+        <div class="sim-note">Pagamento todo dia 15 · Produção do material não inclusa · Proposta válida por 15 dias · Tabela 2026/2027</div>
       </div>
-      <div class="pp-invest">
-        <div class="t">Investimento</div>
-        <div class="pp-line"><span>Período</span><b id="pp-per">4 semanas</b></div>
-        <div class="pp-line"><span>Por semana</span><b id="pp-sem">R$ 0</b></div>
-        <div class="pp-line pp-total"><span>Total da campanha</span><b id="pp-total">R$ 0</b></div>
-        <div class="pp-note">Pagamento todo dia 15 · Produção do material não inclusa · Proposta válida por 15 dias · Tabela 2026/2027</div>
-      </div>
+      <div class="metod pp-metod">📐 <b>Como estimamos o público:</b> moradores conforme cadastro dos condomínios (sem cadastro: unidades × 2,79 moradores/domicílio — Censo 2022/IBGE); comerciais = circulação mensal estimada; <b>+20%/mês de visitantes e prestadores</b> sobre o residencial. <b>Impactos (OTS)</b> = público × 3,5 exposições/dia × 30 dias — metodologia padrão do mercado OOH.</div>
     </div>
-    <div class="metod pp-metod">📐 <b>Como estimamos o público:</b> moradores conforme cadastro dos condomínios (sem cadastro: unidades × 2,79 moradores/domicílio — Censo 2022/IBGE); comerciais = circulação mensal estimada; <b>+20%/mês de visitantes e prestadores</b> sobre o residencial. <b>Impactos (OTS)</b> = público × 3,5 exposições/dia × 30 dias — metodologia padrão do mercado OOH.</div>
   </div>
 </section>
 
@@ -1104,14 +1093,16 @@ function render(){
       'Proposta gerada em '+new Date().toLocaleDateString('pt-BR')
     ].filter(Boolean).join(' · ');
   $('pp-condos').innerHTML=sel.map(c=>`<span class="chip">${c.nome} · ${c.telas} telas</span>`).join('');
+  $('pp-cond').textContent=sel.length;
   $('pp-telas').textContent=telas;
   $('pp-pub').textContent=fmtN(pubEst);
   $('pp-ins').textContent=fmtN(insMes);
-  $('pp-ots').textContent=ots>=1e6?(ots/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi':fmtN(ots);
+  $('pp-ots').textContent=fmtN(ots);
   $('pp-cpm').textContent=ots?fmtR(cpm):'—';
   $('pp-cpp').textContent=pubEst?fmtR(invMes/pubEst):'—';
   $('pp-per').textContent=PER_LBL[state.semanas]||state.semanas+' semanas';
-  $('pp-sem').innerHTML=(negOn?`<s>${fmtR(invSemTab)}</s>`:'')+fmtR(invSem)+(negOn?`<span class="pp-desc-badge">negociado${desc>0?' −'+desc+'%':''}</span>`:'');
+  $('pp-sem').innerHTML=(negOn?`<s>${fmtR(invSemTab)}</s>`:'')+fmtR(invSem);
+  $('pp-neg-badge').innerHTML=negOn?`<span class="neg-badge">negociado${desc>0?' −'+desc+'%':''}</span>`:'';
   $('pp-total').textContent=fmtR(total);
 }
 
