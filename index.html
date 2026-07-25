@@ -4884,6 +4884,7 @@ function copiarSpot() {
 
     <div id="leads-filtros" style="padding:0 22px 4px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
       <div class="anunc-form-field"><label class="anunc-form-lbl">Produto</label><select class="anunc-form-inp" id="leads-f-prod" onchange="buildLeads()"></select></div>
+      <div class="anunc-form-field"><label class="anunc-form-lbl">Estágio</label><select class="anunc-form-inp" id="leads-f-estagio" onchange="buildLeads()"></select></div>
       <div class="anunc-form-field"><label class="anunc-form-lbl">Mês</label><select class="anunc-form-inp" id="leads-f-mes" onchange="leadsMesAnoChange()"></select></div>
       <div class="anunc-form-field"><label class="anunc-form-lbl">Ano</label><select class="anunc-form-inp" id="leads-f-ano" onchange="leadsMesAnoChange()"></select></div>
       <div class="anunc-form-field"><label class="anunc-form-lbl">Período de — até</label>
@@ -4893,6 +4894,7 @@ function copiarSpot() {
           <input type="date" class="anunc-form-inp" id="leads-f-fim" onchange="leadsPeriodoChange()" style="color-scheme:light">
         </div>
       </div>
+      <div id="leads-total" style="font-size:12px;font-weight:700;color:var(--green);background:var(--gd);border-radius:8px;padding:7px 12px;white-space:nowrap"></div>
       <button class="anunc-btn" onclick="leadsLimparFiltros()" title="Limpar filtros">✕ Limpar</button>
     </div>
     <div style="padding:0 22px 4px;font-size:10px;color:var(--hint)">Filtro aplicado pela data em que o lead entrou no CRM.</div>
@@ -6163,7 +6165,7 @@ let relAjustes={ov:{},man:[]}; // relatório Mercadão: ov=valores editados por 
 let pessoalRecId=1, pessoalDespId=1;
 
 // ── LEADS / CRM ───────────────────────────────────────────────────────────
-// leads = [{id, nome, tel, produto:modId, valor, lembrete:'YYYY-MM-DD', obs, estagio, historico:[{data,texto}], itemCriado, criado:'YYYY-MM-DD'}]
+// leads = [{id, nome, tel, produto:modId, valor, lembrete:'YYYY-MM-DD', obs, estagio, historico:[{data,texto}], itemCriado, calEventId, criado:'YYYY-MM-DD'}]
 const LEAD_STAGES=[
   {id:'novo',       label:'Novo',        color:'#2563EB'},
   {id:'contatado',  label:'Contatado',   color:'#D97706'},
@@ -8910,6 +8912,10 @@ function initLeadsFiltros(){
   if(pSel && !pSel.options.length){
     pSel.innerHTML='<option value="">Todos os produtos</option>'+MODULES.map(m=>`<option value="${m.id}">${m.icon} ${m.label.split('—')[0].trim()}</option>`).join('');
   }
+  const eSel=g('leads-f-estagio');
+  if(eSel && !eSel.options.length){
+    eSel.innerHTML='<option value="">Todos os estágios</option>'+LEAD_STAGES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
+  }
   const mSel=g('leads-f-mes');
   if(mSel && !mSel.options.length){
     mSel.innerHTML='<option value="">Mês (todos)</option>'+MESES.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
@@ -8943,15 +8949,17 @@ function leadsPeriodoChange(){
   buildLeads();
 }
 function leadsLimparFiltros(){
-  ['leads-f-prod','leads-f-mes','leads-f-ano','leads-f-ini','leads-f-fim'].forEach(id=>{ if(g(id)) g(id).value=''; });
+  ['leads-f-prod','leads-f-estagio','leads-f-mes','leads-f-ano','leads-f-ini','leads-f-fim'].forEach(id=>{ if(g(id)) g(id).value=''; });
   buildLeads();
 }
 function leadsFiltrados(){
   const prod=g('leads-f-prod')?g('leads-f-prod').value:'';
+  const estagio=g('leads-f-estagio')?g('leads-f-estagio').value:'';
   const ini=g('leads-f-ini')?g('leads-f-ini').value:'';
   const fim=g('leads-f-fim')?g('leads-f-fim').value:'';
   return leads.filter(l=>{
     if(prod && l.produto!==prod) return false;
+    if(estagio && l.estagio!==estagio) return false;
     if(ini && (!l.criado || l.criado<ini)) return false;
     if(fim && (!l.criado || l.criado>fim)) return false;
     return true;
@@ -8979,9 +8987,16 @@ function buildLeads(){
       </div>`;
     }
   }
+  const filtrados=leadsFiltrados();
+  const totalEl=g('leads-total');
+  if(totalEl){
+    const totalGeral=filtrados.reduce((a,l)=>a+(l.valor||0),0);
+    const estSel=g('leads-f-estagio')?g('leads-f-estagio').value:'';
+    const rotulo=estSel?leadStage(estSel).label:'Total filtrado';
+    totalEl.textContent = filtrados.length ? `💰 ${rotulo}: ${f(totalGeral)}/mês (${filtrados.length})` : '💰 Nenhum lead no filtro';
+  }
   const board=g('leads-board');
   if(board){
-    const filtrados=leadsFiltrados();
     board.innerHTML=LEAD_STAGES.map(st=>{
       const cards=filtrados.filter(l=>l.estagio===st.id);
       const soma=cards.reduce((a,l)=>a+(l.valor||0),0);
@@ -9004,7 +9019,7 @@ function leadCardHtml(l){
     ${m?`<span class="lead-card-tag" style="background:${m.color}22;color:${m.color}">${m.icon} ${m.label.split('—')[0].trim()}</span>`:''}
     <div class="lead-card-nome">${l.nome}</div>
     ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês</div>`:''}
-    ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${l.lembrete.split('-').reverse().join('/')}</div>`:''}
+    ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${l.lembrete.split('-').reverse().join('/')}${l.calEventId?' <span title="Sincronizado com o Google Agenda">📅</span>':''}</div>`:''}
     <div class="lead-card-row">
       <select class="lead-card-sel" onclick="event.stopPropagation()" onchange="leadChangeStage(${l.id},this.value)">${stageOpts}</select>
       ${l.tel?`<a class="lead-card-wa" href="https://wa.me/55${l.tel.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="Abrir WhatsApp">💬</a>`:''}
@@ -9031,6 +9046,9 @@ function leadChangeStage(id,novoEstagio){
   if(novoEstagio==='fechado' && antigo!=='fechado'){
     leadFecharCriarUnidade(l);
   }
+  if((novoEstagio==='fechado'||novoEstagio==='perdido') && l.calEventId){
+    leadDeleteCalendarEvent(l).then(buildLeads); // não precisa mais do lembrete
+  }
   buildLeads();
   scheduleSave();
 }
@@ -9047,6 +9065,38 @@ function leadFecharCriarUnidade(l){
   }
   l.itemCriado=nome;
   leadToast(`✅ "${l.nome}" fechado! Unidade criada em ${m.label.split('—')[0].trim()}.`);
+}
+
+// ── Google Agenda (via Apps Script separado — CalendarApp na conta do Eder) ──
+// Cria/atualiza o evento quando o lead tem lembrete; apaga quando o lembrete
+// é removido, o lead é excluído, ou o lead fecha/perde (não precisa mais lembrar).
+async function leadSyncCalendar(l){
+  if(!CALENDAR_APPS_SCRIPT_URL) return;
+  try{
+    if(l.lembrete){
+      const m=leadModPor(l.produto);
+      const title=`📞 Follow-up: ${l.nome}${m?` (${m.label.split('—')[0].trim()})`:''}`;
+      const descPartes=[];
+      if(l.tel) descPartes.push('WhatsApp: '+l.tel);
+      if(l.valor) descPartes.push('Valor estimado: '+f(l.valor)+'/mês');
+      if(l.obs) descPartes.push(l.obs);
+      const qs=new URLSearchParams({action:'upsert',title,desc:descPartes.join('\n'),date:l.lembrete,eventId:l.calEventId||''});
+      const res=await fetch(CALENDAR_APPS_SCRIPT_URL+'?'+qs.toString(),{method:'GET',mode:'cors'});
+      const data=await res.json();
+      if(data.ok && data.eventId){ l.calEventId=data.eventId; scheduleSave(); }
+    } else if(l.calEventId){
+      await leadDeleteCalendarEvent(l);
+    }
+  }catch(e){ console.error('Erro ao sincronizar com o Google Agenda:',e); }
+}
+async function leadDeleteCalendarEvent(l){
+  if(!CALENDAR_APPS_SCRIPT_URL || !l.calEventId) return;
+  try{
+    const qs=new URLSearchParams({action:'delete',eventId:l.calEventId});
+    await fetch(CALENDAR_APPS_SCRIPT_URL+'?'+qs.toString(),{method:'GET',mode:'cors'});
+  }catch(e){ console.error('Erro ao apagar evento da Agenda:',e); }
+  l.calEventId=null;
+  scheduleSave();
 }
 
 function openLeadModal(mode,id){
@@ -9103,20 +9153,24 @@ function saveLeadModal(){
   const valor=parseFloat(g('lead-valor').value)||0;
   const lembrete=g('lead-lembrete').value||'';
   const obs=g('lead-obs').value.trim();
+  let l;
   if(curLeadId!=null){
-    const l=leads.find(x=>x.id===curLeadId);
+    l=leads.find(x=>x.id===curLeadId);
     if(l){ l.nome=nome; l.tel=tel; l.produto=_leadProdutoSel; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
   } else {
-    leads.push({id:leadNextId++, nome, tel, produto:_leadProdutoSel, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, criado:leadHoje()});
+    l={id:leadNextId++, nome, tel, produto:_leadProdutoSel, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
+    leads.push(l);
   }
   closeLeadModal();
   buildLeads();
   scheduleSave();
+  if(l) leadSyncCalendar(l).then(buildLeads); // em segundo plano — não trava o salvar
 }
 function deleteLead(){
   if(curLeadId==null) return;
   const l=leads.find(x=>x.id===curLeadId); if(!l) return;
   if(!confirm(`Excluir o lead "${l.nome}"? Isso não afeta unidades já criadas nos módulos.`)) return;
+  if(l.calEventId) leadDeleteCalendarEvent(l);
   leads=leads.filter(x=>x.id!==curLeadId);
   closeLeadModal();
   buildLeads();
@@ -9127,6 +9181,9 @@ function deleteLead(){
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwD9L4gj8zr9vwOBZxn4-71khw5yhoXwJTFfsWizP-okmZZQWlumQs93seg-H2USa8D/exec';
 // Backend do Pluggy (bot no Vercel).
 const BANCO_API_URL = 'https://mgb-financeiro.vercel.app/api/banco';
+// Apps Script separado (Web App próprio) que sincroniza os lembretes do CRM com o Google Agenda.
+// Deixe vazio até fazer o deploy — o CRM funciona normalmente sem isso, só não sincroniza com a Agenda.
+const CALENDAR_APPS_SCRIPT_URL = '';
 
 let saveTimer = null;
 let syncStatus = 'idle';
