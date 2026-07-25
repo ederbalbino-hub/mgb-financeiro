@@ -9261,7 +9261,7 @@ function leadFecharCriarUnidade(l){
   if(!m.items.includes(nome)){
     m.items.push(nome);
     db[m.id][nome]=[];
-    rec[m.id][nome]={valor:l.valor||0,inicio:'',meses:12};
+    rec[m.id][nome]={valor:l.valor||0,inicio:new Date().toISOString().slice(0,7),meses:12};
   }
   l.itemCriado=nome;
   if(!clientesInfo[m.id]) clientesInfo[m.id]={};
