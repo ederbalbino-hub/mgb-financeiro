@@ -4885,6 +4885,7 @@ function copiarSpot() {
     <div id="leads-filtros" style="padding:0 22px 4px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
       <div class="anunc-form-field"><label class="anunc-form-lbl">Produto</label><select class="anunc-form-inp" id="leads-f-prod" onchange="buildLeads()"></select></div>
       <div class="anunc-form-field"><label class="anunc-form-lbl">Estágio</label><select class="anunc-form-inp" id="leads-f-estagio" onchange="buildLeads()"></select></div>
+      <div class="anunc-form-field"><label class="anunc-form-lbl">Origem</label><select class="anunc-form-inp" id="leads-f-origem" onchange="buildLeads()"></select></div>
       <div class="anunc-form-field"><label class="anunc-form-lbl">Mês</label><select class="anunc-form-inp" id="leads-f-mes" onchange="leadsMesAnoChange()"></select></div>
       <div class="anunc-form-field"><label class="anunc-form-lbl">Ano</label><select class="anunc-form-inp" id="leads-f-ano" onchange="leadsMesAnoChange()"></select></div>
       <div class="anunc-form-field"><label class="anunc-form-lbl">Período de — até</label>
@@ -4914,6 +4915,7 @@ function copiarSpot() {
           <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" autocomplete="off" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">WhatsApp (DDD + número)</label><input class="anunc-form-inp" id="lead-tel" placeholder="43999998888" inputmode="numeric" autocomplete="off" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Produto de interesse</label><div id="lead-produto-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">De onde veio esse lead?</label><select class="anunc-form-inp" id="lead-origem" style="width:100%"></select></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Valor mensal estimado (R$)</label><input class="anunc-form-inp" id="lead-valor" type="number" step="0.01" min="0" placeholder="0,00" autocomplete="off" style="width:100%"></div>
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">📅 Próximo follow-up</label><input class="anunc-form-inp" id="lead-lembrete" type="date" style="width:100%;color-scheme:light"></div>
@@ -6165,7 +6167,7 @@ let relAjustes={ov:{},man:[]}; // relatório Mercadão: ov=valores editados por 
 let pessoalRecId=1, pessoalDespId=1;
 
 // ── LEADS / CRM ───────────────────────────────────────────────────────────
-// leads = [{id, nome, tel, produto:modId, valor, lembrete:'YYYY-MM-DD', obs, estagio, historico:[{data,texto}], itemCriado, calEventId, criado:'YYYY-MM-DD'}]
+// leads = [{id, nome, tel, produto:modId, origem, valor, lembrete:'YYYY-MM-DD', obs, estagio, historico:[{data,texto}], itemCriado, calEventId, criado:'YYYY-MM-DD'}]
 const LEAD_STAGES=[
   {id:'novo',       label:'Novo',        color:'#2563EB'},
   {id:'contatado',  label:'Contatado',   color:'#D97706'},
@@ -6173,6 +6175,7 @@ const LEAD_STAGES=[
   {id:'fechado',    label:'Fechado ✅',  color:'#118A5D'},
   {id:'perdido',    label:'Perdido ❌',  color:'#DC2626'}
 ];
+const LEAD_ORIGENS=['Indicação','Prospecção ativa','Instagram/Redes sociais','WhatsApp','Site','Evento/Feira','Outro'];
 let leads=[];
 let leadNextId=1;
 let curLeadId=null;
@@ -8916,6 +8919,14 @@ function initLeadsFiltros(){
   if(eSel && !eSel.options.length){
     eSel.innerHTML='<option value="">Todos os estágios</option>'+LEAD_STAGES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
   }
+  const oSel=g('leads-f-origem');
+  if(oSel && !oSel.options.length){
+    oSel.innerHTML='<option value="">Todas as origens</option>'+LEAD_ORIGENS.map(o=>`<option value="${o}">${o}</option>`).join('');
+  }
+  const lomSel=g('lead-origem');
+  if(lomSel && !lomSel.options.length){
+    lomSel.innerHTML='<option value="">Selecione...</option>'+LEAD_ORIGENS.map(o=>`<option value="${o}">${o}</option>`).join('');
+  }
   const mSel=g('leads-f-mes');
   if(mSel && !mSel.options.length){
     mSel.innerHTML='<option value="">Mês (todos)</option>'+MESES.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
@@ -8949,17 +8960,19 @@ function leadsPeriodoChange(){
   buildLeads();
 }
 function leadsLimparFiltros(){
-  ['leads-f-prod','leads-f-estagio','leads-f-mes','leads-f-ano','leads-f-ini','leads-f-fim'].forEach(id=>{ if(g(id)) g(id).value=''; });
+  ['leads-f-prod','leads-f-estagio','leads-f-origem','leads-f-mes','leads-f-ano','leads-f-ini','leads-f-fim'].forEach(id=>{ if(g(id)) g(id).value=''; });
   buildLeads();
 }
 function leadsFiltrados(){
   const prod=g('leads-f-prod')?g('leads-f-prod').value:'';
   const estagio=g('leads-f-estagio')?g('leads-f-estagio').value:'';
+  const origem=g('leads-f-origem')?g('leads-f-origem').value:'';
   const ini=g('leads-f-ini')?g('leads-f-ini').value:'';
   const fim=g('leads-f-fim')?g('leads-f-fim').value:'';
   return leads.filter(l=>{
     if(prod && l.produto!==prod) return false;
     if(estagio && l.estagio!==estagio) return false;
+    if(origem && l.origem!==origem) return false;
     if(ini && (!l.criado || l.criado<ini)) return false;
     if(fim && (!l.criado || l.criado>fim)) return false;
     return true;
@@ -9018,6 +9031,7 @@ function leadCardHtml(l){
   return `<div class="lead-card${overdue?' overdue':''}" draggable="true" ondragstart="leadCardDragStart(event,${l.id})" ondragend="leadCardDragEnd(event)" onclick="if(!event.target.closest('select,a')) openLeadModal('edit',${l.id})">
     ${m?`<span class="lead-card-tag" style="background:${m.color}22;color:${m.color}">${m.icon} ${m.label.split('—')[0].trim()}</span>`:''}
     <div class="lead-card-nome">${l.nome}</div>
+    ${l.origem?`<div style="font-size:9.5px;color:var(--hint);margin-top:-2px;margin-bottom:2px">via ${l.origem}</div>`:''}
     ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês</div>`:''}
     ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${l.lembrete.split('-').reverse().join('/')}${l.calEventId?' <span title="Sincronizado com o Google Agenda">📅</span>':''}</div>`:''}
     <div class="lead-card-row">
@@ -9100,11 +9114,13 @@ async function leadDeleteCalendarEvent(l){
 }
 
 function openLeadModal(mode,id){
+  initLeadsFiltros(); // garante que o select de origem já está populado
   curLeadId = mode==='edit' ? id : null;
   const l = mode==='edit' ? leads.find(x=>x.id===id) : null;
   g('lead-modal-title').textContent = mode==='edit' ? 'Editar lead' : 'Novo lead';
   g('lead-nome').value = l ? l.nome : '';
   g('lead-tel').value = l ? (l.tel||'') : '';
+  g('lead-origem').value = l ? (l.origem||'') : '';
   g('lead-valor').value = l && l.valor ? l.valor : '';
   g('lead-lembrete').value = l ? (l.lembrete||'') : '';
   g('lead-obs').value = l ? (l.obs||'') : '';
@@ -9150,15 +9166,16 @@ function saveLeadModal(){
   if(!nome){ g('lead-nome').focus(); return; }
   if(!_leadProdutoSel){ leadToast('⚠ Escolha o produto de interesse'); return; }
   const tel=g('lead-tel').value.trim();
+  const origem=g('lead-origem').value||'';
   const valor=parseFloat(g('lead-valor').value)||0;
   const lembrete=g('lead-lembrete').value||'';
   const obs=g('lead-obs').value.trim();
   let l;
   if(curLeadId!=null){
     l=leads.find(x=>x.id===curLeadId);
-    if(l){ l.nome=nome; l.tel=tel; l.produto=_leadProdutoSel; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
+    if(l){ l.nome=nome; l.tel=tel; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
   } else {
-    l={id:leadNextId++, nome, tel, produto:_leadProdutoSel, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
+    l={id:leadNextId++, nome, tel, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
     leads.push(l);
   }
   closeLeadModal();
