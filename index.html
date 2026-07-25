@@ -874,7 +874,7 @@ body{-webkit-font-smoothing:antialiased}
     <div class="sb-nav-item" id="nav-midiakit" title="Proposta Elevadores" onclick="goPage('midiakit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Proposta Elevadores</div>
     <div class="sb-nav-item" id="nav-apresmgb" title="Apresentação MGB" onclick="goPage('apresmgb')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Apresentação MGB</div>
     <div class="sb-nav-item" id="nav-sindicos" title="Síndicos" onclick="goPage('sindicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg>Síndicos</div>
-    <div class="sb-nav-item" id="nav-leads" title="Leads" onclick="goPage('leads')" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5c1.6.6 2.6 1.9 2.6 3.5s-1 2.9-2.6 3.5"/></svg>Leads<span id="nav-leads-badge" style="display:none;margin-left:auto;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 6px;line-height:1.4"></span></div>
+    <div class="sb-nav-item" id="nav-leads" title="CRM" onclick="goPage('leads')" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5c1.6.6 2.6 1.9 2.6 3.5s-1 2.9-2.6 3.5"/></svg>CRM<span id="nav-leads-badge" style="display:none;margin-left:auto;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 6px;line-height:1.4"></span></div>
     <div class="sb-lbl" style="margin-top:10px">Apoio</div>
     <div class="sb-nav-item" id="nav-ferramentas" title="Ferramentas" onclick="goPage('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.6 4.6 0 0 0-5.9 5.9L3 18l3 3 5.8-5.8a4.6 4.6 0 0 0 5.9-5.9l-2.9 2.9-2.1-.9-.9-2.1z"/></svg>Ferramentas</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
@@ -942,7 +942,7 @@ body{-webkit-font-smoothing:antialiased}
           </div>
           <div class="home-hub-card" style="--accent:#189A66" onclick="goPage('leads')" id="home-leads-card">
             <div class="home-hub-ico">🎯</div>
-            <div class="home-hub-title">Leads</div>
+            <div class="home-hub-title">CRM</div>
             <div class="home-hub-desc" id="home-leads-desc">Clientes em negociação — não deixe esfriar</div>
             <div class="home-hub-cta">Abrir →</div>
           </div>
@@ -4876,11 +4876,26 @@ function copiarSpot() {
   <!-- PAGE: PESSOAL -->
   <div id="page-leads" style="display:none">
     <div class="page-hdr">
-      <div><div class="page-title">🎯 Leads</div><div class="page-sub">Funil de clientes — do primeiro contato até o fechamento</div></div>
+      <div><div class="page-title">🎯 CRM</div><div class="page-sub">Funil de clientes — do primeiro contato até o fechamento</div></div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
         <button class="anunc-btn" onclick="openLeadModal('add')" style="color:var(--green);border-color:rgba(17,138,93,.4);font-weight:700">＋ Novo lead</button>
       </div>
     </div>
+
+    <div id="leads-filtros" style="padding:0 22px 4px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+      <div class="anunc-form-field"><label class="anunc-form-lbl">Produto</label><select class="anunc-form-inp" id="leads-f-prod" onchange="buildLeads()"></select></div>
+      <div class="anunc-form-field"><label class="anunc-form-lbl">Mês</label><select class="anunc-form-inp" id="leads-f-mes" onchange="leadsMesAnoChange()"></select></div>
+      <div class="anunc-form-field"><label class="anunc-form-lbl">Ano</label><select class="anunc-form-inp" id="leads-f-ano" onchange="leadsMesAnoChange()"></select></div>
+      <div class="anunc-form-field"><label class="anunc-form-lbl">Período de — até</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="date" class="anunc-form-inp" id="leads-f-ini" onchange="leadsPeriodoChange()" style="color-scheme:light">
+          <span style="color:var(--hint);font-size:11px">até</span>
+          <input type="date" class="anunc-form-inp" id="leads-f-fim" onchange="leadsPeriodoChange()" style="color-scheme:light">
+        </div>
+      </div>
+      <button class="anunc-btn" onclick="leadsLimparFiltros()" title="Limpar filtros">✕ Limpar</button>
+    </div>
+    <div style="padding:0 22px 4px;font-size:10px;color:var(--hint)">Filtro aplicado pela data em que o lead entrou no CRM.</div>
 
     <div id="leads-hoje" style="margin:14px 22px"></div>
 
@@ -4894,11 +4909,11 @@ function copiarSpot() {
           <button onclick="closeLeadModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" style="width:100%"></div>
-          <div class="anunc-form-field"><label class="anunc-form-lbl">WhatsApp (DDD + número)</label><input class="anunc-form-inp" id="lead-tel" placeholder="43999998888" style="width:100%"></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" autocomplete="off" style="width:100%"></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">WhatsApp (DDD + número)</label><input class="anunc-form-inp" id="lead-tel" placeholder="43999998888" inputmode="numeric" autocomplete="off" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Produto de interesse</label><div id="lead-produto-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Valor mensal estimado (R$)</label><input class="anunc-form-inp" id="lead-valor" type="number" step="0.01" min="0" placeholder="0,00" style="width:100%"></div>
+            <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Valor mensal estimado (R$)</label><input class="anunc-form-inp" id="lead-valor" type="number" step="0.01" min="0" placeholder="0,00" autocomplete="off" style="width:100%"></div>
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">📅 Próximo follow-up</label><input class="anunc-form-inp" id="lead-lembrete" type="date" style="width:100%;color-scheme:light"></div>
           </div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Observações</label><textarea class="anunc-form-inp" id="lead-obs" rows="2" style="width:100%;resize:vertical;font-family:'DM Sans',sans-serif"></textarea></div>
@@ -6743,6 +6758,7 @@ function goPage(p){
     buildOverview();
   } else if(p==='home') buildHome();
   try{ updateMbn(p); }catch(e){}
+  try{ buildSidebar(); }catch(e){} // reaplica o "on" da lista de módulos pro curPage atual (evita ficar 2 itens marcados)
   closeSidebar();
   window.scrollTo(0,0);
 }
@@ -8888,7 +8904,63 @@ function buildLeadsBadge(){
   if(desc) desc.textContent = n ? `⏰ ${n} follow-up${n>1?'s':''} pra hoje` : 'Clientes em negociação — não deixe esfriar';
 }
 
+// ── Filtros do CRM (produto / mês+ano / período) ────────────────────────
+function initLeadsFiltros(){
+  const pSel=g('leads-f-prod');
+  if(pSel && !pSel.options.length){
+    pSel.innerHTML='<option value="">Todos os produtos</option>'+MODULES.map(m=>`<option value="${m.id}">${m.icon} ${m.label.split('—')[0].trim()}</option>`).join('');
+  }
+  const mSel=g('leads-f-mes');
+  if(mSel && !mSel.options.length){
+    mSel.innerHTML='<option value="">Mês (todos)</option>'+MESES.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
+  }
+  const aSel=g('leads-f-ano');
+  if(aSel && !aSel.options.length){
+    let opts='<option value="">Ano (todos)</option>';
+    for(let y=2025;y<=2027;y++) opts+=`<option value="${y}">${y}</option>`;
+    aSel.innerHTML=opts;
+  }
+}
+// Atalho: escolher mês/ano preenche o período de-até com os limites daquele mês
+function leadsMesAnoChange(){
+  const mes=g('leads-f-mes').value, ano=g('leads-f-ano').value;
+  if(mes===''||ano===''){
+    buildLeads();
+    return;
+  }
+  const mi=parseInt(mes), ai=parseInt(ano);
+  const ini=`${ai}-${String(mi+1).padStart(2,'0')}-01`;
+  const ultimoDia=new Date(ai,mi+1,0).getDate();
+  const fim=`${ai}-${String(mi+1).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
+  g('leads-f-ini').value=ini;
+  g('leads-f-fim').value=fim;
+  buildLeads();
+}
+// Editar o período manualmente invalida o atalho de mês/ano (evita 2 fontes de verdade)
+function leadsPeriodoChange(){
+  g('leads-f-mes').value='';
+  g('leads-f-ano').value='';
+  buildLeads();
+}
+function leadsLimparFiltros(){
+  ['leads-f-prod','leads-f-mes','leads-f-ano','leads-f-ini','leads-f-fim'].forEach(id=>{ if(g(id)) g(id).value=''; });
+  buildLeads();
+}
+function leadsFiltrados(){
+  const prod=g('leads-f-prod')?g('leads-f-prod').value:'';
+  const ini=g('leads-f-ini')?g('leads-f-ini').value:'';
+  const fim=g('leads-f-fim')?g('leads-f-fim').value:'';
+  return leads.filter(l=>{
+    if(prod && l.produto!==prod) return false;
+    if(ini && (!l.criado || l.criado<ini)) return false;
+    if(fim && (!l.criado || l.criado>fim)) return false;
+    return true;
+  });
+}
+
 function buildLeads(){
+  initLeadsFiltros();
+  // Banner de follow-ups pendentes: sempre olha TODOS os leads, não só os filtrados
   const pend=leadsPendentes();
   const hojeEl=g('leads-hoje');
   if(hojeEl){
@@ -8909,10 +8981,13 @@ function buildLeads(){
   }
   const board=g('leads-board');
   if(board){
+    const filtrados=leadsFiltrados();
     board.innerHTML=LEAD_STAGES.map(st=>{
-      const cards=leads.filter(l=>l.estagio===st.id);
+      const cards=filtrados.filter(l=>l.estagio===st.id);
+      const soma=cards.reduce((a,l)=>a+(l.valor||0),0);
       return `<div class="lead-col" data-stage="${st.id}" ondragover="leadColDragOver(event)" ondragleave="leadColDragLeave(event)" ondrop="leadColDrop(event,'${st.id}')">
         <div class="lead-col-hdr"><span class="lead-col-dot" style="background:${st.color}"></span>${st.label}<span class="lead-col-count">${cards.length}</span></div>
+        ${soma?`<div style="font-size:11px;font-weight:700;color:var(--green);margin:-6px 4px 10px" title="${f(soma)}/mês somando os leads desta coluna">${fk(soma)}/mês</div>`:''}
         ${cards.map(l=>leadCardHtml(l)).join('')}
       </div>`;
     }).join('');
