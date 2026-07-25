@@ -4913,6 +4913,7 @@ function copiarSpot() {
     <div class="page-hdr">
       <div><div class="page-title">🎯 CRM</div><div class="page-sub">Funil de clientes — do primeiro contato até o fechamento</div></div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <a id="leads-sheet-link" href="#" target="_blank" class="anunc-btn" style="display:none;text-decoration:none">📊 Abrir planilha</a>
         <button class="anunc-btn" onclick="openLeadModal('add')" style="color:var(--green);border-color:rgba(17,138,93,.4);font-weight:700">＋ Novo lead</button>
       </div>
     </div>
@@ -9097,6 +9098,11 @@ function buildLeadsBadge(){
 
 // ── Filtros do CRM (produto / mês+ano / período) ────────────────────────
 function initLeadsFiltros(){
+  const sheetLink=g('leads-sheet-link');
+  if(sheetLink){
+    if(LEADS_SHEET_OPEN_URL){ sheetLink.href=LEADS_SHEET_OPEN_URL; sheetLink.style.display=''; }
+    else sheetLink.style.display='none';
+  }
   const pSel=g('leads-f-prod');
   if(pSel && !pSel.options.length){
     pSel.innerHTML='<option value="">Todos os produtos</option>'+MODULES.map(m=>`<option value="${m.id}">${m.icon} ${m.label.split('—')[0].trim()}</option>`).join('');
@@ -9399,6 +9405,9 @@ const STATUS_API_URL = 'https://mgb-financeiro.vercel.app/api/status';
 // Apps Script separado (Web App próprio) que sincroniza os lembretes do CRM com o Google Agenda.
 // Deixe vazio até fazer o deploy — o CRM funciona normalmente sem isso, só não sincroniza com a Agenda.
 const CALENDAR_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWInbOz8YzmYVDxWSUqEAtaAtTN5T9615q-_D7Mm360FsU4_2-BHPTW7ImbIH1Q4Vt/exec';
+// Apps Script separado (planilha "MGB CRM - Leads") que exporta os leads em colunas, pra visualizar fora do app.
+const LEADS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyVELtnG_j0jRYeBr0ko9HA7aUSqZK7zf-coKXzxvXx9LtpBXFSifjF77Mfv6X8ojdd7g/exec';
+const LEADS_SHEET_OPEN_URL = ''; // preencher com a URL da planilha (a de editar, não a do Apps Script) pra ativar o botão "Abrir planilha"
 
 let saveTimer = null;
 let syncStatus = 'idle';
@@ -9578,7 +9587,38 @@ async function loadFromSheets(){
 // Salva com debounce — espera 2s após última mudança
 function scheduleSave(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveToSheets, 2000);
+  saveTimer = setTimeout(function(){ saveToSheets(); leadsExportToSheet(); }, 2000);
+}
+
+// Exporta os leads pra uma planilha à parte, em colunas — pra dar uma olhada fora do app.
+async function leadsExportToSheet(){
+  if(!LEADS_SHEET_URL) return;
+  try{
+    const payload = leads.map(l=>{
+      const m=leadModPor(l.produto);
+      const st=leadStage(l.estagio);
+      return {
+        nome: l.nome||'',
+        tel: l.tel||'',
+        responsavel: l.responsavel||'',
+        funcao: l.funcao||'',
+        cnpj: l.cnpj||'',
+        produto: m?m.label.split('—')[0].trim():(l.produto||''),
+        origem: l.origem||'',
+        estagio: st.label.replace(/[✅❌]/g,'').trim(),
+        valor: l.valor||0,
+        followup: leadFmtLembrete(l),
+        obs: l.obs||'',
+        criado: l.criado||'',
+        unidade: l.itemCriado||''
+      };
+    });
+    await fetch(LEADS_SHEET_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({leads:payload})
+    });
+  }catch(e){ console.error('Erro ao exportar leads pra planilha:', e); }
 }
 
 // ── HOME ──────────────────────────────────────────────────────────────────
