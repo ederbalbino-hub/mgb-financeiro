@@ -4918,7 +4918,7 @@ function copiarSpot() {
           <div class="anunc-form-field"><label class="anunc-form-lbl">De onde veio esse lead?</label><select class="anunc-form-inp" id="lead-origem" style="width:100%"></select></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Valor mensal estimado (R$)</label><input class="anunc-form-inp" id="lead-valor" type="number" step="0.01" min="0" placeholder="0,00" autocomplete="off" style="width:100%"></div>
-            <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">📅 Próximo follow-up</label><input class="anunc-form-inp" id="lead-lembrete" type="date" style="width:100%;color-scheme:light"></div>
+            <div class="anunc-form-field" style="flex:1;min-width:180px"><label class="anunc-form-lbl">📅 Próximo follow-up (data e hora)</label><input class="anunc-form-inp" id="lead-lembrete" type="datetime-local" style="width:100%;color-scheme:light"></div>
           </div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Observações</label><textarea class="anunc-form-inp" id="lead-obs" rows="2" style="width:100%;resize:vertical;font-family:'DM Sans',sans-serif"></textarea></div>
           <div id="lead-historico-wrap" style="display:none">
@@ -5192,6 +5192,7 @@ function copiarSpot() {
       <span class="ferr-tab" onclick="showFerrTab('qr',this)">QR &amp; Links</span>
       <span class="ferr-tab" onclick="showFerrTab('calc',this)">Calculadoras</span>
       <span class="ferr-tab" onclick="showFerrTab('backup',this)">Backup</span>
+      <span class="ferr-tab" onclick="showFerrTab('status',this)">📡 Monitoramento</span>
     </div>
 
     <!-- ══════ PDF ══════ -->
@@ -5429,6 +5430,36 @@ function copiarSpot() {
       </div>
     </div>
 
+    <!-- ══════ STATUS / MONITORAMENTO (telas 4YouSee + rádio Vaapty) ══════ -->
+    <div id="ferr-status" style="display:none">
+      <div style="padding:0 22px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;color:var(--muted)">Painéis que já existem em agenciamgb.com.br, puxados ao vivo aqui dentro.</div>
+        <button class="ferr-btn" style="padding:6px 14px;font-size:11px" onclick="loadFerrStatus()">🔄 Atualizar</button>
+      </div>
+
+      <div style="padding:0 22px 14px">
+        <div class="ferr-card">
+          <div class="ferr-t">📺 Telas — Painel 4YouSee</div>
+          <div class="ferr-d" id="ferr-telas-atualizado">Carregando…</div>
+          <div id="ferr-telas-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
+          <input class="ferr-in" id="ferr-telas-busca" placeholder="Buscar tela por nome..." style="margin-bottom:10px" oninput="renderFerrTelasLista()">
+          <div id="ferr-telas-lista" style="max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+
+      <div style="padding:0 22px 28px">
+        <div class="ferr-card">
+          <div class="ferr-t">🎧 Rádio Vaapty</div>
+          <div class="ferr-d">Rádio tocada nas lojas Vaapty — status de conexão das unidades.</div>
+          <div id="ferr-radio-status" style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Carregando…</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="ferr-btn" style="text-decoration:none" href="https://agenciamgb.com.br/radios/vaapty/" target="_blank">▶ Abrir player</a>
+            <a class="ferr-btn" style="text-decoration:none;background:var(--surface2);color:var(--text);border:1px solid var(--border2)" href="https://agenciamgb.com.br/radios/vaapty/status/" target="_blank">📋 Painel original</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </main>
@@ -5465,6 +5496,79 @@ function ferrKB(n){ return n>1048576 ? (n/1048576).toFixed(2)+' MB' : Math.max(1
 function ferrMsg(id,html,color){ const el=document.getElementById(id); if(el){ el.innerHTML=html; el.style.color=color||'var(--muted)'; } }
 function ferrLibOk(){ if(typeof PDFLib==='undefined'){ alert('A biblioteca de PDF ainda não carregou — recarregue a página (⌘⇧R).'); return false;} return true; }
 function initFerramentas(){}
+
+/* ═══════════ FERRAMENTAS · MONITORAMENTO (telas 4YouSee + rádio Vaapty) ═══════════ */
+function escH(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+let _ferrTelasPlayers=[];
+
+function loadFerrStatus(){
+  loadFerrTelas();
+  loadFerrRadio();
+}
+
+async function loadFerrTelas(){
+  const kpisEl=g('ferr-telas-kpis'), atEl=g('ferr-telas-atualizado');
+  atEl.textContent='Carregando…';
+  try{
+    const res=await fetch(STATUS_API_URL+'?action=telas');
+    const data=await res.json();
+    if(!data.success){ atEl.textContent='⚠ Não consegui carregar o painel de telas.'; return; }
+    _ferrTelasPlayers=data.players||[];
+    const total=_ferrTelasPlayers.length;
+    const online=_ferrTelasPlayers.filter(p=>p.statusName==='Online').length;
+    const offline=_ferrTelasPlayers.filter(p=>p.statusName==='Offline').length;
+    const semAcesso=total-online-offline;
+    const agora=new Date();
+    atEl.textContent='Atualizado às '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+total+' telas monitoradas';
+    kpisEl.innerHTML=`
+      <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px 6px"><div style="font-size:20px;font-weight:800;color:var(--text)">${total}</div><div style="font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em">Total</div></div>
+      <div style="text-align:center;background:var(--gd);border-radius:10px;padding:10px 6px"><div style="font-size:20px;font-weight:800;color:var(--green)">${online}</div><div style="font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em">Online</div></div>
+      <div style="text-align:center;background:var(--rd);border-radius:10px;padding:10px 6px"><div style="font-size:20px;font-weight:800;color:var(--red)">${offline}</div><div style="font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em">Offline</div></div>
+      <div style="text-align:center;background:var(--ad);border-radius:10px;padding:10px 6px"><div style="font-size:20px;font-weight:800;color:var(--amber)">${semAcesso}</div><div style="font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em">Sem acesso</div></div>
+    `;
+    renderFerrTelasLista();
+  }catch(e){
+    atEl.textContent='⚠ Erro ao carregar: '+e.message;
+  }
+}
+
+function renderFerrTelasLista(){
+  const box=g('ferr-telas-lista');
+  const buscaEl=g('ferr-telas-busca');
+  const busca=(buscaEl?buscaEl.value:'').toLowerCase().trim();
+  const ordem={'Offline':0,'Never accessed':1,'Online':2};
+  const filtrados=_ferrTelasPlayers
+    .filter(p=>!busca || (p.name||'').toLowerCase().includes(busca))
+    .slice()
+    .sort((a,b)=>(ordem[a.statusName]??3)-(ordem[b.statusName]??3));
+  if(!filtrados.length){ box.innerHTML='<div style="font-size:11px;color:var(--hint);padding:10px">Nenhuma tela encontrada.</div>'; return; }
+  const cores={'Online':'var(--green)','Offline':'var(--red)'};
+  box.innerHTML=filtrados.map(p=>{
+    const cor=cores[p.statusName]||'var(--amber)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:11.5px">
+      <span style="width:8px;height:8px;border-radius:50%;background:${cor};flex:none"></span>
+      <span style="flex:1;color:var(--text);font-weight:600">${escH(p.name)}</span>
+      <span style="color:var(--hint);font-size:10.5px;white-space:nowrap">${escH(p.tempoFormatado)}</span>
+      <span style="color:${cor};font-size:10px;font-weight:700;min-width:78px;text-align:right">${escH(p.statusName)}</span>
+    </div>`;
+  }).join('');
+}
+
+async function loadFerrRadio(){
+  const el=g('ferr-radio-status');
+  el.textContent='Carregando…';
+  try{
+    const res=await fetch(STATUS_API_URL+'?action=radio');
+    const data=await res.json();
+    const n=(data.ouvintes||[]).length;
+    el.innerHTML = n
+      ? `🟢 ${n} unidade${n>1?'s':''} conectada${n>1?'s':''} agora`
+      : `⚪ Nenhuma unidade conectada no momento`;
+  }catch(e){
+    el.textContent='⚠ Erro ao carregar: '+e.message;
+  }
+}
 
 /* ---- 1. JUNTAR PDF ---- */
 let _fJuntar=[];
@@ -5607,8 +5711,9 @@ document.addEventListener('DOMContentLoaded',function(){ try{ fAssSigInit(); fAs
 <script>
 /* ═══════════ FERRAMENTAS FASE 2 · Imagem · QR & Links · Calculadoras ═══════════ */
 function showFerrTab(t, el){
-  ['pdf','img','video','qr','calc','backup'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  ['pdf','img','video','qr','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
   document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
+  if(t==='status') loadFerrStatus();
 }
 /* ---- IMAGEM helpers ---- */
 function fImgLoad(file){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=URL.createObjectURL(file); }); }
@@ -8894,9 +8999,25 @@ function leadToast(msg){
   window._leadToastTimer=setTimeout(()=>{ t.style.display='none'; },3200);
 }
 function leadHoje(){ return new Date().toISOString().slice(0,10); }
+// lembrete pode ser 'YYYY-MM-DD' (lembrete do dia, formato antigo) ou 'YYYY-MM-DDTHH:mm' (data+hora, reunião)
+function leadLembreteVencido(l){
+  if(!l.lembrete || l.estagio==='fechado' || l.estagio==='perdido') return false;
+  if(l.lembrete.includes('T')) return new Date(l.lembrete) <= new Date();
+  return l.lembrete <= leadHoje();
+}
+function leadFmtLembrete(l){
+  if(!l.lembrete) return '';
+  const [dataP, horaP] = l.lembrete.split('T');
+  const dataFmt = dataP.split('-').reverse().join('/');
+  return horaP ? `${dataFmt} às ${horaP}` : dataFmt;
+}
+// Normaliza pro input datetime-local: leads antigos só tinham data — assume 9h ao editar
+function leadNormalizaLembreteInput(v){
+  if(!v) return '';
+  return v.includes('T') ? v : v+'T09:00';
+}
 function leadsPendentes(){
-  const hoje=leadHoje();
-  return leads.filter(l=>l.lembrete && l.lembrete<=hoje && l.estagio!=='fechado' && l.estagio!=='perdido');
+  return leads.filter(l=>leadLembreteVencido(l));
 }
 function leadModPor(id){ return MODULES.find(m=>m.id===id); }
 function leadStage(id){ return LEAD_STAGES.find(s=>s.id===id)||LEAD_STAGES[0]; }
@@ -8993,7 +9114,7 @@ function buildLeads(){
         <div style="display:flex;flex-direction:column;gap:5px">
           ${pend.map(l=>`<div style="display:flex;align-items:center;gap:8px;font-size:11.5px">
             <span style="flex:1;color:var(--text)">${l.nome}${l.tel?` <a href="https://wa.me/55${l.tel.replace(/\D/g,'')}" target="_blank" style="text-decoration:none">💬</a>`:''}</span>
-            <span style="color:var(--hint)">${l.lembrete.split('-').reverse().join('/')}</span>
+            <span style="color:var(--hint)">${leadFmtLembrete(l)}</span>
             <button class="anunc-btn" onclick="openLeadModal('edit',${l.id})">Abrir</button>
           </div>`).join('')}
         </div>
@@ -9025,15 +9146,14 @@ function buildLeads(){
 
 function leadCardHtml(l){
   const m=leadModPor(l.produto);
-  const hoje=leadHoje();
-  const overdue = l.lembrete && l.lembrete<=hoje && l.estagio!=='fechado' && l.estagio!=='perdido';
+  const overdue = leadLembreteVencido(l);
   const stageOpts=LEAD_STAGES.map(s=>`<option value="${s.id}" ${s.id===l.estagio?'selected':''}>${s.label}</option>`).join('');
   return `<div class="lead-card${overdue?' overdue':''}" draggable="true" ondragstart="leadCardDragStart(event,${l.id})" ondragend="leadCardDragEnd(event)" onclick="if(!event.target.closest('select,a')) openLeadModal('edit',${l.id})">
     ${m?`<span class="lead-card-tag" style="background:${m.color}22;color:${m.color}">${m.icon} ${m.label.split('—')[0].trim()}</span>`:''}
     <div class="lead-card-nome">${l.nome}</div>
     ${l.origem?`<div style="font-size:9.5px;color:var(--hint);margin-top:-2px;margin-bottom:2px">via ${l.origem}</div>`:''}
     ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês</div>`:''}
-    ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${l.lembrete.split('-').reverse().join('/')}${l.calEventId?' <span title="Sincronizado com o Google Agenda">📅</span>':''}</div>`:''}
+    ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${leadFmtLembrete(l)}${l.calEventId?' <span title="Sincronizado com o Google Agenda">📅</span>':''}</div>`:''}
     <div class="lead-card-row">
       <select class="lead-card-sel" onclick="event.stopPropagation()" onchange="leadChangeStage(${l.id},this.value)">${stageOpts}</select>
       ${l.tel?`<a class="lead-card-wa" href="https://wa.me/55${l.tel.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="Abrir WhatsApp">💬</a>`:''}
@@ -9094,7 +9214,8 @@ async function leadSyncCalendar(l){
       if(l.tel) descPartes.push('WhatsApp: '+l.tel);
       if(l.valor) descPartes.push('Valor estimado: '+f(l.valor)+'/mês');
       if(l.obs) descPartes.push(l.obs);
-      const qs=new URLSearchParams({action:'upsert',title,desc:descPartes.join('\n'),date:l.lembrete,eventId:l.calEventId||''});
+      const [dataP,horaP]=l.lembrete.split('T');
+      const qs=new URLSearchParams({action:'upsert',title,desc:descPartes.join('\n'),date:dataP,time:horaP||'09:00',eventId:l.calEventId||''});
       const res=await fetch(CALENDAR_APPS_SCRIPT_URL+'?'+qs.toString(),{method:'GET',mode:'cors'});
       const data=await res.json();
       if(data.ok && data.eventId){ l.calEventId=data.eventId; scheduleSave(); }
@@ -9122,7 +9243,7 @@ function openLeadModal(mode,id){
   g('lead-tel').value = l ? (l.tel||'') : '';
   g('lead-origem').value = l ? (l.origem||'') : '';
   g('lead-valor').value = l && l.valor ? l.valor : '';
-  g('lead-lembrete').value = l ? (l.lembrete||'') : '';
+  g('lead-lembrete').value = l ? leadNormalizaLembreteInput(l.lembrete) : '';
   g('lead-obs').value = l ? (l.obs||'') : '';
   g('lead-del-btn').style.display = mode==='edit' ? '' : 'none';
   g('lead-historico-wrap').style.display = mode==='edit' ? '' : 'none';
@@ -9198,6 +9319,8 @@ function deleteLead(){
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwD9L4gj8zr9vwOBZxn4-71khw5yhoXwJTFfsWizP-okmZZQWlumQs93seg-H2USa8D/exec';
 // Backend do Pluggy (bot no Vercel).
 const BANCO_API_URL = 'https://mgb-financeiro.vercel.app/api/banco';
+// Proxy pros painéis de telas (4YouSee) e rádio Vaapty que já existem em agenciamgb.com.br (evita CORS).
+const STATUS_API_URL = 'https://mgb-financeiro.vercel.app/api/status';
 // Apps Script separado (Web App próprio) que sincroniza os lembretes do CRM com o Google Agenda.
 // Deixe vazio até fazer o deploy — o CRM funciona normalmente sem isso, só não sincroniza com a Agenda.
 const CALENDAR_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWInbOz8YzmYVDxWSUqEAtaAtTN5T9615q-_D7Mm360FsU4_2-BHPTW7ImbIH1Q4Vt/exec';
