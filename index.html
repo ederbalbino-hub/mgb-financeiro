@@ -10019,6 +10019,11 @@ const LEADS_SHEET_OPEN_URL = 'https://docs.google.com/spreadsheets/d/1OFDF0tfzv8
 
 let saveTimer = null;
 let syncStatus = 'idle';
+// Trava de segurança: só vira true depois que loadFromSheets() termina (sucesso OU erro) a
+// primeira vez. Enquanto false, saveToSheets() é bloqueado — protege contra salvar o estado
+// local (ainda default/vazio) por cima dos dados reais do servidor, caso o usuário mexa em
+// algo antes do carregamento inicial terminar.
+let _cargaInicialCompleta = false;
 
 function setSyncStatus(s, msg=''){
   syncStatus = s;
@@ -10144,7 +10149,13 @@ function deserializeState(obj){
 }
 
 // Salva via Apps Script (POST)
+// ⚠️ NUNCA salva antes do primeiro loadFromSheets() terminar — senão sobrescreve os dados
+// reais do servidor com o estado local ainda vazio/default (ex: leads=[] na inicialização).
 async function saveToSheets(){
+  if(!_cargaInicialCompleta){
+    console.warn('saveToSheets ignorado: carga inicial ainda não terminou (evita sobrescrever com estado vazio).');
+    return;
+  }
   setSyncStatus('saving');
   try {
     const payload = JSON.stringify(serializeState());
@@ -10188,6 +10199,7 @@ async function loadFromSheets(){
     console.error('Load error:', e);
     setSyncStatus('error', 'Offline — dados locais');
   }
+  _cargaInicialCompleta = true; // libera o saveToSheets() dali em diante (sucesso ou erro, mas só depois de tentar)
   // SEMPRE renderiza, mesmo com erro
   return true;
 }
@@ -10200,7 +10212,7 @@ function scheduleSave(){
 
 // Exporta os leads pra uma planilha à parte, em colunas — pra dar uma olhada fora do app.
 async function leadsExportToSheet(){
-  if(!LEADS_SHEET_URL) return;
+  if(!LEADS_SHEET_URL || !_cargaInicialCompleta) return;
   try{
     const payload = leads.map(l=>{
       const m=leadModPor(l.produto);
