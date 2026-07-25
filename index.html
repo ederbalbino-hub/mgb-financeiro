@@ -5475,6 +5475,10 @@ function copiarSpot() {
     <div id="m-warn" class="modal-warn hidden"></div>
     <label class="modal-label" id="m-label">Nome</label>
     <input class="modal-input" id="m-input" onkeydown="if(event.key==='Enter')confirmModal()">
+    <label id="m-confirm-wrap" style="display:none;align-items:center;gap:10px;font-size:13px;color:var(--text,#1D1430);margin:6px 0 4px;padding:10px;border-radius:10px;background:var(--rd,rgba(220,38,38,.08));cursor:pointer">
+      <input type="checkbox" id="m-confirm-chk" style="width:20px;height:20px;flex:none;accent-color:var(--red,#DC2626)">
+      <span>Sim, quero excluir <b id="m-confirm-nome"></b> e todo o histórico</span>
+    </label>
     <div class="modal-btns" id="m-btns"></div>
   </div>
 </div>
@@ -8828,17 +8832,19 @@ function addItem(){
 function openModal(mode){
   modalMode=mode;
   const m=mod();
+  g('m-input').style.display='';
+  g('m-label').style.display='';
+  g('m-confirm-wrap').style.display='none';
+  g('m-warn').style.display='none';
   if(mode==='add'){
     g('m-title').textContent=`Nova unidade — ${m.label}`;
     g('m-sub').textContent='Será adicionada ao módulo atual';
-    g('m-warn').classList.add('hidden');
     g('m-label').textContent='Nome da unidade';
     g('m-input').value='';g('m-input').placeholder='Ex: Condomínio Aurora';
     g('m-btns').innerHTML=`<button class="mbtn mbtn-cancel" onclick="closeModal()">Cancelar</button><button class="mbtn mbtn-ok" onclick="confirmModal()">Adicionar</button>`;
   }else if(mode==='edit'){
     g('m-title').textContent=`Renomear — ${curItem}`;
     g('m-sub').textContent='Alterar o nome desta unidade';
-    g('m-warn').classList.add('hidden');
     g('m-label').textContent='Novo nome';
     g('m-input').value=curItem;g('m-input').placeholder='Novo nome';
     g('m-btns').innerHTML=`<button class="mbtn mbtn-cancel" onclick="closeModal()">Cancelar</button><button class="mbtn mbtn-ok" onclick="confirmModal()">Renomear</button>`;
@@ -8846,13 +8852,17 @@ function openModal(mode){
     g('m-title').textContent=`Excluir unidade`;
     g('m-sub').textContent=`"${curItem}" — ${m.label}`;
     g('m-warn').textContent=`⚠ Todos os lançamentos e receitas desta unidade serão apagados permanentemente. Esta ação não pode ser desfeita.`;
-    g('m-warn').classList.remove('hidden');
-    g('m-label').textContent='Digite o nome para confirmar';
-    g('m-input').value='';g('m-input').placeholder=curItem;
+    g('m-warn').style.display='block';
+    g('m-input').style.display='none';
+    g('m-label').style.display='none';
+    g('m-input').value='';
+    g('m-confirm-chk').checked=false;
+    g('m-confirm-nome').textContent=curItem;
+    g('m-confirm-wrap').style.display='flex';
     g('m-btns').innerHTML=`<button class="mbtn mbtn-cancel" onclick="closeModal()">Cancelar</button><button class="mbtn mbtn-del" onclick="confirmModal()">Excluir</button>`;
   }
   g('modal').classList.remove('hidden');
-  setTimeout(()=>g('m-input').focus(),60);
+  if(mode!=='delete') setTimeout(()=>g('m-input').focus(),60);
 }
 function closeModal(){g('modal').classList.add('hidden');}
 function confirmModal(){
@@ -8871,7 +8881,7 @@ function confirmModal(){
     rec[curMod][val]=rec[curMod][curItem]||0;delete rec[curMod][curItem];
     curItem=val;
   }else if(modalMode==='delete'){
-    if(val!==curItem){alert('Nome não confere. Digite exatamente: '+curItem);return;}
+    if(!g('m-confirm-chk').checked){alert('Marque a caixinha de confirmação pra excluir.');return;}
     if(m.items.length<=1){alert('Não é possível excluir a única unidade do módulo.');return;}
     const idx=m.items.indexOf(curItem);m.items.splice(idx,1);
     delete db[curMod][curItem];delete rec[curMod][curItem];
