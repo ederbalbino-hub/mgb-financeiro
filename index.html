@@ -1551,6 +1551,7 @@ body{-webkit-font-smoothing:antialiased}
     <div class="hub-nav">
       <div class="hub-tab active" data-tab="mercadao" onclick="showOpPanel('mercadao',this)">Contrato Mercadão</div>
       <div class="hub-tab" data-tab="elevador" onclick="showOpPanel('elevador',this)">Contrato Elevador</div>
+      <div class="hub-tab" data-tab="vaapty" onclick="showOpPanel('vaapty',this)">Contrato Vaapty</div>
       <div class="hub-tab" data-tab="parceria" onclick="showOpPanel('parceria',this)">Parceria Cond.</div>
       <div class="hub-tab" data-tab="pasta" onclick="showOpPanel('pasta',this)">Contratos Salvos</div>
       <div class="hub-tab" data-tab="gerador" onclick="showOpPanel('gerador',this)">Gerador de Spots</div>
@@ -3086,6 +3087,563 @@ document.getElementById('e-inicio').value=new Date().toISOString().split('T')[0]
 </html>"></iframe>
 </div>
 
+<div id="panel-vaapty" class="hub-panel">
+  <iframe id="frame-vaapty" class="contract-frame" srcdoc="<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<link href='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap' rel='stylesheet'>
+<style>
+:root {
+  --purple: #9B1D4A; --magenta: #D6367F; --pink: #EC4899; --lilac: #F0A8C4;
+  --bg: #FFF5F9; --card: #FFFFFF; --border: #F5DDE7; --text: #2A0A18;
+  --muted: #4B5563; --success: #10B981; --error: #EF4444;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+
+.header { background:linear-gradient(135deg,#2A0A18,#9B1D4A,#D6367F); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; }
+.header h1 { color:#fff; font-size:18px; font-weight:700; }
+.header p { color:rgba(255,255,255,.7); font-size:12px; }
+.header-actions { display:flex; gap:8px; }
+.btn-hdr { padding:8px 16px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.15); color:#fff; }
+
+.tabs { display:flex; background:#fff; border-bottom:2px solid var(--border); padding:0 32px; overflow-x:auto; }
+.tab { padding:12px 20px; font-size:13px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; color:var(--muted); white-space:nowrap; }
+.tab:hover { color:var(--purple); }
+.tab.active { color:var(--purple); border-bottom-color:var(--magenta); }
+
+.main { max-width:1100px; margin:0 auto; padding:24px 20px; }
+.section { display:none; }
+.section.active { display:block; }
+
+.card { background:#fff; border-radius:12px; padding:24px; margin-bottom:16px; border:1px solid var(--border); box-shadow:0 2px 8px rgba(30,10,60,.04); }
+.card-title { font-size:15px; font-weight:700; color:var(--purple); margin-bottom:18px; display:flex; align-items:center; gap:10px; }
+.card-title .icon { width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,var(--purple),var(--magenta)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; }
+
+.form-grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group.full { grid-column:1/-1; }
+label { font-size:11px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:.5px; }
+input, select, textarea { padding:10px 13px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-family:'Inter',sans-serif; color:var(--text); background:#FFFAFC; transition:border-color .2s; }
+input:focus, select:focus, textarea:focus { outline:none; border-color:var(--magenta); box-shadow:0 0 0 3px rgba(214,54,127,.1); }
+@media(max-width:768px){
+  .form-grid{display:block!important}
+  .form-group{margin-bottom:14px}
+  .main{padding:16px 12px}
+  .header{padding:16px 20px;flex-direction:column;gap:12px}
+  .tabs{padding:0 12px;overflow-x:auto}
+  .tab{padding:12px 16px;font-size:12px;white-space:nowrap}
+}
+input.success { border-color:var(--success); }
+input.error { border-color:var(--error); }
+input[readonly] { background:#f5eef2; cursor:default; }
+textarea { resize:vertical; min-height:70px; }
+.hint { font-size:11px; color:#6B7280; font-style:italic; }
+
+.toggle-group { display:flex; border-radius:8px; overflow:hidden; border:1.5px solid var(--border); }
+.toggle-option { flex:1; padding:10px 14px; text-align:center; cursor:pointer; font-size:13px; font-weight:600; background:#FFFAFC; color:var(--muted); transition:all .2s; }
+.toggle-option.active { background:linear-gradient(135deg,var(--purple),var(--magenta)); color:#fff; }
+
+.clause-box { background:#FFFAFC; border:1px solid var(--border); border-radius:10px; padding:16px 18px; font-size:12.5px; line-height:1.7; color:var(--text); margin-bottom:12px; }
+.clause-box h4 { font-size:12px; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
+.clause-box p { margin-bottom:4px; }
+.clause-box b.warn { color:#B91C1C; }
+
+.summary-box { margin-top:14px; padding:14px; border-radius:10px; background:linear-gradient(135deg,rgba(155,29,74,.06),rgba(214,54,127,.08)); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.sum-item { text-align:center; }
+.sum-num { font-size:22px; font-weight:800; color:var(--purple); }
+.sum-lbl { font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; }
+
+.contract-preview { background:#fff; border:2px solid var(--border); border-radius:12px; padding:32px; max-width:780px; margin:0 auto; }
+.contract-section { margin-bottom:16px; }
+.contract-section h3 { font-size:12px; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid var(--border); }
+.contract-row { display:flex; justify-content:space-between; padding:5px 0; font-size:12px; border-bottom:1px dotted #eee; }
+.contract-row .lbl { color:var(--muted); }
+.contract-row .val { font-weight:600; color:var(--text); text-align:right; max-width:60%; }
+.contract-total { text-align:right; margin-top:14px; padding:14px; background:linear-gradient(135deg,rgba(155,29,74,.06),rgba(214,54,127,.08)); border-radius:10px; }
+.contract-total .big { font-size:26px; font-weight:800; color:var(--purple); }
+.contract-total .small { font-size:11px; color:var(--muted); }
+.sig-area { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:32px; padding-top:16px; }
+.sig-line { border-top:1px solid #333; padding-top:6px; text-align:center; }
+.sig-line .sname { font-size:12px; font-weight:600; }
+.sig-line .srole { font-size:10px; color:var(--muted); }
+.clauses { font-size:9px; color:var(--muted); line-height:1.5; margin-top:14px; }
+.clauses h4 { font-size:9.5px; color:var(--text); margin:5px 0 1px; font-weight:700; }
+
+.btn-primary { padding:11px 24px; border-radius:9px; font-size:13px; font-weight:700; cursor:pointer; border:none; color:#fff; background:linear-gradient(135deg,var(--purple),var(--magenta)); transition:all .2s; }
+.btn-primary:hover { opacity:.88; transform:translateY(-1px); }
+.btn-secondary { padding:11px 24px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:#fff; color:var(--text); transition:all .2s; }
+.btn-secondary:hover { border-color:var(--purple); color:var(--purple); }
+.actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+.wa-box { background:linear-gradient(135deg,rgba(37,211,102,.08),rgba(37,211,102,.14)); border:1px solid rgba(37,211,102,.3); border-radius:10px; padding:14px 16px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.wa-box p { font-size:12px; color:#065F2E; }
+.btn-wa { padding:9px 18px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; border:none; color:#fff; background:#25D366; white-space:nowrap; }
+
+@media print {
+  .header,.tabs,.actions,.wa-box { display:none !important; }
+  .section { display:block !important; }
+  .section:not(#v-sec-contrato) { display:none !important; }
+  #v-sec-contrato { display:block !important; }
+  .contract-preview { border:none; padding:0; }
+  .card { box-shadow:none; border:none; padding:0; }
+}
+</style>
+</head>
+<body>
+
+<div class='header'>
+  <div>
+    <h1>MGB Mídia — Contrato Vaapty (Franqueado)</h1>
+    <p>Comodato de equipamento + gestão e suporte</p>
+  </div>
+  <div class='header-actions'>
+    <button class='btn-hdr' onclick='vPrintContract()'>🖨️ Imprimir</button>
+    <button class='btn-hdr' onclick='vResetForm()'>+ Novo</button>
+  </div>
+</div>
+
+<div class='tabs'>
+  <div class='tab active' data-vtab='franqueado' onclick='vSwitch(&quot;franqueado&quot;)'>1. Franqueado</div>
+  <div class='tab' data-vtab='comodato' onclick='vSwitch(&quot;comodato&quot;)'>2. Comodato</div>
+  <div class='tab' data-vtab='valores' onclick='vSwitch(&quot;valores&quot;)'>3. Valores</div>
+  <div class='tab' data-vtab='contrato' onclick='vSwitch(&quot;contrato&quot;)'>4. Contrato</div>
+</div>
+
+<div class='main'>
+
+  <!-- FRANQUEADO -->
+  <div id='v-sec-franqueado' class='section active'>
+    <div class='card' id='v-card-crm' style='display:none'>
+      <div class='card-title'><div class='icon'>📋</div> Cliente já fechado no CRM?</div>
+      <div class='form-grid'>
+        <div class='form-group full'>
+          <label>Selecionar (preenche os dados sozinho)</label>
+          <select id='v-sel-cliente' onchange='vSelecionarClienteCRM(this.value)'>
+            <option value=''>— Preencher manualmente —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class='card'>
+      <div class='card-title'><div class='icon'>🏢</div> Tipo de Pessoa</div>
+      <div class='toggle-group'>
+        <div class='toggle-option active' data-tipo='pj' onclick='vSetTipo(&quot;pj&quot;)'>Pessoa Jurídica (CNPJ)</div>
+        <div class='toggle-option' data-tipo='pf' onclick='vSetTipo(&quot;pf&quot;)'>Pessoa Física (CPF)</div>
+      </div>
+    </div>
+    <div class='card' id='v-card-pj'>
+      <div class='card-title'><div class='icon'>🚗</div> Dados do Franqueado</div>
+      <div class='form-grid'>
+        <div class='form-group'><label>CNPJ</label><input type='text' id='v-cnpj' placeholder='00.000.000/0000-00' maxlength='18' oninput='vMaskCNPJ(this)'><span class='hint' id='v-cnpj-hint'>Digite o CNPJ para preencher automaticamente</span></div>
+        <div class='form-group'><label>Razão Social</label><input type='text' id='v-razao' placeholder='Razão Social'></div>
+        <div class='form-group'><label>Nome Fantasia / Unidade</label><input type='text' id='v-fantasia' placeholder='Ex: Vaapty Londrina'></div>
+        <div class='form-group'><label>Inscrição Estadual</label><input type='text' id='v-ie' placeholder='Inscrição Estadual (se houver)'></div>
+      </div>
+    </div>
+    <div class='card' id='v-card-pf' style='display:none'>
+      <div class='card-title'><div class='icon'>👤</div> Dados Pessoais</div>
+      <div class='form-grid'>
+        <div class='form-group'><label>CPF</label><input type='text' id='v-cpf' placeholder='000.000.000-00' maxlength='14' oninput='vMaskCPF(this)'></div>
+        <div class='form-group'><label>Nome Completo</label><input type='text' id='v-nomepf' placeholder='Nome completo'></div>
+        <div class='form-group'><label>RG</label><input type='text' id='v-rg' placeholder='RG'></div>
+      </div>
+    </div>
+    <div class='card'>
+      <div class='card-title'><div class='icon'>📍</div> Endereço da Unidade</div>
+      <div class='form-grid'>
+        <div class='form-group'><label>CEP</label><input type='text' id='v-cep' placeholder='00000-000' maxlength='9' oninput='vMaskCEP(this)'><span class='hint' id='v-cep-hint'>Digite o CEP para preencher automaticamente</span></div>
+        <div class='form-group full'><label>Logradouro</label><input type='text' id='v-logradouro' placeholder='Rua, Avenida...'></div>
+        <div class='form-group'><label>Número</label><input type='text' id='v-numero' placeholder='Nº'></div>
+        <div class='form-group'><label>Complemento</label><input type='text' id='v-complemento' placeholder='Sala, loja...'></div>
+        <div class='form-group'><label>Bairro</label><input type='text' id='v-bairro' placeholder='Bairro'></div>
+        <div class='form-group'><label>Cidade</label><input type='text' id='v-cidade' placeholder='Cidade'></div>
+        <div class='form-group'><label>Estado</label>
+          <select id='v-estado'>
+            <option value=''>Selecione</option>
+            <option value='PR' selected>PR</option><option value='SP'>SP</option><option value='SC'>SC</option>
+            <option value='MG'>MG</option><option value='RJ'>RJ</option><option value='RS'>RS</option>
+            <option value='AC'>AC</option><option value='AL'>AL</option><option value='AM'>AM</option>
+            <option value='BA'>BA</option><option value='CE'>CE</option><option value='DF'>DF</option>
+            <option value='ES'>ES</option><option value='GO'>GO</option><option value='MA'>MA</option>
+            <option value='MT'>MT</option><option value='MS'>MS</option><option value='PA'>PA</option>
+            <option value='PB'>PB</option><option value='PE'>PE</option><option value='PI'>PI</option>
+            <option value='RN'>RN</option><option value='RO'>RO</option><option value='RR'>RR</option>
+            <option value='SE'>SE</option><option value='TO'>TO</option><option value='AP'>AP</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class='card'>
+      <div class='card-title'><div class='icon'>📞</div> Contato</div>
+      <div class='form-grid'>
+        <div class='form-group'><label>Responsável</label><input type='text' id='v-resp' placeholder='Nome do responsável'></div>
+        <div class='form-group'><label>Cargo</label><input type='text' id='v-cargo' placeholder='Ex: Sócio, Gerente...'></div>
+        <div class='form-group'><label>Telefone</label><input type='text' id='v-tel' placeholder='(00) 00000-0000' maxlength='15' oninput='vMaskPhone(this)'></div>
+        <div class='form-group'><label>E-mail</label><input type='email' id='v-email' placeholder='email@empresa.com'></div>
+      </div>
+    </div>
+    <div class='actions'><button class='btn-primary' onclick='vSwitch(&quot;comodato&quot;)'>Próximo: Comodato →</button></div>
+  </div>
+
+  <!-- COMODATO -->
+  <div id='v-sec-comodato' class='section'>
+    <div class='card'>
+      <div class='card-title'><div class='icon'>📦</div> Equipamento em Comodato</div>
+      <div class='form-grid'>
+        <div class='form-group'><label>Nº de série / identificação do box</label><input type='text' id='v-serie' placeholder='Ex: VPT-0042'></div>
+        <div class='form-group'><label>Quantidade de telas/boxes</label><input type='number' id='v-qtd-box' min='1' value='1'></div>
+      </div>
+      <div class='clause-box' style='margin-top:14px'>
+        <h4>O que é o comodato</h4>
+        <p>O equipamento (box de exibição) é <b>cedido em comodato</b> pela MGB Mídia — ou seja, continua sendo propriedade da MGB, o franqueado recebe apenas o direito de uso enquanto o contrato estiver vigente. Não pode ser vendido, alugado ou repassado a terceiros.</p>
+      </div>
+      <div class='clause-box'>
+        <h4>Responsabilidade por dano</h4>
+        <p>Se o equipamento quebrar por <b>mau uso, negligência ou dano intencional</b>, a responsabilidade pela reposição (valor de mercado do equipamento) é do franqueado.</p>
+      </div>
+      <div class='clause-box'>
+        <h4>Furto ou roubo</h4>
+        <p>Em caso de <b class='warn'>furto ou roubo</b>, o franqueado deve avisar a MGB imediatamente e registrar <b>Boletim de Ocorrência em até 5 dias úteis</b>, enviando cópia à MGB. Mesmo com o B.O. registrado, o franqueado é responsável por ressarcir o valor de reposição do equipamento — o B.O. documenta o ocorrido, mas não isenta o pagamento.</p>
+      </div>
+      <div class='clause-box'>
+        <h4>Devolução</h4>
+        <p>Ao final ou em caso de rescisão do contrato, o equipamento deve ser devolvido à MGB em até 10 dias, em condições normais de uso (desgaste natural aceitável). Se não for devolvido nesse prazo, vira cobrança do valor integral do equipamento.</p>
+      </div>
+    </div>
+    <div class='card'>
+      <div class='card-title'><div class='icon'>✅</div> Responsabilidades do Franqueado</div>
+      <div class='clause-box'>
+        <p>• Manter <b>internet estável e ativa</b> no local — é o que permite a atualização remota de conteúdo e o monitoramento do equipamento.</p>
+        <p>• Fornecer local adequado, com energia elétrica e segurança física pro equipamento.</p>
+        <p>• Avisar a MGB sobre qualquer mau funcionamento, queda de internet ou necessidade de manutenção.</p>
+      </div>
+    </div>
+    <div class='card'>
+      <div class='card-title'><div class='icon'>💰</div> Receita de Parceiros Locais</div>
+      <div class='clause-box'>
+        <p>Toda receita que o franqueado conseguir com <b>parceiros/anunciantes locais</b> (vendendo espaço publicitário no próprio box, dentro da loja dele) <b>fica 100% com o franqueado</b> — não tem repasse pra MGB sobre isso.</p>
+      </div>
+    </div>
+    <div class='actions'>
+      <button class='btn-secondary' onclick='vSwitch(&quot;franqueado&quot;)'>← Voltar</button>
+      <button class='btn-primary' onclick='vSwitch(&quot;valores&quot;)'>Próximo: Valores →</button>
+    </div>
+  </div>
+
+  <!-- VALORES -->
+  <div id='v-sec-valores' class='section'>
+    <div class='card'>
+      <div class='card-title'><div class='icon'>💵</div> Plano e Valores</div>
+      <div class='form-grid'>
+        <div class='form-group'><label>Valor de tabela (R$/mês)</label><input type='text' id='v-tabela' value='339,00' readonly></div>
+        <div class='form-group'><label>Valor negociado (R$/mês)</label><input type='text' id='v-negociado' placeholder='Ex: 339,00' oninput='vCalc()'><span class='hint' id='v-desc-hint'></span></div>
+        <div class='form-group'><label>Prazo</label><input type='text' value='12 meses' readonly></div>
+        <div class='form-group'><label>Data de início</label><input type='date' id='v-inicio' onchange='vCalc()'></div>
+        <div class='form-group'><label>Forma de Pagamento</label>
+          <select id='v-pgto'>
+            <option>Boleto mensal</option>
+            <option>PIX mensal</option>
+            <option>Cartão de crédito recorrente</option>
+            <option>Transferência bancária</option>
+          </select>
+        </div>
+      </div>
+      <div class='summary-box'>
+        <div class='sum-item'><div class='sum-num' id='v-inv-mensal'>R$ 0</div><div class='sum-lbl'>Mensal</div></div>
+        <div class='sum-item'><div class='sum-num' id='v-inv-total'>R$ 0</div><div class='sum-lbl'>Total 12 meses</div></div>
+        <div class='sum-item'><div class='sum-num' id='v-inv-fim'>—</div><div class='sum-lbl'>Término previsto</div></div>
+      </div>
+    </div>
+    <div class='actions'>
+      <button class='btn-secondary' onclick='vSwitch(&quot;comodato&quot;)'>← Voltar</button>
+      <button class='btn-primary' onclick='vSwitch(&quot;contrato&quot;)'>Próximo: Gerar Contrato →</button>
+    </div>
+  </div>
+
+  <!-- CONTRATO -->
+  <div id='v-sec-contrato' class='section'>
+    <div class='card'>
+      <div class='actions' style='margin-top:0;margin-bottom:16px;justify-content:flex-start'>
+        <button class='btn-primary' onclick='vGerar()'>📄 Gerar Contrato</button>
+      </div>
+      <div class='contract-preview' id='v-contract-out'></div>
+      <div class='wa-box' id='v-wa-box' style='display:none'>
+        <p>✅ Contrato fechado e lançado no módulo Vaapty. Envie o contrato pro franqueado:</p>
+        <button class='btn-wa' onclick='vEnviarWhats()'>📲 Enviar por WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let vTipo = 'pj';
+const VALOR_TABELA = 339;
+
+function vSwitch(tab){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('v-sec-'+tab).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.vtab===tab));
+  window.scrollTo(0,0);
+}
+function vSetTipo(t){
+  vTipo=t;
+  document.querySelectorAll('.toggle-option').forEach(o=>o.classList.toggle('active',o.dataset.tipo===t));
+  document.getElementById('v-card-pj').style.display=t==='pj'?'block':'none';
+  document.getElementById('v-card-pf').style.display=t==='pf'?'block':'none';
+}
+function vMaskCNPJ(el){
+  let v=el.value.replace(/\D/g,'').slice(0,14);
+  if(v.length>12)v=v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
+  else if(v.length>8)v=v.replace(/^(\d{2})(\d{3})(\d{3})(\d+)$/,'$1.$2.$3/$4');
+  else if(v.length>5)v=v.replace(/^(\d{2})(\d{3})(\d+)$/,'$1.$2.$3');
+  else if(v.length>2)v=v.replace(/^(\d{2})(\d+)$/,'$1.$2');
+  el.value=v;
+  if(v.replace(/\D/g,'').length===14){clearTimeout(el._t);el._t=setTimeout(()=>vBuscarCNPJ(v.replace(/\D/g,'')),400);}
+}
+function vMaskCPF(el){let v=el.value.replace(/\D/g,'').slice(0,11);v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');el.value=v;}
+function vMaskCEP(el){
+  let v=el.value.replace(/\D/g,'').slice(0,8);v=v.replace(/(\d{5})(\d)/,'$1-$2');el.value=v;
+  if(v.replace(/\D/g,'').length===8){clearTimeout(el._t);el._t=setTimeout(()=>vBuscarCEP(v.replace(/\D/g,'')),400);}
+}
+function vMaskPhone(el){let v=el.value.replace(/\D/g,'').slice(0,11);if(v.length>10)v=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');else if(v.length>6)v=v.replace(/(\d{2})(\d{4,5})(\d{0,4})/,'($1) $2-$3');else if(v.length>2)v=v.replace(/(\d{2})(\d+)/,'($1) $2');el.value=v;}
+
+async function vBuscarCNPJ(cnpj){
+  const hint=document.getElementById('v-cnpj-hint'),inp=document.getElementById('v-cnpj');
+  inp.classList.remove('success','error');hint.textContent='🔍 Consultando...';hint.style.color='#9B1D4A';
+  const apis=[
+    ()=>fetch('https://publica.cnpj.ws/cnpj/'+cnpj).then(r=>r.ok?r.json():Promise.reject()).then(d=>({nome:d.razao_social||'',fantasia:d.estabelecimento?.nome_fantasia||'',logradouro:d.estabelecimento?.logradouro||'',numero:d.estabelecimento?.numero||'',complemento:d.estabelecimento?.complemento||'',bairro:d.estabelecimento?.bairro||'',cidade:d.estabelecimento?.cidade?.nome||'',uf:d.estabelecimento?.estado?.sigla||'',cep:(d.estabelecimento?.cep||'').replace(/\D/g,''),tel:d.estabelecimento?.ddd1&amp;&amp;d.estabelecimento?.telefone1?d.estabelecimento.ddd1+d.estabelecimento.telefone1:'',email:d.estabelecimento?.email||''})),
+    ()=>fetch('https://brasilapi.com.br/api/cnpj/v1/'+cnpj).then(r=>r.ok?r.json():Promise.reject()).then(d=>({nome:d.razao_social||'',fantasia:d.nome_fantasia||'',logradouro:d.logradouro||'',numero:d.numero||'',complemento:d.complemento||'',bairro:d.bairro||'',cidade:d.municipio||'',uf:d.uf||'',cep:d.cep?String(d.cep).replace(/\D/g,''):'',tel:d.ddd_telefone_1||'',email:d.email||''})),
+  ];
+  for(const api of apis){
+    try{
+      const d=await api();
+      const set=(id,v)=>{const el=document.getElementById(id);if(el&amp;&amp;v)el.value=v;};
+      set('v-razao',d.nome);
+      if(!document.getElementById('v-fantasia').value) set('v-fantasia',d.fantasia);
+      set('v-logradouro',d.logradouro);set('v-numero',d.numero);set('v-complemento',d.complemento);
+      set('v-bairro',d.bairro);set('v-cidade',d.cidade);
+      if(d.uf)document.getElementById('v-estado').value=d.uf;
+      if(d.cep)document.getElementById('v-cep').value=d.cep.replace(/(\d{5})(\d{3})/,'$1-$2');
+      if(d.tel){const el=document.getElementById('v-tel');el.value=d.tel;vMaskPhone(el);}
+      if(d.email)set('v-email',d.email.toLowerCase());
+      inp.classList.add('success');hint.textContent='✅ Dados preenchidos!';hint.style.color='#059669';return;
+    }catch(err){continue;}
+  }
+  inp.classList.add('error');hint.textContent='⚠️ Não foi possível consultar. Preencha manualmente.';hint.style.color='#EF4444';
+  setTimeout(()=>{inp.classList.remove('error');hint.style.color='';hint.textContent='Digite o CNPJ para preencher automaticamente';},4000);
+}
+async function vBuscarCEP(cep){
+  const hint=document.getElementById('v-cep-hint'),inp=document.getElementById('v-cep');
+  inp.classList.remove('success','error');hint.textContent='🔍 Consultando CEP...';
+  try{
+    const r=await fetch('https://viacep.com.br/ws/'+cep+'/json/');const d=await r.json();if(d.erro)throw new Error();
+    const set=(id,v)=>{const el=document.getElementById(id);if(el&amp;&amp;v)el.value=v;};
+    set('v-logradouro',d.logradouro);set('v-bairro',d.bairro);set('v-cidade',d.localidade);
+    if(d.uf)document.getElementById('v-estado').value=d.uf;
+    inp.classList.add('success');hint.textContent='✅ Endereço preenchido!';hint.style.color='#059669';
+  }catch(err){
+    inp.classList.add('error');hint.textContent='⚠️ CEP não encontrado.';hint.style.color='#EF4444';
+    setTimeout(()=>{inp.classList.remove('error');hint.style.color='';hint.textContent='Digite o CEP para preencher automaticamente';},3000);
+  }
+}
+
+function vNum(str){ return parseFloat((str||'0').replace(/\./g,'').replace(',','.'))||0; }
+function vFmt(n){ return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2}); }
+
+function vCalc(){
+  const vn = vNum(document.getElementById('v-negociado').value);
+  const mensal = vn>0 ? vn : VALOR_TABELA;
+  const total = mensal*12;
+  document.getElementById('v-inv-mensal').textContent = vFmt(mensal);
+  document.getElementById('v-inv-total').textContent = vFmt(total);
+  const inicio = document.getElementById('v-inicio').value;
+  if(inicio){
+    const d=new Date(inicio+'T00:00:00'); d.setMonth(d.getMonth()+12);
+    document.getElementById('v-inv-fim').textContent = d.toLocaleDateString('pt-BR');
+  } else {
+    document.getElementById('v-inv-fim').textContent = '—';
+  }
+  const dh = document.getElementById('v-desc-hint');
+  if(vn>0 &amp;&amp; vn!==VALOR_TABELA){
+    const desc = (1 - vn/VALOR_TABELA)*100;
+    if(desc>0){ dh.textContent='Desconto de '+desc.toFixed(1).replace('.',',')+'% sobre a tabela (R$ '+VALOR_TABELA.toLocaleString('pt-BR',{minimumFractionDigits:2})+')'; dh.style.color='#15803D'; }
+    else{ const acr=-desc; dh.textContent='Acréscimo de '+acr.toFixed(1).replace('.',',')+'% sobre a tabela'; dh.style.color='#B45309'; }
+  } else {
+    dh.textContent = vn===VALOR_TABELA ? 'Valor de tabela — sem desconto' : '';
+    dh.style.color='#6B7280';
+  }
+}
+
+function vgv(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+function erow(l,v){return v?'<div class=&quot;contract-row&quot;><span class=&quot;lbl&quot;>'+l+'</span><span class=&quot;val&quot;>'+v+'</span></div>':'';}
+
+let vUltimoPayload = null;
+
+function vGerar(){
+  const isPJ = vTipo==='pj';
+  const vn = vNum(vgv('v-negociado'));
+  const mensal = vn>0 ? vn : VALOR_TABELA;
+  const total = mensal*12;
+  const inicio = vgv('v-inicio');
+  const today = new Date();
+  const num = 'MGB-VPT-'+today.getFullYear()+String(Math.floor(Math.random()*9000)+1000);
+  const nome = isPJ ? (vgv('v-fantasia')||vgv('v-razao')) : vgv('v-nomepf');
+  const doc = isPJ ? vgv('v-cnpj') : vgv('v-cpf'); const docLbl = isPJ?'CNPJ':'CPF';
+  const end = [vgv('v-logradouro'), vgv('v-numero')?'nº '+vgv('v-numero'):'', vgv('v-complemento'), vgv('v-bairro'), vgv('v-cidade')+(vgv('v-estado')?'/'+vgv('v-estado'):''), vgv('v-cep')].filter(Boolean).join(', ');
+  const pgtoEl = document.getElementById('v-pgto'); const pgtoTxt = pgtoEl.options[pgtoEl.selectedIndex].text;
+  let fimDate = '';
+  if(inicio){ const d=new Date(inicio+'T00:00:00'); d.setMonth(d.getMonth()+12); fimDate=d.toLocaleDateString('pt-BR'); }
+
+  if(!nome){ alert('Preencha o nome/razão social do franqueado na aba Franqueado.'); vSwitch('franqueado'); return; }
+
+  const headerHTML = '<div style=&quot;background:linear-gradient(135deg,#2A0A18 0%,#9B1D4A 55%,#D6367F 100%);padding:14px 24px;border-radius:8px 8px 0 0;color:#fff;margin:-32px -32px 12px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
+    '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
+      '<div style=&quot;width:5px;height:44px;background:#D6367F;border-radius:3px;flex-shrink:0&quot;></div>'+
+      '<div>'+
+        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.5px&quot;>MGB Mídia</div>'+
+        '<div style=&quot;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px&quot;>Rede TV Vaapty</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style=&quot;border-left:1px solid rgba(255,255,255,.15);padding-left:18px;text-align:right&quot;>'+
+      '<div style=&quot;font-size:8px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1.5px;text-transform:uppercase&quot;>Contrato de Franquia</div>'+
+      '<div style=&quot;font-size:11px;font-weight:700;margin-top:3px&quot;>Comodato + Gestão TV Vaapty</div>'+
+      '<div style=&quot;font-size:9px;color:rgba(255,255,255,.55);margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
+    '</div>'+
+  '</div>';
+
+  document.getElementById('v-contract-out').innerHTML =
+    headerHTML+
+    '<div class=&quot;contract-section&quot;><h3>1. Partes</h3>'+
+      erow('CONTRATADA','MGB Mídia — CNPJ 23.770.170/0001-50')+
+      erow(isPJ?'Razão Social (CONTRATANTE)':'Nome (CONTRATANTE)', isPJ?vgv('v-razao'):vgv('v-nomepf'))+
+      (isPJ&amp;&amp;vgv('v-fantasia')?erow('Nome Fantasia/Unidade',vgv('v-fantasia')):'')+
+      erow(docLbl,doc)+
+      erow('Endereço',end)+
+      erow('Responsável',vgv('v-resp')+(vgv('v-cargo')?' ('+vgv('v-cargo')+')':''))+
+      erow('Telefone',vgv('v-tel'))+erow('E-mail',vgv('v-email'))+
+    '</div>'+
+    '<div class=&quot;contract-section&quot;><h3>2. Objeto</h3>'+
+      '<p style=&quot;font-size:12px;line-height:1.7;color:#374151&quot;>Cessão em <b>comodato</b> de equipamento de exibição digital ('+(vgv('v-qtd-box')||'1')+' box, identificação '+(vgv('v-serie')||'a definir')+') para veiculação de conteúdo audiovisual no estabelecimento da CONTRATANTE, mais a prestação de serviços de <b>gestão, suporte técnico e atualização de conteúdo</b> pela CONTRATADA.</p>'+
+    '</div>'+
+    '<div class=&quot;contract-section&quot;><h3>3. Prazo</h3>'+
+      erow('Duração','12 meses')+erow('Início',inicio?new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—')+erow('Término previsto',fimDate||'—')+
+      '<p style=&quot;font-size:11px;color:#6B7280;margin-top:6px&quot;>Renovação automática por períodos iguais, salvo aviso em contrário com 30 dias de antecedência.</p>'+
+    '</div>'+
+    '<div class=&quot;contract-section&quot;><h3>4. Comodato do Equipamento</h3>'+
+      '<p style=&quot;font-size:11.5px;line-height:1.7;color:#374151&quot;>4.1. O equipamento permanece de propriedade da CONTRATADA — a CONTRATANTE não pode vendê-lo, alugá-lo ou repassá-lo a terceiros.<br>'+
+      '4.2. Dano por mau uso, negligência ou dolo: reposição pelo valor de mercado é responsabilidade da CONTRATANTE.<br>'+
+      '4.3. Furto ou roubo: a CONTRATANTE deve avisar a CONTRATADA imediatamente e registrar Boletim de Ocorrência em até 5 dias úteis, permanecendo responsável pelo valor de reposição do equipamento.<br>'+
+      '4.4. Ao fim do contrato, devolução em até 10 dias — sob pena de cobrança do valor integral do equipamento.</p>'+
+    '</div>'+
+    '<div class=&quot;contract-section&quot;><h3>5. Responsabilidades da Contratante</h3>'+
+      '<p style=&quot;font-size:11.5px;line-height:1.7;color:#374151&quot;>Manter internet estável e ativa no local (necessária pra atualização e monitoramento remoto), fornecer local adequado com energia e segurança física, e avisar a CONTRATADA sobre mau funcionamento ou necessidade de manutenção.</p>'+
+    '</div>'+
+    '<div class=&quot;contract-section&quot;><h3>6. Receita de Parceiros Locais</h3>'+
+      '<p style=&quot;font-size:11.5px;line-height:1.7;color:#374151&quot;>Receita obtida pela CONTRATANTE com parceiros/anunciantes locais próprios é de titularidade exclusiva da CONTRATANTE — sem repasse à CONTRATADA.</p>'+
+    '</div>'+
+    '<div class=&quot;contract-section&quot;><h3>7. Valor e Pagamento</h3>'+
+      erow('Valor de tabela', vFmt(VALOR_TABELA)+'/mês')+
+      erow('Valor negociado', vFmt(mensal)+'/mês')+
+      erow('Forma de pagamento', pgtoTxt)+
+    '</div>'+
+    '<div class=&quot;contract-total&quot;>'+
+      '<div class=&quot;small&quot;>Valor mensal</div><div class=&quot;big&quot;>'+vFmt(mensal)+'</div>'+
+      '<div class=&quot;small&quot; style=&quot;margin-top:6px&quot;>Total do contrato (12 meses): '+vFmt(total)+'</div>'+
+    '</div>'+
+    '<div class=&quot;sig-area&quot;>'+
+      '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>MGB Mídia</div><div class=&quot;srole&quot;>CONTRATADA · CNPJ 23.770.170/0001-50</div></div>'+
+      '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>'+(nome||'________________')+'</div><div class=&quot;srole&quot;>CONTRATANTE · '+docLbl+' '+(doc||'')+'</div></div>'+
+    '</div>'+
+    '<div class=&quot;clauses&quot;><h4>Rescisão</h4><p>Rescindível por qualquer parte mediante aviso prévio de 30 dias, ressalvada a obrigação de devolução do equipamento (cláusula 4.4).</p>'+
+    '<h4>Foro</h4><p>Fica eleito o foro da comarca de Londrina/PR.</p></div>';
+
+  vUltimoPayload = {
+    nome: nome, razao_social: vgv('v-razao'), nome_fantasia: vgv('v-fantasia'),
+    franqueado: nome, doc: doc, doc_label: docLbl,
+    responsavel: vgv('v-resp'), cargo: vgv('v-cargo'), telefone: vgv('v-tel'), email: vgv('v-email'),
+    endereco: end, cep: vgv('v-cep'), bairro: vgv('v-bairro'), cidade: vgv('v-cidade'), estado: vgv('v-estado'),
+    serie_equipamento: vgv('v-serie'), qtd_box: vgv('v-qtd-box')||'1',
+    valor_tabela: VALOR_TABELA, valor_total: mensal, valor_negociado: mensal,
+    data_inicio: inicio ? new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR') : '',
+    data_fim: fimDate, forma_pagamento: pgtoTxt, meses: 12
+  };
+
+  try{ if(window.parent &amp;&amp; window.parent.mgbSalvarContrato) window.parent.mgbSalvarContrato('vaapty', vUltimoPayload); }catch(err){}
+  try{
+    if(window.parent &amp;&amp; window.parent.mgbCriarUnidadeModulo &amp;&amp; nome){
+      window.parent.mgbCriarUnidadeModulo('vaapty', nome, {
+        valor: mensal,
+        inicio: inicio ? inicio.slice(0,7) : undefined,
+        meses: 12,
+        cliente: { cnpj: doc, fantasia: nome, responsavel: vgv('v-resp'), cargo: vgv('v-cargo'), tel: vgv('v-tel') }
+      });
+    }
+  }catch(err){}
+
+  document.getElementById('v-wa-box').style.display='flex';
+}
+
+function vEnviarWhats(){
+  if(!vUltimoPayload) return;
+  const p = vUltimoPayload;
+  const msg = '🚗 *Contrato TV Vaapty — MGB Mídia*\n'+
+    '*Franqueado:* '+p.nome+'\n'+
+    '*Valor mensal:* '+vFmt(p.valor_total)+'\n'+
+    '*Prazo:* 12 meses\n'+
+    (p.data_inicio?'*Início:* '+p.data_inicio+'\n':'')+
+    'Segue o contrato em anexo — qualquer dúvida é só chamar!';
+  const tel = (p.telefone||'').replace(/\D/g,'');
+  const url = tel ? 'https://wa.me/55'+tel+'?text='+encodeURIComponent(msg) : 'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+function vPrintContract(){ window.print(); }
+function vResetForm(){
+  if(!confirm('Limpar o formulário e começar um novo contrato?')) return;
+  document.querySelectorAll('#v-sec-franqueado input, #v-sec-comodato input, #v-sec-valores input').forEach(el=>{ if(el.type!=='date') el.value=''; else el.value=''; });
+  document.getElementById('v-negociado').value='';
+  document.getElementById('v-contract-out').innerHTML='';
+  document.getElementById('v-wa-box').style.display='none';
+  vUltimoPayload=null;
+  vSwitch('franqueado');
+}
+
+// CRM: puxa cliente já fechado no CRM (produto Vaapty) pra preencher sozinho
+let vClientesCRM = null;
+function vCarregarClientesCRM(){
+  try { vClientesCRM = window.parent &amp;&amp; window.parent.clientesInfo &amp;&amp; window.parent.clientesInfo['vaapty']; } catch(err){ vClientesCRM = null; }
+  const card = document.getElementById('v-card-crm');
+  const sel = document.getElementById('v-sel-cliente');
+  if(!vClientesCRM || !Object.keys(vClientesCRM).length){ if(card) card.style.display='none'; return; }
+  const nomes = Object.keys(vClientesCRM);
+  sel.innerHTML = '<option value=&quot;&quot;>— Preencher manualmente —</option>' + nomes.map(n => '<option value=&quot;'+n.replace(/&quot;/g,'')+'&quot;>'+n+'</option>').join('');
+  card.style.display='block';
+}
+function vSelecionarClienteCRM(nome){
+  if(!nome || !vClientesCRM || !vClientesCRM[nome]) return;
+  const info = vClientesCRM[nome];
+  if(info.cnpj){ document.getElementById('v-cnpj').value = info.cnpj; }
+  document.getElementById('v-fantasia').value = info.fantasia || nome;
+  if(info.responsavel) document.getElementById('v-resp').value = info.responsavel;
+  if(info.cargo) document.getElementById('v-cargo').value = info.cargo;
+  if(info.tel){ const el=document.getElementById('v-tel'); el.value=info.tel; vMaskPhone(el); }
+}
+
+// INIT
+document.getElementById('v-inicio').value = new Date().toISOString().split('T')[0];
+vCarregarClientesCRM();
+vCalc();
+</script>
+</body>
+</html>
+"></iframe>
+</div>
+
 <!-- ══════════════════════ BLOCOS RÁDIO ══════════════════════ -->
 <div id="panel-parceria" class="hub-panel">
 <style>
@@ -3470,6 +4028,7 @@ document.getElementById('e-inicio').value=new Date().toISOString().split('T')[0]
   <div class="ptabs">
     <div class="ptab active" onclick="pTab('mercadao')">📄 Mercadão <span id="pbadge-m" style="margin-left:5px;background:rgba(232,25,125,.18);color:#D6367F;border-radius:10px;padding:1px 7px;font-size:10px">0</span></div>
     <div class="ptab" onclick="pTab('elevador')">🛗 Elevador <span id="pbadge-e" style="margin-left:5px;background:rgba(232,25,125,.18);color:#D6367F;border-radius:10px;padding:1px 7px;font-size:10px">0</span></div>
+    <div class="ptab" onclick="pTab('vaapty')">🚗 Vaapty <span id="pbadge-v" style="margin-left:5px;background:rgba(232,25,125,.18);color:#D6367F;border-radius:10px;padding:1px 7px;font-size:10px">0</span></div>
   </div>
   <div class="pfolder active" id="pfolder-mercadao">
     <div class="fstats">
@@ -3487,11 +4046,19 @@ document.getElementById('e-inicio').value=new Date().toISOString().split('T')[0]
     <input class="psearch" type="text" placeholder="Buscar por nome..." oninput="pBuscar('elevador',this.value)">
     <div class="clista" id="plista-elevador"></div>
   </div>
+  <div class="pfolder" id="pfolder-vaapty">
+    <div class="fstats">
+      <div class="fstat"><div class="fstat-n" id="pn-v">0</div><div class="fstat-l">Contratos</div></div>
+      <div class="fstat"><div class="fstat-n" id="pv-v">R$ 0</div><div class="fstat-l">Volume total</div></div>
+    </div>
+    <input class="psearch" type="text" placeholder="Buscar por nome..." oninput="pBuscar('vaapty',this.value)">
+    <div class="clista" id="plista-vaapty"></div>
+  </div>
 </div>
 <script>
 (function(){
 const PK='mgb_pasta_v2';
-function load(){try{return JSON.parse(localStorage.getItem(PK))||{mercadao:[],elevador:[]};}catch(e){return{mercadao:[],elevador:[]};}}
+function load(){try{return JSON.parse(localStorage.getItem(PK))||{mercadao:[],elevador:[],vaapty:[]};}catch(e){return{mercadao:[],elevador:[],vaapty:[]};}}
 function save(d){try{localStorage.setItem(PK,JSON.stringify(d));}catch(e){}}
 window.mgbSalvarContrato=function(tipo,dados){
   const d=load();if(!d[tipo])d[tipo]=[];
@@ -3501,7 +4068,7 @@ window.mgbSalvarContrato=function(tipo,dados){
   d[tipo].unshift(dados);save(d);pRender();
 };
 window.pTab=function(t){
-  document.querySelectorAll('.ptab').forEach((el,i)=>el.classList.toggle('active',['mercadao','elevador'][i]===t));
+  document.querySelectorAll('.ptab').forEach((el,i)=>el.classList.toggle('active',['mercadao','elevador','vaapty'][i]===t));
   document.querySelectorAll('.pfolder').forEach(el=>el.classList.remove('active'));
   document.getElementById('pfolder-'+t).classList.add('active');
 };
@@ -3522,9 +4089,11 @@ function renderLista(tipo,lista){
   el.innerHTML=lista.map(c=>{
     const nome=c.nome_fantasia||c.razao_social||c.nome||c.responsavel||'—';
     const valor=c.valor_total?'R$ '+parseFloat(c.valor_total).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—';
-    const icon=tipo==='mercadao'?'📄':'🛗';
+    const icon=tipo==='mercadao'?'📄':tipo==='vaapty'?'🚗':'🛗';
     const det=tipo==='mercadao'
       ?[c.num_contrato?'Nº '+c.num_contrato:'',c.plano||'',c.meses?c.meses+'x':''].filter(Boolean).join(' · ')
+      :tipo==='vaapty'
+      ?[c.franqueado||'','12 meses'].filter(Boolean).join(' · ')
       :[c.qtd_condominios?c.qtd_condominios+' cond.':'',c.plano||''].filter(Boolean).join(' · ');
     return `<div class="citem">
       <div class="ci-icon">${icon}</div>
@@ -3542,20 +4111,16 @@ function renderLista(tipo,lista){
 }
 window.pRender=function(){
   const d=load();
-  ['mercadao','elevador'].forEach(tipo=>{
+  const sufixo={mercadao:'m',elevador:'e',vaapty:'v'};
+  ['mercadao','elevador','vaapty'].forEach(tipo=>{
     const lista=d[tipo]||[];
     renderLista(tipo,lista);
     const total=lista.reduce((s,c)=>s+(parseFloat(c.valor_total)||0),0);
     const fmt='R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:0});
-    if(tipo==='mercadao'){
-      document.getElementById('pn-m').textContent=lista.length;
-      document.getElementById('pv-m').textContent=fmt;
-      document.getElementById('pbadge-m').textContent=lista.length;
-    }else{
-      document.getElementById('pn-e').textContent=lista.length;
-      document.getElementById('pv-e').textContent=fmt;
-      document.getElementById('pbadge-e').textContent=lista.length;
-    }
+    const suf=sufixo[tipo];
+    document.getElementById('pn-'+suf).textContent=lista.length;
+    document.getElementById('pv-'+suf).textContent=fmt;
+    document.getElementById('pbadge-'+suf).textContent=lista.length;
   });
 };
 window.pWpp=function(tipo,id){
@@ -3565,6 +4130,8 @@ window.pWpp=function(tipo,id){
   const valor=c.valor_total?'R$ '+parseFloat(c.valor_total).toLocaleString('pt-BR',{minimumFractionDigits:2}):'';
   const msg=tipo==='mercadao'
     ?`📄 *Contrato Rádio Mercadão*\n*Cliente:* ${nome}\n*Plano:* ${c.plano||''}\n*Meses:* ${c.meses||''}\n*Valor:* ${valor}\n*Data:* ${c._data}`
+    :tipo==='vaapty'
+    ?`🚗 *Contrato TV Vaapty*\n*Franqueado:* ${nome}\n*Valor mensal:* ${valor}\n*Prazo:* 12 meses\n*Data:* ${c._data}`
     :`🛗 *Contrato Mídia Elevador*\n*Cliente:* ${nome}\n*Plano:* ${c.plano||''}\n*Valor:* ${valor}\n*Data:* ${c._data}`;
   window.open(`https://wa.me/5543996960078?text=${encodeURIComponent(msg)}`,'_blank');
 };
@@ -6154,6 +6721,9 @@ function showOpPanel(name, btn){
     // Refaz a lista de clientes do CRM sempre que abre a aba (o iframe pode ter carregado antes dos dados chegarem do Sheets)
     try{ const fe=document.getElementById('frame-elevador'); if(fe&&fe.contentWindow&&fe.contentWindow.eCarregarClientesCRM) fe.contentWindow.eCarregarClientesCRM(); }catch(e){}
   }
+  if(name==='vaapty'){
+    try{ const fv=document.getElementById('frame-vaapty'); if(fv&&fv.contentWindow&&fv.contentWindow.vCarregarClientesCRM) fv.contentWindow.vCarregarClientesCRM(); }catch(e){}
+  }
   window.scrollTo(0,0);
 }
 
@@ -6834,7 +7404,7 @@ function toggleSidebarCollapse(){
 
 // ── PAGES ─────────────────────────────────────────────────────────────────
 // Grupos do hub operacional: contratos × estúdio de conteúdo
-var OP_GROUPS={contratos:['mercadao','elevador','parceria','pasta'],estudio:['gerador','blocos','linkedin-gerar','linkedin-plano']};
+var OP_GROUPS={contratos:['mercadao','elevador','vaapty','parceria','pasta'],estudio:['gerador','blocos','linkedin-gerar','linkedin-plano']};
 var curOpGroup='contratos';
 function applyOpGroup(){
   var grp=OP_GROUPS[curOpGroup]||OP_GROUPS.contratos;
@@ -9260,18 +9830,40 @@ function leadChangeStage(id,novoEstagio){
 }
 
 // Ao fechar um lead, cria (ou reaproveita) a unidade correspondente no módulo do produto de interesse
+// Cria (ou reaproveita) uma unidade num módulo — usado pelo fechamento de lead no CRM
+// e pelos contratos (Elevador/Vaapty/etc, inclusive via window.parent de dentro do iframe).
+// Só preenche valor/início se a unidade for NOVA — nunca sobrescreve configuração já existente.
+window.mgbCriarUnidadeModulo=function(modId,nome,opts){
+  opts=opts||{};
+  const m=MODULES.find(x=>x.id===modId);
+  if(!m) return null;
+  if(!m.items.includes(nome)){
+    m.items.push(nome);
+    db[modId][nome]=[];
+    rec[modId][nome]={
+      valor:opts.valor||0,
+      inicio:opts.inicio||new Date().toISOString().slice(0,7),
+      meses:opts.meses||12
+    };
+  }
+  if(opts.cliente){
+    if(!clientesInfo[modId]) clientesInfo[modId]={};
+    clientesInfo[modId][nome]=opts.cliente;
+  }
+  try{ if(curMod===modId) buildAll(); }catch(e){}
+  scheduleSave();
+  return nome;
+};
+
 function leadFecharCriarUnidade(l){
   const m=leadModPor(l.produto);
   if(!m){ leadToast(`✅ "${l.nome}" fechado!`); return; }
-  let nome=l.nome;
-  if(!m.items.includes(nome)){
-    m.items.push(nome);
-    db[m.id][nome]=[];
-    rec[m.id][nome]={valor:l.valor||0,inicio:new Date().toISOString().slice(0,7),meses:12};
-  }
+  const nome=l.nome;
+  mgbCriarUnidadeModulo(m.id,nome,{
+    valor:l.valor||0,
+    cliente:{cnpj:l.cnpj||'', fantasia:l.nome||'', responsavel:l.responsavel||'', cargo:l.funcao||'', tel:l.tel||''}
+  });
   l.itemCriado=nome;
-  if(!clientesInfo[m.id]) clientesInfo[m.id]={};
-  clientesInfo[m.id][nome]={cnpj:l.cnpj||'', fantasia:l.nome||'', responsavel:l.responsavel||'', cargo:l.funcao||'', tel:l.tel||''};
   leadToast(`✅ "${l.nome}" fechado! Unidade criada em ${m.label.split('—')[0].trim()}.`);
 }
 
