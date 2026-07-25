@@ -545,6 +545,27 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 .anunc-form-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--hint)}
 .anunc-form-inp{font-size:12px;font-family:'DM Sans',sans-serif;padding:6px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);outline:none}
 .anunc-form-inp:focus{border-color:var(--purple)}
+
+/* ── LEADS / CRM ── */
+.leads-board{display:flex;gap:12px;overflow-x:auto;padding:0 22px 24px;align-items:flex-start}
+.lead-col{flex:0 0 250px;min-width:250px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:10px;min-height:80px}
+.lead-col.drag-over{background:var(--pd);border-color:var(--purple)}
+.lead-col-hdr{display:flex;align-items:center;gap:7px;padding:2px 4px 10px;font-size:12px;font-weight:700;color:var(--text)}
+.lead-col-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.lead-col-count{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--hint);background:var(--surface);border-radius:8px;padding:1px 7px}
+.lead-card{background:var(--surface);border:1px solid var(--border2);border-radius:11px;padding:10px 11px;margin-bottom:8px;cursor:grab;transition:box-shadow .15s,transform .15s}
+.lead-card:hover{box-shadow:0 4px 14px rgba(29,20,48,.1);transform:translateY(-1px)}
+.lead-card.dragging{opacity:.4}
+.lead-card.overdue{border-color:var(--red);box-shadow:0 0 0 1px rgba(220,38,38,.25)}
+.lead-card-nome{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px}
+.lead-card-tag{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin-bottom:6px}
+.lead-card-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px}
+.lead-card-sel{font-size:9.5px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+.lead-card-wa{font-size:13px;text-decoration:none;line-height:1}
+.lead-produto-chip{font-size:11px;font-weight:600;padding:5px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s}
+.lead-produto-chip.on{color:#fff;border-color:transparent}
+.lead-hist-item{font-size:10.5px;color:var(--muted);background:var(--surface2);border-radius:7px;padding:6px 9px}
+.lead-hist-item b{color:var(--text)}
 .pes-cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .pes-cat-grp-lbl{width:100%;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin-top:6px;margin-bottom:1px}
 .pes-cat-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;padding:4px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);transition:all .12s;user-select:none}
@@ -853,6 +874,7 @@ body{-webkit-font-smoothing:antialiased}
     <div class="sb-nav-item" id="nav-midiakit" title="Proposta Elevadores" onclick="goPage('midiakit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Proposta Elevadores</div>
     <div class="sb-nav-item" id="nav-apresmgb" title="Apresentação MGB" onclick="goPage('apresmgb')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Apresentação MGB</div>
     <div class="sb-nav-item" id="nav-sindicos" title="Síndicos" onclick="goPage('sindicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg>Síndicos</div>
+    <div class="sb-nav-item" id="nav-leads" title="Leads" onclick="goPage('leads')" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5c1.6.6 2.6 1.9 2.6 3.5s-1 2.9-2.6 3.5"/></svg>Leads<span id="nav-leads-badge" style="display:none;margin-left:auto;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 6px;line-height:1.4"></span></div>
     <div class="sb-lbl" style="margin-top:10px">Apoio</div>
     <div class="sb-nav-item" id="nav-ferramentas" title="Ferramentas" onclick="goPage('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.6 4.6 0 0 0-5.9 5.9L3 18l3 3 5.8-5.8a4.6 4.6 0 0 0 5.9-5.9l-2.9 2.9-2.1-.9-.9-2.1z"/></svg>Ferramentas</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
@@ -916,6 +938,12 @@ body{-webkit-font-smoothing:antialiased}
             <div class="home-hub-ico">📊</div>
             <div class="home-hub-title">Financeiro MGB</div>
             <div class="home-hub-desc">Receita, despesa e payback</div>
+            <div class="home-hub-cta">Abrir →</div>
+          </div>
+          <div class="home-hub-card" style="--accent:#189A66" onclick="goPage('leads')" id="home-leads-card">
+            <div class="home-hub-ico">🎯</div>
+            <div class="home-hub-title">Leads</div>
+            <div class="home-hub-desc" id="home-leads-desc">Clientes em negociação — não deixe esfriar</div>
             <div class="home-hub-cta">Abrir →</div>
           </div>
           <div class="home-hub-card" style="--accent:#6C55DB" onclick="goPage('pessoal')">
@@ -4846,6 +4874,55 @@ function copiarSpot() {
   </div>
 
   <!-- PAGE: PESSOAL -->
+  <div id="page-leads" style="display:none">
+    <div class="page-hdr">
+      <div><div class="page-title">🎯 Leads</div><div class="page-sub">Funil de clientes — do primeiro contato até o fechamento</div></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="anunc-btn" onclick="openLeadModal('add')" style="color:var(--green);border-color:rgba(17,138,93,.4);font-weight:700">＋ Novo lead</button>
+      </div>
+    </div>
+
+    <div id="leads-hoje" style="margin:14px 22px"></div>
+
+    <div id="leads-board" class="leads-board"></div>
+
+    <!-- Modal Lead -->
+    <div id="lead-modal" class="modal-overlay hidden">
+      <div class="modal" style="width:460px;max-width:95vw;max-height:90vh;overflow:auto">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="modal-title" id="lead-modal-title">Novo lead</div><div class="modal-sub">Contato que ainda não é cliente</div></div>
+          <button onclick="closeLeadModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" style="width:100%"></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">WhatsApp (DDD + número)</label><input class="anunc-form-inp" id="lead-tel" placeholder="43999998888" style="width:100%"></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">Produto de interesse</label><div id="lead-produto-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Valor mensal estimado (R$)</label><input class="anunc-form-inp" id="lead-valor" type="number" step="0.01" min="0" placeholder="0,00" style="width:100%"></div>
+            <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">📅 Próximo follow-up</label><input class="anunc-form-inp" id="lead-lembrete" type="date" style="width:100%;color-scheme:light"></div>
+          </div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">Observações</label><textarea class="anunc-form-inp" id="lead-obs" rows="2" style="width:100%;resize:vertical;font-family:'DM Sans',sans-serif"></textarea></div>
+          <div id="lead-historico-wrap" style="display:none">
+            <label class="anunc-form-lbl">Histórico</label>
+            <div style="display:flex;gap:6px;margin:4px 0 8px">
+              <input class="anunc-form-inp" id="lead-nota" placeholder="Registrar contato/nota..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addLeadNota();}">
+              <button class="anunc-btn" onclick="addLeadNota()">+ nota</button>
+            </div>
+            <div id="lead-historico-list" style="max-height:120px;overflow:auto;display:flex;flex-direction:column;gap:5px"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+          <button id="lead-del-btn" class="anunc-btn del" onclick="deleteLead()" style="display:none">🗑 Excluir</button>
+          <div style="display:flex;gap:8px;margin-left:auto">
+            <button class="anunc-btn" onclick="closeLeadModal()">Cancelar</button>
+            <button onclick="saveLeadModal()" style="font-size:12px;padding:8px 18px;border-radius:8px;background:var(--green);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="leads-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1D1430;color:#fff;padding:11px 20px;border-radius:10px;font-size:12.5px;font-weight:600;z-index:200000;box-shadow:0 8px 24px rgba(0,0,0,.25)"></div>
+  </div>
+
   <div id="page-pessoal" style="display:none">
     <div class="page-hdr">
       <div><div class="page-title">Pessoal</div><div class="page-sub">Receitas e despesas pessoais — separadas dos módulos MGB</div></div>
@@ -6070,6 +6147,19 @@ let pessoalRegras=null, pessoalUltimaImport=null;
 let relAjustes={ov:{},man:[]}; // relatório Mercadão: ov=valores editados por cliente, man=lançamentos manuais
 let pessoalRecId=1, pessoalDespId=1;
 
+// ── LEADS / CRM ───────────────────────────────────────────────────────────
+// leads = [{id, nome, tel, produto:modId, valor, lembrete:'YYYY-MM-DD', obs, estagio, historico:[{data,texto}], itemCriado, criado:'YYYY-MM-DD'}]
+const LEAD_STAGES=[
+  {id:'novo',       label:'Novo',        color:'#2563EB'},
+  {id:'contatado',  label:'Contatado',   color:'#D97706'},
+  {id:'negociando', label:'Negociando',  color:'#6C55DB'},
+  {id:'fechado',    label:'Fechado ✅',  color:'#118A5D'},
+  {id:'perdido',    label:'Perdido ❌',  color:'#DC2626'}
+];
+let leads=[];
+let leadNextId=1;
+let curLeadId=null;
+
 // Valor efetivo do item no mês: cada mês é INDEPENDENTE.
 // valor = base do lançamento (vale para todos os meses não editados).
 // valMes['YYYY-MM'] = ajuste pontual SÓ daquele mês — não afeta nenhum outro
@@ -6601,13 +6691,13 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 function goPage(p){
   curPage=p;
-  ['home','overview','custos','pessoal','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos'].forEach(id=>{
+  ['home','overview','custos','pessoal','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
   var target=document.getElementById('page-'+p);
   if(target) target.style.display='block';
-  ['nav-home','nav-custos','nav-pessoal','nav-contratos','nav-estudio','nav-relatorios','nav-ferramentas','nav-gerador','nav-midiakit','nav-apresmgb','nav-sindicos'].forEach(id=>{
+  ['nav-home','nav-custos','nav-pessoal','nav-contratos','nav-estudio','nav-relatorios','nav-ferramentas','nav-gerador','nav-midiakit','nav-apresmgb','nav-sindicos','nav-leads'].forEach(id=>{
     var el=document.getElementById(id);
     if(el) el.classList.remove('on');
   });
@@ -6628,6 +6718,7 @@ function goPage(p){
     if(fs && !fs.src) fs.src='sindicos.html?t='+Date.now(); // lazy + cache-bust
   }
   if(p==='ferramentas'){ var elf=document.getElementById('nav-ferramentas'); if(elf) elf.classList.add('on'); try{initFerramentas();}catch(e){} }
+  if(p==='leads'){ var eld=document.getElementById('nav-leads'); if(eld) eld.classList.add('on'); try{buildLeads();}catch(e){} }
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
   if(p==='overview'){ var el=document.getElementById('nav-custos'); if(el) el.classList.add('on'); }
   if(p==='pessoal'){ var el=document.getElementById('nav-pessoal'); if(el) el.classList.add('on'); buildPessoal(); }
@@ -6682,6 +6773,7 @@ function buildSidebar(){
   lEl.textContent=vis?((lucroMes>=0?'+':'')+f(lucroMes)):MASK;
   lEl.style.color=vis?(lucroMes>0?'var(--green)':lucroMes<0?'var(--red)':'var(--hint)'):'var(--hint)';
   try{ localStorage.setItem('mgb_sb_footer', JSON.stringify({mes:g('sb-mes-lbl').textContent,rec:g('sb-rec-mes').textContent,desp:g('sb-desp-mes').textContent,lucro:lEl.textContent,lucroColor:(!vis?'rgba(36,26,56,0.77)':(lucroMes>0?'#189A66':lucroMes<0?'#f87171':'rgba(36,26,56,0.77)'))})); }catch(e){}
+  try{ buildLeadsBadge(); }catch(e){}
 }
 function escQ(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 function sbClick(modId,item){drillMod(modId);switchItem(item);closeSidebar();}
@@ -8773,6 +8865,189 @@ function buildFinDashboard(){
   buildFinKPIs();buildFinChart();buildMonthGrid();buildFinTable();
 }
 
+// ── LEADS / CRM ───────────────────────────────────────────────────────────
+function leadToast(msg){
+  const t=g('leads-toast'); if(!t) return;
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(window._leadToastTimer);
+  window._leadToastTimer=setTimeout(()=>{ t.style.display='none'; },3200);
+}
+function leadHoje(){ return new Date().toISOString().slice(0,10); }
+function leadsPendentes(){
+  const hoje=leadHoje();
+  return leads.filter(l=>l.lembrete && l.lembrete<=hoje && l.estagio!=='fechado' && l.estagio!=='perdido');
+}
+function leadModPor(id){ return MODULES.find(m=>m.id===id); }
+function leadStage(id){ return LEAD_STAGES.find(s=>s.id===id)||LEAD_STAGES[0]; }
+
+function buildLeadsBadge(){
+  const n=leadsPendentes().length;
+  const badge=g('nav-leads-badge');
+  if(badge){ badge.style.display=n?'inline-block':'none'; badge.textContent=n; }
+  const desc=g('home-leads-desc');
+  if(desc) desc.textContent = n ? `⏰ ${n} follow-up${n>1?'s':''} pra hoje` : 'Clientes em negociação — não deixe esfriar';
+}
+
+function buildLeads(){
+  const pend=leadsPendentes();
+  const hojeEl=g('leads-hoje');
+  if(hojeEl){
+    if(!pend.length){
+      hojeEl.innerHTML='';
+    } else {
+      hojeEl.innerHTML=`<div style="background:var(--rd);border:1px solid rgba(220,38,38,.3);border-radius:12px;padding:12px 16px">
+        <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">⏰ ${pend.length} follow-up${pend.length>1?'s':''} pra hoje (ou atrasado)</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${pend.map(l=>`<div style="display:flex;align-items:center;gap:8px;font-size:11.5px">
+            <span style="flex:1;color:var(--text)">${l.nome}${l.tel?` <a href="https://wa.me/55${l.tel.replace(/\D/g,'')}" target="_blank" style="text-decoration:none">💬</a>`:''}</span>
+            <span style="color:var(--hint)">${l.lembrete.split('-').reverse().join('/')}</span>
+            <button class="anunc-btn" onclick="openLeadModal('edit',${l.id})">Abrir</button>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }
+  }
+  const board=g('leads-board');
+  if(board){
+    board.innerHTML=LEAD_STAGES.map(st=>{
+      const cards=leads.filter(l=>l.estagio===st.id);
+      return `<div class="lead-col" data-stage="${st.id}" ondragover="leadColDragOver(event)" ondragleave="leadColDragLeave(event)" ondrop="leadColDrop(event,'${st.id}')">
+        <div class="lead-col-hdr"><span class="lead-col-dot" style="background:${st.color}"></span>${st.label}<span class="lead-col-count">${cards.length}</span></div>
+        ${cards.map(l=>leadCardHtml(l)).join('')}
+      </div>`;
+    }).join('');
+  }
+  buildLeadsBadge();
+}
+
+function leadCardHtml(l){
+  const m=leadModPor(l.produto);
+  const hoje=leadHoje();
+  const overdue = l.lembrete && l.lembrete<=hoje && l.estagio!=='fechado' && l.estagio!=='perdido';
+  const stageOpts=LEAD_STAGES.map(s=>`<option value="${s.id}" ${s.id===l.estagio?'selected':''}>${s.label}</option>`).join('');
+  return `<div class="lead-card${overdue?' overdue':''}" draggable="true" ondragstart="leadCardDragStart(event,${l.id})" ondragend="leadCardDragEnd(event)" onclick="if(!event.target.closest('select,a')) openLeadModal('edit',${l.id})">
+    ${m?`<span class="lead-card-tag" style="background:${m.color}22;color:${m.color}">${m.icon} ${m.label.split('—')[0].trim()}</span>`:''}
+    <div class="lead-card-nome">${l.nome}</div>
+    ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês</div>`:''}
+    ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${l.lembrete.split('-').reverse().join('/')}</div>`:''}
+    <div class="lead-card-row">
+      <select class="lead-card-sel" onclick="event.stopPropagation()" onchange="leadChangeStage(${l.id},this.value)">${stageOpts}</select>
+      ${l.tel?`<a class="lead-card-wa" href="https://wa.me/55${l.tel.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="Abrir WhatsApp">💬</a>`:''}
+    </div>
+  </div>`;
+}
+
+// Drag and drop (desktop) — o <select> por card cobre mobile/acessibilidade
+let _leadDragId=null;
+function leadCardDragStart(e,id){ _leadDragId=id; e.target.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+function leadCardDragEnd(e){ e.target.classList.remove('dragging'); }
+function leadColDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function leadColDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function leadColDrop(e,stageId){
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if(_leadDragId!=null) leadChangeStage(_leadDragId,stageId);
+  _leadDragId=null;
+}
+
+function leadChangeStage(id,novoEstagio){
+  const l=leads.find(x=>x.id===id); if(!l) return;
+  const antigo=l.estagio;
+  l.estagio=novoEstagio;
+  if(novoEstagio==='fechado' && antigo!=='fechado'){
+    leadFecharCriarUnidade(l);
+  }
+  buildLeads();
+  scheduleSave();
+}
+
+// Ao fechar um lead, cria (ou reaproveita) a unidade correspondente no módulo do produto de interesse
+function leadFecharCriarUnidade(l){
+  const m=leadModPor(l.produto);
+  if(!m){ leadToast(`✅ "${l.nome}" fechado!`); return; }
+  let nome=l.nome;
+  if(!m.items.includes(nome)){
+    m.items.push(nome);
+    db[m.id][nome]=[];
+    rec[m.id][nome]={valor:l.valor||0,inicio:'',meses:12};
+  }
+  l.itemCriado=nome;
+  leadToast(`✅ "${l.nome}" fechado! Unidade criada em ${m.label.split('—')[0].trim()}.`);
+}
+
+function openLeadModal(mode,id){
+  curLeadId = mode==='edit' ? id : null;
+  const l = mode==='edit' ? leads.find(x=>x.id===id) : null;
+  g('lead-modal-title').textContent = mode==='edit' ? 'Editar lead' : 'Novo lead';
+  g('lead-nome').value = l ? l.nome : '';
+  g('lead-tel').value = l ? (l.tel||'') : '';
+  g('lead-valor').value = l && l.valor ? l.valor : '';
+  g('lead-lembrete').value = l ? (l.lembrete||'') : '';
+  g('lead-obs').value = l ? (l.obs||'') : '';
+  g('lead-del-btn').style.display = mode==='edit' ? '' : 'none';
+  g('lead-historico-wrap').style.display = mode==='edit' ? '' : 'none';
+  renderLeadProdutoChips(l ? l.produto : '');
+  renderLeadHistorico(l ? (l.historico||[]) : []);
+  const modal=g('lead-modal');
+  modal.classList.remove('hidden'); modal.classList.add('open');
+  modal.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(3px)';
+  setTimeout(()=>g('lead-nome').focus(),60);
+}
+function closeLeadModal(){
+  const modal=g('lead-modal');
+  modal.classList.add('hidden'); modal.classList.remove('open'); modal.style.display='none';
+  curLeadId=null;
+}
+let _leadProdutoSel='';
+function renderLeadProdutoChips(sel){
+  _leadProdutoSel = sel||'';
+  const box=g('lead-produto-chips');
+  box.innerHTML = MODULES.map(m=>`<div class="lead-produto-chip${m.id===_leadProdutoSel?' on':''}" style="${m.id===_leadProdutoSel?`background:${m.color};`:''}" onclick="leadPickProduto('${m.id}')">${m.icon} ${m.label.split('—')[0].trim()}</div>`).join('');
+}
+function leadPickProduto(id){ renderLeadProdutoChips(id===_leadProdutoSel?'':id); }
+function renderLeadHistorico(hist){
+  const box=g('lead-historico-list');
+  if(!box) return;
+  box.innerHTML = hist.length ? hist.slice().reverse().map(h=>`<div class="lead-hist-item"><b>${h.data}</b> — ${h.texto}</div>`).join('') : `<div style="font-size:10.5px;color:var(--hint)">Sem registros ainda.</div>`;
+}
+function addLeadNota(){
+  if(curLeadId==null) return; // salva o lead primeiro
+  const l=leads.find(x=>x.id===curLeadId); if(!l) return;
+  const inp=g('lead-nota'); const texto=inp.value.trim(); if(!texto) return;
+  if(!l.historico) l.historico=[];
+  const agora=new Date();
+  l.historico.push({data:agora.toLocaleDateString('pt-BR')+' '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), texto});
+  inp.value='';
+  renderLeadHistorico(l.historico);
+  scheduleSave();
+}
+function saveLeadModal(){
+  const nome=g('lead-nome').value.trim();
+  if(!nome){ g('lead-nome').focus(); return; }
+  if(!_leadProdutoSel){ leadToast('⚠ Escolha o produto de interesse'); return; }
+  const tel=g('lead-tel').value.trim();
+  const valor=parseFloat(g('lead-valor').value)||0;
+  const lembrete=g('lead-lembrete').value||'';
+  const obs=g('lead-obs').value.trim();
+  if(curLeadId!=null){
+    const l=leads.find(x=>x.id===curLeadId);
+    if(l){ l.nome=nome; l.tel=tel; l.produto=_leadProdutoSel; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
+  } else {
+    leads.push({id:leadNextId++, nome, tel, produto:_leadProdutoSel, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, criado:leadHoje()});
+  }
+  closeLeadModal();
+  buildLeads();
+  scheduleSave();
+}
+function deleteLead(){
+  if(curLeadId==null) return;
+  const l=leads.find(x=>x.id===curLeadId); if(!l) return;
+  if(!confirm(`Excluir o lead "${l.nome}"? Isso não afeta unidades já criadas nos módulos.`)) return;
+  leads=leads.filter(x=>x.id!==curLeadId);
+  closeLeadModal();
+  buildLeads();
+  scheduleSave();
+}
+
 // ── GOOGLE SHEETS CONFIG (via Apps Script) ───────────────────────────────
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwD9L4gj8zr9vwOBZxn4-71khw5yhoXwJTFfsWizP-okmZZQWlumQs93seg-H2USa8D/exec';
 // Backend do Pluggy (bot no Vercel).
@@ -8802,7 +9077,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport, relAjustes,
+    pessoalRegras, pessoalUltimaImport, relAjustes, leads,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -8897,6 +9172,10 @@ function deserializeState(obj){
   if(Array.isArray(obj.pessoalRegras)) pessoalRegras=obj.pessoalRegras;
   if(obj.pessoalUltimaImport) pessoalUltimaImport=obj.pessoalUltimaImport;
   if(obj.relAjustes && typeof obj.relAjustes==='object') relAjustes=obj.relAjustes;
+  if(obj.leads && Array.isArray(obj.leads)){
+    leads=obj.leads;
+    leadNextId=leads.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
 }
 
 // Salva via Apps Script (POST)
