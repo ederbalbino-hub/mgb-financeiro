@@ -2487,6 +2487,17 @@ textarea { resize:vertical; min-height:70px; }
 
   <!-- CLIENTE -->
   <div id=&quot;e-sec-cliente&quot; class=&quot;section active&quot;>
+    <div class=&quot;card&quot; id=&quot;e-card-crm&quot; style=&quot;display:none&quot;>
+      <div class=&quot;card-title&quot;><div class=&quot;icon&quot;>📋</div> Cliente já fechado no CRM?</div>
+      <div class=&quot;form-grid&quot;>
+        <div class=&quot;form-group&quot; style=&quot;grid-column:span 2&quot;>
+          <label>Selecionar (preenche CNPJ/responsável sozinho)</label>
+          <select id=&quot;e-sel-cliente&quot; onchange=&quot;eSelecionarClienteCRM(this.value)&quot;>
+            <option value=&quot;&quot;>— Preencher manualmente —</option>
+          </select>
+        </div>
+      </div>
+    </div>
     <div class=&quot;card&quot;>
       <div class=&quot;card-title&quot;><div class=&quot;icon&quot;>👤</div> Tipo de Pessoa</div>
       <div class=&quot;toggle-group&quot;>
@@ -3042,9 +3053,33 @@ function salvarSheets(num, meses, total, inicio, fim) {
   try { if(window.parent && window.parent.mgbSalvarContrato) window.parent.mgbSalvarContrato('elevador', payload); } catch(e){}
 }
 
+// CRM: puxa cliente já cadastrado (fechado no CRM) pra preencher CNPJ/responsável sozinho
+var eClientesCRM = null;
+function eCarregarClientesCRM(){
+  try { eClientesCRM = window.parent &amp;&amp; window.parent.clientesInfo &amp;&amp; window.parent.clientesInfo['elev']; } catch(err){ eClientesCRM = null; }
+  var card = document.getElementById('e-card-crm');
+  var sel = document.getElementById('e-sel-cliente');
+  if(!eClientesCRM || !Object.keys(eClientesCRM).length){ if(card) card.style.display='none'; return; }
+  var nomes = Object.keys(eClientesCRM);
+  sel.innerHTML = '&lt;option value=&quot;&quot;&gt;— Preencher manualmente —&lt;/option&gt;' + nomes.map(function(n){
+    return '&lt;option value=&quot;' + n.replace(/&quot;/g,'') + '&quot;&gt;' + n + '&lt;/option&gt;';
+  }).join('');
+  card.style.display='block';
+}
+function eSelecionarClienteCRM(nome){
+  if(!nome || !eClientesCRM || !eClientesCRM[nome]) return;
+  var info = eClientesCRM[nome];
+  if(info.cnpj){ document.getElementById('e-cnpj').value = info.cnpj; }
+  document.getElementById('e-fantasia').value = info.fantasia || nome;
+  if(info.responsavel) document.getElementById('e-resp').value = info.responsavel;
+  if(info.cargo) document.getElementById('e-cargo').value = info.cargo;
+  if(info.tel) document.getElementById('e-tel').value = info.tel;
+}
+
 // INIT
 eRenderCondos();
 eRenderPlanos();
+eCarregarClientesCRM();
 document.getElementById('e-inicio').value=new Date().toISOString().split('T')[0];
 </script>
 </body>
@@ -4914,6 +4949,11 @@ function copiarSpot() {
         <div style="display:flex;flex-direction:column;gap:10px">
           <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" autocomplete="off" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">WhatsApp (DDD + número)</label><input class="anunc-form-inp" id="lead-tel" placeholder="43999998888" inputmode="numeric" autocomplete="off" style="width:100%"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Responsável (contato)</label><input class="anunc-form-inp" id="lead-responsavel" placeholder="Ex: João Silva" autocomplete="off" style="width:100%"></div>
+            <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Função/Cargo</label><input class="anunc-form-inp" id="lead-funcao" placeholder="Ex: Síndico, Gerente..." autocomplete="off" style="width:100%"></div>
+          </div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">CNPJ (opcional — usado pra preencher o contrato depois)</label><input class="anunc-form-inp" id="lead-cnpj" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off" oninput="leadMaskCNPJ(this)" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Produto de interesse</label><div id="lead-produto-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">De onde veio esse lead?</label><select class="anunc-form-inp" id="lead-origem" style="width:100%"></select></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -6109,6 +6149,10 @@ function showOpPanel(name, btn){
   if(target) target.classList.add('active');
   document.querySelectorAll('#page-operacional .hub-tab').forEach(t=>t.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  if(name==='elevador'){
+    // Refaz a lista de clientes do CRM sempre que abre a aba (o iframe pode ter carregado antes dos dados chegarem do Sheets)
+    try{ const fe=document.getElementById('frame-elevador'); if(fe&&fe.contentWindow&&fe.contentWindow.eCarregarClientesCRM) fe.contentWindow.eCarregarClientesCRM(); }catch(e){}
+  }
   window.scrollTo(0,0);
 }
 
@@ -6276,7 +6320,7 @@ let relAjustes={ov:{},man:[]}; // relatório Mercadão: ov=valores editados por 
 let pessoalRecId=1, pessoalDespId=1;
 
 // ── LEADS / CRM ───────────────────────────────────────────────────────────
-// leads = [{id, nome, tel, produto:modId, origem, valor, lembrete:'YYYY-MM-DD', obs, estagio, historico:[{data,texto}], itemCriado, calEventId, criado:'YYYY-MM-DD'}]
+// leads = [{id, nome, tel, responsavel, funcao, produto:modId, origem, valor, lembrete:'YYYY-MM-DD'|'YYYY-MM-DDTHH:mm', obs, estagio, historico:[{data,texto}], itemCriado, calEventId, criado:'YYYY-MM-DD'}]
 const LEAD_STAGES=[
   {id:'novo',       label:'Novo',        color:'#2563EB'},
   {id:'contatado',  label:'Contatado',   color:'#D97706'},
@@ -6288,6 +6332,17 @@ const LEAD_ORIGENS=['Indicação','Consultor Vaapty','Prospecção ativa','Insta
 let leads=[];
 let leadNextId=1;
 let curLeadId=null;
+// clientesInfo[modId][item] = {cnpj,fantasia,responsavel,cargo,tel} — alimenta o auto-preenchimento dos contratos
+// var (não let): script dos contratos (dentro de iframe) lê via window.parent.clientesInfo — só "var" vira propriedade de window
+var clientesInfo={};
+function leadMaskCNPJ(el){
+  let v=el.value.replace(/\D/g,'').slice(0,14);
+  v=v.replace(/(\d{2})(\d)/,'$1.$2');
+  v=v.replace(/(\d{3})(\d)/,'$1.$2');
+  v=v.replace(/(\d{3})(\d)/,'$1/$2');
+  v=v.replace(/(\d{4})(\d)/,'$1-$2');
+  el.value=v;
+}
 
 // Valor efetivo do item no mês: cada mês é INDEPENDENTE.
 // valor = base do lançamento (vale para todos os meses não editados).
@@ -9161,6 +9216,7 @@ function leadCardHtml(l){
   return `<div class="lead-card${overdue?' overdue':''}" draggable="true" ondragstart="leadCardDragStart(event,${l.id})" ondragend="leadCardDragEnd(event)" onclick="if(!event.target.closest('select,a')) openLeadModal('edit',${l.id})">
     ${m?`<span class="lead-card-tag" style="background:${m.color}22;color:${m.color}">${m.icon} ${m.label.split('—')[0].trim()}</span>`:''}
     <div class="lead-card-nome">${l.nome}</div>
+    ${l.responsavel?`<div style="font-size:10.5px;color:var(--muted);margin-top:-1px">👤 ${l.responsavel}${l.funcao?' · '+l.funcao:''}</div>`:''}
     ${l.origem?`<div style="font-size:9.5px;color:var(--hint);margin-top:-2px;margin-bottom:2px">via ${l.origem}</div>`:''}
     ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês</div>`:''}
     ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${leadFmtLembrete(l)}${l.calEventId?' <span title="Sincronizado com o Google Agenda">📅</span>':''}</div>`:''}
@@ -9208,6 +9264,8 @@ function leadFecharCriarUnidade(l){
     rec[m.id][nome]={valor:l.valor||0,inicio:'',meses:12};
   }
   l.itemCriado=nome;
+  if(!clientesInfo[m.id]) clientesInfo[m.id]={};
+  clientesInfo[m.id][nome]={cnpj:l.cnpj||'', fantasia:l.nome||'', responsavel:l.responsavel||'', cargo:l.funcao||'', tel:l.tel||''};
   leadToast(`✅ "${l.nome}" fechado! Unidade criada em ${m.label.split('—')[0].trim()}.`);
 }
 
@@ -9221,6 +9279,7 @@ async function leadSyncCalendar(l){
       const m=leadModPor(l.produto);
       const title=`📞 Follow-up: ${l.nome}${m?` (${m.label.split('—')[0].trim()})`:''}`;
       const descPartes=[];
+      if(l.responsavel) descPartes.push('Responsável: '+l.responsavel+(l.funcao?' ('+l.funcao+')':''));
       if(l.tel) descPartes.push('WhatsApp: '+l.tel);
       if(l.valor) descPartes.push('Valor estimado: '+f(l.valor)+'/mês');
       if(l.obs) descPartes.push(l.obs);
@@ -9251,6 +9310,9 @@ function openLeadModal(mode,id){
   g('lead-modal-title').textContent = mode==='edit' ? 'Editar lead' : 'Novo lead';
   g('lead-nome').value = l ? l.nome : '';
   g('lead-tel').value = l ? (l.tel||'') : '';
+  g('lead-responsavel').value = l ? (l.responsavel||'') : '';
+  g('lead-cnpj').value = l ? (l.cnpj||'') : '';
+  g('lead-funcao').value = l ? (l.funcao||'') : '';
   g('lead-origem').value = l ? (l.origem||'') : '';
   g('lead-valor').value = l && l.valor ? l.valor : '';
   g('lead-lembrete').value = l ? leadNormalizaLembreteInput(l.lembrete) : '';
@@ -9297,6 +9359,9 @@ function saveLeadModal(){
   if(!nome){ g('lead-nome').focus(); return; }
   if(!_leadProdutoSel){ leadToast('⚠ Escolha o produto de interesse'); return; }
   const tel=g('lead-tel').value.trim();
+  const responsavel=g('lead-responsavel').value.trim();
+  const funcao=g('lead-funcao').value.trim();
+  const cnpj=g('lead-cnpj').value.trim();
   const origem=g('lead-origem').value||'';
   const valor=parseFloat(g('lead-valor').value)||0;
   const lembrete=g('lead-lembrete').value||'';
@@ -9304,9 +9369,9 @@ function saveLeadModal(){
   let l;
   if(curLeadId!=null){
     l=leads.find(x=>x.id===curLeadId);
-    if(l){ l.nome=nome; l.tel=tel; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
+    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
   } else {
-    l={id:leadNextId++, nome, tel, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
+    l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
     leads.push(l);
   }
   closeLeadModal();
@@ -9359,7 +9424,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport, relAjustes, leads,
+    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -9458,6 +9523,7 @@ function deserializeState(obj){
     leads=obj.leads;
     leadNextId=leads.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
   }
+  if(obj.clientesInfo && typeof obj.clientesInfo==='object') clientesInfo=obj.clientesInfo;
 }
 
 // Salva via Apps Script (POST)
