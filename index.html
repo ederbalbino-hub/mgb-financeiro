@@ -2953,13 +2953,10 @@ function eGerar(){
     '</div>';
   salvarSheets(num, meses, total, inicio, fimDate);
   try{
-    if(window.parent &amp;&amp; window.parent.mgbCriarUnidadeModulo &amp;&amp; nome){
-      window.parent.mgbCriarUnidadeModulo('elev', nome, {
-        valor: mensal,
-        inicio: inicio ? inicio.slice(0,7) : undefined,
-        meses: meses,
-        cliente: { cnpj: doc, fantasia: nome, responsavel: egv('e-resp'), cargo: egv('e-cargo'), tel: egv('e-tel') }
-      });
+    if(window.parent &amp;&amp; window.parent.mgbCriarAnunciante &amp;&amp; nome &amp;&amp; sel.length){
+      window.parent.mgbCriarAnunciante(nome, mensal, meses, inicio ? inicio.slice(0,7) : undefined, sel.map(c=>c.nome),
+        { cnpj: doc, fantasia: nome, responsavel: egv('e-resp'), cargo: egv('e-cargo'), tel: egv('e-tel') }
+      );
     }
   }catch(err){}
   eSwitch('contrato');
@@ -9887,6 +9884,23 @@ window.mgbCriarUnidadeModulo=function(modId,nome,opts){
     clientesInfo[modId][nome]=opts.cliente;
   }
   try{ if(curMod===modId) buildAll(); }catch(e){}
+  scheduleSave();
+  return nome;
+};
+
+// Cria um anunciante — usado pelo Contrato Elevador (a receita do módulo Elevadores
+// vem da soma dos anunciantes ativos em cada tela/condomínio, não de uma unidade por
+// cliente — ver syncAnuncReceita). "telas" são os condomínios já existentes escolhidos
+// no contrato, nunca uma unidade nova.
+window.mgbCriarAnunciante=function(nome,valor,meses,inicio,telas,cliente){
+  if(!nome || !valor || !telas || !telas.length) return null;
+  anunciantes.push({id:anuncId++, nome, valor, meses:meses||1, inicio:inicio||new Date().toISOString().slice(0,7), telas});
+  if(cliente){
+    if(!clientesInfo['elev']) clientesInfo['elev']={};
+    clientesInfo['elev'][nome]=cliente;
+  }
+  syncAnuncReceita();
+  try{ if(curMod==='elev') buildAll(); }catch(e){}
   scheduleSave();
   return nome;
 };
