@@ -2952,6 +2952,16 @@ function eGerar(){
       '</div>'+
     '</div>';
   salvarSheets(num, meses, total, inicio, fimDate);
+  try{
+    if(window.parent &amp;&amp; window.parent.mgbCriarUnidadeModulo &amp;&amp; nome){
+      window.parent.mgbCriarUnidadeModulo('elev', nome, {
+        valor: mensal,
+        inicio: inicio ? inicio.slice(0,7) : undefined,
+        meses: meses,
+        cliente: { cnpj: doc, fantasia: nome, responsavel: egv('e-resp'), cargo: egv('e-cargo'), tel: egv('e-tel') }
+      });
+    }
+  }catch(err){}
   eSwitch('contrato');
 }
 function ePrintContract(){
