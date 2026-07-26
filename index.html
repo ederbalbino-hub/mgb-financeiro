@@ -2725,12 +2725,14 @@ async function eBuscarCNPJ(cnpj){
     try{
       const d=await api();
       const set=(id,v)=>{const el=document.getElementById(id);if(el&amp;&amp;v)el.value=v;};
-      set('e-razao',d.nome);set('e-fantasia',d.fantasia);set('e-logradouro',d.logradouro);
+      set('e-razao',d.nome);
+      if(!document.getElementById('e-fantasia').value) set('e-fantasia',d.fantasia);
+      set('e-logradouro',d.logradouro);
       set('e-numero',d.numero);set('e-complemento',d.complemento);set('e-bairro',d.bairro);set('e-cidade',d.cidade);
       if(d.uf)document.getElementById('e-estado').value=d.uf;
       if(d.cep)document.getElementById('e-cep').value=d.cep.replace(/(\d{5})(\d{3})/,'$1-$2');
-      if(d.tel){const el=document.getElementById('e-tel');el.value=d.tel;eMaskPhone(el);}
-      if(d.email)set('e-email',d.email.toLowerCase());
+      if(d.tel &amp;&amp; !document.getElementById('e-tel').value){const el=document.getElementById('e-tel');el.value=d.tel;eMaskPhone(el);}
+      if(d.email &amp;&amp; !document.getElementById('e-email').value)set('e-email',d.email.toLowerCase());
       inp.classList.add('success');hint.textContent='✅ Dados preenchidos!';hint.style.color='#059669';return;
     }catch{continue;}
   }
@@ -3086,6 +3088,10 @@ function eSelecionarClienteCRM(nome){
   if(info.responsavel) document.getElementById('e-resp').value = info.responsavel;
   if(info.cargo) document.getElementById('e-cargo').value = info.cargo;
   if(info.tel) document.getElementById('e-tel').value = info.tel;
+  if(info.cnpj){
+    var digitos = info.cnpj.replace(/\D/g,'');
+    if(digitos.length===14) eBuscarCNPJ(digitos);
+  }
 }
 
 // INIT
@@ -3440,8 +3446,8 @@ async function vBuscarCNPJ(cnpj){
       set('v-bairro',d.bairro);set('v-cidade',d.cidade);
       if(d.uf)document.getElementById('v-estado').value=d.uf;
       if(d.cep)document.getElementById('v-cep').value=d.cep.replace(/(\d{5})(\d{3})/,'$1-$2');
-      if(d.tel){const el=document.getElementById('v-tel');el.value=d.tel;vMaskPhone(el);}
-      if(d.email)set('v-email',d.email.toLowerCase());
+      if(d.tel &amp;&amp; !document.getElementById('v-tel').value){const el=document.getElementById('v-tel');el.value=d.tel;vMaskPhone(el);}
+      if(d.email &amp;&amp; !document.getElementById('v-email').value)set('v-email',d.email.toLowerCase());
       inp.classList.add('success');hint.textContent='✅ Dados preenchidos!';hint.style.color='#059669';return;
     }catch(err){continue;}
   }
@@ -3643,6 +3649,10 @@ function vSelecionarClienteCRM(nome){
   if(info.responsavel) document.getElementById('v-resp').value = info.responsavel;
   if(info.cargo) document.getElementById('v-cargo').value = info.cargo;
   if(info.tel){ const el=document.getElementById('v-tel'); el.value=info.tel; vMaskPhone(el); }
+  if(info.cnpj){
+    const digitos = info.cnpj.replace(/\D/g,'');
+    if(digitos.length===14) vBuscarCNPJ(digitos);
+  }
 }
 
 // INIT
