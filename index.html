@@ -1316,8 +1316,8 @@ body{-webkit-font-smoothing:antialiased}
     <div class="page-hdr">
       <div><div class="page-title" id="pg-title">—</div><div class="page-sub" id="pg-sub">—</div></div>
       <div style="display:flex;align-items:center;gap:8px">
-        <select id="mod-mes-sel" onchange="buildKPIs();buildCharts();buildAnunciantes();buildTable()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
-        <select id="mod-ano-sel" onchange="buildKPIs();buildCharts();buildAnunciantes();buildTable()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <select id="mod-mes-sel" onchange="buildKPIs();buildCharts();buildAnunciantes();buildTable();buildReceitas()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <select id="mod-ano-sel" onchange="buildKPIs();buildCharts();buildAnunciantes();buildTable();buildReceitas()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
         <div class="date-chip" id="dt"></div>
       </div>
     </div>
@@ -7194,8 +7194,36 @@ const items=()=>mod().items;
 const totalOf=(modId,item)=>(db[modId][item]||[]).reduce((a,r)=>a+r.q*r.u,0);
 const totalMod=modId=>Object.keys(db[modId]).reduce((a,i)=>a+totalOf(modId,i),0);
 const allCur=()=>items().flatMap(i=>db[curMod][i]);
-const recOf=(modId,item)=>((rec[modId]||{})[item]||{}).valor||0;
+const recOf=(modId,item)=>{
+  if(modId==='taroba'){
+    const mSel=g('mod-mes-sel'), aSel=g('mod-ano-sel');
+    const ano=parseInt(aSel&&aSel.value!==''?aSel.value:new Date().getFullYear());
+    const mes=parseInt(mSel&&mSel.value!==''?mSel.value:new Date().getMonth());
+    return recTarobaGetMes(item,ano,mes);
+  }
+  return ((rec[modId]||{})[item]||{}).valor||0;
+};
 const recObj=(modId,item)=>(rec[modId]||{})[item]||{valor:0,inicio:'',meses:12};
+// Tarobá: receita é digitada mês a mês (não é regra recorrente) — rec['taroba'][item] vira um mapa {'YYYY-MM':valor}.
+// Dados antigos no formato {valor,inicio,meses} são migrados na hora (lazy), preservando o valor no mês de início que já estava configurado.
+function ymKey(ano,mes){ return ano+'-'+String(mes+1).padStart(2,'0'); }
+function tarobaRecMap(item){
+  if(!rec['taroba']) rec['taroba']={};
+  let v=rec['taroba'][item];
+  if(v && typeof v==='object' && 'valor' in v && 'inicio' in v){
+    const migrado={};
+    if(v.valor && v.inicio) migrado[v.inicio]=v.valor;
+    v=migrado;
+    rec['taroba'][item]=v;
+  }
+  if(!v || typeof v!=='object'){ v={}; rec['taroba'][item]=v; }
+  return v;
+}
+function recTarobaGetMes(item,ano,mes){ return tarobaRecMap(item)[ymKey(ano,mes)]||0; }
+function recTarobaSetMes(item,ano,mes,valor){
+  const map=tarobaRecMap(item), key=ymKey(ano,mes);
+  if(valor>0) map[key]=valor; else delete map[key];
+}
 // Receita por tela do módulo Elevadores num mês específico — vem dos anunciantes
 function anuncRecByTelaMes(ano,mes){
   const result={};
@@ -7223,6 +7251,10 @@ function recOfMes(modId,item,ano,mes){
   // Elevadores: receita vem dos anunciantes (anunciante tem inicio/meses próprios)
   if(modId==='elev'){
     return anuncRecByTelaMes(ano,mes)[item]||0;
+  }
+  // Tarobá: valor digitado mês a mês, sem repetição automática
+  if(modId==='taroba'){
+    return recTarobaGetMes(item,ano,mes);
   }
   const ro=recObj(modId,item);
   if(!ro.valor||!ro.inicio) return 0;
@@ -8964,16 +8996,23 @@ function buildItemTabs(){
 // ── RECEITAS ──────────────────────────────────────────────────────────────
 function buildReceitas(){
   const grid=g('rec-grid');
+  const isTaroba=curMod==='taroba';
+  const mSel=g('mod-mes-sel'), aSel=g('mod-ano-sel');
+  const selAno=parseInt(aSel&&aSel.value!==''?aSel.value:new Date().getFullYear());
+  const selMes=parseInt(mSel&&mSel.value!==''?mSel.value:new Date().getMonth());
+  const mesKey=curMod+'|'+selAno+'-'+selMes;
   const existingItems=grid.querySelectorAll('.rec-item');
   const needsRebuild = existingItems.length !== items().length ||
-    [...existingItems].some((el,i)=>el.dataset.moditem !== curMod+'|'+items()[i]);
+    [...existingItems].some((el,i)=>el.dataset.moditem !== curMod+'|'+items()[i]) ||
+    (isTaroba && grid.dataset.mesKey !== mesKey);
 
   if(needsRebuild){
+    grid.dataset.mesKey=mesKey;
     const isElev=curMod==='elev';
     grid.innerHTML=items().map(item=>{
       const custo=totalOf(curMod,item);
-      const ro=recObj(curMod,item);
-      const mesesPb=ro.valor>0?custo/ro.valor:null;
+      const valorMes=isTaroba?recTarobaGetMes(item,selAno,selMes):recObj(curMod,item).valor;
+      const mesesPb=valorMes>0?custo/valorMes:null;
       const cls=mesesPb?pbClass(mesesPb):'pb-neu';
       const pbStr=mesesPb?mesesPb.toFixed(1)+' meses':'sem receita';
       const safeItem=item.replace(/"/g,'&quot;');
@@ -8982,12 +9021,25 @@ function buildReceitas(){
           <div class="rec-name" title="${item}">${item}</div>
           <div style="margin-bottom:6px">
             <div class="rec-field-lbl" style="color:var(--green)">💰 Via anunciantes</div>
-            <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:${ro.valor?'var(--green)':'var(--hint)'};padding:5px 0">${ro.valor?f(ro.valor)+'/mês':'—'}</div>
+            <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:${valorMes?'var(--green)':'var(--hint)'};padding:5px 0">${valorMes?f(valorMes)+'/mês':'—'}</div>
           </div>
           <div class="rec-custo" style="font-size:10px;color:var(--hint)">Despesa: ${f(custo)}</div>
           <div class="rec-payback ${cls}" style="margin-top:3px">${pbStr}</div>
         </div>`;
       }
+      if(isTaroba){
+        return `<div class="rec-item" data-moditem="${curMod}|${item}">
+          <div class="rec-name" title="${item}">${item}</div>
+          <div style="margin-bottom:7px">
+            <div class="rec-field-lbl" style="color:var(--green)">💰 Valor de ${MESES[selMes]}/${selAno} (R$)</div>
+            <input class="rec-input-taroba" type="number" step="0.01" min="0" placeholder="ainda não lançado — digite o valor deste mês"
+              value="${valorMes||''}" data-item="${safeItem}">
+          </div>
+          <div class="rec-custo" style="font-size:10px;color:var(--hint)">Despesa: ${f(custo)}</div>
+          <div class="rec-payback ${cls}" style="margin-top:3px">${pbStr}</div>
+        </div>`;
+      }
+      const ro=recObj(curMod,item);
       return `<div class="rec-item" data-moditem="${curMod}|${item}">
         <div class="rec-name" title="${item}">${item}</div>
         <div style="margin-bottom:7px">
@@ -9020,11 +9072,15 @@ function buildReceitas(){
       input.addEventListener('input', ()=>setRec(input));
       input.addEventListener('change', ()=>setRec(input));
     });
+    grid.querySelectorAll('.rec-input-taroba').forEach(input=>{
+      input.addEventListener('input', ()=>setRecTaroba(input));
+      input.addEventListener('change', ()=>setRecTaroba(input));
+    });
   } else {
     existingItems.forEach((el,i)=>{
       const item=items()[i];
-      const custo=totalOf(curMod,item),ro=recObj(curMod,item);
-      const mesesPb=ro.valor>0?custo/ro.valor:null;
+      const custo=totalOf(curMod,item),valorMes=recOf(curMod,item);
+      const mesesPb=valorMes>0?custo/valorMes:null;
       const cls=mesesPb?pbClass(mesesPb):'pb-neu';
       const pbStr=mesesPb?mesesPb.toFixed(1)+' meses':'sem receita';
       el.querySelector('.rec-custo').textContent=`Despesa: ${f(custo)}`;
@@ -9041,6 +9097,18 @@ function setRec(input){
   if(field==='meses') rec[curMod][item][field]=parseInt(input.value)||12;
   else if(field==='valor') rec[curMod][item][field]=parseFloat(input.value)||0;
   else rec[curMod][item][field]=input.value;
+  syncFinanceiro();
+  buildReceitas();
+  buildPayback();buildSidebar();buildKPIs();
+  if(curPage==='financeiro') buildFinDashboard();
+  scheduleSave();
+}
+function setRecTaroba(input){
+  const item=input.dataset.item;
+  const mSel=g('mod-mes-sel'), aSel=g('mod-ano-sel');
+  const ano=parseInt(aSel&&aSel.value!==''?aSel.value:new Date().getFullYear());
+  const mes=parseInt(mSel&&mSel.value!==''?mSel.value:new Date().getMonth());
+  recTarobaSetMes(item,ano,mes,parseFloat(input.value)||0);
   syncFinanceiro();
   buildReceitas();
   buildPayback();buildSidebar();buildKPIs();
