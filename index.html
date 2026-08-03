@@ -9099,7 +9099,7 @@ function setRec(input){
   else rec[curMod][item][field]=input.value;
   syncFinanceiro();
   buildReceitas();
-  buildPayback();buildSidebar();buildKPIs();
+  buildPayback();buildSidebar();buildKPIs();buildCharts();
   if(curPage==='financeiro') buildFinDashboard();
   scheduleSave();
 }
@@ -9121,7 +9121,7 @@ function setRecTaroba(input,isFinal){
   }
   syncFinanceiro();
   buildReceitas();
-  buildPayback();buildSidebar();buildKPIs();
+  buildPayback();buildSidebar();buildKPIs();buildCharts();
   if(curPage==='financeiro') buildFinDashboard();
   scheduleSave();
 }
