@@ -6029,20 +6029,21 @@ function copiarSpot() {
     <!-- ══════ ETIQUETAS (box) ══════ -->
     <div id="ferr-etq" style="display:none">
       <style>
-        .mgb-etq{width:150mm;height:100mm;box-sizing:border-box;padding:7mm 8mm;display:flex;gap:6mm;font-family:'DM Sans',Arial,sans-serif;background:#fff;position:relative;overflow:hidden}
+        .mgb-etq,.mgb-etq *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+        .mgb-etq{width:150mm;height:90mm;box-sizing:border-box;padding:6mm 8mm;display:flex;gap:6mm;font-family:'DM Sans',Arial,sans-serif;background:#fff;position:relative;overflow:hidden}
         .mgb-etq:before{content:'';position:absolute;top:0;left:0;right:0;height:3mm;background:linear-gradient(90deg,#6C55DB,#D6367F)}
-        .me-left{flex:1;display:flex;flex-direction:column;padding-top:4mm;min-width:0}
-        .me-right{width:46mm;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:4mm;text-align:center}
-        .me-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15pt;color:#2A1760;margin-bottom:4mm}
+        .me-left{flex:1;display:flex;flex-direction:column;padding-top:3mm;min-width:0}
+        .me-right{width:46mm;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:3mm;text-align:center}
+        .me-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15pt;color:#2A1760;margin-bottom:3mm}
         .me-logo span{color:#D6367F}
-        .me-fields{display:flex;flex-direction:column;gap:3.5mm;margin-bottom:4mm}
+        .me-fields{display:flex;flex-direction:column;gap:3mm;margin-bottom:3mm}
         .me-flabel{font-size:7pt;font-weight:700;letter-spacing:1.2px;color:#8A7FA6;text-transform:uppercase;margin-bottom:1.5mm}
         .me-fline{border-bottom:.6mm dashed #C9BFE0;height:5mm;width:72mm}
         .me-fnum{font-family:'Syne',sans-serif;font-weight:800;font-size:16pt;color:#6C55DB}
         .me-qrbox{background:#fff;border:1px solid #E4DDF1;border-radius:3mm;padding:2.5mm;box-shadow:0 1mm 3mm rgba(108,85,219,.12)}
         .me-qrbox img{width:34mm;height:34mm;display:block}
         .me-qrcap{font-size:8pt;color:#54486B;margin-top:3mm;line-height:1.4}
-        #f-etq-prevwrap{width:425px;height:283px;overflow:hidden;border-radius:10px;box-shadow:0 8px 26px rgba(108,85,219,.18);border:1px solid var(--border)}
+        #f-etq-prevwrap{width:425px;height:255px;overflow:hidden;border-radius:10px;box-shadow:0 8px 26px rgba(108,85,219,.18);border:1px solid var(--border)}
         #f-etq-prevwrap .mgb-etq{transform:scale(.75);transform-origin:top left}
         .me-inst{font-size:8pt;color:#241A38;line-height:1.4;background:rgba(108,85,219,.08);border:1px dashed #C9BFE0;border-radius:2mm;padding:2.5mm 3mm;margin-bottom:4mm;max-width:82mm}
         .me-inst b{color:#6C55DB}
@@ -6052,7 +6053,7 @@ function copiarSpot() {
       </style>
       <div class="ferr-grid">
         <div class="ferr-card">
-          <div class="ferr-t">🏷️ Etiqueta do box (15×10cm)</div>
+          <div class="ferr-t">🏷️ Etiqueta do box (15×9cm)</div>
           <div class="ferr-d">Pra colar no box na hora da entrega — QR do vídeo de instalação, franqueado, endereço pra digitar na instalação, patrimônio (sigla MGBTVV) e mensagem de agradecimento.</div>
           <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Link do vídeo de instalação (QR)</label>
             <input id="f-etq-video" class="ferr-in" placeholder="https://..." oninput="fEtqPreview()"></div>
@@ -6065,6 +6066,7 @@ function copiarSpot() {
               <input id="f-etq-pat" class="ferr-in" oninput="fEtqPreview()"></div>
           </div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Deixando o Player em branco, a etiqueta imprime a linha pra você preencher à mão na instalação.</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">⚠️ Na janela de impressão, marque a opção <b>"Gráficos de segundo plano" / "Background graphics"</b> (em "Mais configurações") — senão o degradê e as cores de fundo somem no papel.</div>
           <button onclick="fEtqGerar()" class="ferr-btn">🖨️ Gerar e imprimir etiqueta</button>
           <div id="f-etq-info" class="ferr-info"></div>
         </div>
@@ -6556,7 +6558,7 @@ function fEtqGerar(){
   w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Etiqueta MGB — Patrimônio '+fEtqPatCode(patRaw)+'</title>'
     +'<link rel="preconnect" href="https://fonts.googleapis.com">'
     +'<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">'
-    +'<style>'+styleTxt+'@page{size:150mm 100mm;margin:0}body{margin:0}</style>'
+    +'<style>'+styleTxt+'@page{size:150mm 90mm;margin:0}body{margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style>'
     +'</head><body><div class="mgb-etq">'+inner+'</div></body></html>');
   w.document.close();
   const doPrint=()=>{ try{ w.focus(); w.print(); }catch(e){} };
