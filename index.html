@@ -1316,8 +1316,8 @@ body{-webkit-font-smoothing:antialiased}
     <div class="page-hdr">
       <div><div class="page-title" id="pg-title">—</div><div class="page-sub" id="pg-sub">—</div></div>
       <div style="display:flex;align-items:center;gap:8px">
-        <select id="mod-mes-sel" onchange="buildKPIs();buildCharts();buildAnunciantes();buildTable();buildReceitas()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
-        <select id="mod-ano-sel" onchange="buildKPIs();buildCharts();buildAnunciantes();buildTable();buildReceitas()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <select id="mod-mes-sel" onchange="buildKPIs();buildCharts();buildAnunciantes();buildTable();buildReceitas();buildPayback()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
+        <select id="mod-ano-sel" onchange="buildKPIs();buildCharts();buildAnunciantes();buildTable();buildReceitas();buildPayback()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
         <div class="date-chip" id="dt"></div>
       </div>
     </div>
@@ -9073,8 +9073,8 @@ function buildReceitas(){
       input.addEventListener('change', ()=>setRec(input));
     });
     grid.querySelectorAll('.rec-input-taroba').forEach(input=>{
-      input.addEventListener('input', ()=>setRecTaroba(input));
-      input.addEventListener('change', ()=>setRecTaroba(input));
+      input.addEventListener('input', ()=>setRecTaroba(input,false));
+      input.addEventListener('blur', ()=>setRecTaroba(input,true));
     });
   } else {
     existingItems.forEach((el,i)=>{
@@ -9103,12 +9103,22 @@ function setRec(input){
   if(curPage==='financeiro') buildFinDashboard();
   scheduleSave();
 }
-function setRecTaroba(input){
+function setRecTaroba(input,isFinal){
   const item=input.dataset.item;
   const mSel=g('mod-mes-sel'), aSel=g('mod-ano-sel');
   const ano=parseInt(aSel&&aSel.value!==''?aSel.value:new Date().getFullYear());
   const mes=parseInt(mSel&&mSel.value!==''?mSel.value:new Date().getMonth());
-  recTarobaSetMes(item,ano,mes,parseFloat(input.value)||0);
+  const raw=input.value.trim();
+  if(raw===''){
+    // Campo vazio ENQUANTO digita (ex: selecionou tudo pra trocar o número) NÃO apaga o valor salvo —
+    // só apaga de verdade se o campo for deixado vazio de propósito ao sair dele (blur).
+    if(!isFinal) return;
+    recTarobaSetMes(item,ano,mes,0);
+  } else {
+    const val=parseFloat(raw.replace(',','.'));
+    if(isNaN(val)) return;
+    recTarobaSetMes(item,ano,mes,val);
+  }
   syncFinanceiro();
   buildReceitas();
   buildPayback();buildSidebar();buildKPIs();
