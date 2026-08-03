@@ -6047,20 +6047,24 @@ function copiarSpot() {
         .me-inst{font-size:8pt;color:#241A38;line-height:1.4;background:rgba(108,85,219,.08);border:1px dashed #C9BFE0;border-radius:2mm;padding:2.5mm 3mm;margin-bottom:4mm;max-width:82mm}
         .me-inst b{color:#6C55DB}
         .me-fval{font-family:'Syne',sans-serif;font-weight:700;font-size:11pt;color:#241A38;min-height:5mm}
+        .me-thanks{font-size:8pt;color:#54486B;line-height:1.4;margin-top:auto;padding-top:3mm;border-top:1px dashed #E4DDF1;max-width:82mm}
+        .me-thanks b{color:#D6367F}
       </style>
       <div class="ferr-grid">
         <div class="ferr-card">
           <div class="ferr-t">🏷️ Etiqueta do box (15×10cm)</div>
-          <div class="ferr-d">Pra colar no box na hora da entrega — QR do vídeo de instalação, franqueado, endereço pra digitar na instalação e nº de patrimônio sequencial (sigla MGBTVV).</div>
+          <div class="ferr-d">Pra colar no box na hora da entrega — QR do vídeo de instalação, franqueado, endereço pra digitar na instalação, patrimônio (sigla MGBTVV) e mensagem de agradecimento.</div>
           <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Link do vídeo de instalação (QR)</label>
             <input id="f-etq-video" class="ferr-in" placeholder="https://..." oninput="fEtqPreview()"></div>
           <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nome do Franqueado</label>
             <input id="f-etq-franq" class="ferr-in" placeholder="Nome do franqueado" oninput="fEtqPreview()"></div>
-          <div style="display:flex;gap:8px;align-items:flex-end;margin:10px 0">
+          <div style="display:flex;gap:8px;margin:10px 0">
+            <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nº do Player (opcional)</label>
+              <input id="f-etq-player" class="ferr-in" placeholder="deixe em branco p/ preencher à mão" oninput="fEtqPreview()"></div>
             <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nº de patrimônio (após MGBTVV-)</label>
               <input id="f-etq-pat" class="ferr-in" oninput="fEtqPreview()"></div>
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">O campo "Player:" fica em branco na etiqueta — pra você preencher à mão na hora de instalar.</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Deixando o Player em branco, a etiqueta imprime a linha pra você preencher à mão na instalação.</div>
           <button onclick="fEtqGerar()" class="ferr-btn">🖨️ Gerar e imprimir etiqueta</button>
           <div id="f-etq-info" class="ferr-info"></div>
         </div>
@@ -6504,17 +6508,19 @@ function fEtqInit(){
   fEtqPreview();
 }
 function fEtqQrData(text){ try{ const qr=qrcode(0,'M'); qr.addData(text||' '); qr.make(); return qr.createDataURL(6,8); }catch(e){ return ''; } }
-function fEtqTemplate(pat, franq, qrUrl){
+function fEtqTemplate(pat, franq, player, qrUrl){
   const patCode = fEtqPatCode(pat);
-  const franqSafe = franq && String(franq).trim() ? String(franq).trim() : '—';
+  const franqSafe = franq && String(franq).trim() ? escH(franq.trim()) : '—';
+  const playerBlock = player && String(player).trim() ? '<div class="me-fval">'+escH(player.trim())+'</div>' : '<div class="me-fline"></div>';
   return '<div class="me-left">'
     +'<div class="me-logo">MGB <span>Mídia</span></div>'
     +'<div class="me-inst">📶 Quando solicitado no momento da instalação, digite:<br><b>'+ETQ_SITE+'</b></div>'
     +'<div class="me-fields">'
       +'<div><div class="me-flabel">Franqueado</div><div class="me-fval">'+franqSafe+'</div></div>'
-      +'<div><div class="me-flabel">Player</div><div class="me-fline"></div></div>'
+      +'<div><div class="me-flabel">Player</div>'+playerBlock+'</div>'
       +'<div><div class="me-flabel">Patrimônio nº</div><div class="me-fnum">'+patCode+'</div></div>'
     +'</div>'
+    +'<div class="me-thanks">🎉 Parabéns pela nova parceria! Obrigado por confiar na <b>MGB Mídia</b> — sua tela já faz parte da nossa rede.</div>'
   +'</div>'
   +'<div class="me-right">'
     +'<div class="me-qrbox"><img src="'+qrUrl+'"></div>'
@@ -6526,8 +6532,9 @@ function fEtqPreview(){
   const pat=patEl.value.trim() || fEtqNextNum();
   const video=document.getElementById('f-etq-video').value.trim();
   const franq=document.getElementById('f-etq-franq').value;
+  const player=document.getElementById('f-etq-player').value;
   const qrUrl=fEtqQrData(video || ('https://'+ETQ_SITE));
-  document.getElementById('f-etq-preview').innerHTML=fEtqTemplate(pat, franq, qrUrl);
+  document.getElementById('f-etq-preview').innerHTML=fEtqTemplate(pat, franq, player, qrUrl);
 }
 function fEtqGerar(){
   const video=document.getElementById('f-etq-video').value.trim();
@@ -6535,12 +6542,14 @@ function fEtqGerar(){
   const patInput=document.getElementById('f-etq-pat');
   const patRaw=patInput.value.trim() || String(fEtqNextNum());
   const franq=document.getElementById('f-etq-franq').value.trim();
+  const playerInput=document.getElementById('f-etq-player');
+  const player=playerInput.value.trim();
   localStorage.setItem(ETQ_VIDEO_KEY, video);
   if(franq) localStorage.setItem(ETQ_FRANQ_KEY, franq);
   const patNum=parseInt(patRaw,10), cur=parseInt(localStorage.getItem(ETQ_SEQ_KEY)||'0',10);
   if(!isNaN(patNum) && patNum>cur) localStorage.setItem(ETQ_SEQ_KEY, String(patNum));
   const qrUrl=fEtqQrData(video);
-  const inner=fEtqTemplate(patRaw, franq, qrUrl);
+  const inner=fEtqTemplate(patRaw, franq, player, qrUrl);
   const styleTxt=document.querySelector('#ferr-etq style').innerHTML;
   const w=window.open('', '_blank', 'width=760,height=560');
   if(!w){ alert('Permita pop-ups pra imprimir a etiqueta.'); return; }
@@ -6554,6 +6563,7 @@ function fEtqGerar(){
   if(w.document.readyState==='complete') setTimeout(doPrint,350); else w.onload=()=>setTimeout(doPrint,350);
   const nextSuggest=(!isNaN(patNum)?patNum:cur)+1;
   patInput.value=nextSuggest;
+  playerInput.value='';
   fEtqPreview();
   const infoEl=document.getElementById('f-etq-info'); if(infoEl) infoEl.innerHTML='✓ Etiqueta enviada pra impressão — próximo número sugerido: '+nextSuggest;
 }
