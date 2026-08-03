@@ -6050,11 +6050,24 @@ function copiarSpot() {
         .me-fval{font-family:'Syne',sans-serif;font-weight:700;font-size:11pt;color:#241A38;min-height:5mm}
         .me-thanks{font-size:8pt;color:#54486B;line-height:1.4;margin-top:auto;padding-top:3mm;border-top:1px dashed #E4DDF1;max-width:82mm}
         .me-thanks b{color:#D6367F}
+        .mgb-cor,.mgb-cor *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+        .mgb-cor{width:150mm;height:90mm;box-sizing:border-box;padding:6mm 9mm;display:flex;flex-direction:column;font-family:'DM Sans',Arial,sans-serif;background:#fff;position:relative;overflow:hidden}
+        .mgb-cor:before{content:'';position:absolute;top:0;left:0;right:0;height:3mm;background:linear-gradient(90deg,#6C55DB,#D6367F)}
+        .mc-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:11pt;color:#2A1760;margin:5mm 0}
+        .mc-logo span{color:#D6367F}
+        .mc-block{margin-bottom:5mm}
+        .mc-label{font-size:7pt;font-weight:700;letter-spacing:1.2px;color:#8A7FA6;text-transform:uppercase;margin-bottom:1.5mm}
+        .mc-remet{font-size:9pt;color:#54486B;line-height:1.5}
+        .mc-dest{font-size:12pt;color:#241A38;line-height:1.55;font-weight:600}
+        .mc-dest b{font-family:'Syne',sans-serif;font-weight:800;font-size:14pt;color:#241A38;display:block;margin-bottom:1mm}
+        .mc-ref{margin-top:auto;font-size:7.5pt;color:#8A7FA6}
+        #f-cor-prevwrap{width:425px;height:255px;overflow:hidden;border-radius:10px;box-shadow:0 8px 26px rgba(108,85,219,.18);border:1px solid var(--border)}
+        #f-cor-prevwrap .mgb-cor{transform:scale(.75);transform-origin:top left}
       </style>
       <div class="ferr-grid">
         <div class="ferr-card">
           <div class="ferr-t">🏷️ Etiqueta do box (15×9cm)</div>
-          <div class="ferr-d">Pra colar no box na hora da entrega — QR do vídeo de instalação, franqueado, endereço pra digitar na instalação, patrimônio (sigla MGBTVV) e mensagem de agradecimento.</div>
+          <div class="ferr-d">Pra colar DENTRO do box na hora da entrega — QR do vídeo de instalação, franqueado, endereço pra digitar na instalação, patrimônio (sigla MGBTVV) e mensagem de agradecimento.</div>
           <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Link do vídeo de instalação (QR)</label>
             <input id="f-etq-video" class="ferr-in" placeholder="https://..." oninput="fEtqPreview()"></div>
           <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nome do Franqueado</label>
@@ -6063,7 +6076,7 @@ function copiarSpot() {
             <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nº do Player (opcional)</label>
               <input id="f-etq-player" class="ferr-in" placeholder="deixe em branco p/ preencher à mão" oninput="fEtqPreview()"></div>
             <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nº de patrimônio (após MGBTVV-)</label>
-              <input id="f-etq-pat" class="ferr-in" oninput="fEtqPreview()"></div>
+              <input id="f-etq-pat" class="ferr-in" oninput="fEtqPreview();fCorPreview()"></div>
           </div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Deixando o Player em branco, a etiqueta imprime a linha pra você preencher à mão na instalação.</div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">⚠️ Na janela de impressão, marque a opção <b>"Gráficos de segundo plano" / "Background graphics"</b> (em "Mais configurações") — senão o degradê e as cores de fundo somem no papel.</div>
@@ -6072,6 +6085,62 @@ function copiarSpot() {
         </div>
         <div class="ferr-card" style="display:flex;align-items:center;justify-content:center">
           <div id="f-etq-prevwrap"><div class="mgb-etq" id="f-etq-preview"></div></div>
+        </div>
+      </div>
+
+      <div class="ferr-grid" style="margin-top:14px">
+        <div class="ferr-card">
+          <div class="ferr-t">📮 Etiqueta de correio (15×9cm)</div>
+          <div class="ferr-d">Pra colar do LADO DE FORA da caixa, pro envio pelos Correios/transportadora — remetente e destinatário. Usa o mesmo nº de patrimônio de cima como referência.</div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:2px 0 6px">Remetente</div>
+          <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nome/Empresa</label>
+            <input id="f-cor-rem-nome" class="ferr-in" oninput="fCorPreview()"></div>
+          <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Endereço</label>
+            <input id="f-cor-rem-end" class="ferr-in" oninput="fCorPreview()"></div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Cidade/UF</label>
+              <input id="f-cor-rem-cid" class="ferr-in" oninput="fCorPreview()"></div>
+            <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">CEP</label>
+              <input id="f-cor-rem-cep" class="ferr-in" oninput="fCorPreview()"></div>
+          </div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:2px 0 6px">Destinatário</div>
+          <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nome</label>
+            <input id="f-cor-dest-nome" class="ferr-in" oninput="fCorPreview()"></div>
+          <div style="margin-bottom:6px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Endereço</label>
+            <input id="f-cor-dest-end" class="ferr-in" oninput="fCorPreview()"></div>
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Complemento</label>
+              <input id="f-cor-dest-comp" class="ferr-in" oninput="fCorPreview()"></div>
+            <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Bairro</label>
+              <input id="f-cor-dest-bairro" class="ferr-in" oninput="fCorPreview()"></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Cidade/UF</label>
+              <input id="f-cor-dest-cid" class="ferr-in" oninput="fCorPreview()"></div>
+            <div style="flex:1"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">CEP</label>
+              <input id="f-cor-dest-cep" class="ferr-in" oninput="fCorPreview()"></div>
+          </div>
+          <button onclick="fCorGerar()" class="ferr-btn">📮 Gerar e imprimir etiqueta de correio</button>
+          <div id="f-cor-info" class="ferr-info"></div>
+        </div>
+        <div class="ferr-card" style="display:flex;align-items:center;justify-content:center">
+          <div id="f-cor-prevwrap"><div class="mgb-cor" id="f-cor-preview"></div></div>
+        </div>
+      </div>
+
+      <div class="ferr-grid" style="grid-template-columns:1fr;margin-top:14px">
+        <div class="ferr-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <div class="ferr-t" style="margin-bottom:0">📋 Etiquetas geradas</div>
+            <button onclick="etqExportCSV()" class="badd">⬇ Exportar CSV</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Data</th><th>Franqueado</th><th>Patrimônio</th><th>Destinatário</th><th></th></tr></thead>
+              <tbody id="etq-list-body"></tbody>
+            </table>
+          </div>
+          <div id="etq-list-empty" style="font-size:11px;color:var(--muted);padding:14px 0;text-align:center;display:none">Nenhuma etiqueta gerada ainda.</div>
         </div>
       </div>
     </div>
@@ -6508,6 +6577,8 @@ function fEtqInit(){
   const fEl=document.getElementById('f-etq-franq'); if(fEl && !fEl.value) fEl.value=localStorage.getItem(ETQ_FRANQ_KEY)||'';
   const pEl=document.getElementById('f-etq-pat'); if(pEl && !pEl.value) pEl.value=fEtqNextNum();
   fEtqPreview();
+  fCorInit();
+  buildEtiquetasList();
 }
 function fEtqQrData(text){ try{ const qr=qrcode(0,'M'); qr.addData(text||' '); qr.make(); return qr.createDataURL(6,8); }catch(e){ return ''; } }
 function fEtqTemplate(pat, franq, player, qrUrl){
@@ -6538,6 +6609,24 @@ function fEtqPreview(){
   const qrUrl=fEtqQrData(video || ('https://'+ETQ_SITE));
   document.getElementById('f-etq-preview').innerHTML=fEtqTemplate(pat, franq, player, qrUrl);
 }
+function fEtqAbrirImpressao(wrapClass, inner, titulo){
+  const styleTxt=document.querySelector('#ferr-etq style').innerHTML;
+  const w=window.open('', '_blank', 'width=760,height=560');
+  if(!w){ alert('Permita pop-ups pra imprimir a etiqueta.'); return; }
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+titulo+'</title>'
+    +'<link rel="preconnect" href="https://fonts.googleapis.com">'
+    +'<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">'
+    +'<style>'+styleTxt+'@page{size:150mm 90mm;margin:0}body{margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style>'
+    +'</head><body><div class="'+wrapClass+'">'+inner+'</div></body></html>');
+  w.document.close();
+  const doPrint=()=>{ try{ w.focus(); w.print(); }catch(e){} };
+  if(w.document.readyState==='complete') setTimeout(doPrint,350); else w.onload=()=>setTimeout(doPrint,350);
+}
+function fEtqImprimirInterna(patRaw, franq, player, video){
+  const qrUrl=fEtqQrData(video);
+  const inner=fEtqTemplate(patRaw, franq, player, qrUrl);
+  fEtqAbrirImpressao('mgb-etq', inner, 'Etiqueta MGB — Patrimônio '+fEtqPatCode(patRaw));
+}
 function fEtqGerar(){
   const video=document.getElementById('f-etq-video').value.trim();
   if(!video){ alert('Cole o link do vídeo de instalação.'); return; }
@@ -6550,24 +6639,182 @@ function fEtqGerar(){
   if(franq) localStorage.setItem(ETQ_FRANQ_KEY, franq);
   const patNum=parseInt(patRaw,10), cur=parseInt(localStorage.getItem(ETQ_SEQ_KEY)||'0',10);
   if(!isNaN(patNum) && patNum>cur) localStorage.setItem(ETQ_SEQ_KEY, String(patNum));
-  const qrUrl=fEtqQrData(video);
-  const inner=fEtqTemplate(patRaw, franq, player, qrUrl);
-  const styleTxt=document.querySelector('#ferr-etq style').innerHTML;
-  const w=window.open('', '_blank', 'width=760,height=560');
-  if(!w){ alert('Permita pop-ups pra imprimir a etiqueta.'); return; }
-  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Etiqueta MGB — Patrimônio '+fEtqPatCode(patRaw)+'</title>'
-    +'<link rel="preconnect" href="https://fonts.googleapis.com">'
-    +'<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">'
-    +'<style>'+styleTxt+'@page{size:150mm 90mm;margin:0}body{margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style>'
-    +'</head><body><div class="mgb-etq">'+inner+'</div></body></html>');
-  w.document.close();
-  const doPrint=()=>{ try{ w.focus(); w.print(); }catch(e){} };
-  if(w.document.readyState==='complete') setTimeout(doPrint,350); else w.onload=()=>setTimeout(doPrint,350);
+
+  fEtqImprimirInterna(patRaw, franq, player, video);
+
+  const rec=etqBuscaOuCria(fEtqPatCode(patRaw));
+  rec.patrimonio=patNum; rec.franqueado=franq; rec.player=player; rec.video=video;
+  rec.data = rec.data || new Date().toISOString().slice(0,10);
+  rec.ts = Date.now();
+  buildEtiquetasList();
+  scheduleSave();
+
   const nextSuggest=(!isNaN(patNum)?patNum:cur)+1;
-  patInput.value=nextSuggest;
-  playerInput.value='';
   fEtqPreview();
-  const infoEl=document.getElementById('f-etq-info'); if(infoEl) infoEl.innerHTML='✓ Etiqueta enviada pra impressão — próximo número sugerido: '+nextSuggest;
+  const infoEl=document.getElementById('f-etq-info'); if(infoEl) infoEl.innerHTML='✓ Etiqueta enviada pra impressão e salva. Pra imprimir o correio DESSA mesma caixa, preencha o bloco abaixo agora — o número de patrimônio só muda quando você mandar. <button type="button" onclick="etqUsarProximoPat('+nextSuggest+')" style="margin-left:4px;font-size:10px;padding:3px 9px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer">Ir pra próxima caixa (nº '+nextSuggest+')</button>';
+}
+function etqUsarProximoPat(n){
+  const el=document.getElementById('f-etq-pat'); if(!el) return;
+  el.value=n;
+  document.getElementById('f-etq-player').value='';
+  document.getElementById('f-cor-dest-nome').value='';
+  document.getElementById('f-cor-dest-end').value='';
+  document.getElementById('f-cor-dest-comp').value='';
+  document.getElementById('f-cor-dest-bairro').value='';
+  document.getElementById('f-cor-dest-cid').value='';
+  document.getElementById('f-cor-dest-cep').value='';
+  fEtqPreview();
+  fCorPreview();
+  const infoEl=document.getElementById('f-etq-info'); if(infoEl) infoEl.innerHTML='';
+}
+
+/* ---- ETIQUETA DE CORREIO (remetente/destinatário) ---- */
+const ETQ_REM_KEY='mgb_etq_remetente';
+function fCorInit(){
+  let def={}; try{ def=JSON.parse(localStorage.getItem(ETQ_REM_KEY)||'null')||{}; }catch(e){ def={}; }
+  const setIfEmpty=(id,val)=>{ const el=document.getElementById(id); if(el && !el.value && val) el.value=val; };
+  setIfEmpty('f-cor-rem-nome', def.nome||'MGB Mídia');
+  setIfEmpty('f-cor-rem-end', def.endereco);
+  setIfEmpty('f-cor-rem-cid', def.cidadeUf);
+  setIfEmpty('f-cor-rem-cep', def.cep);
+  fCorPreview();
+}
+function fCorTemplate(rem, dest, patCode){
+  const l=v=>v && String(v).trim() ? escH(String(v).trim()) : '';
+  const remCid=[l(rem.cidadeUf), l(rem.cep)].filter(Boolean).join(' · ');
+  const destComp=l(dest.complemento) ? ' — '+l(dest.complemento) : '';
+  const destCid=[l(dest.bairro), l(dest.cidadeUf)].filter(Boolean).join(' · ')+(l(dest.cep)?' · CEP '+l(dest.cep):'');
+  return '<div class="mc-logo">MGB <span>Mídia</span> · Envio</div>'
+    +'<div class="mc-block">'
+      +'<div class="mc-label">Remetente</div>'
+      +'<div class="mc-remet">'+(l(rem.nome)||'—')+(l(rem.endereco)?'<br>'+l(rem.endereco):'')+(remCid?'<br>'+remCid:'')+'</div>'
+    +'</div>'
+    +'<div class="mc-block">'
+      +'<div class="mc-label">Destinatário</div>'
+      +'<div class="mc-dest"><b>'+(l(dest.nome)||'—')+'</b>'+(l(dest.endereco)||'')+destComp+(l(dest.endereco)||destComp?'<br>':'')+destCid+'</div>'
+    +'</div>'
+    +'<div class="mc-ref">Ref.: '+(patCode||'—')+'</div>';
+}
+function fCorReadForm(){
+  return {
+    rem:{
+      nome: document.getElementById('f-cor-rem-nome').value,
+      endereco: document.getElementById('f-cor-rem-end').value,
+      cidadeUf: document.getElementById('f-cor-rem-cid').value,
+      cep: document.getElementById('f-cor-rem-cep').value
+    },
+    dest:{
+      nome: document.getElementById('f-cor-dest-nome').value,
+      endereco: document.getElementById('f-cor-dest-end').value,
+      complemento: document.getElementById('f-cor-dest-comp').value,
+      bairro: document.getElementById('f-cor-dest-bairro').value,
+      cidadeUf: document.getElementById('f-cor-dest-cid').value,
+      cep: document.getElementById('f-cor-dest-cep').value
+    }
+  };
+}
+function fCorPreview(){
+  const el=document.getElementById('f-cor-preview'); if(!el) return;
+  const {rem,dest}=fCorReadForm();
+  const patEl=document.getElementById('f-etq-pat');
+  const patCode=fEtqPatCode(patEl?patEl.value:'');
+  el.innerHTML=fCorTemplate(rem,dest,patCode);
+}
+function fCorImprimir(rem, dest, patCode){
+  const inner=fCorTemplate(rem,dest,patCode);
+  fEtqAbrirImpressao('mgb-cor', inner, 'Etiqueta de Correio — '+(patCode||'MGB'));
+}
+function fCorGerar(){
+  const {rem,dest}=fCorReadForm();
+  if(!dest.nome.trim() || !dest.endereco.trim()){ alert('Preencha ao menos o nome e o endereço do destinatário.'); return; }
+  localStorage.setItem(ETQ_REM_KEY, JSON.stringify(rem));
+  const patInput=document.getElementById('f-etq-pat');
+  const patRaw=patInput.value.trim() || String(fEtqNextNum());
+  const patCode=fEtqPatCode(patRaw);
+
+  fCorImprimir(rem, dest, patCode);
+
+  const rec=etqBuscaOuCria(patCode);
+  rec.remNome=rem.nome.trim(); rec.remEndereco=rem.endereco.trim(); rec.remCidadeUf=rem.cidadeUf.trim(); rec.remCep=rem.cep.trim();
+  rec.destNome=dest.nome.trim(); rec.destEndereco=dest.endereco.trim(); rec.destComplemento=dest.complemento.trim(); rec.destBairro=dest.bairro.trim(); rec.destCidadeUf=dest.cidadeUf.trim(); rec.destCep=dest.cep.trim();
+  rec.data = rec.data || new Date().toISOString().slice(0,10);
+  rec.ts = Date.now();
+  buildEtiquetasList();
+  scheduleSave();
+  const infoEl=document.getElementById('f-cor-info'); if(infoEl) infoEl.innerHTML='✓ Etiqueta de correio enviada pra impressão e salva.';
+}
+
+/* ---- LISTA/REGISTRO DE ETIQUETAS (sincronizado) ---- */
+function etqBuscaOuCria(patCode){
+  let rec=etiquetas.find(x=>x.patCode===patCode);
+  if(!rec){ rec={id:etiquetaId++, patCode}; etiquetas.push(rec); }
+  return rec;
+}
+function buildEtiquetasList(){
+  const body=document.getElementById('etq-list-body');
+  const emptyEl=document.getElementById('etq-list-empty');
+  if(!body) return;
+  const ordenado=[...etiquetas].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  body.innerHTML = ordenado.map(e=>{
+    const dataTxt = e.data ? new Date(e.data+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    return '<tr>'
+      +'<td>'+dataTxt+'</td>'
+      +'<td>'+(e.franqueado?escH(e.franqueado):'—')+'</td>'
+      +'<td class="mono">'+(e.patCode||'—')+'</td>'
+      +'<td>'+(e.destNome?escH(e.destNome):'—')+'</td>'
+      +'<td style="white-space:nowrap;text-align:right">'
+        +'<button class="del" title="Editar" onclick="editEtq('+e.id+')">✎</button>'
+        +'<button class="del" title="Reimprimir etiqueta interna" onclick="reprintEtqInterna('+e.id+')">🏷️</button>'
+        +'<button class="del" title="Reimprimir etiqueta de correio" onclick="reprintEtqCorreio('+e.id+')">📮</button>'
+        +'<button class="del" title="Excluir" onclick="delEtq('+e.id+')">✕</button>'
+      +'</td>'
+    +'</tr>';
+  }).join('');
+  if(emptyEl) emptyEl.style.display = ordenado.length ? 'none' : 'block';
+}
+function editEtq(id){
+  const e=etiquetas.find(x=>x.id===id); if(!e) return;
+  document.getElementById('f-etq-video').value=e.video||'';
+  document.getElementById('f-etq-franq').value=e.franqueado||'';
+  document.getElementById('f-etq-player').value=e.player||'';
+  document.getElementById('f-etq-pat').value=e.patrimonio||'';
+  document.getElementById('f-cor-rem-nome').value=e.remNome||'';
+  document.getElementById('f-cor-rem-end').value=e.remEndereco||'';
+  document.getElementById('f-cor-rem-cid').value=e.remCidadeUf||'';
+  document.getElementById('f-cor-rem-cep').value=e.remCep||'';
+  document.getElementById('f-cor-dest-nome').value=e.destNome||'';
+  document.getElementById('f-cor-dest-end').value=e.destEndereco||'';
+  document.getElementById('f-cor-dest-comp').value=e.destComplemento||'';
+  document.getElementById('f-cor-dest-bairro').value=e.destBairro||'';
+  document.getElementById('f-cor-dest-cid').value=e.destCidadeUf||'';
+  document.getElementById('f-cor-dest-cep').value=e.destCep||'';
+  fEtqPreview();
+  fCorPreview();
+  const el=document.getElementById('ferr-etq'); if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function delEtq(id){
+  if(!confirm('Remover esta etiqueta da lista?')) return;
+  etiquetas = etiquetas.filter(x=>x.id!==id);
+  buildEtiquetasList();
+  scheduleSave();
+}
+function reprintEtqInterna(id){
+  const e=etiquetas.find(x=>x.id===id); if(!e) return;
+  fEtqImprimirInterna(e.patrimonio, e.franqueado||'', e.player||'', e.video||'');
+}
+function reprintEtqCorreio(id){
+  const e=etiquetas.find(x=>x.id===id); if(!e) return;
+  const rem={nome:e.remNome, endereco:e.remEndereco, cidadeUf:e.remCidadeUf, cep:e.remCep};
+  const dest={nome:e.destNome, endereco:e.destEndereco, complemento:e.destComplemento, bairro:e.destBairro, cidadeUf:e.destCidadeUf, cep:e.destCep};
+  fCorImprimir(rem, dest, e.patCode);
+}
+function etqExportCSV(){
+  const cols=['data','franqueado','player','patCode','video','remNome','remEndereco','remCidadeUf','remCep','destNome','destEndereco','destComplemento','destBairro','destCidadeUf','destCep'];
+  const head=cols.join(';');
+  const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=etiquetas.map(e=>cols.map(c=>esc(e[c])).join(';'));
+  const csv='﻿'+[head,...rows].join('\n');
+  ferrDL(csv, 'mgb-etiquetas.csv', 'text/csv;charset=utf-8;');
 }
 
 /* ---- CALCULADORAS ---- */
@@ -7018,6 +7265,11 @@ let empresaRecId = 1;
 // [{id, desc, valor, lado:'desp'|'rec', data:'YYYY-MM-DD', mes:'YYYY-MM', _imp:'c6-<docto>', conta}]
 let empresaMovimentos = [];
 let empresaMovId = 1;
+// Etiquetas do box (interna + correio) geradas na ferramenta — 1 registro por patrimônio (patCode)
+// [{id, patCode, patrimonio, franqueado, player, video, remNome, remEndereco, remCidadeUf, remCep,
+//   destNome, destEndereco, destComplemento, destBairro, destCidadeUf, destCep, data, ts}]
+let etiquetas = [];
+let etiquetaId = 1;
 
 // ── DESPESAS COMPARTILHADAS (Elevadores) ─────────────────────────────────
 // despesasComp = [{id, nome, forn, valor, inicio, meses, telas:[]}]
@@ -10203,7 +10455,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo,
+    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -10281,6 +10533,10 @@ function deserializeState(obj){
   if(obj.empresaMovimentos && Array.isArray(obj.empresaMovimentos)){
     empresaMovimentos=obj.empresaMovimentos;
     empresaMovId=empresaMovimentos.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.etiquetas && Array.isArray(obj.etiquetas)){
+    etiquetas=obj.etiquetas;
+    etiquetaId=etiquetas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
   }
   if(obj.despPagamentos && typeof obj.despPagamentos==='object'){
     despPagamentos=obj.despPagamentos;
