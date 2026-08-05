@@ -8094,11 +8094,11 @@ function buildLancRec(){
     <td style="text-align:center">
       <input type="checkbox" ${l.nota?'checked':''}
         onchange="toggleNotaFlag('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}')"
-        title="Precisa de nota fiscal"
+        title="Precisa de nota fiscal — marcação fixa do cliente, vale pra todos os meses"
         style="cursor:pointer;width:16px;height:16px;accent-color:#6C55DB">
     </td>
     <td>
-      <input type="text" value="${l.obs}" placeholder="Obs..."
+      <input type="text" value="${l.obs}" placeholder="Obs. (CNPJ etc.)" title="Fica salvo no cliente — aparece em todos os meses"
         onchange="setRecObs('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}',this.value)"
         style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:3px 7px;width:120px;outline:none">
     </td>
@@ -8128,8 +8128,9 @@ function coletaClientesMes(selAno,selMes){
         const item=a.nome; // anunciante vira "item"
         if(!recPagamentos[m.id]) recPagamentos[m.id]={};
         if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
-        const pg=recPagamentos[m.id][item][_key]||{pago:false,obs:'',nota:false};
-        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,obs:pg.obs,nota:pg.nota||false,key:_key,sub:(a.telas||[]).join(', ')});
+        const pg=recPagamentos[m.id][item][_key]||{pago:false};
+        const def=recDefault(m.id,item);
+        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,obs:def.obs,nota:def.nota,key:_key,sub:(a.telas||[]).join(', ')});
       });
       return; // pula iteração por items pra elev
     }
@@ -8138,8 +8139,9 @@ function coletaClientesMes(selAno,selMes){
       if(!val) return;
       if(!recPagamentos[m.id]) recPagamentos[m.id]={};
       if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
-      const pg=recPagamentos[m.id][item][_key]||{pago:false,obs:'',nota:false};
-      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,obs:pg.obs,nota:pg.nota||false,key:_key});
+      const pg=recPagamentos[m.id][item][_key]||{pago:false};
+      const def=recDefault(m.id,item);
+      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,obs:def.obs,nota:def.nota,key:_key});
     });
   });
   // Receita manual avulsa do mês (não vinculada a módulo)
@@ -8147,8 +8149,9 @@ function coletaClientesMes(selAno,selMes){
   if(manualRec>0){
     if(!recPagamentos['_manual']) recPagamentos['_manual']={};
     if(!recPagamentos['_manual']['Receita avulsa']) recPagamentos['_manual']['Receita avulsa']={};
-    const pg=recPagamentos['_manual']['Receita avulsa'][_key]||{pago:false,obs:'',nota:false};
-    linhas.push({modId:'_manual',modLabel:'Avulsa',modIcon:'➕',item:'Receita avulsa do mês',valor:manualRec,pago:pg.pago,obs:pg.obs,nota:pg.nota||false,key:_key,sub:'lançada manualmente em fin[ano][mes].receita'});
+    const pg=recPagamentos['_manual']['Receita avulsa'][_key]||{pago:false};
+    const def=recDefault('_manual','Receita avulsa');
+    linhas.push({modId:'_manual',modLabel:'Avulsa',modIcon:'➕',item:'Receita avulsa do mês',valor:manualRec,pago:pg.pago,obs:def.obs,nota:def.nota,key:_key,sub:'lançada manualmente em fin[ano][mes].receita'});
   }
   return linhas;
 }
@@ -8162,20 +8165,34 @@ function toggleRecPago(modId,item,key,idx){
   scheduleSave();
 }
 
-function setRecObs(modId,item,key,obs){
+// Obs (CNPJ etc.) e a marcação "NF?" são DO CLIENTE — valem pra todos os meses,
+// guardadas na chave especial '_default'. Só o "pago" continua sendo mensal.
+// Migração automática: na primeira leitura, adota o que já foi digitado nos
+// registros mensais antigos (o mais recente prevalece).
+function recDefault(modId,item){
   if(!recPagamentos[modId]) recPagamentos[modId]={};
   if(!recPagamentos[modId][item]) recPagamentos[modId][item]={};
-  const pg=recPagamentos[modId][item][key]||{pago:false,obs:''};
-  recPagamentos[modId][item][key]={...pg,obs};
+  let d=recPagamentos[modId][item]['_default'];
+  if(!d){
+    d={obs:'',nota:false};
+    Object.keys(recPagamentos[modId][item])
+      .filter(k=>k!=='_default')
+      .sort((a,b)=>{const [ay,am]=a.split('-').map(Number),[by,bm]=b.split('-').map(Number);return (ay*12+am)-(by*12+bm);})
+      .forEach(k=>{const r=recPagamentos[modId][item][k]; if(r&&r.obs) d.obs=r.obs; if(r&&r.nota) d.nota=true;});
+    recPagamentos[modId][item]['_default']=d;
+  }
+  return d;
+}
+
+function setRecObs(modId,item,key,obs){
+  recDefault(modId,item).obs=obs;
   scheduleSave();
 }
 
 // Marca/desmarca "precisa de nota fiscal" — não re-renderiza a tabela (evita perder o foco)
 function toggleNotaFlag(modId,item,key){
-  if(!recPagamentos[modId]) recPagamentos[modId]={};
-  if(!recPagamentos[modId][item]) recPagamentos[modId][item]={};
-  const pg=recPagamentos[modId][item][key]||{pago:false,obs:''};
-  recPagamentos[modId][item][key]={...pg,nota:!pg.nota};
+  const d=recDefault(modId,item);
+  d.nota=!d.nota;
   scheduleSave();
 }
 
