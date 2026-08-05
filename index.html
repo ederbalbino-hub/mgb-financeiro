@@ -8212,17 +8212,17 @@ function gerarRelContador(){
     <div style="padding:24px 32px 12px">
       <p style="font-size:12px;color:#444;line-height:1.6;margin:0 0 16px">Clientes que precisam de <strong>nota fiscal</strong> referente a <strong>${mesNome}/${selAno}</strong>. Total de <strong>${marcados.length}</strong> nota(s).</p>
       <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead><tr style="background:#2A1760;color:#fff">
-          <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Módulo</th>
-          <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Cliente / Unidade</th>
-          <th style="padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Valor</th>
-          <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Obs.</th>
+        <thead><tr>
+          <th style="background:#2A1760;color:#fff;padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Módulo</th>
+          <th style="background:#2A1760;color:#fff;padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Cliente / Unidade</th>
+          <th style="background:#2A1760;color:#fff;padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Valor</th>
+          <th style="background:#2A1760;color:#fff;padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Obs.</th>
         </tr></thead>
         <tbody>${rows}
-          <tr style="background:#2A1760;color:#fff;font-weight:700">
-            <td style="padding:8px 12px" colspan="2">TOTAL</td>
-            <td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-            <td style="padding:8px 12px"></td>
+          <tr>
+            <td colspan="2" style="background:#2A1760;color:#fff;font-weight:700;padding:10px 12px;font-size:12px;letter-spacing:.5px">TOTAL — ${marcados.length} nota(s)</td>
+            <td style="background:#2A1760;color:#fff;font-weight:700;padding:10px 12px;text-align:right;font-family:'DM Mono',monospace;font-size:14px">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+            <td style="background:#2A1760;padding:10px 12px"></td>
           </tr>
         </tbody>
       </table>
@@ -8236,7 +8236,8 @@ function gerarRelContador(){
 function fecharRelContador(){ g('rel-contador-modal').style.display='none'; }
 function imprimirRelContador(){
   const mes=g('lanc-mes-sel2').value, ano=g('lanc-ano-sel2').value;
-  relPrintEl('rel-contador-output','mgb mídia_notas a emitir_'+MESES[parseInt(mes)]+'-'+ano);
+  const mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][parseInt(mes)];
+  relPrintEl('rel-contador-output','MGB Mídia_Relação de notas_'+mesNome+'-'+ano);
 }
 
 // ── PÁGINA DESPESAS (aba própria) ────────────────────────────────────────

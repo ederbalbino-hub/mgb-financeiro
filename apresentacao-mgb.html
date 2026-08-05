@@ -506,17 +506,13 @@ function mgbLembretePdf(){
   requestAnimationFrame(()=>t.classList.add('show'));
   setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},5500);
 }
-/* nome do PDF = título do documento; dentro da plataforma (iframe) o Chrome usa o título da página-mãe */
+/* nome do PDF = título do documento. Só mexe no PRÓPRIO título: o mgbSmartPrint
+   já sai do iframe antes de imprimir, então alterar o título da página-mãe aqui
+   era desnecessário — e sequestrava o nome do PDF de QUALQUER outro relatório
+   impresso na plataforma enquanto este iframe estivesse carregado. */
 const T_PDF='MGB Mídia_Institucional', T_NORMAL='MGB Mídia — Apresentação Institucional 2026/2027';
-let parentT0=null;
-window.addEventListener('beforeprint',()=>{
-  document.title=T_PDF;
-  try{ if(window.parent!==window){ parentT0=window.parent.document.title; window.parent.document.title=T_PDF; } }catch(e){}
-});
-window.addEventListener('afterprint',()=>{
-  document.title=T_NORMAL;
-  try{ if(parentT0!==null){ window.parent.document.title=parentT0; parentT0=null; } }catch(e){}
-});
+window.addEventListener('beforeprint',()=>{ document.title=T_PDF; });
+window.addEventListener('afterprint',()=>{ document.title=T_NORMAL; });
 
 /* iOS Safari: window.print() dentro de iframe embutido na plataforma imprime a
    pagina de FORA inteira (bug do motor). Se estivermos num iframe, sai pra
