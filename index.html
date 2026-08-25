@@ -876,6 +876,7 @@ body{-webkit-font-smoothing:antialiased}
     <div class="sb-nav-item" id="nav-sindicos" title="Síndicos" onclick="goPage('sindicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg>Síndicos</div>
     <div class="sb-nav-item" id="nav-propvaapty" title="Proposta Vaapty" onclick="goPage('propvaapty')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M9 3h6M8 21h8"/></svg>Proposta Vaapty</div>
     <div class="sb-nav-item" id="nav-leads" title="CRM" onclick="goPage('leads')" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5c1.6.6 2.6 1.9 2.6 3.5s-1 2.9-2.6 3.5"/></svg>CRM<span id="nav-leads-badge" style="display:none;margin-left:auto;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 6px;line-height:1.4"></span></div>
+    <div class="sb-nav-item" id="nav-radioops" title="Rádio Moinho" onclick="goPage('radioops')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M7 9l10-5M16.5 13.5h.01"/><circle cx="9" cy="14.5" r="2.2"/></svg>Rádio Moinho</div>
     <div class="sb-lbl" style="margin-top:10px">Apoio</div>
     <div class="sb-nav-item" id="nav-ferramentas" title="Ferramentas" onclick="goPage('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.6 4.6 0 0 0-5.9 5.9L3 18l3 3 5.8-5.8a4.6 4.6 0 0 0 5.9-5.9l-2.9 2.9-2.1-.9-.9-2.1z"/></svg>Ferramentas</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
@@ -5830,6 +5831,35 @@ function copiarSpot() {
   </div>
 
 
+  <div id="page-radioops" style="display:none">
+    <style>
+      #page-radioops .rops-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 18px}
+      @media(max-width:768px){#page-radioops .rops-kpis{grid-template-columns:1fr 1fr}}
+      #page-radioops .rops-kpi{background:var(--surface,#fff);border:1px solid rgba(76,45,142,.16);border-radius:12px;padding:14px 16px}
+      #page-radioops .rops-kpi .n{font-size:19px;font-weight:800;color:#4E38B2}
+      #page-radioops .rops-kpi .l{font-size:10.5px;color:rgba(29,20,48,.55);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+      #page-radioops .rops-tblwrap{overflow-x:auto;background:var(--surface,#fff);border:1px solid rgba(76,45,142,.16);border-radius:12px;padding:6px 10px}
+      #page-radioops table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
+      #page-radioops th{text-align:left;padding:9px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(29,20,48,.55);border-bottom:2px solid rgba(76,45,142,.18)}
+      #page-radioops td{padding:9px 8px;border-bottom:1px solid rgba(76,45,142,.1)}
+      #page-radioops .num{text-align:right;white-space:nowrap}
+      #page-radioops .rops-eco{color:#118A5D;font-weight:700}
+      #page-radioops .rops-mgb{color:#4E38B2;font-weight:800}
+      #page-radioops .rops-note{font-size:11.5px;color:rgba(29,20,48,.55);margin-top:12px;line-height:1.5}
+      #page-radioops .rops-btn{background:linear-gradient(90deg,#6C55DB,#D6367F);color:#fff;border:none;border-radius:9px;padding:8px 14px;font-weight:700;font-size:12.5px;cursor:pointer}
+      #page-radioops .rops-btn.ghost{background:transparent;color:#4E38B2;border:1.5px solid rgba(76,45,142,.3)}
+      #page-radioops .rops-status{font-size:11.5px;color:rgba(29,20,48,.55);margin-left:8px}
+    </style>
+    <div class="page-hdr"><div><h2>📻 Rádio — Moinho Globo</h2><p style="margin:4px 0 0;font-size:12.5px;color:rgba(29,20,48,.55)">Preenchido automaticamente pelo MGB Rádio Ops — comissões, fee, Connectmix e economia gerada ao cliente</p></div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+      <button class="rops-btn" onclick="buildRadioOps(true)">🔄 Atualizar do Rádio Ops</button>
+      <button class="rops-btn ghost" onclick="ropsAbrirPainel()">Abrir painel Rádio Ops ↗</button>
+      <span class="rops-status" id="rops-status"></span>
+    </div>
+    <div class="rops-kpis" id="rops-kpis"></div>
+    <div class="rops-tblwrap"><table id="rops-tabela"></table></div>
+    <div class="rops-note">Os números espelham as ações <b>formalizadas</b> no Rádio Ops (status Enviado, Fechado ou Pós-Venda), mês a mês pela vigência de cada PI. <b>Nota MGB</b> = comissões do mês + fee de gestão + repasse Connectmix (R$ por rádio auditada — valores editáveis na aba Config da planilha do Ops). O botão 📊 de cada mês abre o relatório pronto pra enviar ao cliente. <b>Integração automática com o Financeiro MGB:</b> a nota MGB do mês entra como receita (com imposto) e o repasse da Connectmix como despesa — sem lançar nada na mão; basta manter este módulo sincronizado.</div>
+  </div>
   <div id="page-ferramentas" style="display:none">
     <style>
       .ferr-tab{display:inline-block;padding:7px 15px;border-radius:8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border:1px solid var(--border);background:var(--surface2);margin-right:6px}
@@ -7295,7 +7325,18 @@ function finGet(y,m,k){return finYear(y)[m][k]||0;}
 function finGetRec(y,m){
   const manual=finYear(y)[m].receita||0;
   const auto=MODULES.reduce((a,mod)=>a+recModMes(mod.id,y,m),0);
-  return manual+auto;
+  return manual+auto+ropsFinMes(y,m).receita; // Rádio Moinho: nota MGB (comissões+fee+Connectmix), auto via rops_cache
+}
+// ── Rádio Moinho (bureau): números vêm do cache sincronizado do MGB Rádio Ops ──
+function ropsFinMes(ano,mes){
+  try{
+    const cache=JSON.parse(localStorage.getItem('rops_cache')||'null');
+    if(!cache||!cache.meses) return {receita:0,despesaCmx:0,radios:0};
+    const key=ano+'-'+String(mes+1).padStart(2,'0');
+    const d=cache.meses.find(x=>x.mes===key);
+    if(!d) return {receita:0,despesaCmx:0,radios:0};
+    return {receita:d.notaMGB||0,despesaCmx:d.connectmix||0,radios:d.radios||0};
+  }catch(e){ return {receita:0,despesaCmx:0,radios:0}; }
 }
 // Despesa do mês = mesma fonte que Visão Despesas (db + despesas compartilhadas)
 function finGetDesp(y,m){ return despesaTotalMes(y,m); }
@@ -7906,13 +7947,13 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 function goPage(p){
   curPage=p;
-  ['home','overview','custos','pessoal','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads','propvaapty'].forEach(id=>{
+  ['home','overview','custos','pessoal','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads','propvaapty','radioops'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
   var target=document.getElementById('page-'+p);
   if(target) target.style.display='block';
-  ['nav-home','nav-custos','nav-pessoal','nav-contratos','nav-estudio','nav-relatorios','nav-ferramentas','nav-gerador','nav-midiakit','nav-apresmgb','nav-sindicos','nav-leads','nav-propvaapty'].forEach(id=>{
+  ['nav-home','nav-custos','nav-pessoal','nav-contratos','nav-estudio','nav-relatorios','nav-ferramentas','nav-gerador','nav-midiakit','nav-apresmgb','nav-sindicos','nav-leads','nav-propvaapty','nav-radioops'].forEach(id=>{
     var el=document.getElementById(id);
     if(el) el.classList.remove('on');
   });
@@ -7939,6 +7980,7 @@ function goPage(p){
   }
   if(p==='ferramentas'){ var elf=document.getElementById('nav-ferramentas'); if(elf) elf.classList.add('on'); try{initFerramentas();}catch(e){} }
   if(p==='leads'){ var eld=document.getElementById('nav-leads'); if(eld) eld.classList.add('on'); try{buildLeads();}catch(e){} }
+  if(p==='radioops'){ var elr=document.getElementById('nav-radioops'); if(elr) elr.classList.add('on'); try{buildRadioOps();}catch(e){} }
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
   if(p==='overview'){ var el=document.getElementById('nav-custos'); if(el) el.classList.add('on'); }
   if(p==='pessoal'){ var el=document.getElementById('nav-pessoal'); if(el) el.classList.add('on'); buildPessoal(); }
@@ -8304,7 +8346,8 @@ function coletaDespesasMes(selAno,selMes){
   // Empresa: imposto + despesas gerais (módulo virtual)
   const empMod={id:'_empresa',label:'Empresa',icon:'🏢',color:'#D97706'};
   // Imposto: 2,05% × receita do mês
-  const recMesTotal=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0);
+  const ropsFm=ropsFinMes(selAno,selMes);
+  const recMesTotal=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0)+ropsFm.receita;
   if(recMesTotal>0){
     out.push({
       m:empMod,
@@ -8313,6 +8356,18 @@ function coletaDespesasMes(selAno,selMes){
       r:{d:`Imposto ${(IMPOSTO_ALIQ*100).toFixed(2).replace('.',',')}% sobre receita`,f:'Receita Federal'},
       vlrMes:recMesTotal*IMPOSTO_ALIQ,
       tipoLbl:'Imposto',
+      mes:selMes,ano:selAno
+    });
+  }
+  // Rádio Moinho (bureau): repasse Connectmix — vem do cache do MGB Rádio Ops
+  if(ropsFm.despesaCmx>0){
+    out.push({
+      m:{id:'_radioops',label:'Rádio Moinho',icon:'📻',color:'#4E38B2'},
+      item:'Rádio Moinho',
+      idx:'_connectmix',
+      r:{d:'Connectmix — auditoria de veiculação ('+ropsFm.radios+' rádio(s))',f:'Connectmix'},
+      vlrMes:ropsFm.despesaCmx,
+      tipoLbl:'Auditoria',
       mes:selMes,ano:selAno
     });
   }
@@ -12079,5 +12134,67 @@ loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} buildSi
     <button class="mbn-btn" id="mbn-mais" onclick="toggleSidebar()"><span class="mbn-icon">☰</span><span class="mbn-lbl">Mais</span></button>
   </div>
 </div>
+<script>
+/* ── 📻 RÁDIO MOINHO — ponte com o MGB Rádio Ops (somente Eder; chave fica só neste navegador) ── */
+var ROPS_EXEC='https://script.google.com/macros/s/AKfycbx3f1mtsqCz4XUzTtyK2Jcup3gUrKSEphT2PmWr_z1z4vAJ43qyin0SORTtVxew927UxQ/exec';
+function ropsChave(){
+  var k=localStorage.getItem('rops_chave')||'';
+  if(!k){ k=(prompt('Cole a sua chave pessoal do Rádio Ops (a mesma do painel):')||'').trim(); if(k) localStorage.setItem('rops_chave',k); }
+  return k;
+}
+function ropsAbrirPainel(){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?chave='+encodeURIComponent(k),'_blank'); }
+function ropsMoeda(n){ return 'R$ '+(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+var ROPS_MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function buildRadioOps(force){
+  var cache=null; try{ cache=JSON.parse(localStorage.getItem('rops_cache')||'null'); }catch(e){}
+  if(cache) renderRadioOps(cache);
+  var st=document.getElementById('rops-status');
+  var k=ropsChave();
+  if(!k){ if(st) st.textContent='Sem chave — clique em Atualizar pra informar.'; return; }
+  if(st) st.textContent='Buscando no Rádio Ops…';
+  var ano=new Date().getFullYear();
+  var tag=document.createElement('script');
+  tag.src=ROPS_EXEC+'?rel=json&chave='+encodeURIComponent(k)+'&ano='+ano+'&callback=mgbRadioOpsCb&t='+Date.now();
+  tag.onerror=function(){ if(st) st.textContent=cache?'Sem conexão — mostrando a última sincronização.':'Não consegui falar com o Rádio Ops (confira a chave e a internet).'; };
+  document.body.appendChild(tag);
+}
+function mgbRadioOpsCb(data){
+  try{ localStorage.setItem('rops_cache',JSON.stringify(data)); }catch(e){}
+  renderRadioOps(data);
+  var st=document.getElementById('rops-status'); if(st) st.textContent='Sincronizado agora ✓';
+}
+function renderRadioOps(data){
+  if(!data||!data.meses) return;
+  var ativos=data.meses.filter(function(m){ return m.frentes>0; });
+  var hoje=new Date(); var mesAtualStr=hoje.getFullYear()+'-'+('0'+(hoje.getMonth()+1)).slice(-2);
+  var atual=data.meses.find(function(m){ return m.mes===mesAtualStr; })||{mes:mesAtualStr,notaMGB:0,frentes:0,radios:0};
+  var rotAtual='Nota MGB — mês atual';
+  if(!atual.frentes){ var prox=ativos.find(function(m){ return m.mes>=mesAtualStr; }); if(prox){ atual=prox; rotAtual='Nota MGB — '+ROPS_MESES[parseInt(prox.mes.slice(5,7),10)-1]+'/'+prox.mes.slice(2,4)+' (próximo ativo)'; } }
+  var somaNota=ativos.reduce(function(s,m){return s+m.notaMGB;},0);
+  var somaEco=ativos.reduce(function(s,m){return s+m.economia;},0);
+  var kp=document.getElementById('rops-kpis');
+  if(kp) kp.innerHTML=
+    '<div class="rops-kpi"><div class="n">'+ropsMoeda(atual.notaMGB)+'</div><div class="l">'+rotAtual+'</div></div>'+
+    '<div class="rops-kpi"><div class="n">'+ropsMoeda(somaNota)+'</div><div class="l">Receita MGB no ano (prevista)</div></div>'+
+    '<div class="rops-kpi"><div class="n" style="color:#118A5D">'+ropsMoeda(somaEco)+'</div><div class="l">Economia gerada ao cliente</div></div>'+
+    '<div class="rops-kpi"><div class="n">'+(atual.radios||0)+'</div><div class="l">Rádio(s) no ar no mês</div></div>';
+  var tb=document.getElementById('rops-tabela');
+  if(!tb) return;
+  var linhas=ativos.map(function(m){
+    var i=parseInt(m.mes.slice(5,7),10)-1;
+    var ehAtual=m.mes===mesAtualStr;
+    return '<tr'+(ehAtual?' style="background:rgba(108,85,219,.07)"':'')+'><td><b>'+ROPS_MESES[i]+'/'+m.mes.slice(2,4)+'</b>'+(ehAtual?' <span style="font-size:10px;color:#4E38B2;font-weight:800">← agora</span>':'')+'</td>'+
+      '<td class="num">'+m.radios+'</td><td class="num">'+ropsMoeda(m.bruto)+'</td><td class="num rops-eco">'+ropsMoeda(m.economia)+'</td>'+
+      '<td class="num">'+ropsMoeda(m.comissoes)+'</td><td class="num">'+ropsMoeda(m.fee)+'</td><td class="num">'+ropsMoeda(m.connectmix)+'</td>'+
+      '<td class="num rops-mgb">'+ropsMoeda(m.notaMGB)+'</td><td class="num">'+ropsMoeda(m.desembolsoCliente)+'</td>'+
+      '<td><button class="rops-btn ghost" style="padding:4px 10px;font-size:11.5px" onclick="ropsAbrirRelatorio(\''+m.mes+'\')">📊</button></td></tr>';
+  }).join('');
+  var tot=function(k){ return ativos.reduce(function(s,m){return s+(m[k]||0);},0); };
+  tb.innerHTML='<tr><th>Mês</th><th class="num">Rádios</th><th class="num">Investimento cliente</th><th class="num">Economia</th><th class="num">Comissões</th><th class="num">Fee</th><th class="num">Connectmix</th><th class="num">Nota MGB</th><th class="num">Investimento total</th><th>Rel.</th></tr>'+
+    (linhas||'<tr><td colspan="10" style="text-align:center;color:rgba(29,20,48,.5);padding:18px">Nenhum mês com ação formalizada ainda — feche negócios no Rádio Ops e atualize.</td></tr>')+
+    (ativos.length?'<tr><td><b>Total</b></td><td></td><td class="num"><b>'+ropsMoeda(tot('bruto'))+'</b></td><td class="num rops-eco"><b>'+ropsMoeda(tot('economia'))+'</b></td><td class="num"><b>'+ropsMoeda(tot('comissoes'))+'</b></td><td class="num"><b>'+ropsMoeda(tot('fee'))+'</b></td><td class="num"><b>'+ropsMoeda(tot('connectmix'))+'</b></td><td class="num rops-mgb"><b>'+ropsMoeda(tot('notaMGB'))+'</b></td><td class="num"><b>'+ropsMoeda(tot('desembolsoCliente'))+'</b></td><td></td></tr>':'');
+}
+function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
+</script>
 </body>
 </html>
