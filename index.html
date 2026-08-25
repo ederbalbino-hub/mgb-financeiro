@@ -876,7 +876,6 @@ body{-webkit-font-smoothing:antialiased}
     <div class="sb-nav-item" id="nav-sindicos" title="Síndicos" onclick="goPage('sindicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg>Síndicos</div>
     <div class="sb-nav-item" id="nav-propvaapty" title="Proposta Vaapty" onclick="goPage('propvaapty')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M9 3h6M8 21h8"/></svg>Proposta Vaapty</div>
     <div class="sb-nav-item" id="nav-leads" title="CRM" onclick="goPage('leads')" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5c1.6.6 2.6 1.9 2.6 3.5s-1 2.9-2.6 3.5"/></svg>CRM<span id="nav-leads-badge" style="display:none;margin-left:auto;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 6px;line-height:1.4"></span></div>
-    <div class="sb-nav-item" id="nav-radioops" title="Rádio Moinho" onclick="goPage('radioops')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M7 9l10-5M16.5 13.5h.01"/><circle cx="9" cy="14.5" r="2.2"/></svg>Rádio Moinho</div>
     <div class="sb-lbl" style="margin-top:10px">Apoio</div>
     <div class="sb-nav-item" id="nav-ferramentas" title="Ferramentas" onclick="goPage('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.6 4.6 0 0 0-5.9 5.9L3 18l3 3 5.8-5.8a4.6 4.6 0 0 0 5.9-5.9l-2.9 2.9-2.1-.9-.9-2.1z"/></svg>Ferramentas</div>
     <div class="sb-lbl" style="margin-top:10px">Módulos</div>
@@ -7193,7 +7192,9 @@ const MODULES=[
   {id:'tv',    label:'TV Interna',icon:'📺',color:'#2563EB',desc:'TV corporativa interna',agrupado:false,
    items:['Cliente Piloto','Expansão']},
   {id:'taroba',label:'Tarobá',icon:'📡',color:'#0D9488',desc:'Rádio e TV Tarobá',agrupado:false,
-   items:['Rádio Tarobá Londrina','Rádio Tarobá Cascavel','TV Tarobá Londrina','TV Tarobá Cascavel']}
+   items:['Rádio Tarobá Londrina','Rádio Tarobá Cascavel','TV Tarobá Londrina','TV Tarobá Cascavel']},
+  {id:'radioops',label:'Rádio Moinho (Bureau)',icon:'📻',color:'#4E38B2',desc:'Agência de rádio — Moinho Globo',agrupado:false,
+   items:['Moinho Globo']}
 ];
 const CATS=['Cabo','Aparelho/TV','Suporte','Instalação','Elétrica','Outros'];
 const CAT_COLORS=['#6C55DB','#189A66','#D6367F','#D97706','#2563EB','#94a3b8'];
@@ -7225,6 +7226,12 @@ const totalOf=(modId,item)=>(db[modId][item]||[]).reduce((a,r)=>a+r.q*r.u,0);
 const totalMod=modId=>Object.keys(db[modId]).reduce((a,i)=>a+totalOf(modId,i),0);
 const allCur=()=>items().flatMap(i=>db[curMod][i]);
 const recOf=(modId,item)=>{
+  if(modId==='radioops'){
+    const mSel=g('mod-mes-sel'), aSel=g('mod-ano-sel');
+    const ano=parseInt(aSel&&aSel.value!==''?aSel.value:new Date().getFullYear());
+    const mes=parseInt(mSel&&mSel.value!==''?mSel.value:new Date().getMonth());
+    return ropsFinMes(ano,mes).receita;
+  }
   if(modId==='taroba'){
     const mSel=g('mod-mes-sel'), aSel=g('mod-ano-sel');
     const ano=parseInt(aSel&&aSel.value!==''?aSel.value:new Date().getFullYear());
@@ -7286,6 +7293,10 @@ function recOfMes(modId,item,ano,mes){
   if(modId==='taroba'){
     return recTarobaGetMes(item,ano,mes);
   }
+  // Rádio Moinho (bureau): nota MGB do mês, sincronizada do MGB Rádio Ops
+  if(modId==='radioops'){
+    return item==='Moinho Globo' ? ropsFinMes(ano,mes).receita : 0;
+  }
   const ro=recObj(modId,item);
   if(!ro.valor||!ro.inicio) return 0;
   const [anoI,mesI]=ro.inicio.split('-').map(Number);
@@ -7325,7 +7336,7 @@ function finGet(y,m,k){return finYear(y)[m][k]||0;}
 function finGetRec(y,m){
   const manual=finYear(y)[m].receita||0;
   const auto=MODULES.reduce((a,mod)=>a+recModMes(mod.id,y,m),0);
-  return manual+auto+ropsFinMes(y,m).receita; // Rádio Moinho: nota MGB (comissões+fee+Connectmix), auto via rops_cache
+  return manual+auto; // Rádio Moinho já entra no reduce acima (módulo 'radioops' → ropsFinMes)
 }
 // ── Rádio Moinho (bureau): números vêm do cache sincronizado do MGB Rádio Ops ──
 function ropsFinMes(ano,mes){
@@ -8347,7 +8358,7 @@ function coletaDespesasMes(selAno,selMes){
   const empMod={id:'_empresa',label:'Empresa',icon:'🏢',color:'#D97706'};
   // Imposto: 2,05% × receita do mês
   const ropsFm=ropsFinMes(selAno,selMes);
-  const recMesTotal=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0)+ropsFm.receita;
+  const recMesTotal=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0); // radioops incluso via recOfMes
   if(recMesTotal>0){
     out.push({
       m:empMod,
@@ -8362,8 +8373,8 @@ function coletaDespesasMes(selAno,selMes){
   // Rádio Moinho (bureau): repasse Connectmix — vem do cache do MGB Rádio Ops
   if(ropsFm.despesaCmx>0){
     out.push({
-      m:{id:'_radioops',label:'Rádio Moinho',icon:'📻',color:'#4E38B2'},
-      item:'Rádio Moinho',
+      m:MODULES.find(x=>x.id==='radioops'),
+      item:'Moinho Globo',
       idx:'_connectmix',
       r:{d:'Connectmix — auditoria de veiculação ('+ropsFm.radios+' rádio(s))',f:'Connectmix'},
       vlrMes:ropsFm.despesaCmx,
@@ -9034,6 +9045,7 @@ function relAnualExportCSV(){
 }
 
 function drillMod(modId){
+  if(modId==='radioops'){ goPage('radioops'); return; } // Rádio Moinho tem painel próprio (dados vêm do Rádio Ops)
   curMod=modId; curItem=MODULES.find(m=>m.id===modId).items[0];
   goPage('custos'); buildAll();
 }
