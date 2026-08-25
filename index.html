@@ -5858,7 +5858,7 @@ function copiarSpot() {
     </div>
     <div class="rops-kpis" id="rops-kpis"></div>
     <div class="rops-tblwrap"><table id="rops-tabela"></table></div>
-    <div class="rops-note">Os números espelham as ações <b>formalizadas</b> no Rádio Ops (status Enviado, Fechado ou Pós-Venda), mês a mês pela vigência de cada PI. <b>Nota MGB</b> = comissões do mês + fee de gestão + repasse Connectmix (R$ por rádio auditada — valores editáveis na aba Config da planilha do Ops). O botão 📊 de cada mês abre o relatório pronto pra enviar ao cliente. <b>Integração automática com o Financeiro MGB (regime de caixa):</b> o <b>fee</b> entra como receita no mês corrente (antecipado — 1º em ago/26); as <b>comissões</b> e a despesa <b>Connectmix</b> entram no mês seguinte ao da campanha (a NF sai depois do mês fechado — campanha de setembro → recebimento em outubro). Sem lançar nada na mão; basta manter este módulo sincronizado. <i>A tabela abaixo mostra os meses de campanha (visão do relatório do cliente).</i></div>
+    <div class="rops-note">Os números espelham as ações <b>formalizadas</b> no Rádio Ops (status Enviado, Fechado ou Pós-Venda), mês a mês pela vigência de cada PI. <b>Nota MGB</b> = comissões do mês + fee de gestão + repasse Connectmix (R$ por rádio auditada — valores editáveis na aba Config da planilha do Ops). O botão 📊 de cada mês abre o relatório pronto pra enviar ao cliente. <b>Integração automática com o Financeiro MGB (regime de caixa):</b> o <b>fee</b> entra como receita no próprio mês de campanha (1º em set/26); as <b>comissões</b> e a despesa <b>Connectmix</b> entram no mês seguinte ao da campanha (a NF sai depois do mês fechado — campanha de setembro → recebimento em outubro). Sem lançar nada na mão; basta manter este módulo sincronizado. <i>A tabela abaixo mostra os meses de campanha (visão do relatório do cliente).</i></div>
   </div>
   <div id="page-ferramentas" style="display:none">
     <style>
@@ -7340,18 +7340,17 @@ function finGetRec(y,m){
   return manual+auto; // Rádio Moinho já entra no reduce acima (módulo 'radioops' → ropsFinMes)
 }
 // ── Rádio Moinho (bureau): números vêm do cache sincronizado do MGB Rádio Ops ──
-// REGIME DE CAIXA (pedido do Eder, 2026-08): o fee entra no mês CORRENTE (1º fee em ago/26,
-// antecipado ao mês de campanha); comissões e Connectmix entram no MÊS SEGUINTE ao da campanha
-// (a NF da rádio/MGB sai depois que o mês fecha — recebimento em out pra campanha de set).
+// REGIME DE CAIXA (Eder, 2026-08): o fee é recebido no PRÓPRIO mês de campanha (1º em set/26);
+// comissões e Connectmix entram no MÊS SEGUINTE ao da campanha (a NF sai depois que o mês
+// fecha — recebimento em out pra campanha de set).
 function ropsFinMes(ano,mes){
   try{
     const cache=JSON.parse(localStorage.getItem('rops_cache')||'null');
     if(!cache||!cache.meses) return {receita:0,despesaCmx:0,radios:0};
     const key=(a,m)=>a+'-'+String(m+1).padStart(2,'0');
     const dAtual=cache.meses.find(x=>x.mes===key(ano,mes));
-    const dSeguinte=cache.meses.find(x=>x.mes===(mes===11?key(ano+1,0):key(ano,mes+1)));
     const dAnterior=cache.meses.find(x=>x.mes===(mes===0?key(ano-1,11):key(ano,mes-1)));
-    const fee=dSeguinte?(dSeguinte.fee||0):0;            // fee do mês de campanha seguinte, recebido agora
+    const fee=dAtual?(dAtual.fee||0):0;                   // fee do próprio mês de campanha
     const comissoes=dAnterior?(dAnterior.comissoes||0):0; // comissões da campanha do mês passado
     const cmx=dAnterior?(dAnterior.connectmix||0):0;      // repasse Connectmix idem
     return {receita:fee+comissoes, despesaCmx:cmx, radios:dAtual?(dAtual.radios||0):0};
