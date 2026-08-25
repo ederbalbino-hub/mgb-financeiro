@@ -1096,6 +1096,7 @@ body{-webkit-font-smoothing:antialiased}
       </div>
     </div>
     <div class="ov-grid" id="ov-grid"></div>
+    <div id="ov-contratos" style="padding:0 22px 8px"></div>
 
     <div id="ov-annual-wrap" style="display:none;padding:0 22px 28px">
       <div class="tcard" style="padding:18px 20px">
@@ -8877,7 +8878,99 @@ function toggleDespPagoOv(modId,item,idx,dKey){
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────────
 let ovChart=null;
+
+// ── 📄 CONTRATOS — quem está ativo, quem encerra, quem já acabou ──────────
+function contratosLista(){
+  const out=[];
+  const push=(origem,nome,valor,inicio,meses)=>{
+    let fimKey=null;
+    if(inicio){ const [y,m]=inicio.split('-').map(Number); fimKey=y*12+(m-1)+(meses||12)-1; }
+    out.push({origem,nome,valor,inicio:inicio||'',meses,fimKey,
+      iniKey: inicio ? (parseInt(inicio)*12 + parseInt(inicio.split('-')[1])-1) : null});
+  };
+  MODULES.forEach(m=>{
+    if(m.id==='elev'||m.id==='taroba'||m.id==='radioops') return;
+    m.items.forEach(item=>{ const ro=recObj(m.id,item); if(ro.valor) push(m.label,item,ro.valor,ro.inicio,ro.meses); });
+  });
+  (typeof anunciantes==='undefined'?[]:anunciantes).forEach(a=>{ if(a.valor) push('Elevadores',a.nome,a.valor,a.inicio,a.meses||1); });
+  return out;
+}
+function keyToMesAno(k){ return MESES[k%12]+'/'+String(Math.floor(k/12)).slice(2); }
+function buildContratos(){
+  const el=g('ov-contratos'); if(!el) return;
+  const mSel=g('ov-mes-sel'), aSel=g('ov-ano-sel');
+  const ano=parseInt(aSel&&aSel.value!==''?aSel.value:new Date().getFullYear());
+  const mes=parseInt(mSel&&mSel.value!==''?mSel.value:new Date().getMonth());
+  const ref=ano*12+mes;
+  const lista=contratosLista();
+  const grupos={encerra:[],encerrado:[],futuro:[],ativo:[],sem:[]};
+  lista.forEach(c=>{
+    if(c.fimKey===null){ grupos.sem.push(c); return; }
+    if(c.fimKey===ref) grupos.encerra.push(c);
+    else if(c.fimKey<ref) grupos.encerrado.push(c);
+    else if(c.iniKey>ref) grupos.futuro.push(c);
+    else grupos.ativo.push(c);
+  });
+  grupos.encerrado.sort((a,b)=>b.fimKey-a.fimKey);
+  grupos.ativo.sort((a,b)=>a.fimKey-b.fimKey);
+  const soma=arr=>arr.reduce((s,c)=>s+c.valor,0);
+  const vis=(typeof valuesVisible==='undefined')?false:valuesVisible;
+  const fv=v=>vis?f(v):MASK;
+  // Tarobá: digitado mês a mês — avisa se o mês de referência está sem lançamento
+  const tbMod=MODULES.find(x=>x.id==='taroba');
+  let tbAviso='';
+  if(tbMod){
+    const temNoMes=tbMod.items.some(i=>recTarobaGetMes(i,ano,mes)>0);
+    const temAlgum=tbMod.items.some(i=>Object.keys(tarobaRecMap(i)).length);
+    if(temAlgum&&!temNoMes) tbAviso='<div style="font-size:11.5px;color:var(--amber,#D97706);margin-top:8px">⚠️ <b>Tarobá</b>: nenhum valor lançado em '+MESES[mes]+'/'+ano+' — as receitas da Tarobá são digitadas mês a mês no módulo.</div>';
+  }
+  // Rádio Moinho: vigência via cache do Rádio Ops
+  let ropsInfo='';
+  try{
+    const cache=JSON.parse(localStorage.getItem('rops_cache')||'null');
+    if(cache&&cache.meses){
+      const ativos=cache.meses.filter(x=>x.notaMGB>0);
+      if(ativos.length){
+        const ult=ativos[ativos.length-1].mes;
+        const noMes=cache.meses.find(x=>x.mes===ano+'-'+String(mes+1).padStart(2,'0'));
+        ropsInfo='<div style="font-size:11.5px;color:var(--muted);margin-top:8px">📻 <b>Rádio Moinho (Bureau)</b>: '+(noMes&&noMes.notaMGB>0?fv(noMes.notaMGB)+' neste mês · ':'sem campanha neste mês · ')+'vigência dos PIs até <b>'+rotuloMesRops(ult)+'</b>.</div>';
+      }
+    } else ropsInfo='<div style="font-size:11.5px;color:var(--muted);margin-top:8px">📻 <b>Rádio Moinho (Bureau)</b>: sincronize no módulo (🔄 Atualizar do Rádio Ops) pra entrar nas receitas.</div>';
+  }catch(e){}
+  const chip=(cor,txt)=>'<span style="display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 9px;border-radius:999px;color:#fff;background:'+cor+'">'+txt+'</span>';
+  const linha=(c,st)=>'<tr><td style="padding:6px 8px;border-bottom:1px solid var(--border2)"><b>'+c.nome+'</b> <span style="color:var(--muted);font-size:10.5px">'+c.origem+'</span></td>'+
+    '<td style="padding:6px 8px;border-bottom:1px solid var(--border2);text-align:right;white-space:nowrap">'+fv(c.valor)+'/mês</td>'+
+    '<td style="padding:6px 8px;border-bottom:1px solid var(--border2);text-align:center;white-space:nowrap;font-size:11px">'+(c.inicio?keyToMesAno(c.iniKey):'—')+' → '+(c.fimKey!==null?keyToMesAno(c.fimKey):'—')+'</td>'+
+    '<td style="padding:6px 8px;border-bottom:1px solid var(--border2);text-align:center">'+st+'</td></tr>';
+  let corpo='';
+  grupos.encerra.forEach(c=>corpo+=linha(c,chip('#D97706','encerra '+MESES[mes]+'/'+String(ano).slice(2))));
+  grupos.encerrado.forEach(c=>corpo+=linha(c,chip('#DC2626','encerrado')));
+  grupos.sem.forEach(c=>corpo+=linha(c,chip('#94a3b8','sem início')));
+  grupos.futuro.forEach(c=>corpo+=linha(c,chip('#2563EB','começa '+keyToMesAno(c.iniKey))));
+  grupos.ativo.forEach(c=>corpo+=linha(c,chip('#118A5D','ativo')));
+  el.innerHTML='<div class="tcard" style="padding:16px 18px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="toggleContratosLista()">'+
+      '<div><div style="font-size:13px;font-weight:700;color:var(--text)">📄 Contratos — situação em '+MESES[mes]+'/'+ano+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:2px">quem está no ar, quem encerra e quem já saiu da receita</div></div>'+
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px">'+
+        '<span style="color:#118A5D;font-weight:700">● '+grupos.ativo.length+' ativos · '+fv(soma(grupos.ativo))+'/mês</span>'+
+        (grupos.encerra.length?'<span style="color:#D97706;font-weight:700">● '+grupos.encerra.length+' encerram este mês · '+fv(soma(grupos.encerra))+'/mês</span>':'')+
+        (grupos.encerrado.length?'<span style="color:#DC2626;font-weight:700">● '+grupos.encerrado.length+' encerrados · '+fv(soma(grupos.encerrado))+'/mês fora</span>':'')+
+        '<span style="color:var(--muted)">'+(localStorage.getItem('mgb_contratos_aberto')==='1'?'▲ fechar':'▼ ver lista')+'</span>'+
+      '</div></div>'+
+    '<div id="ov-contratos-lista" style="display:'+(localStorage.getItem('mgb_contratos_aberto')==='1'?'block':'none')+';margin-top:12px;overflow-x:auto">'+
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:560px">'+
+      '<tr><th style="text-align:left;padding:5px 8px;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Cliente</th><th style="text-align:right;padding:5px 8px;font-size:9.5px;text-transform:uppercase;color:var(--muted)">Valor</th><th style="text-align:center;padding:5px 8px;font-size:9.5px;text-transform:uppercase;color:var(--muted)">Vigência</th><th style="text-align:center;padding:5px 8px;font-size:9.5px;text-transform:uppercase;color:var(--muted)">Status</th></tr>'+corpo+'</table>'+
+    tbAviso+ropsInfo+'</div></div>';
+}
+function rotuloMesRops(m){ return MESES[parseInt(m.slice(5,7),10)-1]+'/'+m.slice(2,4); }
+function toggleContratosLista(){
+  const aberto=localStorage.getItem('mgb_contratos_aberto')==='1';
+  localStorage.setItem('mgb_contratos_aberto',aberto?'0':'1');
+  buildContratos();
+}
 function buildOverview(){
+  try{ buildContratos(); }catch(e){}
   g('dt-ov').textContent=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 
   // Seletor de mês
