@@ -12253,7 +12253,7 @@ function ropsChave(){
   if(!k){ k=(prompt('Cole a sua chave pessoal do Rádio Ops (a mesma do painel):')||'').trim(); if(k) localStorage.setItem('rops_chave',k); }
   return k;
 }
-function ropsAbrirPainel(){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?chave='+encodeURIComponent(k),'_blank'); }
+function ropsAbrirPainel(){ var k=ropsChave(); if(k) window.open('https://agenciamgb.com.br/painel.html?chave='+encodeURIComponent(k),'_blank'); }
 function ropsMoeda(n){ return 'R$ '+(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 var ROPS_MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 function buildRadioOps(force){
