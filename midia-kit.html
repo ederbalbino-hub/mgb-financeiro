@@ -565,7 +565,7 @@ body.has-logo .mock-nome{font-size:17px}
     </div>
     <div class="rede-grid" id="rede-grid"></div>
     <div class="urg">🏗️ <b>Rede em expansão:</b> o <b>Cond. Hype</b> (Gleba Palhano · Zona Sul) está em processo de instalação. Quem fecha contrato agora <b>entra na nova tela sem custo adicional</b> assim que ela for ao ar — e trava o valor da tabela 2026/2027.</div>
-    <div class="metod">📐 <b>Como estimamos o público:</b> moradores conforme cadastro dos condomínios parceiros (quando não informado, estimamos por <b>unidades × 2,79 moradores/domicílio</b> — média do Censo 2022 do IBGE). Nos empreendimentos comerciais (Ed. Ayrton Senna 1 e 2, Spot e Ed. Itamaraty), o número reflete a <b>circulação mensal estimada</b> de colaboradores e visitantes informada pelas administrações (no Ed. Itamaraty, ~500 pessoas/dia × 22 dias úteis). Além dos moradores, os elevadores impactam <b>visitantes e prestadores de serviço</b> (entregas, diaristas, técnicos, mudanças) — estimamos esse fluxo adicional de forma conservadora em <b>+20% ao mês</b> sobre o público residencial, em linha com as práticas de medição do mercado DOOH brasileiro, que apura audiência em elevadores por dados de circulação e mobilidade. Os <b>impactos mensais (OTS — Opportunity To See)</b> seguem a metodologia padrão do mercado OOH: <b>público × 3,5 exposições/dia × 30 dias</b> — cada viagem de elevador é uma oportunidade real de visualização, sem opção de pular.</div>
+    <div class="metod">📐 <b>Como estimamos o público:</b> moradores conforme cadastro dos condomínios parceiros (quando não informado, estimamos por <b>unidades × 2,79 moradores/domicílio</b> — média do Censo 2022 do IBGE). Nos empreendimentos comerciais (Ed. Ayrton Senna 1 e 2, Spot e Ed. Itamaraty), o número reflete a <b>circulação mensal estimada</b> de colaboradores e visitantes informada pelas administrações (no Ed. Itamaraty, ~500 pessoas/dia × 22 dias úteis). Além dos moradores, os elevadores impactam <b>visitantes e prestadores de serviço</b> (entregas, diaristas, técnicos, mudanças) — estimamos esse fluxo adicional de forma conservadora em <b>+20% ao mês</b> sobre o público residencial, em linha com as práticas de medição do mercado DOOH brasileiro, que apura audiência em elevadores por dados de circulação e mobilidade. Os <b>impactos mensais (OTS — Opportunity To See)</b> seguem a metodologia padrão do mercado OOH: no residencial, <b>público × 3,5 exposições/dia × 30 dias</b> — frequência conservadora frente ao benchmark internacional de ~4 viagens de elevador/dia por usuário; nos comerciais, <b>circulação mensal × 2 viagens por presença</b> (entrada e saída). Cada viagem de elevador é uma oportunidade real de visualização, sem opção de pular.</div>
   </div>
 </section>
 
@@ -591,7 +591,7 @@ body.has-logo .mock-nome{font-size:17px}
         <div class="skpi big"><span class="l">Total · <span id="pp-per">4 semanas</span></span><span class="v" id="pp-total">R$ 0</span></div>
         <div class="sim-note">Pagamento todo dia 15 · Produção do material não inclusa · Proposta válida por 15 dias · Tabela 2026/2027</div>
       </div>
-      <div class="metod pp-metod">📐 <b>Como estimamos o público:</b> moradores conforme cadastro dos condomínios (sem cadastro: unidades × 2,79 moradores/domicílio — Censo 2022/IBGE); comerciais = circulação mensal estimada; <b>+20%/mês de visitantes e prestadores</b> sobre o residencial. <b>Impactos (OTS)</b> = público × 3,5 exposições/dia × 30 dias — metodologia padrão do mercado OOH.</div>
+      <div class="metod pp-metod">📐 <b>Como estimamos o público:</b> moradores conforme cadastro dos condomínios (sem cadastro: unidades × 2,79 moradores/domicílio — Censo 2022/IBGE); comerciais = circulação mensal estimada; <b>+20%/mês de visitantes e prestadores</b> sobre o residencial. <b>Impactos (OTS)</b> = residencial: público × 3,5 exposições/dia × 30 dias · comerciais: circulação mensal × 2 viagens por presença — metodologia padrão do mercado OOH.</div>
     </div>
   </div>
 </section>
@@ -748,7 +748,11 @@ body.has-logo .mock-nome{font-size:17px}
 const PRECO_TELA_SEMANA = 279.90;           // tabela cheia
 const SEM_POR_MES = 4;                       // mês comercial
 const INSERCOES_DIA = 150;                   // inserções do anúncio por tela/dia
-const EXPO_DIA = 3.5;                        // exposições diárias por pessoa (frequência OOH)
+const EXPO_DIA = 3.5;                        // exposições diárias por pessoa (benchmark internacional: 4 viagens/dia — usamos 3,5, conservador)
+// impactos mensais (OTS) por condomínio:
+//  residencial → moradores × 1,2 (visitantes/prestadores) × 3,5 exposições/dia × 30 dias
+//  comercial   → circulação MENSAL × 2 viagens por presença (entrada e saída) — a circulação já é o fluxo do mês
+function impactosDe(c){ return c.tipo==='residencial' ? c.pessoas*1.2*EXPO_DIA*30 : c.pessoas*2; }
 const WA_NUM = '5543996960078';
 
 const CONDOS = [
@@ -964,7 +968,7 @@ function buildRede(){
       <span class="zona">${zonaLbl}</span>
       <span class="add">${state.sel.has(c.id)?'✓ Na simulação':'+ Simular'}</span>
       <div class="bd"><h3>${c.nome}</h3><div class="rg">${regLbl}</div>
-      <div class="nums"><div><b>${c.telas}</b><span>telas</span></div><div><b>${fmtN(c.pessoas)}</b><span>${lbl}</span></div></div></div>
+      <div class="nums"><div><b>${c.telas}</b><span>telas</span></div><div><b>${fmtN(Math.round(impactosDe(c)))}</b><span>impactos/mês</span></div><div><b>${fmtN(c.pessoas)}</b><span>${lbl}</span></div></div></div>
     </div>`;
   }).join('')+`
     <div class="condo breve"><div class="ph">🏗️</div><span class="breve-tag">EM BREVE</span>
@@ -1024,7 +1028,7 @@ function render(){
   const invMes=invSem*SEM_POR_MES;
   const total=invSem*state.semanas;
   /* metodologia OOH: OTS = público × exposições/dia × 30 dias */
-  const ots=Math.round(pubEst*EXPO_DIA*30);
+  const ots=Math.round(sel.reduce((a,c)=>a+impactosDe(c),0)); // residencial ×126 · comercial ×2 (ver impactosDe)
   const insMes=telas*INSERCOES_DIA*30;
   const cpm=ots?invMes/(ots/1000):0;
   $('s-cond').textContent=sel.length;
@@ -1050,7 +1054,7 @@ function render(){
   const cPub=Math.round(cAll.reduce((a,c)=>a+(c.tipo==='residencial'?c.pessoas*1.2:c.pessoas),0));
   const cTelas=cAll.reduce((a,c)=>a+c.telas,0);
   const cMes=(sel.length?invSem:cTelas*PRECO_TELA_SEMANA)*SEM_POR_MES;
-  const cOts=Math.round(cPub*EXPO_DIA*30);
+  const cOts=Math.round(cAll.reduce((a,c)=>a+impactosDe(c),0));
   $('cmp-imp').textContent=cOts>=1e6?(cOts/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi':fmtN(cOts);
   $('cmp-imp-l').textContent='impactos por mês (OTS)';
   $('cmp-cpp').textContent=fmtR(cMes/cPub);
