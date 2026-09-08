@@ -956,11 +956,14 @@ function setInstit(on){
 function buildRede(){
   $('rede-grid').innerHTML=CONDOS.map(c=>{
     const lbl=c.tipo==='comercial'?'pessoas/mês':'moradores';
+    // "Centro" não é zona — mostra sem o prefixo; e não repete região quando é igual à zona
+    const zonaLbl=c.zona==='Centro'?'Centro':'Zona '+c.zona;
+    const regLbl=c.regiao===c.zona?zonaLbl:`${c.regiao} · ${zonaLbl}`;
     return `<div class="condo${state.sel.has(c.id)?' on':''}" id="condo-${c.id}" onclick="toggleCondo('${c.id}')">
       <div class="ph" style="background-image:url('${c.img}')"></div>
-      <span class="zona">Zona ${c.zona}</span>
+      <span class="zona">${zonaLbl}</span>
       <span class="add">${state.sel.has(c.id)?'✓ Na simulação':'+ Simular'}</span>
-      <div class="bd"><h3>${c.nome}</h3><div class="rg">${c.regiao} · Zona ${c.zona}</div>
+      <div class="bd"><h3>${c.nome}</h3><div class="rg">${regLbl}</div>
       <div class="nums"><div><b>${c.telas}</b><span>telas</span></div><div><b>${fmtN(c.pessoas)}</b><span>${lbl}</span></div></div></div>
     </div>`;
   }).join('')+`
