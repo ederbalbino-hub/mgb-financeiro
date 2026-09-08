@@ -159,17 +159,20 @@ const CFG={
   recepcao:{locTitle:'Em quais recepções as telas rodaram?',help:'Cada player do CSV vira uma recepção. Confira os locais e informe o nº de visitantes (opcional).',unidade:'exib.'},
 };
 const CONDOS={
-  'lagoa-dourada':{nome:'Lagoa Dourada',bairro:'Aquaville · Zona Leste',moradores:1344,telas:5,img:'assets/lagoa-dourada.png'},
+  'lagoa-dourada':{nome:'Lagoa Dourada',bairro:'Aquaville · Zona Leste',moradores:1344,telas:7,img:'assets/lagoa-dourada.png'},
   'spazio-louvre':{nome:'Spazio Louvre',bairro:'Gleba Palhano · Zona Sul',moradores:1650,telas:5,img:'assets/spazio-louvre.png'},
-  'lake-portinari':{nome:'Lake Portinari',bairro:'Pioneiros · Zona Leste',moradores:865,telas:2,img:'assets/portinari.png'},
+  'lake-portinari':{nome:'Lake Portinari',bairro:'Pioneiros · Zona Leste',moradores:865,telas:3,img:'assets/portinari.png'},
   'res-malaga':{nome:'Residencial Málaga',bairro:'Aquaville · Zona Leste',moradores:1290,telas:3,img:'assets/malaga.jpg'},
   'terra-parque':{nome:'Terra Parque',bairro:'Champagnat · Zona Oeste',moradores:450,telas:2,img:'assets/terra-parque.png'},
-  'bella-fiori':{nome:'Resid. Bella Fiori',bairro:'Vale dos Tucanos · Zona Sul',moradores:500,telas:2,img:'assets/bella-fiori.png'},
+  'bella-fiori':{nome:'Resid. Bella Fiori',bairro:'Vale dos Tucanos · Zona Sul',moradores:1200,telas:2,img:'assets/bella-fiori.png'},
   'spot':{nome:'Spot',bairro:'Centro · Londrina',moradores:1200,telas:2,img:'assets/spot.png'},
   'ayrton-senna-1':{nome:'Ed. Ayrton Senna 1',bairro:'Gleba Palhano · Zona Sul',moradores:35000,telas:2,img:'assets/ayrton-senna-1.png'},
   'ayrton-senna-2':{nome:'Ed. Ayrton Senna 2',bairro:'Gleba Palhano · Zona Sul',moradores:35000,telas:2,img:'assets/ayrton-senna-2.png'},
-  'tay':{nome:'Tay',bairro:'Zona Sul',moradores:400,telas:2,img:'assets/tay.jpg'},
-  'uptown':{nome:'Uptown',bairro:'Zona Sul',moradores:400,telas:2,img:'assets/uptown.png'},
+  'tay':{nome:'Tay',bairro:'Zona Sul',moradores:600,telas:2,img:'assets/tay.jpg'},
+  'uptown':{nome:'Uptown',bairro:'Zona Sul',moradores:600,telas:2,img:'assets/uptown.png'},
+  'ever':{nome:'Cond. Ever',bairro:'Zona Norte',moradores:800,telas:2,img:'assets/ever.jpg'},
+  'dampezzo':{nome:"Resid. D'Ampezzo",bairro:'Centro',moradores:200,telas:1,img:'assets/dampezzo.jpg'},
+  'itamaraty':{nome:'Ed. Itamaraty',bairro:'Centro · comercial',moradores:11000,telas:1,img:'assets/itamaraty.jpg'},
 };
 const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
 const slug=s=>norm(s).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'local';
