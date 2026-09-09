@@ -7340,20 +7340,19 @@ function finGetRec(y,m){
   return manual+auto; // Rádio Moinho já entra no reduce acima (módulo 'radioops' → ropsFinMes)
 }
 // ── Rádio Moinho (bureau): números vêm do cache sincronizado do MGB Rádio Ops ──
-// REGIME DE CAIXA (Eder, 2026-08): o fee é recebido no PRÓPRIO mês de campanha (1º em set/26);
-// comissões e Connectmix entram no MÊS SEGUINTE ao da campanha (a NF sai depois que o mês
-// fecha — recebimento em out pra campanha de set).
+// Desde set/2026 o Rádio Ops já manda a VISÃO CAIXA por mês (fee do próprio mês +
+// comissões/Connectmix referentes ao mês anterior, recebidos dia 15) — usar DIRETO,
+// sem deslocar de novo aqui (deslocar duas vezes errava out em diante).
+// Receita = nota MGB cheia (inclui o Connectmix cobrado do cliente); o repasse
+// à Connectmix entra como DESPESA própria na Cobrança Mensal — líquido = fee+comissões.
 function ropsFinMes(ano,mes){
   try{
     const cache=JSON.parse(localStorage.getItem('rops_cache')||'null');
     if(!cache||!cache.meses) return {receita:0,despesaCmx:0,radios:0};
     const key=(a,m)=>a+'-'+String(m+1).padStart(2,'0');
-    const dAtual=cache.meses.find(x=>x.mes===key(ano,mes));
-    const dAnterior=cache.meses.find(x=>x.mes===(mes===0?key(ano-1,11):key(ano,mes-1)));
-    const fee=dAtual?(dAtual.fee||0):0;                   // fee do próprio mês de campanha
-    const comissoes=dAnterior?(dAnterior.comissoes||0):0; // comissões da campanha do mês passado
-    const cmx=dAnterior?(dAnterior.connectmix||0):0;      // repasse Connectmix idem
-    return {receita:fee+comissoes, despesaCmx:cmx, radios:dAtual?(dAtual.radios||0):0};
+    const d=cache.meses.find(x=>x.mes===key(ano,mes));
+    if(!d) return {receita:0,despesaCmx:0,radios:0};
+    return {receita:d.notaMGB||0, despesaCmx:d.connectmix||0, radios:d.radios||0};
   }catch(e){ return {receita:0,despesaCmx:0,radios:0}; }
 }
 // Despesa do mês = mesma fonte que Visão Despesas (db + despesas compartilhadas)
