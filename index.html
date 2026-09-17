@@ -5864,6 +5864,7 @@ function copiarSpot() {
     <style>
       .ferr-tab{display:inline-block;padding:7px 15px;border-radius:8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border:1px solid var(--border);background:var(--surface2);margin-right:6px}
       .ferr-tab.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+      .ferr-lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px;letter-spacing:.02em}
       .ferr-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
       .ferr-t{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
       .ferr-d{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5}
@@ -5882,6 +5883,7 @@ function copiarSpot() {
       <span class="ferr-tab" onclick="showFerrTab('video',this)">Vídeo</span>
       <span class="ferr-tab" onclick="showFerrTab('qr',this)">QR &amp; Links</span>
       <span class="ferr-tab" onclick="showFerrTab('etq',this)">🏷️ Etiquetas</span>
+      <span class="ferr-tab" onclick="showFerrTab('recibo',this)">🧾 Recibos</span>
       <span class="ferr-tab" onclick="showFerrTab('calc',this)">Calculadoras</span>
       <span class="ferr-tab" onclick="showFerrTab('backup',this)">Backup</span>
       <span class="ferr-tab" onclick="showFerrTab('status',this)">📡 Monitoramento</span>
@@ -6201,6 +6203,46 @@ function copiarSpot() {
     </div>
 
     <!-- ══════ CALCULADORAS ══════ -->
+    <div id="ferr-recibo" style="display:none">
+      <div class="ferr-grid" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
+        <div class="ferr-card">
+          <div class="ferr-t">🧾 Emitir recibo</div><div class="ferr-d">Escolha o cliente: módulo e descrição do serviço vêm sozinhos. Só o valor é manual. PIX fixo da conta C6 (financeiro@agenciamgb.com.br).</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+            <div><label class="ferr-lbl">Nº do recibo</label><input id="f-rec-num" class="ferr-in" placeholder="0001/2026"></div>
+            <div><label class="ferr-lbl">Data</label><input id="f-rec-data" type="date" class="ferr-in"></div>
+          </div>
+          <label class="ferr-lbl" style="margin-top:8px">Cliente</label>
+          <select id="f-rec-cli" class="ferr-in" onchange="fRecCliente()"></select>
+          <div id="f-rec-mod" class="ferr-info" style="margin-top:4px"></div>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px">
+            <div><label class="ferr-lbl">Pagador (nome / razão social)</label><input id="f-rec-pagador" class="ferr-in"></div>
+            <div><label class="ferr-lbl">CNPJ / CPF</label><input id="f-rec-doc" class="ferr-in" placeholder="opcional"></div>
+          </div>
+          <label class="ferr-lbl" style="margin-top:8px">Referente a</label>
+          <textarea id="f-rec-desc" class="ferr-in" rows="3"></textarea>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+            <div><label class="ferr-lbl">Competência</label><input id="f-rec-comp" type="month" class="ferr-in" onchange="fRecCompMudou()"></div>
+            <div><label class="ferr-lbl">Valor (R$)</label><input id="f-rec-valor" class="ferr-in" inputmode="decimal" placeholder="ex.: 1.250,00" oninput="fRecPreview()"></div>
+            <div><label class="ferr-lbl">Forma</label><select id="f-rec-forma" class="ferr-in" onchange="fRecPreview()"><option value="pix">PIX — C6</option><option value="transf">Transferência — C6</option><option value="boleto">Boleto</option><option value="dinheiro">Dinheiro</option></select></div>
+          </div>
+          <div id="f-rec-hint" class="ferr-info" style="margin-top:4px"></div>
+          <label class="ferr-lbl" style="margin-top:8px">Observações <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+          <input id="f-rec-obs" class="ferr-in" oninput="fRecPreview()" placeholder="ex.: referente à 2ª parcela">
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="ferr-btn" onclick="fRecGerar()">🖨️ Gerar e imprimir / PDF</button>
+            <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fRecLimpar()">Novo</button>
+          </div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">Prévia</div><div class="ferr-d">É assim que sai no papel (A5 deitado).</div>
+          <div id="f-rec-preview" style="margin-top:10px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:0;overflow:hidden"></div>
+        </div>
+      </div>
+      <div class="ferr-card" style="margin-top:14px">
+        <div class="ferr-t">Recibos emitidos</div><div class="ferr-d">Ficam guardados junto com o financeiro (sincronizado). Reimprima ou exclua.</div>
+        <div id="f-rec-lista" style="margin-top:10px"></div>
+      </div>
+    </div>
     <div id="ferr-calc" style="display:none">
       <div class="ferr-grid">
         <div class="ferr-card">
@@ -6525,11 +6567,127 @@ document.addEventListener('DOMContentLoaded',function(){ try{ fAssSigInit(); fAs
 </script>
 <script>
 /* ═══════════ FERRAMENTAS FASE 2 · Imagem · QR & Links · Calculadoras ═══════════ */
+
+/* ---- RECIBOS (sub-aba 🧾) ---- */
+const REC_EMPRESA={ razao:'MGB Comunicação e Marketing LTDA', fantasia:'MGB Mídia', cnpj:'23.770.170/0001-50', end:'Rua Raul Juliatto, 200 — Londrina/PR — CEP 86.047-230', contato:'comercial@agenciamgb.com.br · (43) 99696-0078', pixChave:'financeiro@agenciamgb.com.br', banco:'Banco C6', resp:'Eder Balbino', cargo:'Diretor', cidade:'Londrina' };
+const REC_DESC={ mb:'Prestação de serviços de gestão e veiculação de conteúdo em painel de telas (TV corporativa) — unidade {item}',
+  elev:'Veiculação de mídia publicitária em telas digitais de elevadores (rede MGB Elevadores) — anunciante {item}',
+  vaapty:'Gestão e operação da TV Vaapty (rede de telas) — {item}', radio:'Gestão e veiculação de rádio interna — {item}',
+  tv:'Gestão de TV corporativa interna — {item}', taroba:'Agenciamento e veiculação de mídia em {item}',
+  radioops:'Fee de gestão e agenciamento de mídia em rádio (Bureau de Mídia) — {item}' };
+function fRecNum(v){ return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fRecParseValor(s){ s=String(s||'').trim().replace(/[R$\s]/g,''); if(!s) return 0; if(s.indexOf(',')>-1){ s=s.replace(/\./g,'').replace(',','.'); } else if((s.match(/\./g)||[]).length>1){ s=s.replace(/\./g,''); } return parseFloat(s)||0; }
+function fRecExtenso(v){ // reais por extenso (pt-BR)
+  const u=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+  const d=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+  const c=['','cento','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+  const ate999=n=>{ if(n===0) return ''; if(n===100) return 'cem'; let r=[]; const ce=Math.floor(n/100), dz=n%100; if(ce) r.push(c[ce]); if(dz){ if(dz<20) r.push(u[dz]); else { const de=Math.floor(dz/10), un=dz%10; r.push(d[de]+(un?' e '+u[un]:'')); } } return r.join(' e '); };
+  const grupo=(n,sing,plur)=>{ if(!n) return ''; const t=ate999(n); return n===1?(t+' '+sing):(t+' '+plur); };
+  v=Math.round(Number(v||0)*100)/100; const inteiro=Math.floor(v), cent=Math.round((v-inteiro)*100);
+  const mil=Math.floor(inteiro/1000000), milh=Math.floor((inteiro%1000000)/1000), rest=inteiro%1000;
+  const partes=[]; if(mil) partes.push(grupo(mil,'milhão','milhões')); if(milh) partes.push(milh===1?'mil':ate999(milh)+' mil'); if(rest) partes.push(ate999(rest));
+  let txt=partes.join(rest&&rest<100&&partes.length>1?' e ':' ').replace(/\s+/g,' ').trim();
+  if(inteiro) txt+=inteiro===1?' real':' reais'; if(cent) txt+=(inteiro?' e ':'')+ate999(cent)+(cent===1?' centavo':' centavos');
+  return txt?txt.charAt(0).toUpperCase()+txt.slice(1):'Zero reais';
+}
+function fRecAno(){ const d=document.getElementById('f-rec-data'); const y=d&&d.value?d.value.slice(0,4):String(new Date().getFullYear()); return y; }
+function fRecProximoNum(){ const ano=fRecAno(); const n=recibos.filter(r=>String(r.numero||'').endsWith('/'+ano)).reduce((m,r)=>Math.max(m,parseInt(r.numero,10)||0),0)+1; return String(n).padStart(4,'0')+'/'+ano; }
+function fRecClientes(){ const out=[]; MODULES.forEach(m=>{ const itens=(m.id==='elev'&&typeof anunciantes!=='undefined')?anunciantes.map(a=>a.nome):m.items; (itens||[]).forEach(item=>out.push({mod:m.id,modLabel:m.label,item})); }); return out; }
+function fRecInit(){
+  const sel=document.getElementById('f-rec-cli'); if(!sel) return;
+  const d=document.getElementById('f-rec-data'); if(!d.value) d.value=new Date().toISOString().slice(0,10);
+  const comp=document.getElementById('f-rec-comp'); if(!comp.value) comp.value=new Date().toISOString().slice(0,7);
+  if(!document.getElementById('f-rec-num').value) document.getElementById('f-rec-num').value=fRecProximoNum();
+  const atual=sel.value; let html='<option value="">— escolha o cliente —</option>';
+  MODULES.forEach(m=>{ const itens=fRecClientes().filter(c=>c.mod===m.id); if(!itens.length) return; html+='<optgroup label="'+m.icon+' '+m.label+'">'+itens.map(c=>'<option value="'+m.id+'|'+c.item.replace(/"/g,'&quot;')+'">'+c.item+'</option>').join('')+'</optgroup>'; });
+  sel.innerHTML=html; if(atual) sel.value=atual;
+  fRecLista(); fRecPreview();
+}
+function fRecCliente(){
+  const v=document.getElementById('f-rec-cli').value; if(!v){ fRecPreview(); return; }
+  const [mod,item]=v.split('|'); const m=MODULES.find(x=>x.id===mod)||{};
+  document.getElementById('f-rec-mod').textContent='Módulo: '+(m.label||mod);
+  const info=(typeof clientesInfo!=='undefined'&&clientesInfo[mod]&&clientesInfo[mod][item])||{};
+  document.getElementById('f-rec-pagador').value=info.razao||info.fantasia||item;
+  document.getElementById('f-rec-doc').value=info.cnpj||'';
+  fRecCompMudou(); // monta a descrição com a competência
+  let hint=''; try{ if(mod==='elev'){ const a=(anunciantes||[]).find(x=>x.nome===item); if(a&&a.valor) hint='Valor do contrato: '+f(a.valor)+'/mês'; } else { const ro=recObj(mod,item); if(ro&&ro.valor) hint='Valor do contrato: '+f(ro.valor)+'/mês'; } }catch(e){}
+  document.getElementById('f-rec-hint').textContent=hint;
+  fRecPreview();
+}
+function fRecCompMudou(){
+  const v=document.getElementById('f-rec-cli').value; const comp=document.getElementById('f-rec-comp').value;
+  if(v){ const [mod,item]=v.split('|'); const base=(REC_DESC[mod]||'Prestação de serviços de mídia — {item}').replace('{item}',item); const cl=comp?' — competência '+MESES[parseInt(comp.slice(5,7),10)-1]+'/'+comp.slice(0,4):''; document.getElementById('f-rec-desc').value=base+cl; }
+  fRecPreview();
+}
+function fRecColeta(){
+  const g=id=>{ const el=document.getElementById(id); return el?el.value:''; };
+  const v=g('f-rec-cli'); const [mod,item]=v?v.split('|'):['',''];
+  const m=MODULES.find(x=>x.id===mod)||{};
+  return { numero:g('f-rec-num').trim()||fRecProximoNum(), data:g('f-rec-data')||new Date().toISOString().slice(0,10), mod, modLabel:m.label||'', cliente:item,
+    pagador:g('f-rec-pagador').trim(), doc:g('f-rec-doc').trim(), desc:g('f-rec-desc').trim(), comp:g('f-rec-comp'), valor:fRecParseValor(g('f-rec-valor')), forma:g('f-rec-forma')||'pix', obs:g('f-rec-obs').trim() };
+}
+function fRecDataExt(iso){ const d=new Date((iso||'')+'T12:00:00'); if(isNaN(d)) return iso||''; const M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; return d.getDate()+' de '+M[d.getMonth()]+' de '+d.getFullYear(); }
+const REC_CSS='.rc{font-family:"DM Sans",Arial,sans-serif;color:#1D1430;width:210mm;min-height:148mm;box-sizing:border-box;padding:12mm 14mm;background:#fff;position:relative;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+ '.rc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #6C55DB;padding-bottom:8px}'+
+ '.rc-logo{font-size:26px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;line-height:1;background:linear-gradient(135deg,#c084fc 0%,#D6367F 40%,#6C55DB 75%,#0D9488 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}'+
+ '.rc-tag{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6C55DB;font-weight:700;margin-top:3px}'+
+ '.rc-emp{font-size:9.5px;color:#4b4459;margin-top:6px;line-height:1.45}'+
+ '.rc-box{text-align:right;min-width:62mm}.rc-box .t{font-size:11px;letter-spacing:.2em;font-weight:800;color:#6C55DB}.rc-box .n{font-size:15px;font-weight:800;margin-top:2px}'+
+ '.rc-box .v{margin-top:6px;display:inline-block;background:#F1EDF9;border:1.5px solid #6C55DB;border-radius:8px;padding:6px 12px;font-size:18px;font-weight:900;color:#1D1430}'+
+ '.rc-body{font-size:12.5px;line-height:1.7;margin:9mm 0 6mm;text-align:justify}.rc-body b{color:#1D1430}'+
+ '.rc-pay{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#FAF8FD;border:1px solid #E2DCF0;border-radius:10px;padding:8px 12px;font-size:11px}'+
+ '.rc-pay img{width:62px;height:62px}'+
+ '.rc-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:9mm;font-size:11px}'+
+ '.rc-sig{text-align:center;min-width:80mm}.rc-sig .l{border-top:1px solid #1D1430;padding-top:4px;font-weight:700}.rc-sig small{display:block;color:#4b4459;font-weight:400}'+
+ '.rc-obs{font-size:10.5px;color:#4b4459;margin-top:6px}';
+function fRecHtml(r){
+  const formas={pix:'PIX — '+REC_EMPRESA.banco+' · chave '+REC_EMPRESA.pixChave, transf:'Transferência bancária — '+REC_EMPRESA.banco, boleto:'Boleto bancário', dinheiro:'Dinheiro'};
+  let qr=''; try{ if(r.forma==='pix'&&r.valor>0&&typeof qrcode!=='undefined'){ const q=qrcode(0,'M'); q.addData(fPixPayload(REC_EMPRESA.pixChave,'MGB COMUNICACAO E MARKETING','LONDRINA',r.valor,'RCB'+String(r.numero||'').replace('/',''))); q.make(); qr='<img src="'+q.createDataURL(3,2)+'" alt="QR PIX">'; } }catch(e){}
+  const docTxt=r.doc?(', '+(r.doc.replace(/\D/g,'').length>11?'CNPJ ':'CPF ')+r.doc):'';
+  return '<div class="rc"><div class="rc-top"><div><div class="rc-logo">'+REC_EMPRESA.fantasia+'</div><div class="rc-tag">Bureau de Mídia · Comunicação e Marketing</div>'+
+    '<div class="rc-emp"><b>'+REC_EMPRESA.razao+'</b> · CNPJ '+REC_EMPRESA.cnpj+'<br>'+REC_EMPRESA.end+'<br>'+REC_EMPRESA.contato+'</div></div>'+
+    '<div class="rc-box"><div class="t">RECIBO</div><div class="n">Nº '+r.numero+'</div><div class="v">R$ '+fRecNum(r.valor)+'</div></div></div>'+
+    '<div class="rc-body">Recebemos de <b>'+(r.pagador||'________________')+'</b>'+docTxt+' a importância de <b>R$ '+fRecNum(r.valor)+'</b> ('+fRecExtenso(r.valor)+'), referente a <b>'+(r.desc||'prestação de serviços de mídia')+'</b>.'+
+    (r.obs?'<div class="rc-obs">Obs.: '+r.obs+'</div>':'')+'</div>'+
+    '<div class="rc-pay"><div><b>Forma de pagamento:</b> '+(formas[r.forma]||formas.pix)+'<br><span style="color:#4b4459">Para maior clareza, firmamos o presente recibo, dando plena e geral quitação do valor acima.</span></div>'+qr+'</div>'+
+    '<div class="rc-foot"><div>'+REC_EMPRESA.cidade+', '+fRecDataExt(r.data)+'</div><div class="rc-sig"><div class="l">'+REC_EMPRESA.razao+'<small>'+REC_EMPRESA.resp+' — '+REC_EMPRESA.cargo+' · CNPJ '+REC_EMPRESA.cnpj+'</small></div></div></div></div>';
+}
+function fRecPreview(){ const box=document.getElementById('f-rec-preview'); if(!box) return; const r=fRecColeta(); box.innerHTML='<style>'+REC_CSS+'</style><div style="transform:scale(.62);transform-origin:top left;width:210mm;height:calc(148mm*.62)">'+fRecHtml(r)+'</div>'; }
+function fRecAbrirImpressao(r){
+  const w=window.open('','_blank','width=900,height=700'); if(!w){ alert('Permita pop-ups pra imprimir o recibo.'); return; }
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Recibo '+r.numero+' — MGB Mídia</title><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;900&display=swap" rel="stylesheet"><style>'+REC_CSS+'@page{size:210mm 148mm;margin:0}body{margin:0;background:#fff}</style></head><body>'+fRecHtml(r)+'</body></html>');
+  w.document.close(); const go=()=>{ try{ w.focus(); w.print(); }catch(e){} }; if(w.document.readyState==='complete') setTimeout(go,400); else w.onload=()=>setTimeout(go,400);
+}
+function fRecGerar(){
+  const r=fRecColeta();
+  if(!r.cliente){ alert('Escolha o cliente.'); return; }
+  if(!(r.valor>0)){ alert('Informe o valor.'); return; }
+  let rec=recibos.find(x=>x.numero===r.numero);
+  if(rec&&rec.cliente!==r.cliente&&!confirm('Já existe o recibo '+r.numero+' pra '+rec.cliente+'. Sobrescrever?')) return;
+  if(!rec){ rec={id:reciboId++}; recibos.push(rec); }
+  Object.assign(rec, r, {ts:Date.now()});
+  try{ scheduleSave(); }catch(e){}
+  fRecLista(); fRecAbrirImpressao(rec);
+}
+function fRecLimpar(){ ['f-rec-pagador','f-rec-doc','f-rec-desc','f-rec-valor','f-rec-obs'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); document.getElementById('f-rec-cli').value=''; document.getElementById('f-rec-mod').textContent=''; document.getElementById('f-rec-hint').textContent=''; document.getElementById('f-rec-num').value=fRecProximoNum(); fRecPreview(); }
+function fRecLista(){
+  const el=document.getElementById('f-rec-lista'); if(!el) return;
+  const lst=[...recibos].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!lst.length){ el.innerHTML='<div class="ferr-info">Nenhum recibo emitido ainda.</div>'; return; }
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em"><th style="text-align:left;padding:4px 6px">Nº</th><th style="text-align:left;padding:4px 6px">Data</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th></th></tr>'+
+    lst.map(r=>'<tr><td style="padding:5px 6px;border-top:1px solid var(--border2)"><b>'+r.numero+'</b></td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+(r.data||'').split('-').reverse().join('/')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+r.cliente+' <span style="color:var(--muted);font-size:10.5px">'+(r.modLabel||'')+'</span></td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(r.valor||0)+'</td>'+
+      '<td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap"><a href="#" onclick="event.preventDefault();fRecReimprimir('+r.id+')" style="margin-right:10px">imprimir</a><a href="#" onclick="event.preventDefault();fRecEditar('+r.id+')" style="margin-right:10px">editar</a><a href="#" onclick="event.preventDefault();fRecExcluir('+r.id+')" style="color:var(--red)">excluir</a></td></tr>').join('')+'</table>';
+}
+function fRecReimprimir(id){ const r=recibos.find(x=>x.id===id); if(r) fRecAbrirImpressao(r); }
+function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod+'|'+r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); s('f-rec-comp',r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
+function fRecExcluir(id){ const r=recibos.find(x=>x.id===id); if(!r) return; if(!confirm('Excluir o recibo '+r.numero+'?')) return; recibos=recibos.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fRecLista(); }
 function showFerrTab(t, el){
-  ['pdf','img','video','qr','etq','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  ['pdf','img','video','qr','etq','recibo','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
   document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
   if(t==='status') loadFerrStatus();
   if(t==='etq') fEtqInit();
+  if(t==='recibo') fRecInit();
 }
 /* ---- IMAGEM helpers ---- */
 function fImgLoad(file){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=URL.createObjectURL(file); }); }
@@ -7385,6 +7543,8 @@ let empresaMovId = 1;
 //   destNome, destEndereco, destComplemento, destBairro, destCidadeUf, destCep, data, ts}]
 let etiquetas = [];
 let etiquetaId = 1;
+let recibos = [];
+let reciboId = 1;
 
 // ── DESPESAS COMPARTILHADAS (Elevadores) ─────────────────────────────────
 // despesasComp = [{id, nome, forn, valor, inicio, meses, telas:[]}]
@@ -10848,7 +11008,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas,
+    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -10930,6 +11090,10 @@ function deserializeState(obj){
   if(obj.etiquetas && Array.isArray(obj.etiquetas)){
     etiquetas=obj.etiquetas;
     etiquetaId=etiquetas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.recibos && Array.isArray(obj.recibos)){
+    recibos=obj.recibos;
+    reciboId=recibos.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
   }
   if(obj.despPagamentos && typeof obj.despPagamentos==='object'){
     despPagamentos=obj.despPagamentos;
