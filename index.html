@@ -6221,7 +6221,7 @@ function copiarSpot() {
           <label class="ferr-lbl" style="margin-top:8px">Referente a</label>
           <textarea id="f-rec-desc" class="ferr-in" rows="3"></textarea>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-            <div><label class="ferr-lbl">Competência</label><input id="f-rec-comp" type="month" class="ferr-in" onchange="fRecCompMudou()"></div>
+            <div><label class="ferr-lbl">Competência</label><div style="display:flex;gap:4px"><select id="f-rec-comp-m" class="ferr-in" onchange="fRecCompMudou()"></select><select id="f-rec-comp-a" class="ferr-in" style="max-width:82px" onchange="fRecCompMudou()"></select></div></div>
             <div><label class="ferr-lbl">Valor (R$)</label><input id="f-rec-valor" class="ferr-in" inputmode="decimal" placeholder="ex.: 1.250,00" oninput="fRecPreview()"></div>
             <div><label class="ferr-lbl">Forma</label><select id="f-rec-forma" class="ferr-in" onchange="fRecPreview()"><option value="pix">PIX — C6</option><option value="transf">Transferência — C6</option><option value="boleto">Boleto</option><option value="dinheiro">Dinheiro</option></select></div>
           </div>
@@ -6593,10 +6593,13 @@ function fRecExtenso(v){ // reais por extenso (pt-BR)
 function fRecAno(){ const d=document.getElementById('f-rec-data'); const y=d&&d.value?d.value.slice(0,4):String(new Date().getFullYear()); return y; }
 function fRecProximoNum(){ const ano=fRecAno(); const n=recibos.filter(r=>String(r.numero||'').endsWith('/'+ano)).reduce((m,r)=>Math.max(m,parseInt(r.numero,10)||0),0)+1; return String(n).padStart(4,'0')+'/'+ano; }
 function fRecClientes(){ const out=[]; MODULES.forEach(m=>{ const itens=(m.id==='elev'&&typeof anunciantes!=='undefined')?anunciantes.map(a=>a.nome):m.items; (itens||[]).forEach(item=>out.push({mod:m.id,modLabel:m.label,item})); }); return out; }
+function fRecCompGet(){ const m=document.getElementById('f-rec-comp-m'), a=document.getElementById('f-rec-comp-a'); return (m&&a&&m.value!==''&&a.value)?(a.value+'-'+String(parseInt(m.value,10)+1).padStart(2,'0')):''; }
+function fRecCompSet(v){ const m=document.getElementById('f-rec-comp-m'), a=document.getElementById('f-rec-comp-a'); if(!m||!a) return; if(!v){ v=new Date().toISOString().slice(0,7); } m.value=String(parseInt(v.slice(5,7),10)-1); a.value=v.slice(0,4); }
 function fRecInit(){
   const sel=document.getElementById('f-rec-cli'); if(!sel) return;
   const d=document.getElementById('f-rec-data'); if(!d.value) d.value=new Date().toISOString().slice(0,10);
-  const comp=document.getElementById('f-rec-comp'); if(!comp.value) comp.value=new Date().toISOString().slice(0,7);
+  const cm=document.getElementById('f-rec-comp-m'), ca=document.getElementById('f-rec-comp-a');
+  if(cm&&!cm.options.length){ const y=new Date().getFullYear(); cm.innerHTML=MESES.map((n,i)=>'<option value="'+i+'">'+n+'</option>').join(''); ca.innerHTML=[y-1,y,y+1].map(a=>'<option value="'+a+'">'+a+'</option>').join(''); fRecCompSet(''); }
   if(!document.getElementById('f-rec-num').value) document.getElementById('f-rec-num').value=fRecProximoNum();
   const atual=sel.value; let html='<option value="">— escolha o cliente —</option>';
   MODULES.forEach(m=>{ const itens=fRecClientes().filter(c=>c.mod===m.id); if(!itens.length) return; html+='<optgroup label="'+m.icon+' '+m.label+'">'+itens.map(c=>'<option value="'+m.id+'|'+c.item.replace(/"/g,'&quot;')+'">'+c.item+'</option>').join('')+'</optgroup>'; });
@@ -6616,7 +6619,7 @@ function fRecCliente(){
   fRecPreview();
 }
 function fRecCompMudou(){
-  const v=document.getElementById('f-rec-cli').value; const comp=document.getElementById('f-rec-comp').value;
+  const v=document.getElementById('f-rec-cli').value; const comp=fRecCompGet();
   if(v){ const [mod,item]=v.split('|'); const base=(REC_DESC[mod]||'Prestação de serviços de mídia — {item}').replace('{item}',item); const cl=comp?' — competência '+MESES[parseInt(comp.slice(5,7),10)-1]+'/'+comp.slice(0,4):''; document.getElementById('f-rec-desc').value=base+cl; }
   fRecPreview();
 }
@@ -6625,7 +6628,7 @@ function fRecColeta(){
   const v=g('f-rec-cli'); const [mod,item]=v?v.split('|'):['',''];
   const m=MODULES.find(x=>x.id===mod)||{};
   return { numero:g('f-rec-num').trim()||fRecProximoNum(), data:g('f-rec-data')||new Date().toISOString().slice(0,10), mod, modLabel:m.label||'', cliente:item,
-    pagador:g('f-rec-pagador').trim(), doc:g('f-rec-doc').trim(), desc:g('f-rec-desc').trim(), comp:g('f-rec-comp'), valor:fRecParseValor(g('f-rec-valor')), forma:g('f-rec-forma')||'pix', obs:g('f-rec-obs').trim() };
+    pagador:g('f-rec-pagador').trim(), doc:g('f-rec-doc').trim(), desc:g('f-rec-desc').trim(), comp:fRecCompGet(), valor:fRecParseValor(g('f-rec-valor')), forma:g('f-rec-forma')||'pix', obs:g('f-rec-obs').trim() };
 }
 function fRecDataExt(iso){ const d=new Date((iso||'')+'T12:00:00'); if(isNaN(d)) return iso||''; const M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; return d.getDate()+' de '+M[d.getMonth()]+' de '+d.getFullYear(); }
 const REC_CSS='.rc{font-family:"DM Sans",Arial,sans-serif;color:#1D1430;width:210mm;min-height:148mm;box-sizing:border-box;padding:12mm 14mm;background:#fff;position:relative;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
@@ -6680,7 +6683,7 @@ function fRecLista(){
       '<td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap"><a href="#" onclick="event.preventDefault();fRecReimprimir('+r.id+')" style="margin-right:10px">imprimir</a><a href="#" onclick="event.preventDefault();fRecEditar('+r.id+')" style="margin-right:10px">editar</a><a href="#" onclick="event.preventDefault();fRecExcluir('+r.id+')" style="color:var(--red)">excluir</a></td></tr>').join('')+'</table>';
 }
 function fRecReimprimir(id){ const r=recibos.find(x=>x.id===id); if(r) fRecAbrirImpressao(r); }
-function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod+'|'+r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); s('f-rec-comp',r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
+function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod+'|'+r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); fRecCompSet(r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
 function fRecExcluir(id){ const r=recibos.find(x=>x.id===id); if(!r) return; if(!confirm('Excluir o recibo '+r.numero+'?')) return; recibos=recibos.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fRecLista(); }
 function showFerrTab(t, el){
   ['pdf','img','video','qr','etq','recibo','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
