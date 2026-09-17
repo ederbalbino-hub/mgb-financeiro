@@ -6234,7 +6234,7 @@ function copiarSpot() {
           </div>
         </div>
         <div class="ferr-card">
-          <div class="ferr-t">Prévia</div><div class="ferr-d">É assim que sai no papel (A5 deitado).</div>
+          <div class="ferr-t">Prévia</div><div class="ferr-d">É assim que sai no papel: 21 × 15 cm, na horizontal.</div>
           <div id="f-rec-preview" style="margin-top:10px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:0;overflow:hidden"></div>
         </div>
       </div>
@@ -6631,7 +6631,7 @@ function fRecColeta(){
     pagador:g('f-rec-pagador').trim(), doc:g('f-rec-doc').trim(), desc:g('f-rec-desc').trim(), comp:fRecCompGet(), valor:fRecParseValor(g('f-rec-valor')), forma:g('f-rec-forma')||'pix', obs:g('f-rec-obs').trim() };
 }
 function fRecDataExt(iso){ const d=new Date((iso||'')+'T12:00:00'); if(isNaN(d)) return iso||''; const M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; return d.getDate()+' de '+M[d.getMonth()]+' de '+d.getFullYear(); }
-const REC_CSS='.rc{font-family:"DM Sans",Arial,sans-serif;color:#1D1430;width:210mm;min-height:148mm;box-sizing:border-box;padding:12mm 14mm;background:#fff;position:relative;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+const REC_CSS='.rc{font-family:"DM Sans",Arial,sans-serif;color:#1D1430;width:210mm;height:150mm;overflow:hidden;box-sizing:border-box;padding:10mm 12mm;background:#fff;position:relative;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
  '.rc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #6C55DB;padding-bottom:8px}'+
  '.rc-logo{font-size:26px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;line-height:1;background:linear-gradient(135deg,#c084fc 0%,#D6367F 40%,#6C55DB 75%,#0D9488 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}'+
  '.rc-tag{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6C55DB;font-weight:700;margin-top:3px}'+
@@ -6656,10 +6656,13 @@ function fRecHtml(r){
     '<div class="rc-pay"><div><b>Forma de pagamento:</b> '+(formas[r.forma]||formas.pix)+'<br><span style="color:#4b4459">Para maior clareza, firmamos o presente recibo, dando plena e geral quitação do valor acima.</span></div>'+qr+'</div>'+
     '<div class="rc-foot"><div>'+REC_EMPRESA.cidade+', '+fRecDataExt(r.data)+'</div><div class="rc-sig"><div class="l">'+REC_EMPRESA.razao+'<small>'+REC_EMPRESA.resp+' — '+REC_EMPRESA.cargo+' · CNPJ '+REC_EMPRESA.cnpj+'</small></div></div></div></div>';
 }
-function fRecPreview(){ const box=document.getElementById('f-rec-preview'); if(!box) return; const r=fRecColeta(); box.innerHTML='<style>'+REC_CSS+'</style><div style="transform:scale(.62);transform-origin:top left;width:210mm;height:calc(148mm*.62)">'+fRecHtml(r)+'</div>'; }
+function fRecPreview(){ const box=document.getElementById('f-rec-preview'); if(!box) return; const r=fRecColeta();
+  const W=794, H=567; // 210mm × 150mm em px (96dpi)
+  const esc=Math.min(1,(box.clientWidth||W)/W);
+  box.innerHTML='<style>'+REC_CSS+'</style><div style="width:'+Math.round(W*esc)+'px;height:'+Math.round(H*esc)+'px;overflow:hidden"><div style="transform:scale('+esc.toFixed(3)+');transform-origin:top left;width:'+W+'px;height:'+H+'px">'+fRecHtml(r)+'</div></div>'; }
 function fRecAbrirImpressao(r){
   const w=window.open('','_blank','width=900,height=700'); if(!w){ alert('Permita pop-ups pra imprimir o recibo.'); return; }
-  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Recibo '+r.numero+' — MGB Mídia</title><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;900&display=swap" rel="stylesheet"><style>'+REC_CSS+'@page{size:210mm 148mm;margin:0}body{margin:0;background:#fff}</style></head><body>'+fRecHtml(r)+'</body></html>');
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Recibo '+r.numero+' — MGB Mídia</title><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;900&display=swap" rel="stylesheet"><style>'+REC_CSS+'@page{size:210mm 150mm;margin:0}body{margin:0;background:#fff}</style></head><body>'+fRecHtml(r)+'</body></html>');
   w.document.close(); const go=()=>{ try{ w.focus(); w.print(); }catch(e){} }; if(w.document.readyState==='complete') setTimeout(go,400); else w.onload=()=>setTimeout(go,400);
 }
 function fRecGerar(){
