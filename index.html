@@ -5875,6 +5875,7 @@ function copiarSpot() {
       <span style="flex:1"></span>
       <button class="rops-btn ghost" onclick="ropsTrocarChave()" title="Informar ou trocar a chave pessoal do Rádio Ops">🔑 Chave</button>
       <button class="rops-btn ghost" onclick="ropsAbrirPainel()" title="Abrir o painel em nova aba">Nova aba ↗</button>
+      <button class="rops-btn ghost" onclick="ropsAbrirGuina()" title="O que o Guina vê (abre o painel dele sem trocar a sua chave)">Painel do Guina ↗</button>
       <button class="rops-btn ghost" onclick="window.open('https://script.google.com/macros/s/AKfycbx3f1mtsqCz4XUzTtyK2Jcup3gUrKSEphT2PmWr_z1z4vAJ43qyin0SORTtVxew927UxQ/exec?portal=moinho-portal-7Kq2xR9mWv4pT8nL','_blank')" title="O que o cliente vê">Portal do cliente ↗</button>
       <button class="rops-btn ghost" onclick="var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?ajuda=1&chave='+encodeURIComponent(k),'_blank')" title="Cartilha / ajuda do Rádio Ops">Ajuda ↗</button>
     </div>
@@ -12453,6 +12454,18 @@ function ropsChave(){
   return k;
 }
 function ropsAbrirPainel(){ var k=ropsChave(); if(k) window.open('https://agenciamgb.com.br/painel.html?chave='+encodeURIComponent(k),'_blank'); }
+// atalho "Painel do Guina ↗": o link vem do Rádio Ops (rel=json, rota só do Eder) — a chave dele nunca fica no HTML público do hub
+function ropsAbrirGuina(){
+  var cache=null; try{ cache=JSON.parse(localStorage.getItem('rops_cache')||'null'); }catch(e){}
+  if(cache&&cache.guinaUrl){ window.open(cache.guinaUrl,'_blank'); return; }
+  var k=ropsChave(); if(!k) return;
+  var w=window.open('about:blank','_blank'); // abre já no clique (senão o bloqueador de pop-up barra) e aponta quando o link chegar
+  try{ if(w) w.document.write('<p style="font-family:sans-serif;padding:40px;color:#1D1430">Buscando o painel do Guina…</p>'); }catch(e){}
+  fetch(ROPS_EXEC+'?rel=json&chave='+encodeURIComponent(k)+'&ano='+new Date().getFullYear()+'&t='+Date.now(),{credentials:'omit',redirect:'follow'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){ try{ mgbRadioOpsCb(d); }catch(e){} if(d&&d.guinaUrl){ if(w) w.location.href=d.guinaUrl; else window.open(d.guinaUrl,'_blank'); } else throw new Error('sem guinaUrl'); })
+    .catch(function(){ try{ if(w) w.close(); }catch(e){} mostrarToast('Não consegui buscar o link do Guina — confira a chave (🔑) e a internet.'); });
+}
 function ropsMoeda(n){ return 'R$ '+(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 var ROPS_MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 function buildRadioOps(force){
