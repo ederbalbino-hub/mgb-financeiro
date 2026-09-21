@@ -12463,10 +12463,16 @@ function buildRadioOps(force){
   if(!k){ if(st) st.textContent='Sem chave — clique em Atualizar pra informar.'; return; }
   if(st) st.textContent='Buscando no Rádio Ops…';
   var ano=new Date().getFullYear();
-  var tag=document.createElement('script');
-  tag.src=ROPS_EXEC+'?rel=json&chave='+encodeURIComponent(k)+'&ano='+ano+'&callback=mgbRadioOpsCb&t='+Date.now();
-  tag.onerror=function(){ if(st) st.textContent=cache?'Sem conexão — mostrando a última sincronização.':'Não consegui falar com o Rádio Ops (confira a chave e a internet).'; };
-  document.body.appendChild(tag);
+  ropsBuscarJson(k,ano,function(){ if(st) st.textContent=cache?'Sem conexão — mostrando a última sincronização.':'Não consegui falar com o Rádio Ops (confira a chave e a internet).'; });
+}
+// busca SEM cookies do Google (credentials:'omit'): com login do Google vencido ou várias contas no Chrome,
+// o script.google.com desvia a chamada pra tela de login e o <script> JSONP/iframe morre ("conexão recusada").
+// Anônimo responde sempre (o acesso é pela chave). Se o fetch falhar, cai no JSONP antigo.
+function ropsBuscarJson(k,ano,onErr){
+  var url=ROPS_EXEC+'?rel=json&chave='+encodeURIComponent(k)+'&ano='+ano;
+  var jsonp=function(){ var tag=document.createElement('script'); tag.src=url+'&callback=mgbRadioOpsCb&t='+Date.now(); if(onErr) tag.onerror=onErr; document.body.appendChild(tag); };
+  if(!window.fetch){ jsonp(); return; }
+  fetch(url+'&t='+Date.now(),{credentials:'omit',redirect:'follow'}).then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); }).then(mgbRadioOpsCb).catch(jsonp);
 }
 // ── painel embutido + alertas 💰 (v2, 2026-09-21: "concentrar tudo no hub") ──
 function ropsSetTab(t){
@@ -12491,7 +12497,10 @@ function ropsMontarPainel(){
 function ropsEmbutir(){
   var pw=document.getElementById('rops-painel-wrap'); if(!pw||document.getElementById('rops-frame')) return;
   var k=(localStorage.getItem('rops_chave')||'').trim(); pw.innerHTML='';
-  var f=document.createElement('iframe'); f.id='rops-frame'; f.className='rops-frame'; f.allow='fullscreen; clipboard-write'; f.src=ROPS_EXEC+'?chave='+encodeURIComponent(k); pw.appendChild(f);
+  var f=document.createElement('iframe'); f.id='rops-frame'; f.className='rops-frame'; f.allow='fullscreen; clipboard-write';
+  // credentialless = quadro carrega sem os cookies do Google (mesmo motivo do ropsBuscarJson): evita o desvio pro login que o Chrome mostra como "conexão recusada"
+  f.setAttribute('credentialless',''); try{ f.credentialless=true; }catch(e){}
+  f.src=ROPS_EXEC+'?chave='+encodeURIComponent(k); pw.appendChild(f);
 }
 function ropsTrocarChave(){
   var atual=localStorage.getItem('rops_chave')||'';
@@ -12518,7 +12527,7 @@ function ropsAutoSync(){ // na abertura do hub: mostra o cache e, se estiver vel
   if(cache) ropsRenderAlertas(cache);
   var k=localStorage.getItem('rops_chave')||''; if(!k) return;
   var idade=cache&&cache.geradoEm?(Date.now()-new Date(cache.geradoEm).getTime()):Infinity;
-  if(idade>3*3600e3){ var tag=document.createElement('script'); tag.src=ROPS_EXEC+'?rel=json&chave='+encodeURIComponent(k)+'&ano='+new Date().getFullYear()+'&callback=mgbRadioOpsCb&t='+Date.now(); document.body.appendChild(tag); }
+  if(idade>3*3600e3) ropsBuscarJson(k,new Date().getFullYear());
 }
 document.addEventListener('DOMContentLoaded',function(){ try{ ropsAutoSync(); }catch(e){} });
 function mgbRadioOpsCb(data){
