@@ -12484,12 +12484,9 @@ function ropsMontarPainel(){
   var pw=document.getElementById('rops-painel-wrap'); if(!pw) return;
   var k=(localStorage.getItem('rops_chave')||'').trim();
   if(!k){ ropsMsgChave('Sem chave do Rádio Ops neste navegador. É a mesma chave do seu link pessoal do painel (<b>painel.html?chave=…</b>).'); return; }
-  pw.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted)">Conferindo a chave… <button class="rops-btn ghost" style="margin-left:10px" onclick="ropsEmbutir()">Abrir mesmo assim</button></div>';
-  // valida por JSONP num ping leve (?ping=1): chave errada = o Apps Script devolve HTML (sem callback) e o painel embutido seria bloqueado
-  var ok=false; window.mgbRopsPingCb=function(r){ ok=true; if(r&&r.ok) ropsEmbutir(); else ropsMsgChave('A chave salva aqui <b>não é reconhecida</b> pelo Rádio Ops. Cole a chave pessoal do seu link do painel.'); };
-  var tag=document.createElement('script'); tag.src=ROPS_EXEC+'?ping=1&chave='+encodeURIComponent(k)+'&callback=mgbRopsPingCb&t='+Date.now();
-  var falhou=function(){ if(!ok) ropsMsgChave('Não consegui conferir a chave com o Rádio Ops (sem resposta). Confira a internet ou tente <b>Abrir mesmo assim</b>.<br><button class="rops-btn ghost" style="margin-top:8px" onclick="ropsEmbutir()">Abrir mesmo assim</button>'); };
-  tag.onerror=falhou; setTimeout(falhou, 40000); document.body.appendChild(tag);
+  // embute direto (como o painel.html do site): desde o Ops v166 uma chave errada mostra
+  // a mensagem do próprio Ops dentro do quadro, então não precisa conferir antes
+  ropsEmbutir();
 }
 function ropsEmbutir(){
   var pw=document.getElementById('rops-painel-wrap'); if(!pw||document.getElementById('rops-frame')) return;
