@@ -5873,6 +5873,7 @@ function copiarSpot() {
       <span class="rops-tab on" id="rops-tab-painel" onclick="ropsSetTab('painel')">Painel</span>
       <span class="rops-tab" id="rops-tab-resumo" onclick="ropsSetTab('resumo')">Resumo financeiro</span>
       <span style="flex:1"></span>
+      <button class="rops-btn ghost" onclick="ropsTrocarChave()" title="Informar ou trocar a chave pessoal do Rádio Ops">🔑 Chave</button>
       <button class="rops-btn ghost" onclick="ropsAbrirPainel()" title="Abrir o painel em nova aba">Nova aba ↗</button>
       <button class="rops-btn ghost" onclick="window.open('https://script.google.com/macros/s/AKfycbx3f1mtsqCz4XUzTtyK2Jcup3gUrKSEphT2PmWr_z1z4vAJ43qyin0SORTtVxew927UxQ/exec?portal=moinho-portal-7Kq2xR9mWv4pT8nL','_blank')" title="O que o cliente vê">Portal do cliente ↗</button>
       <button class="rops-btn ghost" onclick="var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?ajuda=1&chave='+encodeURIComponent(k),'_blank')" title="Cartilha / ajuda do Rádio Ops">Ajuda ↗</button>
@@ -12476,12 +12477,28 @@ function ropsSetTab(t){
   var painel=(t!=='resumo');
   pw.style.display=painel?'block':'none'; rw.style.display=painel?'none':'block';
   if(tp) tp.classList.toggle('on',painel); if(tr) tr.classList.toggle('on',!painel);
-  if(painel && !document.getElementById('rops-frame')){
-    var k=ropsChave();
-    if(!k){ pw.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted)">Sem chave do Rádio Ops — clique em <b>Resumo financeiro → Atualizar</b> pra informar a chave e volte aqui.</div>'; return; }
-    var f=document.createElement('iframe'); f.id='rops-frame'; f.className='rops-frame'; f.allow='fullscreen; clipboard-write';
-    f.src=ROPS_EXEC+'?chave='+encodeURIComponent(k); pw.appendChild(f);
-  }
+  if(painel && !document.getElementById('rops-frame')) ropsMontarPainel();
+}
+function ropsMsgChave(txt){ var pw=document.getElementById('rops-painel-wrap'); if(pw) pw.innerHTML='<div style="padding:34px 20px;text-align:center;color:var(--muted);line-height:1.7">'+txt+'<br><button class="rops-btn" style="margin-top:12px" onclick="ropsTrocarChave()">🔑 Informar a chave</button></div>'; }
+function ropsMontarPainel(){
+  var pw=document.getElementById('rops-painel-wrap'); if(!pw) return;
+  var k=(localStorage.getItem('rops_chave')||'').trim();
+  if(!k){ ropsMsgChave('Sem chave do Rádio Ops neste navegador. É a mesma chave do seu link pessoal do painel (<b>painel.html?chave=…</b>).'); return; }
+  pw.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted)">Conferindo a chave…</div>';
+  // valida por JSONP: chave errada = o Apps Script devolve HTML (sem callback) e o painel embutido seria bloqueado
+  var ok=false; window.mgbRopsChaveCb=function(data){ ok=true; try{ localStorage.setItem('rops_cache',JSON.stringify(data)); ropsRenderAlertas(data); }catch(e){}
+    pw.innerHTML=''; var f=document.createElement('iframe'); f.id='rops-frame'; f.className='rops-frame'; f.allow='fullscreen; clipboard-write'; f.src=ROPS_EXEC+'?chave='+encodeURIComponent(k); pw.appendChild(f); };
+  var tag=document.createElement('script'); tag.src=ROPS_EXEC+'?rel=json&chave='+encodeURIComponent(k)+'&ano='+new Date().getFullYear()+'&callback=mgbRopsChaveCb&t='+Date.now();
+  var falhou=function(){ if(!ok) ropsMsgChave('A chave salva aqui <b>não é reconhecida</b> pelo Rádio Ops (por isso o painel não abre dentro do hub). Cole a chave pessoal do seu link do painel.'); };
+  tag.onerror=falhou; setTimeout(falhou, 12000); document.body.appendChild(tag);
+}
+function ropsTrocarChave(){
+  var atual=localStorage.getItem('rops_chave')||'';
+  var k=prompt('Chave pessoal do Rádio Ops (a mesma do seu link painel.html?chave=…):', atual);
+  if(k===null) return; k=k.trim(); if(!k) return;
+  localStorage.setItem('rops_chave',k); localStorage.removeItem('rops_cache');
+  var pw=document.getElementById('rops-painel-wrap'); if(pw) pw.innerHTML='';
+  ropsSetTab('painel'); try{ buildRadioOps(true); }catch(e){}
 }
 function ropsRenderAlertas(data){
   var rels=(data&&data.relatorios)||[]; var pend=rels.filter(function(r){ return r.aceiteEm && !r.nfEmitidaEm; });
