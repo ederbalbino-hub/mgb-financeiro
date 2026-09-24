@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tela Vertical — Contrato de Veiculação (Anunciante)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens Tela Vertical ── */
+:root{--tv-navy:#16294F;--tv-navy-deep:#0E1B36;--tv-gold:#C0A062;--tv-gold-light:#E2CFA3;--tv-champagne:#F3EDE2;--tv-sky:#6FC7E8;--tv-white:#FFFFFF;--tv-ink:#1B1F2A;--tv-muted:#6B7280;--tv-line:rgba(22,41,79,.14);--tv-font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--tv-font);background:#DDD6C8;color:var(--tv-ink);font-size:10.5pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@page{size:A4;margin:14mm 15mm 14mm}
+
+/* Barra de ferramentas (só na tela) */
+.toolbar{position:sticky;top:0;z-index:50;background:var(--tv-navy);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px}
+.toolbar b{color:var(--tv-gold-light)}
+.toolbar .sp{flex:1}
+.tb-btn{background:var(--tv-gold);color:var(--tv-navy);border:none;border-radius:999px;padding:8px 16px;font-family:var(--tv-font);font-weight:700;font-size:12px;cursor:pointer}
+.tb-btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+
+/* Folha */
+.sheet{background:#fff;max-width:210mm;margin:22px auto;padding:16mm 16mm 18mm;box-shadow:0 20px 60px rgba(22,41,79,.25)}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:12px;border-bottom:2px solid var(--tv-gold);margin-bottom:16px}
+.hdr .logo svg{height:44px;width:auto}
+.hdr .right{text-align:right}
+.hdr .kicker{font-size:8pt;letter-spacing:.28em;text-transform:uppercase;color:var(--tv-gold);font-weight:700}
+.hdr .tit{font-size:13pt;font-weight:800;color:var(--tv-navy);line-height:1.15;margin-top:2px}
+.hdr .num{font-size:8.5pt;color:var(--tv-muted);margin-top:3px}
+.predial{display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap;line-height:1}
+.predial .g{font-weight:400;letter-spacing:.3em;color:var(--tv-gold);font-size:.6em;text-transform:uppercase}
+.predial .p{font-weight:800;color:var(--tv-navy);text-transform:uppercase}
+.assin{font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:var(--tv-muted);margin-top:4px;display:flex;align-items:center;gap:6px}
+
+h2{font-size:9pt;letter-spacing:.22em;text-transform:uppercase;color:var(--tv-navy);font-weight:800;border-left:4px solid var(--tv-gold);padding-left:8px;margin:13px 0 7px;break-after:avoid}
+h3{font-size:9.5pt;font-weight:700;color:var(--tv-navy);margin:7px 0 1px;break-after:avoid}
+p{margin:0 0 6px;text-align:justify}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.box{border:1px solid var(--tv-line);border-radius:8px;padding:10px 12px;break-inside:avoid}
+.box .bt{font-size:8pt;letter-spacing:.2em;text-transform:uppercase;color:var(--tv-gold);font-weight:700;margin-bottom:6px}
+.row{display:flex;gap:8px;align-items:baseline;font-size:9.5pt;padding:3px 0;border-bottom:1px dotted var(--tv-line)}
+.row:last-child{border-bottom:none}
+.row .l{flex:0 0 108px;color:var(--tv-muted);font-size:8.5pt;font-weight:500}
+.row .v{flex:1;font-weight:500;color:var(--tv-ink)}
+
+/* Campos preenchíveis: na tela = input; na impressão = texto */
+.f{position:relative;display:inline-block;width:100%}
+.f input,.f select,.f textarea{width:100%;font:inherit;font-size:9.5pt;color:var(--tv-ink);border:none;border-bottom:1px solid rgba(22,41,79,.35);background:rgba(111,199,232,.10);padding:2px 5px;outline:none;border-radius:3px 3px 0 0}
+.f input:focus,.f select:focus,.f textarea:focus{background:rgba(111,199,232,.22);border-bottom-color:var(--tv-navy)}
+.f textarea{resize:vertical;min-height:40px}
+.f .fp{display:none;border-bottom:1px solid rgba(22,41,79,.35);padding:1px 4px;min-height:1.4em;white-space:pre-wrap}
+.f .fp:empty::before{content:'\00a0'}
+.inl{display:inline-block;width:auto;min-width:90px}
+.inl input{width:100%}
+
+table{width:100%;border-collapse:collapse;font-size:9pt;margin:6px 0 4px}
+th{background:var(--tv-navy);color:#fff;font-weight:600;text-align:left;padding:6px 8px;font-size:8pt;letter-spacing:.05em}
+td{padding:4px 8px;border-bottom:1px solid var(--tv-line);vertical-align:middle}
+td .f input{background:transparent}
+tr.tot td{font-weight:700;background:var(--tv-champagne);color:var(--tv-navy)}
+.mini{font-size:8pt;color:var(--tv-muted)}
+.hl{background:var(--tv-champagne);border-radius:8px;padding:10px 14px;display:flex;gap:26px;flex-wrap:wrap;margin-top:10px;break-inside:avoid}
+.hl .k{font-size:7.5pt;letter-spacing:.16em;text-transform:uppercase;color:var(--tv-muted);font-weight:600}
+.hl .n{font-size:14pt;font-weight:800;color:var(--tv-navy)}
+.hl .n.gold{color:var(--tv-gold)}
+.clauses p{font-size:9pt;line-height:1.45}
+.sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:30px;break-inside:avoid}
+.sig .ln{border-top:1px solid var(--tv-ink);padding-top:5px;text-align:center;font-size:9pt}
+.sig .ln b{display:block;color:var(--tv-navy)}
+.sig .ln span{color:var(--tv-muted);font-size:8pt}
+.test{margin-top:16px;break-inside:avoid}
+.test .two{gap:28px}
+.foot{margin-top:12px;padding-top:6px;border-top:1px solid var(--tv-line);font-size:7pt;color:var(--tv-muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.add-row{font-size:8.5pt;color:var(--tv-navy);background:none;border:1px dashed var(--tv-navy);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--tv-font);margin-top:4px}
+.note-screen{font-size:8.5pt;color:var(--tv-muted);background:rgba(192,160,98,.12);border-radius:6px;padding:6px 10px;margin-bottom:12px}
+
+@media(max-width:700px){.sheet{padding:18px 16px;margin:10px;overflow-x:hidden}table{display:block;overflow-x:auto;white-space:nowrap}.hdr .num{white-space:normal}.f.inl{max-width:100%}.two,.sig{grid-template-columns:1fr}.hdr{flex-direction:column;align-items:flex-start}.hdr .right{text-align:left}.row .l{flex-basis:90px}}
+@media print{
+  body{background:#fff}
+  .toolbar,.no-print,.add-row,.note-screen{display:none!important}
+  .sheet{box-shadow:none;margin:0;padding:0;max-width:none}
+  .f input,.f select,.f textarea{display:none}
+  .f .fp{display:block}
+  .inl .fp{display:inline-block;min-width:90px}
+  .box,.hl,.sig,.test,tr{break-inside:avoid}
+  .sheet{padding-bottom:0}
+  .foot{margin-top:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <span><b>Contrato de Veiculação · Tela Vertical</b> — preencha os campos azuis; na impressão eles viram texto.</span>
+  <span class="sp"></span>
+  <button class="tb-btn ghost" onclick="tvLimpar()">Limpar</button>
+  <button class="tb-btn" onclick="window.print()">Imprimir / PDF</button>
+</div>
+
+<main class="sheet">
+  <header class="hdr">
+    <div>
+      <div class="logo"><!-- LOGO --><svg role="img" aria-label="Tela Vertical" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200"><title>Tela Vertical — logo horizontal</title><g transform="translate(24,16)"><path fill="#16294F" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#16294F" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#16294F" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g></svg></div>
+      <div class="assin">uma empresa do <!-- LOGO PREDIAL --><span class="predial" style="font-size:11pt"><span class="g">Grupo</span><span class="p">Predial</span></span></div>
+    </div>
+    <div class="right">
+      <div class="kicker">Contrato de Veiculação</div>
+      <div class="tit">Mídia Digital em Elevadores</div>
+      <div class="num">Nº <span class="f inl" style="min-width:120px"><input id="num" placeholder="TV-2026-09-0001"><span class="fp"></span></span> · Londrina, <span class="f inl" style="min-width:110px"><input id="data" placeholder="dd/mm/aaaa"><span class="fp"></span></span></div>
+    </div>
+  </header>
+
+  <div class="note-screen no-print">Dica: o número e a data são sugeridos automaticamente; os valores de tabela vêm do mídia kit (R$ 279,90 por tela/semana, tabela cheia 2026/2027). Duração acima de 10 s multiplica o valor por tela (20 s = 2×, 30 s = 3×).</div>
+
+  <!-- 1 e 2. PARTES -->
+  <div class="two">
+    <div class="box">
+      <div class="bt">1. Contratante (Anunciante)</div>
+      <div class="row"><span class="l">Razão social / Nome</span><span class="v f"><input id="c-razao"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Nome fantasia</span><span class="v f"><input id="c-fantasia"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">CNPJ / CPF</span><span class="v f"><input id="c-doc"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Endereço</span><span class="v f"><input id="c-end"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Responsável</span><span class="v f"><input id="c-resp" placeholder="Nome (cargo)"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Telefone</span><span class="v f"><input id="c-tel"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">E-mail</span><span class="v f"><input id="c-email"><span class="fp"></span></span></div>
+    </div>
+    <div class="box">
+      <div class="bt">2. Contratada</div>
+      <div class="row"><span class="l">Razão social</span><span class="v">MGB Mídia Comunicação LTDA</span></div>
+      <div class="row"><span class="l">Marca</span><span class="v">Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial</span></div>
+      <div class="row"><span class="l">CNPJ</span><span class="v">23.770.170/0001-50</span></div>
+      <div class="row"><span class="l">Endereço</span><span class="v">Rua Raul Juliatto, 200 — Londrina/PR</span></div>
+      <div class="row"><span class="l">Representante</span><span class="v">Eder Balbino</span></div>
+      <div class="row"><span class="l">Contato</span><span class="v">(43) 99696-0078 · contato@telavertical.com.br</span></div>
+    </div>
+  </div>
+
+  <!-- 3. PONTOS -->
+  <h2>3. Pontos de Veiculação</h2>
+  <table id="tbl-pontos">
+    <thead><tr><th style="width:34%">Condomínio</th><th>Bairro</th><th style="width:9%">Torres</th><th style="width:9%">Telas</th><th style="width:15%">Pessoas/mês</th><th style="width:15%">Inserções/mês</th></tr></thead>
+    <tbody id="pontos-body">
+      <tr><td><span class="f"><input class="p-nome" list="condos"><span class="fp"></span></span></td><td><span class="f"><input class="p-bairro"><span class="fp"></span></span></td><td><span class="f"><input class="p-torres" inputmode="numeric"><span class="fp"></span></span></td><td><span class="f"><input class="p-telas" inputmode="numeric" oninput="tvCalc()"><span class="fp"></span></span></td><td><span class="f"><input class="p-pess" inputmode="numeric" oninput="tvCalc()"><span class="fp"></span></span></td><td class="p-ins mini">—</td></tr>
+      <tr><td><span class="f"><input class="p-nome" list="condos"><span class="fp"></span></span></td><td><span class="f"><input class="p-bairro"><span class="fp"></span></span></td><td><span class="f"><input class="p-torres" inputmode="numeric"><span class="fp"></span></span></td><td><span class="f"><input class="p-telas" inputmode="numeric" oninput="tvCalc()"><span class="fp"></span></span></td><td><span class="f"><input class="p-pess" inputmode="numeric" oninput="tvCalc()"><span class="fp"></span></span></td><td class="p-ins mini">—</td></tr>
+      <tr><td><span class="f"><input class="p-nome" list="condos"><span class="fp"></span></span></td><td><span class="f"><input class="p-bairro"><span class="fp"></span></span></td><td><span class="f"><input class="p-torres" inputmode="numeric"><span class="fp"></span></span></td><td><span class="f"><input class="p-telas" inputmode="numeric" oninput="tvCalc()"><span class="fp"></span></span></td><td><span class="f"><input class="p-pess" inputmode="numeric" oninput="tvCalc()"><span class="fp"></span></span></td><td class="p-ins mini">—</td></tr>
+    </tbody>
+    <tfoot><tr class="tot"><td>TOTAL</td><td></td><td id="t-torres">—</td><td id="t-telas">—</td><td id="t-pess">—</td><td id="t-ins">—</td></tr></tfoot>
+  </table>
+  <datalist id="condos">
+    <option value="Lagoa Dourada"><option value="Lake Portinari"><option value="Spazio Louvre"><option value="Terra Parque"><option value="Residencial Málaga"><option value="Spot"><option value="Resid. Bella Fiori"><option value="Tay"><option value="Uptown"><option value="Ed. Ayrton Senna 1"><option value="Ed. Ayrton Senna 2">
+  </datalist>
+  <button class="add-row no-print" onclick="tvAddRow()">+ adicionar condomínio</button>
+  <p class="mini" style="margin-top:4px">Entrega mínima de 250 inserções/dia por tela (~7.500/mês). Impactos estimados pela metodologia DOOH: cada pessoa é alcançada ~3× por mês. Pessoas/mês conforme informação das administrações (residenciais: moradores; comerciais: fluxo estimado).</p>
+
+  <!-- 4. PLANO -->
+  <h2>4. Plano e Investimento</h2>
+  <div class="two">
+    <div class="box">
+      <div class="row"><span class="l">Plano</span><span class="v f"><select id="plano" onchange="tvCalc()"><option value="1">Mensal (1 mês)</option><option value="3">Trimestral (3 meses)</option><option value="6">Semestral (6 meses)</option><option value="12">Anual (12 meses)</option></select><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Vigência</span><span class="v"><span class="f inl" style="min-width:95px"><input id="v-ini" placeholder="dd/mm/aaaa"><span class="fp"></span></span> a <span class="f inl" style="min-width:95px"><input id="v-fim" placeholder="dd/mm/aaaa"><span class="fp"></span></span></span></div>
+      <div class="row"><span class="l">Valor / tela / mês</span><span class="v">R$ <span class="f inl" style="min-width:90px"><input id="vtela" placeholder="0,00" oninput="tvCalc()"><span class="fp"></span></span> <span class="mini" id="mult-lbl"></span></span></div>
+      <div class="row"><span class="l">Valor mensal</span><span class="v">R$ <span class="f inl" style="min-width:110px"><input id="vmensal" placeholder="calculado ou negociado" oninput="tvCalc(true)"><span class="fp"></span></span></span></div>
+      <div class="row"><span class="l">Forma de pagamento</span><span class="v f"><select id="pgto"><option>Boleto bancário</option><option>PIX</option><option>Transferência bancária</option></select><span class="fp"></span></span></div>
+    </div>
+    <div>
+      <div class="hl">
+        <div><div class="k">Telas</div><div class="n" id="h-telas">0</div></div>
+        <div><div class="k">Valor mensal</div><div class="n" id="h-mensal">R$ 0,00</div></div>
+        <div><div class="k">Total do plano</div><div class="n gold" id="h-total">R$ 0,00</div></div>
+      </div>
+      <p class="mini" style="margin-top:8px">Vencimento todo dia 15. Produção do material não inclusa (indicamos parceiros). Alterações de arte durante o período sem custo adicional. Valores de tabela: R$ 279,90 por tela/semana (mês comercial de 4 semanas), sujeitos a desconto por volume e prazo.</p>
+    </div>
+  </div>
+
+  <!-- 5. SPECS -->
+  <h2>5. Especificações Técnicas</h2>
+  <div class="box">
+    <div class="two" style="gap:6px 20px">
+      <div class="row"><span class="l">Duração do spot</span><span class="v f"><select id="dur" onchange="tvCalc()"><option value="1">10 segundos — sem áudio (padrão)</option><option value="2">20 segundos — sem áudio (2×)</option><option value="3">30 segundos — sem áudio (3×)</option></select><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Formato</span><span class="v f"><select id="fmt"><option>Vídeo (MP4 / H.264)</option><option>Imagem estática (JPG / PNG)</option></select><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Resolução</span><span class="v">1100 × 900 px (paisagem) — sem áudio</span></div>
+      <div class="row"><span class="l">Exibições</span><span class="v">Mínimo de 250 inserções/dia por tela (~7.500/mês)</span></div>
+    </div>
+    <div class="row" style="border:none"><span class="l">Observações</span><span class="v f"><textarea id="obs" rows="2"></textarea><span class="fp"></span></span></div>
+  </div>
+
+  <!-- 6. TERMOS -->
+  <h2>6. Termos e Condições</h2>
+  <div class="clauses">
+    <h3>6.1. Objeto</h3>
+    <p>Veiculação de conteúdo publicitário do CONTRATANTE nas telas de mídia digital em elevadores operadas pela CONTRATADA sob a marca Tela Vertical, nos condomínios especificados na cláusula 3.</p>
+    <h3>6.2. Obrigações da Contratada</h3>
+    <p>a) Garantir a exibição nas frequências estabelecidas. b) Manter os equipamentos em funcionamento. c) Fornecer relatórios mensais de veiculação. d) Em caso de problemas técnicos ou não-entrega do quantitativo, veicular em outros condomínios de mesmo perfil para compensação, mediante alinhamento prévio com o CONTRATANTE.</p>
+    <h3>6.3. Obrigações do Contratante</h3>
+    <p>a) Fornecer material nas especificações com mínimo de 3 (três) dias úteis de antecedência. b) Efetuar os pagamentos nas datas acordadas. c) Responsabilizar-se integralmente pelo conteúdo veiculado.</p>
+    <h3>6.4. Pagamento</h3>
+    <p>Mensal, via <span id="pgto-txt">boleto bancário</span>, com vencimento todo dia 15. Em caso de atraso: multa de 2% e juros de 1% ao mês.</p>
+    <h3>6.5. Rescisão</h3>
+    <p>Aviso prévio de 30 (trinta) dias. Rescisão antecipada: multa de 20% sobre os meses restantes do plano contratado.</p>
+    <h3>6.6. Política de Conteúdo</h3>
+    <p>A CONTRATADA pode recusar material ilícito, ofensivo, político-partidário ou fora dos padrões técnicos, bem como conteúdo inadequado ao ambiente residencial dos condomínios.</p>
+    <h3>6.7. Foro</h3>
+    <p>Fica eleito o foro da Comarca de Londrina/PR para dirimir quaisquer controvérsias decorrentes deste instrumento.</p>
+  </div>
+
+  <p style="margin-top:14px;font-size:9.5pt">E por estarem justas e contratadas, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma.</p>
+  <p style="font-size:9.5pt">Londrina/PR, <span class="f inl" style="min-width:150px"><input id="data-ext" placeholder="dd de mês de aaaa"><span class="fp"></span></span></p>
+
+  <div class="sig">
+    <div class="ln"><b id="sig-nome">CONTRATANTE</b><span id="sig-doc">CNPJ/CPF: ______________________</span></div>
+    <div class="ln"><b>MGB Mídia Comunicação LTDA · Tela Vertical</b><span>CONTRATADA · CNPJ 23.770.170/0001-50 · Eder Balbino</span></div>
+  </div>
+  <div class="test">
+    <div class="bt" style="font-size:8pt;letter-spacing:.2em;text-transform:uppercase;color:var(--tv-gold);font-weight:700;margin-bottom:14px">Testemunhas</div>
+    <div class="two">
+      <div class="ln" style="border-top:1px solid var(--tv-ink);padding-top:5px;font-size:8.5pt;color:var(--tv-muted)">Nome: ______________________________ CPF: __________________</div>
+      <div class="ln" style="border-top:1px solid var(--tv-ink);padding-top:5px;font-size:8.5pt;color:var(--tv-muted)">Nome: ______________________________ CPF: __________________</div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial</span><span>MGB Mídia Comunicação LTDA · CNPJ 23.770.170/0001-50 · Rua Raul Juliatto, 200 · Londrina/PR</span><span>(43) 99696-0078 · contato@telavertical.com.br</span></div>
+</main>
+
+<script>
+const INS_DIA=250, DIAS=30;
+const fmtBRL=v=>'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=s=>parseFloat(String(s||'').replace(/\./g,'').replace(',','.'))||0;
+function syncAll(){
+  document.querySelectorAll('.f').forEach(f=>{
+    const el=f.querySelector('input,select,textarea'), fp=f.querySelector('.fp');
+    if(!el||!fp) return;
+    fp.textContent = el.tagName==='SELECT' ? el.options[el.selectedIndex]?.text||'' : el.value;
+  });
+  const razao=document.getElementById('c-fantasia').value||document.getElementById('c-razao').value;
+  document.getElementById('sig-nome').textContent=razao?razao.toUpperCase():'CONTRATANTE';
+  const doc=document.getElementById('c-doc').value;
+  document.getElementById('sig-doc').textContent='CNPJ/CPF: '+(doc||'______________________');
+  const pg=document.getElementById('pgto'); document.getElementById('pgto-txt').textContent=pg.options[pg.selectedIndex].text.toLowerCase();
+}
+function tvCalc(fromMensal){
+  let telas=0,pess=0,torres=0;
+  document.querySelectorAll('#pontos-body tr').forEach(tr=>{
+    const t=num(tr.querySelector('.p-telas').value), p=num(tr.querySelector('.p-pess').value), to=num(tr.querySelector('.p-torres').value);
+    telas+=t; pess+=p; torres+=to;
+    tr.querySelector('.p-ins').textContent=t?(t*INS_DIA*DIAS).toLocaleString('pt-BR'):'—';
+  });
+  document.getElementById('t-telas').textContent=telas||'—';
+  document.getElementById('t-pess').textContent=pess?pess.toLocaleString('pt-BR'):'—';
+  document.getElementById('t-torres').textContent=torres||'—';
+  document.getElementById('t-ins').textContent=telas?(telas*INS_DIA*DIAS).toLocaleString('pt-BR'):'—';
+  const mult=parseInt(document.getElementById('dur').value)||1;
+  const vt=num(document.getElementById('vtela').value)*mult;
+  document.getElementById('mult-lbl').textContent=mult>1?'(× '+mult+' pela duração = R$ '+vt.toLocaleString('pt-BR',{minimumFractionDigits:2})+'/tela)':'';
+  const meses=parseInt(document.getElementById('plano').value)||1;
+  const vm=document.getElementById('vmensal');
+  let mensal=num(vm.value);
+  if(!fromMensal && !vm.dataset.manual){ mensal=telas*vt; vm.value=mensal?mensal.toLocaleString('pt-BR',{minimumFractionDigits:2}):''; }
+  if(fromMensal) vm.dataset.manual=vm.value?'1':'';
+  document.getElementById('h-telas').textContent=telas;
+  document.getElementById('h-mensal').textContent=fmtBRL(mensal);
+  document.getElementById('h-total').textContent=fmtBRL(mensal*meses);
+  // vigência automática
+  const ini=document.getElementById('v-ini').value, m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(ini);
+  if(m && !document.getElementById('v-fim').dataset.manual){ const d=new Date(+m[3],+m[2]-1,+m[1]); d.setMonth(d.getMonth()+meses); document.getElementById('v-fim').value=d.toLocaleDateString('pt-BR'); }
+  syncAll();
+}
+function tvAddRow(){
+  const tb=document.getElementById('pontos-body'); const tr=tb.rows[0].cloneNode(true);
+  tr.querySelectorAll('input').forEach(i=>i.value=''); tr.querySelector('.p-ins').textContent='—'; tb.appendChild(tr); bind(tr);
+}
+function bind(root){
+  root.querySelectorAll('input,select,textarea').forEach(el=>{ el.addEventListener('input',()=>{ if(!el.closest('#pontos-body')||!el.oninput) syncAll(); }); });
+}
+function tvLimpar(){ if(!confirm('Limpar todos os campos?')) return; document.querySelectorAll('input,textarea').forEach(i=>{i.value='';delete i.dataset.manual;}); document.querySelectorAll('select').forEach(s=>s.selectedIndex=0); tvInit(); }
+function tvInit(){
+  const hoje=new Date();
+  const numEl=document.getElementById('num'); if(!numEl.value) numEl.value='TV-'+hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000);
+  const d=document.getElementById('data'); if(!d.value) d.value=hoje.toLocaleDateString('pt-BR');
+  const de=document.getElementById('data-ext'); if(!de.value) de.value=hoje.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+  tvCalc();
+}
+document.getElementById('v-fim').addEventListener('input',e=>{e.target.dataset.manual=e.target.value?'1':'';});
+document.getElementById('v-ini').addEventListener('input',()=>tvCalc());
+bind(document);
+tvInit();
+window.addEventListener('beforeprint',()=>{syncAll();document.title='Contrato Tela Vertical - '+(document.getElementById('c-fantasia').value||document.getElementById('c-razao').value||'anunciante');});
+</script>
+</body>
+</html>

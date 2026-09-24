@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16294F">
+<title>Eder Balbino · Tela Vertical</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--tv-navy:#16294F;--tv-navy-deep:#0E1B36;--tv-gold:#C0A062;--tv-gold-light:#E2CFA3;--tv-champagne:#F3EDE2;--tv-sky:#6FC7E8;--tv-ink:#1B1F2A;--tv-muted:#6B7280;--tv-line:rgba(22,41,79,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--tv-champagne);color:var(--tv-ink);display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);-webkit-font-smoothing:antialiased}
+.card{width:100%;max-width:400px;min-height:100dvh;background:#fff;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(22,41,79,.18)}
+@media(min-width:480px){.card{min-height:auto;border-radius:28px;overflow:hidden;margin:24px 0}}
+.top{background:radial-gradient(600px 300px at 90% 0%,rgba(192,160,98,.28),transparent 60%),linear-gradient(160deg,var(--tv-navy) 0%,#1C3563 65%,var(--tv-navy-deep) 100%);color:#fff;padding:34px 28px 30px;position:relative;overflow:hidden}
+.top::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 2px,transparent 2px 7px);pointer-events:none}
+.top>*{position:relative;z-index:1}
+.top svg{width:170px;height:auto;display:block}
+.nome{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-top:26px}
+.cargo{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--tv-sky);font-weight:600;margin-top:6px}
+.empresa{font-size:13px;color:rgba(255,255,255,.75);margin-top:10px}
+.body{padding:22px 22px 26px;display:flex;flex-direction:column;gap:10px;flex:1}
+.btn{display:flex;align-items:center;gap:14px;background:#fff;border:1.5px solid var(--tv-line);border-radius:16px;padding:14px 16px;text-decoration:none;color:var(--tv-navy);font-weight:600;font-size:15px;transition:transform .08s,box-shadow .2s}
+.btn:active{transform:scale(.98)}
+.btn .ic{width:40px;height:40px;border-radius:12px;background:var(--tv-navy);display:flex;align-items:center;justify-content:center;flex:none}
+.btn .ic svg{width:20px;height:20px;fill:none;stroke:var(--tv-sky);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn small{display:block;font-size:12px;color:var(--tv-muted);font-weight:400;margin-top:1px}
+.btn.wa .ic{background:#1f8a4c}.btn.wa .ic svg{stroke:#fff}
+.btn.primary{background:var(--tv-gold);border-color:var(--tv-gold);color:var(--tv-navy);justify-content:center;font-weight:700;margin-top:6px;cursor:pointer;font-family:inherit;width:100%}
+.btn.primary .ic{background:rgba(22,41,79,.15)}.btn.primary .ic svg{stroke:var(--tv-navy)}
+.foot{padding:18px 22px 26px;border-top:1px solid var(--tv-line);text-align:center}
+.assin{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--tv-muted);font-weight:500}
+.predial{display:inline-flex;align-items:baseline;gap:5px;margin-top:8px;border-bottom:2px solid var(--tv-gold);padding-bottom:3px}
+.predial .g{font-weight:400;letter-spacing:.3em;color:var(--tv-gold);font-size:11px}
+.predial .p{font-weight:800;color:var(--tv-navy);font-size:17px;letter-spacing:.02em}
+.mgb{font-size:10px;color:#9CA3AF;margin-top:12px;line-height:1.5}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--tv-navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="top">
+    <!-- LOGO (oficial · Monolito · ../brand/logo/outline/tela-vertical-horizontal-branco.svg) -->
+    <svg role="img" aria-label="Tela Vertical" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200">
+  <title>Tela Vertical — logo horizontal (texto em curvas)</title>
+  <g transform="translate(24,16)">
+    <path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/>
+    <rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/>
+  </g>
+  <g>
+    <path d="M166.05 53.33L198.82 53.33L198.82 60.56L186.91 60.56L186.91 98L177.95 98L177.95 60.56L166.05 60.56L166.05 53.33ZM232.26 60.56L215.30 60.56L215.30 71.76L230.34 71.76L230.34 78.86L215.30 78.86L215.30 90.70L232.26 90.70L232.26 98L206.34 98L206.34 53.26L232.26 53.26L232.26 60.56ZM250.35 53.33L250.35 90.90L265.07 90.90L265.07 98L241.39 98L241.39 53.33L250.35 53.33ZM302.10 98L299.16 89.49L281.37 89.49L278.42 98L269.02 98L285.08 53.26L295.51 53.26L311.58 98L302.10 98ZM283.80 82.32L296.73 82.32L290.26 63.63L283.80 82.32Z" fill="#FFFFFF"><title>TELA</title></path>
+    <path d="M185.04 124.23L187.56 124.23L178.55 148L175.83 148L166.82 124.23L169.40 124.23L177.19 145.42L185.04 124.23ZM213.54 126.17L203.51 126.17L203.51 135.05L212.52 135.05L212.52 137.02L203.51 137.02L203.51 146.03L213.54 146.03L213.54 148L201.13 148L201.13 124.20L213.54 124.20L213.54 126.17ZM243.73 148L240.88 148L234.99 138.07L230.61 138.07L230.61 148L228.23 148L228.23 124.23L235.37 124.23Q239.35 124.23 241.40 126.14Q243.46 128.04 243.46 131.14L243.46 131.14Q243.46 133.72 241.98 135.54Q240.50 137.36 237.61 137.90L237.61 137.90L243.73 148ZM230.61 126.24L230.61 136.13L235.40 136.13Q238.19 136.13 239.60 134.77Q241.01 133.41 241.01 131.14L241.01 131.14Q241.01 128.79 239.65 127.52Q238.29 126.24 235.37 126.24L235.37 126.24L230.61 126.24ZM256.49 124.23L272.09 124.23L272.09 126.21L265.50 126.21L265.50 148L263.12 148L263.12 126.21L256.49 126.21L256.49 124.23ZM285.87 124.23L288.25 124.23L288.25 148L285.87 148L285.87 124.23ZM302.56 136.10Q302.56 132.60 304.09 129.83Q305.62 127.06 308.28 125.51Q310.93 123.96 314.19 123.96L314.19 123.96Q318.17 123.96 321.01 125.85Q323.85 127.74 325.14 131.17L325.14 131.17L322.35 131.17Q321.33 128.76 319.24 127.40Q317.15 126.04 314.19 126.04L314.19 126.04Q311.57 126.04 309.48 127.26Q307.39 128.48 306.20 130.78Q305.01 133.07 305.01 136.10L305.01 136.10Q305.01 139.13 306.20 141.40Q307.39 143.68 309.48 144.91Q311.57 146.13 314.19 146.13L314.19 146.13Q317.15 146.13 319.24 144.79Q321.33 143.44 322.35 141.06L322.35 141.06L325.14 141.06Q323.85 144.46 320.99 146.33Q318.14 148.20 314.19 148.20L314.19 148.20Q310.93 148.20 308.28 146.66Q305.62 145.11 304.09 142.36Q302.56 139.60 302.56 136.10L302.56 136.10ZM355.71 148L353.64 142.36L342.82 142.36L340.75 148L338.23 148L346.90 124.54L349.59 124.54L358.23 148L355.71 148ZM343.54 140.38L352.92 140.38L348.23 127.53L343.54 140.38ZM374.41 124.23L374.41 146.06L382.95 146.06L382.95 148L372.03 148L372.03 124.23L374.41 124.23Z" fill="#FFFFFF"><title>VERTICAL</title></path>
+    <rect x="166" y="160" width="60" height="3" fill="#C0A062"/>
+  </g>
+</svg>
+    <div class="nome" id="v-nome"></div>
+    <div class="cargo" id="v-cargo"></div>
+    <div class="empresa">Tela Vertical · Mídia em Elevadores</div>
+  </div>
+
+  <div class="body">
+    <a class="btn wa" id="b-wa" href="#"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21l1.6-4.7A8.5 8.5 0 1 1 8 19.6z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.8-1-1 .8a4 4 0 0 1-2.3-2.3l.8-1-1-1.8z"/></svg></span><span>WhatsApp<small id="v-tel1"></small></span></a>
+    <a class="btn" id="b-tel" href="#"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg></span><span>Ligar<small id="v-tel2"></small></span></a>
+    <a class="btn" id="b-mail" href="#"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><span>E-mail<small id="v-mail"></small></span></a>
+    <a class="btn" id="b-ig" href="#" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#6FC7E8" stroke="none"/></svg></span><span>Instagram<small id="v-ig"></small></span></a>
+    <a class="btn" id="b-site" href="#" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><span>Site<small id="v-site"></small></span></a>
+    <button class="btn primary" id="b-vcard"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0M19 3v4M17 5h4"/></svg></span><span>Salvar contato</span></button>
+  </div>
+
+  <div class="foot">
+    <div class="assin">uma empresa do</div>
+    <!-- LOGO PREDIAL (wordmark em texto) -->
+    <div class="predial"><span class="g">GRUPO</span><span class="p">PREDIAL</span></div>
+    <div class="mgb">MGB Mídia Comunicação LTDA · CNPJ 23.770.170/0001-50<br>Rua Raul Juliatto, 200 · Londrina-PR</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ====== DADOS DO CARTÃO — troque aqui ====== */
+const DADOS = {
+  nome:      'Eder Balbino',
+  cargo:     'Diretor comercial',
+  empresa:   'Tela Vertical · Mídia em Elevadores',
+  telefone:  '(43) 99696-0078',        // como aparece
+  whatsapp:  '5543996960078',          // só números, com 55
+  email:     'contato@telavertical.com.br',   // provisório até registrar o domínio
+  instagram: '@telavertical',
+  site:      'telavertical.com.br',    // futuro
+  endereco:  'Rua Raul Juliatto, 200;Londrina;PR;;Brasil',
+  nota:      'Tela Vertical — uma empresa do Grupo Predial. MGB Mídia Comunicação LTDA, CNPJ 23.770.170/0001-50.'
+};
+/* =========================================== */
+
+const $ = id => document.getElementById(id);
+$('v-nome').textContent = DADOS.nome;
+$('v-cargo').textContent = DADOS.cargo;
+$('v-tel1').textContent = DADOS.telefone;
+$('v-tel2').textContent = DADOS.telefone;
+$('v-mail').textContent = DADOS.email;
+$('v-ig').textContent = DADOS.instagram;
+$('v-site').textContent = DADOS.site;
+document.title = DADOS.nome + ' · Tela Vertical';
+
+const msg = encodeURIComponent('Olá, ' + DADOS.nome.split(' ')[0] + '! Vi seu cartão da Tela Vertical e quero saber mais.');
+$('b-wa').href   = 'https://wa.me/' + DADOS.whatsapp + '?text=' + msg;
+$('b-tel').href  = 'tel:+' + DADOS.whatsapp;
+$('b-mail').href = 'mailto:' + DADOS.email;
+$('b-ig').href   = 'https://instagram.com/' + DADOS.instagram.replace(/^@/,'');
+$('b-site').href = 'https://' + DADOS.site;
+
+/* vCard 3.0 gerado no navegador */
+function vcard(){
+  const [primeiro, ...resto] = DADOS.nome.split(' ');
+  const sobrenome = resto.join(' ');
+  const l = [
+    'BEGIN:VCARD','VERSION:3.0',
+    'N:' + sobrenome + ';' + primeiro + ';;;',
+    'FN:' + DADOS.nome,
+    'ORG:Tela Vertical (Grupo Predial);MGB Mídia Comunicação LTDA',
+    'TITLE:' + DADOS.cargo,
+    'TEL;TYPE=CELL,VOICE:+' + DADOS.whatsapp,
+    'EMAIL;TYPE=INTERNET,WORK:' + DADOS.email,
+    'URL:https://' + DADOS.site,
+    'X-SOCIALPROFILE;TYPE=instagram:https://instagram.com/' + DADOS.instagram.replace(/^@/,''),
+    'ADR;TYPE=WORK:;;' + DADOS.endereco,
+    'NOTE:' + DADOS.nota.replace(/,/g,'\\,'),
+    'END:VCARD'
+  ];
+  return l.join('\r\n');
+}
+$('b-vcard').addEventListener('click', () => {
+  const blob = new Blob([vcard()], {type:'text/vcard;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = DADOS.nome.replace(/\s+/g,'-') + '-tela-vertical.vcf';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  const t = $('toast'); t.textContent = 'Contato gerado — abra o arquivo .vcf para salvar.'; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'), 3500);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tela Vertical — Kit de Boas-Vindas do Condomínio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--tv-navy:#16294F;--tv-navy-deep:#0E1B36;--tv-gold:#C0A062;--tv-gold-light:#E2CFA3;--tv-champagne:#F3EDE2;--tv-sky:#6FC7E8;--tv-white:#FFFFFF;--tv-ink:#1B1F2A;--tv-muted:#6B7280;--tv-line:rgba(22,41,79,.14);--tv-font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+@page{size:A4;margin:0}
+body{font-family:var(--tv-font);background:#DDD6C8;color:var(--tv-ink);line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.toolbar{position:sticky;top:0;z-index:50;background:var(--tv-navy);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px}
+.toolbar b{color:var(--tv-gold-light)}
+.toolbar .sp{flex:1}
+.toolbar label{display:flex;align-items:center;gap:6px;font-size:12px}
+.toolbar input{font:inherit;font-size:12px;padding:5px 9px;border-radius:6px;border:none;min-width:190px}
+.tb-btn{background:var(--tv-gold);color:var(--tv-navy);border:none;border-radius:999px;padding:8px 16px;font-family:var(--tv-font);font-weight:700;font-size:12px;cursor:pointer}
+
+.pg{width:210mm;min-height:297mm;margin:22px auto;background:#fff;box-shadow:0 20px 60px rgba(22,41,79,.25);position:relative;overflow:hidden;page-break-after:always;break-after:page}
+.pg:last-of-type{page-break-after:auto;break-after:auto}
+.pg-lbl{position:absolute;top:-16px;left:0;font-size:11px;color:var(--tv-muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+
+.predial{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap;line-height:1}
+.predial .g{font-weight:400;letter-spacing:.32em;color:var(--tv-gold);font-size:.62em;text-transform:uppercase}
+.predial .p{font-weight:800;color:var(--tv-navy);text-transform:uppercase}
+.dark .predial .p{color:#fff}
+
+/* ── (a) MURAL ── */
+.mural{background:linear-gradient(160deg,var(--tv-navy-deep),var(--tv-navy) 55%,#1F3A6B);color:#fff;padding:22mm 18mm;display:flex;flex-direction:column}
+.mural::after{content:'';position:absolute;right:-70mm;top:-60mm;width:170mm;height:170mm;border-radius:50%;background:radial-gradient(circle,rgba(111,199,232,.22),transparent 62%);pointer-events:none}
+.mural>*{position:relative;z-index:1}
+.mural .logo svg{height:26mm;width:auto}
+.mural .eyebrow{font-size:10pt;letter-spacing:.3em;text-transform:uppercase;color:var(--tv-gold);font-weight:700;margin-top:16mm}
+.mural h1{font-size:34pt;font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:5mm 0 6mm;color:#fff}
+.mural h1 .gold{color:var(--tv-gold)}
+.mural .lead{font-size:13.5pt;color:rgba(255,255,255,.82);max-width:150mm;line-height:1.45}
+.mural .itens{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-top:12mm}
+.mural .it{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:5mm;padding:6mm 5mm}
+.mural .it svg{width:9mm;height:9mm;stroke:var(--tv-sky);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;margin-bottom:3mm}
+.mural .it b{display:block;font-size:11pt;margin-bottom:1mm}
+.mural .it span{font-size:9pt;color:rgba(255,255,255,.7);line-height:1.4}
+.mural .sind{margin-top:10mm;background:var(--tv-gold);color:var(--tv-navy);border-radius:5mm;padding:6mm 7mm;font-size:11pt;line-height:1.45}
+.mural .sind b{font-weight:800}
+.mural .rodape{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:8mm;padding-top:10mm}
+.mural .rodape .predial{font-size:20pt}
+.mural .rodape .assin{font-size:8.5pt;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:2mm}
+.mural .rodape .ct{text-align:right;font-size:9.5pt;color:rgba(255,255,255,.8);line-height:1.6}
+.mural .rodape .ct b{color:var(--tv-gold-light)}
+
+/* ── (b) ADESIVO ── */
+.adesivos{padding:18mm 15mm;display:flex;flex-direction:column;align-items:center}
+.adesivos h2{font-size:12pt;font-weight:700;color:var(--tv-navy);letter-spacing:.02em}
+.adesivos .hint{font-size:9pt;color:var(--tv-muted);margin:2mm 0 8mm;text-align:center;max-width:150mm}
+.grid-ad{display:grid;grid-template-columns:100mm 100mm;gap:12mm 14mm}
+.grid-ad svg{width:100mm;height:100mm;display:block}
+.corte{position:relative}
+.corte::before,.corte::after{content:'';position:absolute;width:6mm;height:6mm;border:0 solid #bbb}
+.corte::before{left:-7mm;top:-7mm;border-right-width:.3mm;border-bottom-width:.3mm}
+.corte::after{right:-7mm;bottom:-7mm;border-left-width:.3mm;border-top-width:.3mm}
+
+/* ── (c) CARTA ── */
+.carta{padding:18mm 20mm 16mm;display:flex;flex-direction:column}
+.carta .hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:5mm;border-bottom:.6mm solid var(--tv-gold);margin-bottom:9mm}
+.carta .hdr svg{height:13mm;width:auto}
+.carta .hdr .assin{font-size:8pt;letter-spacing:.2em;text-transform:uppercase;color:var(--tv-muted);display:flex;align-items:center;gap:5px}
+.carta .hdr .predial{font-size:12pt}
+.carta .meta{font-size:9.5pt;color:var(--tv-muted);margin-bottom:7mm}
+.carta h1{font-size:20pt;font-weight:800;color:var(--tv-navy);letter-spacing:-.02em;line-height:1.15;margin-bottom:5mm}
+.carta h1 .gold{color:var(--tv-gold)}
+.carta p{font-size:10.5pt;margin-bottom:3.5mm;text-align:justify}
+.carta .passos{margin:3mm 0 4mm;display:grid;gap:2.5mm}
+.carta .passo{display:flex;gap:4mm;align-items:flex-start;font-size:10pt;background:var(--tv-champagne);border-radius:3mm;padding:3.5mm 4.5mm}
+.carta .passo .n{flex:0 0 7mm;height:7mm;border-radius:50%;background:var(--tv-navy);color:var(--tv-gold-light);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:9.5pt}
+.carta .passo b{color:var(--tv-navy)}
+.carta .box{border:1px solid var(--tv-line);border-left:1.2mm solid var(--tv-sky);border-radius:3mm;padding:4mm 5mm;font-size:9.8pt;margin:2mm 0 5mm}
+.carta .box b{color:var(--tv-navy)}
+.carta .ass{margin-top:auto;padding-top:6mm}
+.carta .ass .nome{font-weight:700;color:var(--tv-navy);font-size:11pt}
+.carta .ass .cargo{font-size:9pt;color:var(--tv-muted);line-height:1.6}
+.fill{color:var(--tv-navy);font-weight:700;border-bottom:1px dotted var(--tv-line)}
+
+@media screen and (max-width:820px){.pg{width:100%;min-height:0}.grid-ad{grid-template-columns:1fr}.mural .itens{grid-template-columns:1fr}.mural h1{font-size:26pt}}
+@media print{
+  body{background:#fff}
+  .toolbar,.pg-lbl{display:none!important}
+  .pg{margin:0;box-shadow:none;width:210mm;height:297mm;min-height:297mm}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span><b>Kit de Boas-Vindas</b> · Tela Vertical</span>
+  <label>Condomínio <input id="in-cond" placeholder="ex.: Residencial Málaga"></label>
+  <label>Síndico(a) <input id="in-sind" placeholder="ex.: Maria Silva"></label>
+  <label>Nº de telas <input id="in-telas" placeholder="ex.: 3" style="min-width:60px"></label>
+  <span class="sp"></span>
+  <button class="tb-btn" onclick="window.print()">Imprimir / PDF (3 páginas)</button>
+</div>
+
+<!-- (a) FOLHA PARA O MURAL -->
+<section class="pg mural dark">
+  <span class="pg-lbl">(a) Folha A4 para o mural</span>
+  <div class="logo"><!-- LOGO --><svg role="img" aria-label="Tela Vertical" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200"><title>Tela Vertical — logo horizontal</title><g transform="translate(24,16)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#FFFFFF" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#FFFFFF" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g></svg></div>
+  <div class="eyebrow">Comunicado aos moradores</div>
+  <h1>Este condomínio<br>agora tem<br><span class="gold">Tela Vertical.</span></h1>
+  <p class="lead">Comunicados do síndico e informações úteis no elevador — todos os dias, no momento em que você está parado e atento. Sem nenhum custo para o condomínio.</p>
+  <div class="itens">
+    <div class="it"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><b>Avisos do condomínio</b><span>Assembleias, manutenção, obras e lembretes do regimento — na hora certa.</span></div>
+    <div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h6M7 12h10M7 16h10"/></svg><b>Notícias e tempo</b><span>Manchetes do dia e previsão do tempo antes de sair de casa.</span></div>
+    <div class="it"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><b>Dicas e ofertas da região</b><span>Convivência, datas comemorativas e marcas selecionadas perto de você.</span></div>
+  </div>
+  <div class="sind"><b>Síndico(a), quer publicar um aviso?</b> Envie o texto pelo WhatsApp (43) 99696-0078. A gente formata, publica e tira do ar na data certa — sem custo.</div>
+  <div class="rodape">
+    <div><div class="assin">uma empresa do</div><!-- LOGO PREDIAL --><span class="predial"><span class="g">Grupo</span><span class="p">Predial</span></span></div>
+    <div class="ct"><b>Quer anunciar no elevador?</b><br>WhatsApp (43) 99696-0078 · @telavertical<br>contato@telavertical.com.br</div>
+  </div>
+</section>
+
+<!-- (b) ADESIVO 10×10 cm -->
+<section class="pg adesivos">
+  <span class="pg-lbl">(b) Adesivo 10×10 cm — 4 por folha</span>
+  <h2>Adesivo "Este elevador tem Tela Vertical" — 10 × 10 cm</h2>
+  <p class="hint">Imprimir em vinil adesivo fosco (ou papel adesivo) em tamanho real, sem "ajustar à página". Cortar pelas marcas; cantos arredondados de 8 mm. Um adesivo por cabine, ao lado da tela.</p>
+  <div class="grid-ad">
+    <div class="corte"><svg viewBox="0 0 400 400" role="img" aria-label="Este elevador tem Tela Vertical"><rect x="0" y="0" width="400" height="400" rx="32" fill="#16294F"/><rect x="10" y="10" width="380" height="380" rx="26" fill="none" stroke="#C0A062" stroke-width="2"/><g transform="translate(167.8,50) scale(.62)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><text x="200" y="185" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="17" fill="#E2CFA3" letter-spacing="4">ESTE ELEVADOR TEM</text><text x="200" y="240" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="600" font-size="52" fill="#FFFFFF" letter-spacing="1">TELA</text><text x="200" y="272" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="300" font-size="24" fill="#FFFFFF" letter-spacing="7">VERTICAL</text><line x1="90" y1="300" x2="310" y2="300" stroke="#C0A062" stroke-width="1.2" opacity=".7"/><text x="200" y="326" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="400" font-size="12" fill="#C0A062" letter-spacing="3">UMA EMPRESA DO</text><text x="200" y="348" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-size="18" fill="#FFFFFF"><tspan font-weight="400" fill="#C0A062" letter-spacing="4" font-size="12">GRUPO </tspan><tspan font-weight="800" letter-spacing="1">PREDIAL</tspan></text><text x="200" y="374" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="11" fill="rgba(255,255,255,.75)" letter-spacing="1">Anuncie: (43) 99696-0078 · @telavertical</text></svg></div>
+    <div class="corte"><svg viewBox="0 0 400 400"><use href="#ad"/></svg></div>
+    <div class="corte"><svg viewBox="0 0 400 400"><use href="#ad"/></svg></div>
+    <div class="corte"><svg viewBox="0 0 400 400"><use href="#ad"/></svg></div>
+  </div>
+</section>
+
+<!-- (c) CARTA AO SÍNDICO -->
+<section class="pg carta">
+  <span class="pg-lbl">(c) Carta de boas-vindas ao síndico</span>
+  <div class="hdr">
+    <!-- LOGO --><svg role="img" aria-label="Tela Vertical" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200"><title>Tela Vertical — logo horizontal</title><g transform="translate(24,16)"><path fill="#16294F" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#16294F" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#16294F" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g></svg>
+    <div class="assin">uma empresa do <!-- LOGO PREDIAL --><span class="predial"><span class="g">Grupo</span><span class="p">Predial</span></span></div>
+  </div>
+  <div class="meta">Londrina, <span id="c-data"></span></div>
+  <h1>Bem-vindo(a) à <span class="gold">Tela Vertical</span>,<br><span id="c-cond" class="fill">condomínio parceiro</span>.</h1>
+  <p>Prezado(a) <span id="c-sind" class="fill">síndico(a)</span>,</p>
+  <p>É um prazer ter o seu condomínio na rede Tela Vertical. A partir de agora, <span id="c-telas">as telas</span> nos elevadores passam a exibir os comunicados oficiais da administração, notícias, previsão do tempo e conteúdo útil para os moradores — sem nenhum custo para o condomínio, hoje ou no futuro.</p>
+  <p>A Tela Vertical é uma empresa do Grupo Predial, a administradora que você já conhece. Isso significa o mesmo padrão de cuidado com o patrimônio e com as pessoas — e um canal direto para o que você precisar.</p>
+  <div class="passos">
+    <div class="passo"><div class="n">1</div><div><b>Para publicar um aviso:</b> envie o texto (ou a arte pronta) pelo WhatsApp (43) 99696-0078. Formatamos no padrão da tela, publicamos e programamos a saída do ar na data que você indicar.</div></div>
+    <div class="passo"><div class="n">2</div><div><b>O que costuma funcionar bem:</b> assembleias, manutenção, obras, dedetização, horários de mudança, lembretes de convivência (pets, silêncio, lixo) e datas comemorativas do condomínio.</div></div>
+    <div class="passo"><div class="n">3</div><div><b>Se a tela apresentar qualquer problema:</b> avise pelo mesmo WhatsApp ou por contato@telavertical.com.br. Manutenção corretiva em até 48 horas úteis após o chamado.</div></div>
+  </div>
+  <div class="box"><b>Fica com a Tela Vertical:</b> equipamento, conteúdo, gestão remota e manutenção. <b>Fica com o condomínio:</b> só o ponto de energia e a internet já existente. Nada mais.</div>
+  <p>Coloque a folha "Este condomínio agora tem Tela Vertical" no mural e o adesivo nas cabines — assim os moradores já sabem onde encontrar os avisos. Se quiser, também passamos no condomínio para explicar o funcionamento ao conselho.</p>
+  <p>Obrigado pela confiança. Estamos à disposição.</p>
+  <div class="ass">
+    <div class="nome">Eder Balbino</div>
+    <div class="cargo">Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial<br>WhatsApp (43) 99696-0078 · contato@telavertical.com.br · @telavertical<br>MGB Mídia Comunicação LTDA · CNPJ 23.770.170/0001-50 · Londrina/PR</div>
+  </div>
+</section>
+
+<!-- Definição reutilizável do adesivo (cópias 2–4) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="ad"><rect x="0" y="0" width="400" height="400" rx="32" fill="#16294F"/><rect x="10" y="10" width="380" height="380" rx="26" fill="none" stroke="#C0A062" stroke-width="2"/><g transform="translate(167.8,50) scale(.62)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><text x="200" y="185" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="17" fill="#E2CFA3" letter-spacing="4">ESTE ELEVADOR TEM</text><text x="200" y="240" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="600" font-size="52" fill="#FFFFFF" letter-spacing="1">TELA</text><text x="200" y="272" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="300" font-size="24" fill="#FFFFFF" letter-spacing="7">VERTICAL</text><line x1="90" y1="300" x2="310" y2="300" stroke="#C0A062" stroke-width="1.2" opacity=".7"/><text x="200" y="326" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="400" font-size="12" fill="#C0A062" letter-spacing="3">UMA EMPRESA DO</text><text x="200" y="348" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-size="18" fill="#FFFFFF"><tspan font-weight="400" fill="#C0A062" letter-spacing="4" font-size="12">GRUPO </tspan><tspan font-weight="800" letter-spacing="1">PREDIAL</tspan></text><text x="200" y="374" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="11" fill="rgba(255,255,255,.75)" letter-spacing="1">Anuncie: (43) 99696-0078 · @telavertical</text></g></defs></svg>
+
+<script>
+const $=id=>document.getElementById(id);
+$('c-data').textContent=new Date().toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+function sync(){
+  const c=$('in-cond').value.trim(), s=$('in-sind').value.trim(), t=parseInt($('in-telas').value)||0;
+  $('c-cond').textContent=c||'condomínio parceiro';
+  $('c-sind').textContent=s?s:'síndico(a)';
+  $('c-telas').textContent=t?(t===1?'a tela instalada':'as '+t+' telas instaladas'):'as telas';
+  document.title='Kit Boas-Vindas Tela Vertical'+(c?' - '+c:'');
+}
+['in-cond','in-sind','in-telas'].forEach(id=>$(id).addEventListener('input',sync));
+sync();
+</script>
+</body>
+</html>

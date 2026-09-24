@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capas WhatsApp e redes · Tela Vertical</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--tv-navy:#16294F;--tv-navy-deep:#0E1B36;--tv-gold:#C0A062;--tv-gold-light:#E2CFA3;--tv-champagne:#F3EDE2;--tv-sky:#6FC7E8;--tv-ink:#1B1F2A;--tv-muted:#6B7280;--tv-line:rgba(22,41,79,.12);--tv-shadow:0 10px 40px rgba(22,41,79,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--tv-champagne);color:var(--tv-ink);line-height:1.5;padding-bottom:80px}
+header{background:var(--tv-navy);color:#fff;padding:32px clamp(20px,5vw,60px)}
+header .eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--tv-gold-light);font-weight:700;margin-bottom:6px}
+header h1{font-size:clamp(24px,3vw,34px);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+header p{color:rgba(255,255,255,.75);margin-top:8px;max-width:760px;font-size:14px}
+.howto{max-width:1200px;margin:24px auto 0;padding:0 clamp(20px,5vw,60px)}
+.howto .card{background:#fff;border-radius:18px;box-shadow:var(--tv-shadow);padding:22px 26px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:760px){.howto .card{grid-template-columns:1fr}}
+.howto h2{font-size:15px;color:var(--tv-navy);margin-bottom:6px}
+.howto ol{padding-left:18px;font-size:13.5px}
+.howto li{margin:4px 0}
+.howto b{color:var(--tv-navy)}
+kbd{font-family:inherit;background:#f1efe9;border:1px solid var(--tv-line);border-radius:6px;padding:1px 6px;font-size:12px}
+.toolbar{position:sticky;top:0;z-index:5;background:rgba(243,237,226,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--tv-line);padding:10px clamp(20px,5vw,60px);display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px;margin-top:24px}
+.toolbar label{display:flex;gap:8px;align-items:center;font-weight:600;color:var(--tv-navy)}
+.toolbar input[type=range]{width:160px}
+.toolbar .btn{background:var(--tv-navy);color:#fff;border:0;border-radius:999px;padding:8px 16px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer}
+.toolbar .btn.on{background:var(--tv-gold);color:var(--tv-navy)}
+main{max-width:1200px;margin:0 auto;padding:28px clamp(20px,5vw,60px) 0}
+.arte-wrap{margin-bottom:44px}
+.arte-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.arte-head h3{font-size:17px;font-weight:700;color:var(--tv-navy)}
+.arte-head span{font-size:12px;color:var(--tv-muted);font-family:ui-monospace,Menlo,monospace}
+.arte-head .dl{font-size:12px;font-weight:600;color:var(--tv-navy);background:#fff;border:1px solid var(--tv-line);border-radius:999px;padding:5px 12px;cursor:pointer;font-family:inherit}
+.scaler{overflow:auto;border-radius:14px;box-shadow:var(--tv-shadow);background:#fff;padding:0;display:inline-block;max-width:100%}
+.arte{display:block;transform-origin:top left}
+.arte svg{display:block}
+.row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+/* ===== modo exportação: mostra só a arte, em 100%, sem nada em volta ===== */
+body.export{background:#fff;padding:0}
+body.export header,body.export .howto,body.export .toolbar,body.export .arte-head,body.export .arte-wrap:not(.only){display:none}
+body.export main{max-width:none;padding:0;margin:0}
+body.export .scaler{box-shadow:none;border-radius:0;display:block;overflow:visible}
+body.export .arte{transform:none!important}
+.exit{display:none;position:fixed;right:16px;bottom:16px;z-index:9;background:var(--tv-navy);color:#fff;border:0;border-radius:999px;padding:10px 18px;font-family:inherit;font-weight:600;cursor:pointer}
+body.export .exit{display:block}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Tela Vertical · uma empresa do Grupo Predial</div>
+  <h1>Capas WhatsApp e redes</h1>
+  <p>Sete artes prontas em SVG, nos tamanhos exatos de cada plataforma. Sem bibliotecas: exporte por screenshot do nó (Chrome) ou baixe o SVG e abra no Illustrator/Figma.</p>
+</header>
+
+<div class="howto">
+  <div class="card">
+    <div>
+      <h2>Como exportar em PNG (Chrome, sem instalar nada)</h2>
+      <ol>
+        <li>Clique em <b>"Exportar"</b> na arte desejada: a página mostra só ela, em 100%.</li>
+        <li>Abra o DevTools (<kbd>Cmd</kbd>+<kbd>Opt</kbd>+<kbd>I</kbd> / <kbd>F12</kbd>) → aba <b>Elements</b>.</li>
+        <li>Selecione o <code>&lt;svg&gt;</code> da arte (ou clique com o botão direito na arte → Inspecionar).</li>
+        <li>Botão direito no nó → <b>"Capture node screenshot"</b>. Sai um PNG no tamanho exato (1600×900, 1080×1080…).</li>
+        <li>Para 2× de resolução: DevTools → <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> → "Capture node screenshot" com o modo dispositivo em DPR 2.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>Ou baixe o SVG</h2>
+      <ol>
+        <li><b>"Baixar SVG"</b> salva o arquivo vetorial. Abra no Figma, Illustrator, Canva ou no próprio Chrome.</li>
+        <li>A fonte Poppins precisa estar instalada na máquina para o SVG fora do navegador ficar igual (Google Fonts → Poppins → Download).</li>
+        <li>Instagram: o destaque recorta um <b>círculo no centro</b>; por isso o ícone e o título ficam dentro da área segura central.</li>
+        <li>Avatar: WhatsApp e Instagram recortam em círculo; o símbolo já está centralizado com margem.</li>
+        <li>Logo oficial (Monolito) em curvas, embutido no bloco <code>&lt;!-- LOGO --&gt;</code> no topo do arquivo; fonte em <code>../brand/logo/</code>.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <label>Zoom da prévia <input type="range" id="zoom" min="20" max="100" value="50"> <span id="zoomv">50%</span></label>
+  <span style="color:var(--tv-muted)">A prévia é reduzida só na tela; a exportação sai sempre no tamanho real.</span>
+</div>
+
+<!-- ============ SPRITE: LOGO oficial (Monolito) — fonte: ../brand/logo/ ============ -->
+<!-- LOGO -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo-escuro" viewBox="0 0 560 200"><g transform="translate(24,16)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><path d="M166.05 53.33L198.82 53.33L198.82 60.56L186.91 60.56L186.91 98L177.95 98L177.95 60.56L166.05 60.56L166.05 53.33ZM232.26 60.56L215.30 60.56L215.30 71.76L230.34 71.76L230.34 78.86L215.30 78.86L215.30 90.70L232.26 90.70L232.26 98L206.34 98L206.34 53.26L232.26 53.26L232.26 60.56ZM250.35 53.33L250.35 90.90L265.07 90.90L265.07 98L241.39 98L241.39 53.33L250.35 53.33ZM302.10 98L299.16 89.49L281.37 89.49L278.42 98L269.02 98L285.08 53.26L295.51 53.26L311.58 98L302.10 98ZM283.80 82.32L296.73 82.32L290.26 63.63L283.80 82.32Z" fill="#FFFFFF"/><path d="M185.04 124.23L187.56 124.23L178.55 148L175.83 148L166.82 124.23L169.40 124.23L177.19 145.42L185.04 124.23ZM213.54 126.17L203.51 126.17L203.51 135.05L212.52 135.05L212.52 137.02L203.51 137.02L203.51 146.03L213.54 146.03L213.54 148L201.13 148L201.13 124.20L213.54 124.20L213.54 126.17ZM243.73 148L240.88 148L234.99 138.07L230.61 138.07L230.61 148L228.23 148L228.23 124.23L235.37 124.23Q239.35 124.23 241.40 126.14Q243.46 128.04 243.46 131.14L243.46 131.14Q243.46 133.72 241.98 135.54Q240.50 137.36 237.61 137.90L237.61 137.90L243.73 148ZM230.61 126.24L230.61 136.13L235.40 136.13Q238.19 136.13 239.60 134.77Q241.01 133.41 241.01 131.14L241.01 131.14Q241.01 128.79 239.65 127.52Q238.29 126.24 235.37 126.24L235.37 126.24L230.61 126.24ZM256.49 124.23L272.09 124.23L272.09 126.21L265.50 126.21L265.50 148L263.12 148L263.12 126.21L256.49 126.21L256.49 124.23ZM285.87 124.23L288.25 124.23L288.25 148L285.87 148L285.87 124.23ZM302.56 136.10Q302.56 132.60 304.09 129.83Q305.62 127.06 308.28 125.51Q310.93 123.96 314.19 123.96L314.19 123.96Q318.17 123.96 321.01 125.85Q323.85 127.74 325.14 131.17L325.14 131.17L322.35 131.17Q321.33 128.76 319.24 127.40Q317.15 126.04 314.19 126.04L314.19 126.04Q311.57 126.04 309.48 127.26Q307.39 128.48 306.20 130.78Q305.01 133.07 305.01 136.10L305.01 136.10Q305.01 139.13 306.20 141.40Q307.39 143.68 309.48 144.91Q311.57 146.13 314.19 146.13L314.19 146.13Q317.15 146.13 319.24 144.79Q321.33 143.44 322.35 141.06L322.35 141.06L325.14 141.06Q323.85 144.46 320.99 146.33Q318.14 148.20 314.19 148.20L314.19 148.20Q310.93 148.20 308.28 146.66Q305.62 145.11 304.09 142.36Q302.56 139.60 302.56 136.10L302.56 136.10ZM355.71 148L353.64 142.36L342.82 142.36L340.75 148L338.23 148L346.90 124.54L349.59 124.54L358.23 148L355.71 148ZM343.54 140.38L352.92 140.38L348.23 127.53L343.54 140.38ZM374.41 124.23L374.41 146.06L382.95 146.06L382.95 148L372.03 148L372.03 124.23L374.41 124.23Z" fill="#FFFFFF"/><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></symbol>
+  <symbol id="logo-claro" viewBox="0 0 560 200"><g transform="translate(24,16)"><path fill="#16294F" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><path d="M166.05 53.33L198.82 53.33L198.82 60.56L186.91 60.56L186.91 98L177.95 98L177.95 60.56L166.05 60.56L166.05 53.33ZM232.26 60.56L215.30 60.56L215.30 71.76L230.34 71.76L230.34 78.86L215.30 78.86L215.30 90.70L232.26 90.70L232.26 98L206.34 98L206.34 53.26L232.26 53.26L232.26 60.56ZM250.35 53.33L250.35 90.90L265.07 90.90L265.07 98L241.39 98L241.39 53.33L250.35 53.33ZM302.10 98L299.16 89.49L281.37 89.49L278.42 98L269.02 98L285.08 53.26L295.51 53.26L311.58 98L302.10 98ZM283.80 82.32L296.73 82.32L290.26 63.63L283.80 82.32Z" fill="#16294F"/><path d="M185.04 124.23L187.56 124.23L178.55 148L175.83 148L166.82 124.23L169.40 124.23L177.19 145.42L185.04 124.23ZM213.54 126.17L203.51 126.17L203.51 135.05L212.52 135.05L212.52 137.02L203.51 137.02L203.51 146.03L213.54 146.03L213.54 148L201.13 148L201.13 124.20L213.54 124.20L213.54 126.17ZM243.73 148L240.88 148L234.99 138.07L230.61 138.07L230.61 148L228.23 148L228.23 124.23L235.37 124.23Q239.35 124.23 241.40 126.14Q243.46 128.04 243.46 131.14L243.46 131.14Q243.46 133.72 241.98 135.54Q240.50 137.36 237.61 137.90L237.61 137.90L243.73 148ZM230.61 126.24L230.61 136.13L235.40 136.13Q238.19 136.13 239.60 134.77Q241.01 133.41 241.01 131.14L241.01 131.14Q241.01 128.79 239.65 127.52Q238.29 126.24 235.37 126.24L235.37 126.24L230.61 126.24ZM256.49 124.23L272.09 124.23L272.09 126.21L265.50 126.21L265.50 148L263.12 148L263.12 126.21L256.49 126.21L256.49 124.23ZM285.87 124.23L288.25 124.23L288.25 148L285.87 148L285.87 124.23ZM302.56 136.10Q302.56 132.60 304.09 129.83Q305.62 127.06 308.28 125.51Q310.93 123.96 314.19 123.96L314.19 123.96Q318.17 123.96 321.01 125.85Q323.85 127.74 325.14 131.17L325.14 131.17L322.35 131.17Q321.33 128.76 319.24 127.40Q317.15 126.04 314.19 126.04L314.19 126.04Q311.57 126.04 309.48 127.26Q307.39 128.48 306.20 130.78Q305.01 133.07 305.01 136.10L305.01 136.10Q305.01 139.13 306.20 141.40Q307.39 143.68 309.48 144.91Q311.57 146.13 314.19 146.13L314.19 146.13Q317.15 146.13 319.24 144.79Q321.33 143.44 322.35 141.06L322.35 141.06L325.14 141.06Q323.85 144.46 320.99 146.33Q318.14 148.20 314.19 148.20L314.19 148.20Q310.93 148.20 308.28 146.66Q305.62 145.11 304.09 142.36Q302.56 139.60 302.56 136.10L302.56 136.10ZM355.71 148L353.64 142.36L342.82 142.36L340.75 148L338.23 148L346.90 124.54L349.59 124.54L358.23 148L355.71 148ZM343.54 140.38L352.92 140.38L348.23 127.53L343.54 140.38ZM374.41 124.23L374.41 146.06L382.95 146.06L382.95 148L372.03 148L372.03 124.23L374.41 124.23Z" fill="#16294F"/><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></symbol>
+  <!-- símbolo sozinho, branco (seta em recorte: o fundo aparece) -->
+  <symbol id="simbolo" viewBox="0 0 104 168"><g transform="translate(0,0)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g></symbol>
+  <symbol id="vertical-escuro" viewBox="0 0 340 360"><g transform="translate(118,16)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><path d="M101.40 224.12L132.12 224.12L132.12 230.90L120.96 230.90L120.96 266L112.56 266L112.56 230.90L101.40 230.90L101.40 224.12ZM163.54 230.90L147.64 230.90L147.64 241.40L161.74 241.40L161.74 248.06L147.64 248.06L147.64 259.16L163.54 259.16L163.54 266L139.24 266L139.24 224.06L163.54 224.06L163.54 230.90ZM180.56 224.12L180.56 259.34L194.36 259.34L194.36 266L172.16 266L172.16 224.12L180.56 224.12ZM229.14 266L226.38 258.02L209.70 258.02L206.94 266L198.12 266L213.18 224.06L222.96 224.06L238.02 266L229.14 266ZM211.98 251.30L224.10 251.30L218.04 233.78L211.98 251.30Z" fill="#FFFFFF"/><path d="M92.89 292.43L94.96 292.43L87.54 312L85.30 312L77.88 292.43L80.01 292.43L86.42 309.87L92.89 292.43ZM117.12 294.02L108.86 294.02L108.86 301.33L116.28 301.33L116.28 302.96L108.86 302.96L108.86 310.38L117.12 310.38L117.12 312L106.90 312L106.90 292.40L117.12 292.40L117.12 294.02ZM142.76 312L140.40 312L135.56 303.82L131.95 303.82L131.95 312L129.99 312L129.99 292.43L135.87 292.43Q139.14 292.43 140.84 294.00Q142.53 295.56 142.53 298.11L142.53 298.11Q142.53 300.24 141.31 301.74Q140.10 303.24 137.72 303.68L137.72 303.68L142.76 312ZM131.95 294.08L131.95 302.23L135.90 302.23Q138.19 302.23 139.35 301.11Q140.52 299.99 140.52 298.11L140.52 298.11Q140.52 296.18 139.40 295.13Q138.28 294.08 135.87 294.08L135.87 294.08L131.95 294.08ZM154.02 292.43L166.88 292.43L166.88 294.05L161.44 294.05L161.44 312L159.48 312L159.48 294.05L154.02 294.05L154.02 292.43ZM178.98 292.43L180.94 292.43L180.94 312L178.98 312L178.98 292.43ZM193.50 302.20Q193.50 299.32 194.76 297.03Q196.02 294.75 198.20 293.48Q200.39 292.20 203.08 292.20L203.08 292.20Q206.35 292.20 208.69 293.76Q211.03 295.31 212.09 298.14L212.09 298.14L209.80 298.14Q208.96 296.15 207.23 295.03Q205.51 293.91 203.08 293.91L203.08 293.91Q200.92 293.91 199.20 294.92Q197.48 295.93 196.50 297.82Q195.52 299.71 195.52 302.20L195.52 302.20Q195.52 304.69 196.50 306.57Q197.48 308.44 199.20 309.45Q200.92 310.46 203.08 310.46L203.08 310.46Q205.51 310.46 207.23 309.35Q208.96 308.25 209.80 306.29L209.80 306.29L212.09 306.29Q211.03 309.09 208.68 310.63Q206.32 312.17 203.08 312.17L203.08 312.17Q200.39 312.17 198.20 310.89Q196.02 309.62 194.76 307.35Q193.50 305.08 193.50 302.20L193.50 302.20ZM238.03 312L236.32 307.35L227.42 307.35L225.71 312L223.64 312L230.78 292.68L232.99 292.68L240.10 312L238.03 312ZM228.01 305.73L235.74 305.73L231.87 295.14L228.01 305.73ZM254.20 292.43L254.20 310.40L261.23 310.40L261.23 312L252.24 312L252.24 292.43L254.20 292.43Z" fill="#FFFFFF"/><rect x="140" y="326" width="60" height="3" fill="#C0A062"/></symbol>
+  <!-- LOGO PREDIAL (wordmark em texto) -->
+  <symbol id="predial-escuro" viewBox="0 0 420 70">
+    <text x="0" y="46" font-family="Poppins, Arial, sans-serif" font-weight="400" font-size="30" fill="#C0A062" letter-spacing="11">GRUPO</text>
+    <text x="158" y="48" font-family="Poppins, Arial, sans-serif" font-weight="800" font-size="46" fill="#FFFFFF" letter-spacing="1">PREDIAL</text>
+    <rect x="0" y="60" width="380" height="3" fill="#C0A062"/>
+  </symbol>
+  <symbol id="predial-claro" viewBox="0 0 420 70">
+    <text x="0" y="46" font-family="Poppins, Arial, sans-serif" font-weight="400" font-size="30" fill="#C0A062" letter-spacing="11">GRUPO</text>
+    <text x="158" y="48" font-family="Poppins, Arial, sans-serif" font-weight="800" font-size="46" fill="#16294F" letter-spacing="1">PREDIAL</text>
+    <rect x="0" y="60" width="380" height="3" fill="#C0A062"/>
+  </symbol>
+  <!-- ícones dos pilares -->
+  <symbol id="ic-sindico" viewBox="0 0 24 24"><path d="M4 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18M16 10h2a2 2 0 0 1 2 2v10M2 22h20M8 6h2M8 10h2M8 14h2M12 6h2M12 10h2M12 14h2M9 22v-4h2v4"/></symbol>
+  <symbol id="ic-instal" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4M3 8l3-3M21 8l-3-3"/></symbol>
+  <symbol id="ic-anun" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+  <symbol id="ic-inst" viewBox="0 0 24 24"><path d="M12 2l2.4 2 3.1-.4 1 3 2.7 1.6-.9 3 .9 3-2.7 1.6-1 3-3.1-.4L12 22l-2.4-2-3.1.4-1-3-2.7-1.6.9-3-.9-3 2.7-1.6 1-3 3.1.4z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></symbol>
+  <!-- textura inox -->
+  <pattern id="inox" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#B9BBC0"/><rect width="2" height="8" fill="#D6D8DB"/><rect x="4" width="1" height="8" fill="#A2A4A9"/></pattern>
+  <linearGradient id="inoxg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8F9096"/><stop offset=".2" stop-color="#D9DADC"/><stop offset=".4" stop-color="#A3A5AA"/><stop offset=".6" stop-color="#E6E7E9"/><stop offset=".8" stop-color="#9A9CA1"/><stop offset="1" stop-color="#C7C8CB"/></linearGradient>
+  <linearGradient id="navyg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16294F"/><stop offset=".6" stop-color="#1C3563"/><stop offset="1" stop-color="#0E1B36"/></linearGradient>
+  <linearGradient id="telag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1C3563"/><stop offset="1" stop-color="#0E1B36"/></linearGradient>
+  <radialGradient id="glow" cx=".85" cy=".1" r=".8"><stop offset="0" stop-color="#C0A062" stop-opacity=".32"/><stop offset=".6" stop-color="#C0A062" stop-opacity="0"/></radialGradient>
+  <radialGradient id="glow2" cx=".1" cy=".9" r=".7"><stop offset="0" stop-color="#6FC7E8" stop-opacity=".18"/><stop offset=".6" stop-color="#6FC7E8" stop-opacity="0"/></radialGradient>
+</svg>
+
+<main>
+
+<!-- ============ 1. CAPA WHATSAPP BUSINESS 1600×900 ============ -->
+<div class="arte-wrap" id="w-wa">
+  <div class="arte-head"><h3>1 · Capa WhatsApp Business</h3><span>1600 × 900 px</span><div><button class="dl" onclick="exportar('w-wa')">Exportar</button> <button class="dl" onclick="baixarSVG('a-wa','capa-whatsapp-tela-vertical')">Baixar SVG</button></div></div>
+  <div class="scaler"><div class="arte" style="width:1600px;height:900px">
+  <svg id="a-wa" xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+    <rect width="1600" height="900" fill="url(#navyg)"/>
+    <rect width="1600" height="900" fill="url(#glow)"/>
+    <rect width="1600" height="900" fill="url(#glow2)"/>
+    <!-- faixa inox + tela à direita -->
+    <rect x="1120" y="0" width="480" height="900" fill="url(#inoxg)"/>
+    <rect x="1120" y="0" width="480" height="900" fill="url(#inox)" opacity=".18"/>
+    <rect x="1112" y="0" width="8" height="900" fill="#0E1B36" opacity=".5"/>
+    <rect x="1230" y="120" width="260" height="660" rx="18" fill="#0B1225"/>
+    <rect x="1244" y="134" width="232" height="632" rx="10" fill="url(#telag)"/>
+    <use href="#vertical-escuro" x="1250" y="330" width="220" height="233"/>
+    <!-- lado esquerdo -->
+    <use href="#logo-escuro" x="120" y="150" width="468" height="180"/>
+    <text x="126" y="440" font-family="Poppins, Arial, sans-serif" font-weight="700" font-size="20" fill="#E2CFA3" letter-spacing="7">MÍDIA EM ELEVADORES · LONDRINA</text>
+    <text x="120" y="530" font-family="Poppins, Arial, sans-serif" font-weight="800" font-size="72" fill="#FFFFFF" letter-spacing="-2">A tela do elevador</text>
+    <text x="120" y="610" font-family="Poppins, Arial, sans-serif" font-weight="800" font-size="72" fill="#E2CFA3" letter-spacing="-2">que todo morador vê.</text>
+    <rect x="120" y="670" width="80" height="3" fill="#C0A062"/>
+    <text x="120" y="735" font-family="Poppins, Arial, sans-serif" font-weight="400" font-size="24" fill="#FFFFFF" fill-opacity=".8">WhatsApp (43) 99696-0078 · @telavertical</text>
+    <text x="126" y="800" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="16" fill="#FFFFFF" fill-opacity=".7" letter-spacing="5">UMA EMPRESA DO</text>
+    <use href="#predial-escuro" x="352" y="768" width="240" height="40"/>
+  </svg>
+  </div></div>
+</div>
+
+<!-- ============ 2. AVATAR 1080×1080 ============ -->
+<div class="arte-wrap" id="w-av">
+  <div class="arte-head"><h3>2 · Avatar (WhatsApp, Instagram, LinkedIn)</h3><span>1080 × 1080 px · recorte circular seguro</span><div><button class="dl" onclick="exportar('w-av')">Exportar</button> <button class="dl" onclick="baixarSVG('a-av','avatar-tela-vertical')">Baixar SVG</button></div></div>
+  <div class="scaler"><div class="arte" style="width:1080px;height:1080px">
+  <svg id="a-av" xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+    <rect width="1080" height="1080" fill="url(#navyg)"/>
+    <rect width="1080" height="1080" fill="url(#glow)"/>
+    <!-- área segura circular (invisível) -->
+    <use href="#simbolo" x="326" y="212" width="428" height="622"/>
+    <text x="540" y="940" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="300" font-size="30" fill="#FFFFFF" letter-spacing="14">TELA VERTICAL</text>
+  </svg>
+  </div></div>
+</div>
+
+<!-- ============ 3. CAPA LINKEDIN 1584×396 ============ -->
+<div class="arte-wrap" id="w-li">
+  <div class="arte-head"><h3>3 · Capa LinkedIn (página da empresa / perfil)</h3><span>1584 × 396 px · área central segura (o avatar cobre o canto inferior esquerdo no perfil)</span><div><button class="dl" onclick="exportar('w-li')">Exportar</button> <button class="dl" onclick="baixarSVG('a-li','capa-linkedin-tela-vertical')">Baixar SVG</button></div></div>
+  <div class="scaler"><div class="arte" style="width:1584px;height:396px">
+  <svg id="a-li" xmlns="http://www.w3.org/2000/svg" width="1584" height="396" viewBox="0 0 1584 396">
+    <rect width="1584" height="396" fill="url(#navyg)"/>
+    <rect width="1584" height="396" fill="url(#glow)"/>
+    <!-- inox à direita -->
+    <rect x="1250" y="0" width="334" height="396" fill="url(#inoxg)"/>
+    <rect x="1250" y="0" width="334" height="396" fill="url(#inox)" opacity=".18"/>
+    <rect x="1244" y="0" width="6" height="396" fill="#0E1B36" opacity=".5"/>
+    <rect x="1350" y="48" width="134" height="300" rx="12" fill="#0B1225"/>
+    <rect x="1359" y="57" width="116" height="282" rx="7" fill="url(#telag)"/>
+    <use href="#simbolo" x="1385" y="140" width="64" height="94"/>
+    <!-- conteúdo -->
+    <use href="#logo-escuro" x="380" y="66" width="340" height="131"/>
+    <text x="760" y="132" font-family="Poppins, Arial, sans-serif" font-weight="800" font-size="38" fill="#FFFFFF" letter-spacing="-1">Mídia em elevadores</text>
+    <text x="760" y="176" font-family="Poppins, Arial, sans-serif" font-weight="800" font-size="38" fill="#E2CFA3" letter-spacing="-1">+80 mil pessoas/mês</text>
+    <text x="762" y="212" font-family="Poppins, Arial, sans-serif" font-weight="400" font-size="17" fill="#FFFFFF" fill-opacity=".75">Condomínios de médio e alto padrão em Londrina</text>
+    <text x="762" y="238" font-family="Poppins, Arial, sans-serif" font-weight="400" font-size="17" fill="#FFFFFF" fill-opacity=".75">3× por mês, sem pular anúncio</text>
+    <text x="384" y="304" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="14" fill="#FFFFFF" fill-opacity=".7" letter-spacing="4">UMA EMPRESA DO</text>
+    <use href="#predial-escuro" x="580" y="276" width="170" height="28"/>
+    <text x="762" y="304" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="14" fill="#6FC7E8" letter-spacing="2">@telavertical · telavertical.com.br · (43) 99696-0078</text>
+  </svg>
+  </div></div>
+</div>
+
+<!-- ============ 4. CAPAS DE DESTAQUE INSTAGRAM 1080×1920 ============ -->
+<div class="arte-wrap" id="w-ig">
+  <div class="arte-head"><h3>4 · Capas de destaque Instagram · 4 pilares</h3><span>1080 × 1920 px cada · o Instagram recorta um círculo central</span><div><button class="dl" onclick="exportar('w-ig')">Exportar</button></div></div>
+  <div class="row" id="ig-row">
+    <!-- gerado por JS a partir de PILARES -->
+  </div>
+</div>
+
+</main>
+<button class="exit" onclick="sair()">Voltar à lista</button>
+
+<script>
+/* ===== Pilares do Instagram (editar aqui) ===== */
+const PILARES = [
+  {id:'sindicos',    titulo:'Síndicos',     sub:'Custo zero pro condomínio', icone:'ic-sindico', fundo:'navy'},
+  {id:'instalacoes', titulo:'Instalações',  sub:'Mais um prédio conectado',  icone:'ic-instal',  fundo:'champagne'},
+  {id:'anunciantes', titulo:'Anunciantes',  sub:'Sua marca no elevador',     icone:'ic-anun',    fundo:'navy'},
+  {id:'institucional',titulo:'Institucional',sub:'Tela Vertical × Grupo Predial', icone:'ic-inst', fundo:'deep'},
+];
+function capaIG(p){
+  const navy = p.fundo==='navy', champ = p.fundo==='champagne', deep = p.fundo==='deep';
+  const bg = navy ? 'url(#navyg)' : champ ? '#F3EDE2' : '#0E1B36';
+  const fg = champ ? '#16294F' : '#FFFFFF';
+  const ac = navy ? '#6FC7E8' : (deep ? '#E2CFA3' : '#C0A062');
+  const ring = champ ? 'rgba(22,41,79,.18)' : (deep ? 'rgba(192,160,98,.5)' : 'rgba(255,255,255,.14)');
+  const iconStroke = navy ? '#6FC7E8' : (deep ? '#C0A062' : '#16294F');
+  const circleFill = champ ? '#FFFFFF' : (deep ? 'rgba(192,160,98,.08)' : 'rgba(255,255,255,.06)');
+  return `
+  <svg id="a-ig-${p.id}" xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+    <rect width="1080" height="1920" fill="${bg}"/>
+    ${navy ? '<rect width="1080" height="1920" fill="url(#glow)"/>' : ''}
+    <!-- área segura: círculo central r=540 (Instagram recorta aqui) -->
+    <circle cx="540" cy="960" r="400" fill="${circleFill}" stroke="${ring}" stroke-width="6"/>
+    <g transform="translate(400,690)"><svg width="280" height="280" viewBox="0 0 24 24" fill="none" stroke="${iconStroke}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><use href="#${p.icone}"/></svg></g>
+    <text x="540" y="1090" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="800" font-size="86" fill="${fg}" letter-spacing="-2">${p.titulo}</text>
+    <text x="540" y="1150" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="28" fill="${ac}" letter-spacing="2">${p.sub}</text>
+    <rect x="500" y="1200" width="80" height="4" fill="${champ ? '#16294F' : '#C0A062'}"/>
+    <!-- fora da área do círculo: logo e assinatura (aparecem só no story aberto) -->
+    <use href="#${champ ? 'logo-claro' : 'logo-escuro'}" x="360" y="200" width="360" height="138"/>
+    <text x="540" y="1700" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="22" fill="${fg}" fill-opacity=".7" letter-spacing="6">UMA EMPRESA DO GRUPO PREDIAL</text>
+  </svg>`;
+}
+const row = document.getElementById('ig-row');
+PILARES.forEach(p => {
+  const d = document.createElement('div');
+  d.innerHTML = `<div class="arte-head" style="margin-bottom:6px"><span>${p.titulo}</span><button class="dl" onclick="baixarSVG('a-ig-${p.id}','destaque-${p.id}-tela-vertical')">Baixar SVG</button></div>
+    <div class="scaler"><div class="arte" style="width:1080px;height:1920px">${capaIG(p)}</div></div>`;
+  row.appendChild(d);
+});
+
+/* ===== zoom da prévia ===== */
+const zoom = document.getElementById('zoom');
+function aplicarZoom(){
+  const z = zoom.value/100; document.getElementById('zoomv').textContent = zoom.value+'%';
+  document.querySelectorAll('.arte').forEach(a=>{
+    a.style.transform = 'scale('+z+')';
+    a.parentElement.style.width = (parseInt(a.style.width)*z)+'px';
+    a.parentElement.style.height = (parseInt(a.style.height)*z)+'px';
+  });
+}
+zoom.addEventListener('input', aplicarZoom);
+(function(){ const w = Math.min(window.innerWidth-60, 1100); zoom.value = Math.max(20, Math.min(100, Math.floor(w/1600*100))); aplicarZoom(); })();
+
+/* ===== modo exportação ===== */
+function exportar(id){
+  document.querySelectorAll('.arte-wrap').forEach(w=>w.classList.toggle('only', w.id===id));
+  document.body.classList.add('export');
+  document.querySelectorAll('.arte').forEach(a=>{a.parentElement.style.width='';a.parentElement.style.height='';});
+  window.scrollTo(0,0);
+}
+function sair(){ document.body.classList.remove('export'); aplicarZoom(); }
+
+/* ===== baixar SVG standalone (com os símbolos usados embutidos) ===== */
+function baixarSVG(svgId, nome){
+  const src = document.getElementById(svgId);
+  const clone = src.cloneNode(true);
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const sprite = document.querySelector('svg[aria-hidden]');
+  // copia todos os símbolos, gradientes e patterns (simples e seguro)
+  sprite.querySelectorAll('symbol, pattern, linearGradient, radialGradient').forEach(n=>defs.appendChild(n.cloneNode(true)));
+  clone.insertBefore(defs, clone.firstChild);
+  clone.removeAttribute('id');
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([xml], {type:'image/svg+xml;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome + '.svg';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+</script>
+</body>
+</html>

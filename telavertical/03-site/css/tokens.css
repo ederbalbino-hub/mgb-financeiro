@@ -1,0 +1,26 @@
+/* Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial
+   Tokens de marca (fonte da verdade para todos os materiais) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+:root{
+  --tv-navy:#16294F;        /* base — fundos, títulos */
+  --tv-navy-deep:#0E1B36;   /* fundos escuros profundos */
+  --tv-gold:#C0A062;        /* acento premium — destaques, números */
+  --tv-gold-light:#E2CFA3;  /* dourado claro */
+  --tv-champagne:#F3EDE2;   /* fundo claro principal */
+  --tv-sky:#6FC7E8;         /* acento "Vertical" — links, ícones, detalhes */
+  --tv-white:#FFFFFF;
+  --tv-ink:#1B1F2A;         /* texto em fundo claro */
+  --tv-muted:#6B7280;       /* texto secundário */
+  --tv-line:rgba(22,41,79,.12);
+  --tv-font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --tv-radius:18px;
+  --tv-shadow:0 10px 40px rgba(22,41,79,.12);
+}
+body{font-family:var(--tv-font);color:var(--tv-ink);background:var(--tv-champagne)}
+.tv-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--tv-gold);font-weight:700}
+.tv-h1{font-weight:800;line-height:1.05;letter-spacing:-.02em;color:var(--tv-navy)}
+.tv-h1 .gold{color:var(--tv-gold)}.tv-h1 .sky{color:var(--tv-sky)}
+.tv-assinatura{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--tv-muted)}
+.tv-btn{background:var(--tv-navy);color:#fff;border-radius:999px;padding:14px 28px;font-weight:600;text-decoration:none;display:inline-flex;gap:8px;align-items:center}
+.tv-btn.gold{background:var(--tv-gold);color:var(--tv-navy)}
+.tv-card{background:var(--tv-white);border-radius:var(--tv-radius);box-shadow:var(--tv-shadow);padding:28px}

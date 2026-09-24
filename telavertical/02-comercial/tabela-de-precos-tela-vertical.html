@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tabela de Preços Tela Vertical 2026/2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#16294F;--deep:#0E1B36;--gold:#C0A062;--gold-light:#E2CFA3;--champ:#F3EDE2;--sky:#6FC7E8;--ink:#1B1F2A;--mut:#6B7280;--line:rgba(22,41,79,.12)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',system-ui,sans-serif;color:var(--ink);background:#fff;line-height:1.45;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{position:relative;width:100%;min-height:810px;background:#fff;padding:44px 64px 34px}
+.tv-logo svg{height:46px;width:auto;display:block}
+.predial-mark{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
+.predial-mark .g{font-size:10px;letter-spacing:.32em;color:var(--gold);font-weight:500;text-transform:uppercase}
+.predial-mark .p{font-size:15px;letter-spacing:.06em;color:var(--navy);font-weight:800;text-transform:uppercase}
+.head{display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+.head .brand{display:flex;align-items:center;gap:16px}.head .sep{width:1px;height:36px;background:var(--line)}
+.head h1{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.02em;line-height:1.05}
+.head .eyebrow{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.head .vig{text-align:right;font-size:11px;color:var(--mut);line-height:1.5}.head .vig b{color:var(--navy);display:block;font-size:13px}
+.planos{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.pkg{border:1.5px solid var(--line);border-radius:14px;padding:16px 16px 14px;position:relative;background:#fff}
+.pkg.on{border-color:var(--gold);background:linear-gradient(180deg,#fff,#FBF7EF)}
+.pkg .badge{position:absolute;top:-10px;left:16px;background:var(--navy);color:var(--gold-light);font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:4px 12px;border-radius:999px}
+.pkg .nm{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.pkg .pr{font-size:26px;font-weight:800;color:var(--navy);line-height:1.1;margin-top:4px}
+.pkg .pr sup{font-size:11px;color:var(--gold);vertical-align:top;margin-top:4px;display:inline-block}
+.pkg .per{font-size:10.5px;color:var(--mut);margin-bottom:8px}
+.pkg ul{list-style:none;border-top:1px solid var(--line);padding-top:8px}
+.pkg li{font-size:10.5px;padding:2px 0;display:flex;gap:5px;align-items:flex-start}
+.pkg li::before{content:'✓';color:var(--gold);font-weight:800;flex-shrink:0}
+.grid3{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px;margin-top:14px}
+.box{border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.box.champ{background:var(--champ);border-color:transparent}
+.box h3{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px}
+.box ul{list-style:none}
+.box li{font-size:10.8px;padding:3px 0 3px 13px;position:relative;color:var(--ink);line-height:1.4}
+.box li::before{content:'';position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--navy)}
+.box li b{color:var(--navy)}
+.def{background:rgba(192,160,98,.18);color:#7a5f2a;border-radius:4px;padding:0 5px;font-weight:700;font-size:10px}
+.per-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.perd{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;text-align:center}
+.perd b{display:block;font-size:13px;color:var(--navy)}.perd span{font-size:9.5px;color:var(--mut)}
+.specs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.spec{flex:1;min-width:90px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center}
+.spec b{display:block;font-size:11px;color:var(--navy)}.spec span{font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.foot{margin-top:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;border-top:1px solid var(--line);padding-top:12px}
+.foot .ct{font-size:11px;color:var(--ink);line-height:1.6}.foot .ct b{color:var(--navy)}
+.foot .ct a{color:var(--navy);text-decoration:none;font-weight:600}
+.foot .legal{font-size:9px;color:var(--mut);text-align:right;line-height:1.5;max-width:520px}
+.assinatura{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}.assinatura b{color:var(--gold)}
+@media(max-width:1000px){.page{padding:28px 20px;min-height:0}.planos,.per-row{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr}.head{flex-wrap:wrap}.head .vig{text-align:left}.foot{flex-direction:column;align-items:flex-start}.foot .legal{text-align:left}}
+@media(max-width:560px){.planos,.per-row{grid-template-columns:1fr}.head .brand{flex-wrap:wrap}}
+@media print{@page{size:1440px 900px;margin:0}}
+</style>
+</head>
+<body>
+<section class="page">
+  <div class="head">
+    <div class="brand">
+      <!-- LOGO --><span class="tv-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200"><title>Tela Vertical — logo horizontal</title><g transform="translate(24,16)"><path fill="#16294F" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#16294F" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#16294F" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g></svg></span><!-- /LOGO -->
+      <span class="sep"></span>
+      <!-- LOGO PREDIAL --><span class="predial-mark"><span class="g">Grupo</span><span class="p">Predial</span></span><!-- /LOGO PREDIAL -->
+      <span class="sep"></span>
+      <div><div class="eyebrow">Mídia em Elevadores · Londrina</div><h1>Tabela de preços<br>e política comercial</h1></div>
+    </div>
+    <div class="vig"><b>Tabela 2026/2027</b>válida de abril/2026 a março/2027<br><span id="rede-line">36 telas · 14 condomínios · +80 mil pessoas/mês</span></div>
+  </div>
+
+  <div class="planos">
+    <div class="pkg"><div class="nm">Rede completa · tabela</div><div class="pr"><sup>R$</sup> 4.000,00</div><div class="per">por mês · todas as telas da rede</div>
+      <ul><li>Todos os condomínios e telas ativas</li><li>+80 mil pessoas impactadas/mês</li><li>Exibição 24h, 7 dias por semana</li><li>Relatório mensal de exibição</li></ul></div>
+    <div class="pkg on"><span class="badge">Recomendado</span><div class="nm">Campanha ativa · 30% off</div><div class="pr"><sup>R$</sup> 2.800,00</div><div class="per">por mês · todas as telas da rede</div>
+      <ul><li>Todos os condomínios e telas ativas</li><li>+80 mil pessoas impactadas/mês</li><li>Economia de R$ 1.200,00/mês sobre a tabela</li><li>Relatório mensal de exibição</li></ul></div>
+    <div class="pkg"><div class="nm">Por condomínio</div><div class="pr"><sup>R$</sup> 300,00</div><div class="per">por condomínio / mês</div>
+      <ul><li>Preço único para qualquer condomínio da rede</li><li>Todas as telas do condomínio incluídas</li><li>Escolha 1 ou combine os que fizerem sentido</li><li>Relatório mensal de exibição</li></ul></div>
+    <div class="pkg"><div class="nm">Torre comercial</div><div class="pr"><sup>R$</sup> 500,00</div><div class="per">por tela / mês</div>
+      <ul><li>Ed. Ayrton Senna 1 e 2 — Gleba Palhano</li><li>~70.000 pessoas · circulação/mês</li><li>Exibição 24h, 7 dias por semana</li><li>Relatório mensal de exibição</li></ul></div>
+  </div>
+
+  <div class="grid3">
+    <div class="box champ">
+      <h3>O que está incluído</h3>
+      <ul>
+        <li><b>250 inserções/dia por tela</b> do seu anúncio, em rodízio com notícias e comunicados do condomínio</li>
+        <li>Veiculação em <b>todas as telas</b> do(s) condomínio(s) contratado(s), 24h por dia</li>
+        <li><b>Troca de peça sem custo</b> durante o período — quantas vezes precisar</li>
+        <li><b>Relatório mensal de exibição</b> por tela (sistema 4YouSee) no seu e-mail</li>
+        <li>Gabarito técnico e suporte na adequação da arte</li>
+        <li>Novas telas que entrarem na rede durante o contrato, conforme plano contratado</li>
+      </ul>
+      <h3 style="margin-top:10px">Períodos</h3>
+      <div class="per-row">
+        <div class="perd"><b>Mensal</b><span>valor de tabela</span></div>
+        <div class="perd"><b>Trimestral</b><span><span class="def">[[DEFINIR]]</span> desconto</span></div>
+        <div class="perd"><b>Semestral</b><span><span class="def">[[DEFINIR]]</span> desconto</span></div>
+        <div class="perd"><b>Anual</b><span><span class="def">[[DEFINIR]]</span> desconto</span></div>
+      </div>
+    </div>
+    <div class="box">
+      <h3>Política comercial</h3>
+      <ul>
+        <li><b>Produção da arte não inclusa</b> — indicamos parceiros de confiança</li>
+        <li><b>Prazo de reserva:</b> fechamento com no mínimo 10 dias de antecedência ao início da exibição; espaços sujeitos à disponibilidade, reserva efetivada com PI ou contrato assinado</li>
+        <li><b>Arte final:</b> entrega com no mínimo 5 dias úteis de antecedência; arte aprovada entra no ar em até 48h; layout sujeito à aprovação do condomínio</li>
+        <li><b>Troca de peça:</b> sem custo adicional durante o período contratado</li>
+        <li><b>Descontos por volume/pacote:</b> <span class="def">[[DEFINIR]]</span> (hoje: campanha ativa = 30% sobre a tabela)</li>
+        <li><b>Agências:</b> comissionamento padrão de 20% sobre o valor de tabela</li>
+        <li><b>Exclusividade de segmento:</b> não incluída por padrão — sob negociação específica</li>
+        <li>Conteúdo de responsabilidade do anunciante (CONAR, CDC, LGPD); a Tela Vertical pode recusar material ilegal, ofensivo ou incompatível com o ambiente condominial</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Condições de pagamento</h3>
+      <ul>
+        <li><b>Faturamento mensal</b> com nota fiscal — <b>pagamento todo dia 15</b></li>
+        <li>Emissão por MGB Mídia Comunicação LTDA (CNPJ 23.770.170/0001-50)</li>
+        <li><b>Renovação:</b> contratante tem prioridade de renovação até 60 dias antes do término; reajuste anual pelo IPCA acumulado</li>
+        <li><b>Cancelamento:</b> aviso prévio de 30 dias; multa compensatória de 35% do saldo remanescente</li>
+        <li>Formas de pagamento: <span class="def">[[DEFINIR]]</span> (boleto / Pix / transferência)</li>
+      </ul>
+      <h3 style="margin-top:10px">Especificações do material</h3>
+      <div class="specs">
+        <div class="spec"><b>MP4 · JPEG · PNG</b><span>Formatos</span></div>
+        <div class="spec"><b>1080 × 1100 px</b><span>Resolução</span></div>
+        <div class="spec"><b>até 10 s</b><span>Duração</span></div>
+        <div class="spec"><b>Sem áudio</b><span>Vertical</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="ct"><b>Eder Balbino · Comercial</b> · WhatsApp <a href="https://wa.me/5543996960078">(43) 99696-0078</a> · <a href="mailto:contato@telavertical.com.br">contato@telavertical.com.br</a> · Instagram @telavertical<br><span class="assinatura">Tela Vertical · Mídia em Elevadores — uma empresa do <b>Grupo Predial</b></span></div>
+    <div class="legal">Valores de tabela; condições especiais conforme volume e prazo — solicite proposta. Referência por tela para agências: R$ 279,90 por tela/semana (mês comercial de 4 semanas). MGB Mídia Comunicação LTDA · CNPJ 23.770.170/0001-50 · Rua Raul Juliatto, 200 · Londrina-PR.</div>
+  </div>
+</section>
+</body>
+</html>

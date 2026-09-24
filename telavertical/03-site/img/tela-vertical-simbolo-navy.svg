@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 208" width="144" height="208">
+  <title>Tela Vertical — símbolo</title>
+  <g transform="translate(20,20)">
+    <path fill="#16294F" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/>
+    <rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/>
+  </g>
+</svg>

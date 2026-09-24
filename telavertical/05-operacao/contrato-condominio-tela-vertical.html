@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tela Vertical — Termo de Autorização e Comodato (Condomínio)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens Tela Vertical ── */
+:root{--tv-navy:#16294F;--tv-navy-deep:#0E1B36;--tv-gold:#C0A062;--tv-gold-light:#E2CFA3;--tv-champagne:#F3EDE2;--tv-sky:#6FC7E8;--tv-white:#FFFFFF;--tv-ink:#1B1F2A;--tv-muted:#6B7280;--tv-line:rgba(22,41,79,.14);--tv-font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--tv-font);background:#DDD6C8;color:var(--tv-ink);font-size:10.5pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@page{size:A4;margin:14mm 15mm 14mm}
+
+/* Barra de ferramentas (só na tela) */
+.toolbar{position:sticky;top:0;z-index:50;background:var(--tv-navy);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px}
+.toolbar b{color:var(--tv-gold-light)}
+.toolbar .sp{flex:1}
+.tb-btn{background:var(--tv-gold);color:var(--tv-navy);border:none;border-radius:999px;padding:8px 16px;font-family:var(--tv-font);font-weight:700;font-size:12px;cursor:pointer}
+.tb-btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+
+/* Folha */
+.sheet{background:#fff;max-width:210mm;margin:22px auto;padding:16mm 16mm 18mm;box-shadow:0 20px 60px rgba(22,41,79,.25)}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:12px;border-bottom:2px solid var(--tv-gold);margin-bottom:16px}
+.hdr .logo svg{height:44px;width:auto}
+.hdr .right{text-align:right}
+.hdr .kicker{font-size:8pt;letter-spacing:.28em;text-transform:uppercase;color:var(--tv-gold);font-weight:700}
+.hdr .tit{font-size:13pt;font-weight:800;color:var(--tv-navy);line-height:1.15;margin-top:2px}
+.hdr .num{font-size:8.5pt;color:var(--tv-muted);margin-top:3px}
+.predial{display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap;line-height:1}
+.predial .g{font-weight:400;letter-spacing:.3em;color:var(--tv-gold);font-size:.6em;text-transform:uppercase}
+.predial .p{font-weight:800;color:var(--tv-navy);text-transform:uppercase}
+.assin{font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:var(--tv-muted);margin-top:4px;display:flex;align-items:center;gap:6px}
+
+h2{font-size:9pt;letter-spacing:.22em;text-transform:uppercase;color:var(--tv-navy);font-weight:800;border-left:4px solid var(--tv-gold);padding-left:8px;margin:13px 0 7px;break-after:avoid}
+h3{font-size:9.5pt;font-weight:700;color:var(--tv-navy);margin:7px 0 1px;break-after:avoid}
+p{margin:0 0 6px;text-align:justify}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.box{border:1px solid var(--tv-line);border-radius:8px;padding:10px 12px;break-inside:avoid}
+.box .bt{font-size:8pt;letter-spacing:.2em;text-transform:uppercase;color:var(--tv-gold);font-weight:700;margin-bottom:6px}
+.row{display:flex;gap:8px;align-items:baseline;font-size:9.5pt;padding:3px 0;border-bottom:1px dotted var(--tv-line)}
+.row:last-child{border-bottom:none}
+.row .l{flex:0 0 108px;color:var(--tv-muted);font-size:8.5pt;font-weight:500}
+.row .v{flex:1;font-weight:500;color:var(--tv-ink)}
+
+/* Campos preenchíveis: na tela = input; na impressão = texto */
+.f{position:relative;display:inline-block;width:100%}
+.f input,.f select,.f textarea{width:100%;font:inherit;font-size:9.5pt;color:var(--tv-ink);border:none;border-bottom:1px solid rgba(22,41,79,.35);background:rgba(111,199,232,.10);padding:2px 5px;outline:none;border-radius:3px 3px 0 0}
+.f input:focus,.f select:focus,.f textarea:focus{background:rgba(111,199,232,.22);border-bottom-color:var(--tv-navy)}
+.f textarea{resize:vertical;min-height:40px}
+.f .fp{display:none;border-bottom:1px solid rgba(22,41,79,.35);padding:1px 4px;min-height:1.4em;white-space:pre-wrap}
+.f .fp:empty::before{content:'\00a0'}
+.inl{display:inline-block;width:auto;min-width:90px}
+.inl input{width:100%}
+
+table{width:100%;border-collapse:collapse;font-size:9pt;margin:6px 0 4px}
+th{background:var(--tv-navy);color:#fff;font-weight:600;text-align:left;padding:6px 8px;font-size:8pt;letter-spacing:.05em}
+td{padding:4px 8px;border-bottom:1px solid var(--tv-line);vertical-align:middle}
+td .f input{background:transparent}
+tr.tot td{font-weight:700;background:var(--tv-champagne);color:var(--tv-navy)}
+.mini{font-size:8pt;color:var(--tv-muted)}
+.hl{background:var(--tv-champagne);border-radius:8px;padding:10px 14px;display:flex;gap:26px;flex-wrap:wrap;margin-top:10px;break-inside:avoid}
+.hl .k{font-size:7.5pt;letter-spacing:.16em;text-transform:uppercase;color:var(--tv-muted);font-weight:600}
+.hl .n{font-size:14pt;font-weight:800;color:var(--tv-navy)}
+.hl .n.gold{color:var(--tv-gold)}
+.clauses p{font-size:9pt;line-height:1.45}
+.sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:30px;break-inside:avoid}
+.sig .ln{border-top:1px solid var(--tv-ink);padding-top:5px;text-align:center;font-size:9pt}
+.sig .ln b{display:block;color:var(--tv-navy)}
+.sig .ln span{color:var(--tv-muted);font-size:8pt}
+.test{margin-top:16px;break-inside:avoid}
+.test .two{gap:28px}
+.foot{margin-top:12px;padding-top:6px;border-top:1px solid var(--tv-line);font-size:7pt;color:var(--tv-muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.add-row{font-size:8.5pt;color:var(--tv-navy);background:none;border:1px dashed var(--tv-navy);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--tv-font);margin-top:4px}
+.note-screen{font-size:8.5pt;color:var(--tv-muted);background:rgba(192,160,98,.12);border-radius:6px;padding:6px 10px;margin-bottom:12px}
+
+@media(max-width:700px){.sheet{padding:18px 16px;margin:10px;overflow-x:hidden}table{display:block;overflow-x:auto;white-space:nowrap}.hdr .num{white-space:normal}.f.inl{max-width:100%}.two,.sig{grid-template-columns:1fr}.hdr{flex-direction:column;align-items:flex-start}.hdr .right{text-align:left}.row .l{flex-basis:90px}}
+@media print{
+  body{background:#fff}
+  .toolbar,.no-print,.add-row,.note-screen{display:none!important}
+  .sheet{box-shadow:none;margin:0;padding:0;max-width:none}
+  .f input,.f select,.f textarea{display:none}
+  .f .fp{display:block}
+  .inl .fp{display:inline-block;min-width:90px}
+  .box,.hl,.sig,.test,tr{break-inside:avoid}
+  .sheet{padding-bottom:0}
+  .foot{margin-top:14px}
+}
+</style>
+<style>
+.zero{display:inline-flex;align-items:center;gap:8px;background:var(--tv-navy);color:#fff;border-radius:999px;padding:5px 14px;font-size:8.5pt;font-weight:600;margin:-6px 0 4px}
+.hdr .assin{white-space:nowrap}
+.zero b{color:var(--tv-gold-light)}
+.quadro td{font-size:9pt}
+.quadro th{text-align:center}
+.quadro td{text-align:center}
+.quadro td:first-child{text-align:left}
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <span><b>Termo de Autorização e Comodato · Tela Vertical</b> — preencha os campos azuis; na impressão eles viram texto.</span>
+  <span class="sp"></span>
+  <button class="tb-btn ghost" onclick="tvLimpar()">Limpar</button>
+  <button class="tb-btn" onclick="window.print()">Imprimir / PDF</button>
+</div>
+
+<main class="sheet">
+  <header class="hdr">
+    <div>
+      <div class="logo"><!-- LOGO --><svg role="img" aria-label="Tela Vertical" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200"><title>Tela Vertical — logo horizontal</title><g transform="translate(24,16)"><path fill="#16294F" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#16294F" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#16294F" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g></svg></div>
+      <div class="assin">uma empresa do <!-- LOGO PREDIAL --><span class="predial" style="font-size:11pt"><span class="g">Grupo</span><span class="p">Predial</span></span></div>
+    </div>
+    <div class="right">
+      <div class="kicker">Termo de Autorização e Comodato</div>
+      <div class="tit">Telas Digitais em Elevadores</div>
+      <div class="num">Nº <span class="f inl" style="min-width:130px"><input id="num" placeholder="TV-COND-2026-0001"><span class="fp"></span></span> · Londrina, <span class="f inl" style="min-width:110px"><input id="data" placeholder="dd/mm/aaaa"><span class="fp"></span></span></div>
+    </div>
+  </header>
+  <div class="zero">Custo para o condomínio: <b>R$ 0,00</b> — instalação, conteúdo, gestão e manutenção por conta da Tela Vertical</div>
+
+  <!-- 1. PARTES -->
+  <h2>1. Dados das Partes</h2>
+  <div class="two">
+    <div class="box">
+      <div class="bt">Contratante (Condomínio)</div>
+      <div class="row"><span class="l">Condomínio</span><span class="v f"><input id="c-nome"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">CNPJ</span><span class="v f"><input id="c-cnpj"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Endereço</span><span class="v f"><input id="c-end"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Administradora</span><span class="v f"><input id="c-adm" placeholder="ex.: Grupo Predial"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">Síndico(a)</span><span class="v f"><input id="c-sind"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">CPF</span><span class="v f"><input id="c-cpf"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">E-mail</span><span class="v f"><input id="c-email"><span class="fp"></span></span></div>
+      <div class="row"><span class="l">WhatsApp</span><span class="v f"><input id="c-wa"><span class="fp"></span></span></div>
+    </div>
+    <div class="box">
+      <div class="bt">Contratada</div>
+      <div class="row"><span class="l">Razão social</span><span class="v">MGB Mídia Comunicação LTDA</span></div>
+      <div class="row"><span class="l">Marca</span><span class="v">Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial</span></div>
+      <div class="row"><span class="l">CNPJ</span><span class="v">23.770.170/0001-50</span></div>
+      <div class="row"><span class="l">Endereço</span><span class="v">Rua Raul Juliatto, 200 — Londrina/PR</span></div>
+      <div class="row"><span class="l">Representante</span><span class="v">Eder Balbino</span></div>
+      <div class="row"><span class="l">E-mail</span><span class="v">contato@telavertical.com.br</span></div>
+      <div class="row"><span class="l">WhatsApp</span><span class="v">(43) 99696-0078</span></div>
+    </div>
+  </div>
+
+  <!-- 2. OBJETO -->
+  <h2>2. Objeto</h2>
+  <table class="quadro">
+    <thead><tr><th style="text-align:left">Local</th><th>Bairro</th><th>Torres</th><th>Aptos / unidades</th><th>Telas</th><th>Funcionamento</th></tr></thead>
+    <tbody><tr>
+      <td><span class="f"><input id="o-local"><span class="fp"></span></span></td>
+      <td><span class="f"><input id="o-bairro"><span class="fp"></span></span></td>
+      <td><span class="f"><input id="o-torres" inputmode="numeric"><span class="fp"></span></span></td>
+      <td><span class="f"><input id="o-aptos" inputmode="numeric"><span class="fp"></span></span></td>
+      <td><span class="f"><input id="o-telas" inputmode="numeric"><span class="fp"></span></span></td>
+      <td>24h / 7 dias</td>
+    </tr></tbody>
+  </table>
+  <p style="font-size:9pt">Localização das telas: <span class="f inl" style="min-width:200px"><input id="o-loc" value="elevadores sociais"><span class="fp"></span></span>. Prazo de vigência: 36 (trinta e seis) meses a contar da ativação. Vigência: <span class="f inl" style="min-width:95px"><input id="v-ini" placeholder="dd/mm/aaaa"><span class="fp"></span></span> a <span class="f inl" style="min-width:95px"><input id="v-fim" placeholder="dd/mm/aaaa"><span class="fp"></span></span>.</p>
+
+  <!-- 3. CLÁUSULAS -->
+  <h2>3. Cláusulas e Condições</h2>
+  <div class="clauses">
+    <h3>CLÁUSULA 1ª — DO OBJETO</h3>
+    <p>1.1. O presente termo tem por objeto a cessão gratuita de espaço físico pelo CONTRATANTE à CONTRATADA, para instalação, operação e gestão de monitores digitais nos elevadores do condomínio identificado no quadro acima, destinados à veiculação de conteúdo publicitário, informativo e institucional, sob a marca Tela Vertical.</p>
+    <p>1.2. Os equipamentos (monitores, suportes, cabeamentos e demais componentes) serão cedidos pela CONTRATADA ao CONTRATANTE em regime de COMODATO, permanecendo de propriedade exclusiva da CONTRATADA durante toda a vigência contratual.</p>
+    <p>1.3. A exploração comercial dos espaços publicitários exibidos nas telas é de responsabilidade exclusiva da CONTRATADA, sendo vedado ao CONTRATANTE comercializar ou ceder tais espaços a terceiros.</p>
+
+    <h3>CLÁUSULA 2ª — DA EXCLUSIVIDADE</h3>
+    <p>2.1. A presente parceria é firmada em caráter de EXCLUSIVIDADE. Durante a vigência deste instrumento, é vedado ao CONTRATANTE instalar, permitir ou contratar qualquer outro sistema de mídia digital em tela, sinalização digital, totem interativo ou solução similar nas áreas comuns do condomínio.</p>
+    <p>2.2. O descumprimento desta cláusula facultará à CONTRATADA a rescisão imediata do contrato, sem prejuízo das perdas e danos cabíveis.</p>
+
+    <h3>CLÁUSULA 3ª — DAS OBRIGAÇÕES DA CONTRATADA (TELA VERTICAL)</h3>
+    <p>3.1. Realizar a instalação dos equipamentos no prazo de até 60 (sessenta) dias corridos após a assinatura deste termo, sem custo de instalação ao CONTRATANTE.</p>
+    <p>3.2. Garantir o funcionamento contínuo dos equipamentos 24 horas por dia, 7 dias por semana, realizando manutenção preventiva periódica e manutenção corretiva em até 48 (quarenta e oito) horas úteis após o registro do chamado técnico.</p>
+    <p>3.3. Reservar nas telas um espaço fixo de avisos institucionais do condomínio, destinado à exibição permanente de comunicados, informes, atas e demais informações internas, alimentado pelo síndico ou administradora por meio dos canais da CONTRATADA, sem custo adicional.</p>
+    <p>3.4. Responsabilizar-se integralmente por seus colaboradores durante a instalação e manutenção, bem como por eventuais danos estruturais, estéticos ou elétricos causados ao condomínio exclusivamente em decorrência das atividades técnicas da CONTRATADA.</p>
+    <p>3.5. Zelar pela qualidade do conteúdo veiculado, assegurando que as peças publicitárias estejam em conformidade com as normas do CONAR e a legislação vigente, e adequadas ao ambiente residencial.</p>
+    <p>3.6. Manter sigilo sobre dados e informações internas do condomínio a que tiver acesso em decorrência deste termo.</p>
+
+    <h3>CLÁUSULA 4ª — DAS OBRIGAÇÕES DO CONTRATANTE</h3>
+    <p>4.1. Disponibilizar o local indicado para instalação em condições adequadas, limpo, desimpedido e com ponto de energia elétrica ativo e estabilizado, bem como o acesso à rede de internet já existente no condomínio.</p>
+    <p>4.2. Permitir o acesso dos técnicos da CONTRATADA para instalação, manutenção e remoção dos equipamentos, mediante agendamento prévio.</p>
+    <p>4.3. Não interferir, modificar, remover, cobrir ou danificar os equipamentos instalados, sob pena de responsabilização pelos danos causados.</p>
+    <p>4.4. Comunicar imediatamente à CONTRATADA qualquer falha, dano ou irregularidade verificada nos equipamentos, por meio dos canais: (43) 99696-0078 | contato@telavertical.com.br.</p>
+    <p>4.5. Garantir que os conteúdos institucionais enviados pelo condomínio para veiculação não contenham material ilegal, ofensivo, difamatório ou que viole direitos de terceiros, sendo de sua exclusiva responsabilidade o conteúdo por ele produzido.</p>
+
+    <h3>CLÁUSULA 5ª — DA GRATUIDADE E DA CONTRAPRESTAÇÃO</h3>
+    <p>5.1. A cessão do espaço pelo CONTRATANTE à CONTRATADA é feita a título GRATUITO, configurando contrapartida suficiente a própria instalação dos equipamentos em comodato e a prestação dos serviços descritos neste termo, sem qualquer ônus financeiro ao condomínio.</p>
+    <p>5.2. O CONTRATANTE não fará jus a qualquer participação nos resultados comerciais obtidos pela CONTRATADA com a exploração publicitária das telas.</p>
+
+    <h3>CLÁUSULA 6ª — DO PRAZO E DA VIGÊNCIA</h3>
+    <p>6.1. O presente termo terá vigência de 36 (trinta e seis) meses, contados da data de ativação definitiva dos equipamentos, devidamente confirmada por escrito pela CONTRATADA.</p>
+    <p>6.2. Findo o prazo inicial, o termo será renovado automaticamente por períodos iguais e sucessivos de 36 (trinta e seis) meses, salvo manifestação contrária de qualquer das partes, com antecedência mínima de 90 (noventa) dias do término do prazo vigente, por meio de notificação escrita.</p>
+
+    <h3>CLÁUSULA 7ª — DA RESCISÃO</h3>
+    <p>7.1. O presente termo poderá ser rescindido por qualquer das partes, a qualquer tempo, mediante notificação escrita com antecedência mínima de 90 (noventa) dias, em razão dos compromissos comerciais assumidos pela CONTRATADA junto a anunciantes vinculados ao espaço.</p>
+    <p>7.2. A rescisão antecipada por iniciativa do CONTRATANTE, sem justa causa, antes de completados 12 (doze) meses de vigência, sujeitará o CONTRATANTE ao pagamento de multa compensatória no valor equivalente a 03 (três) meses de valoração média do espaço publicitário comercializado nas telas do condomínio no período imediatamente anterior à rescisão.</p>
+    <p>7.3. Constituem justa causa para rescisão imediata, sem ônus: (a) inadimplemento de obrigação essencial não sanado em 15 dias após notificação; (b) descumprimento da cláusula de exclusividade; (c) dano doloso aos equipamentos.</p>
+    <p>7.4. Na hipótese de rescisão, a CONTRATADA terá prazo de até 30 (trinta) dias para retirar os equipamentos, responsabilizando-se pela restauração do local ao estado original.</p>
+
+    <h3>CLÁUSULA 8ª — DOS EQUIPAMENTOS E DO COMODATO</h3>
+    <p>8.1. Os equipamentos instalados são e permanecerão sendo de propriedade exclusiva da CONTRATADA, não podendo ser penhorados, alienados ou dados em garantia pelo CONTRATANTE.</p>
+    <p>8.2. O CONTRATANTE é depositário fiel dos equipamentos enquanto instalados em suas dependências, devendo zelar por sua integridade e segurança.</p>
+    <p>8.3. Em caso de sinistro (furto, roubo, incêndio, vandalismo) não imputável à CONTRATADA, o CONTRATANTE deverá: (a) comunicar imediatamente a CONTRATADA; (b) disponibilizar as imagens das câmeras de segurança do condomínio para identificação do responsável, colaborando ativamente para que a CONTRATADA possa notificar e responsabilizar o causador do dano; (c) acionar o seguro predial do condomínio, se houver, para cobertura dos equipamentos. A recusa em fornecer as imagens das câmeras configura descumprimento contratual, podendo a CONTRATADA responsabilizar subsidiariamente o CONTRATANTE pelos prejuízos sofridos.</p>
+
+    <h3>CLÁUSULA 9ª — DA PROTEÇÃO DE DADOS (LGPD)</h3>
+    <p>9.1. As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em razão deste termo em conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados — LGPD), adotando medidas técnicas e organizacionais adequadas para proteção dos dados.</p>
+    <p>9.2. Nenhuma das partes poderá compartilhar, vender ou utilizar dados pessoais de condôminos ou colaboradores para finalidades diversas das estritamente necessárias à execução deste termo.</p>
+
+    <h3>CLÁUSULA 10ª — DAS DISPOSIÇÕES GERAIS</h3>
+    <p>10.1. Este termo vincula as partes e seus sucessores a qualquer título.</p>
+    <p>10.2. A tolerância de qualquer das partes quanto ao descumprimento de obrigação pela outra não importará novação, renúncia ou alteração das disposições contratuais.</p>
+    <p>10.3. Qualquer alteração deste instrumento somente será válida se realizada por escrito e assinada por ambas as partes.</p>
+    <p>10.4. Os casos omissos serão resolvidos com base nos princípios gerais de direito e na legislação aplicável, em especial o Código Civil Brasileiro.</p>
+
+    <h3>CLÁUSULA 11ª — DO FORO</h3>
+    <p>11.1. As partes elegem o foro da Comarca de Londrina, Estado do Paraná, para dirimir quaisquer controvérsias decorrentes deste instrumento, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</p>
+  </div>
+
+  <p style="margin-top:12px;font-size:9.5pt">Por estarem assim justas e contratadas, as partes assinam o presente instrumento em 02 (duas) vias de igual teor e forma, na presença de 02 (duas) testemunhas.</p>
+  <p style="font-size:9.5pt">Londrina – PR, <span class="f inl" style="min-width:150px"><input id="data-ext" placeholder="dd de mês de aaaa"><span class="fp"></span></span></p>
+
+  <div class="sig">
+    <div class="ln"><b id="sig-nome">CONTRATANTE</b><span id="sig-doc">Síndico(a) · CPF: ______________________</span></div>
+    <div class="ln"><b>MGB Mídia Comunicação LTDA · Tela Vertical</b><span>CONTRATADA · CNPJ 23.770.170/0001-50 · Eder Balbino</span></div>
+  </div>
+  <div class="test">
+    <div class="bt" style="font-size:8pt;letter-spacing:.2em;text-transform:uppercase;color:var(--tv-gold);font-weight:700;margin-bottom:14px">Testemunhas</div>
+    <div class="two">
+      <div class="ln" style="border-top:1px solid var(--tv-ink);padding-top:5px;font-size:8.5pt;color:var(--tv-muted)">Nome: ______________________________ CPF: __________________</div>
+      <div class="ln" style="border-top:1px solid var(--tv-ink);padding-top:5px;font-size:8.5pt;color:var(--tv-muted)">Nome: ______________________________ CPF: __________________</div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial</span><span>MGB Mídia Comunicação LTDA · CNPJ 23.770.170/0001-50 · Rua Raul Juliatto, 200 · Londrina/PR</span><span>(43) 99696-0078 · contato@telavertical.com.br</span></div>
+</main>
+
+<script>
+function syncAll(){
+  document.querySelectorAll('.f').forEach(f=>{
+    const el=f.querySelector('input,select,textarea'), fp=f.querySelector('.fp');
+    if(!el||!fp) return;
+    fp.textContent = el.tagName==='SELECT' ? el.options[el.selectedIndex]?.text||'' : el.value;
+  });
+  const nome=document.getElementById('c-nome').value, sind=document.getElementById('c-sind').value, cpf=document.getElementById('c-cpf').value;
+  document.getElementById('sig-nome').textContent=nome?'CONTRATANTE — '+nome.toUpperCase():'CONTRATANTE';
+  document.getElementById('sig-doc').textContent=(sind?sind+' · ':'Síndico(a) · ')+'CPF: '+(cpf||'______________________');
+  // quadro "Local" acompanha o nome do condomínio se estiver vazio
+  const loc=document.getElementById('o-local'); if(!loc.dataset.manual && nome){ loc.value=nome; loc.nextElementSibling.textContent=nome; }
+  // vigência: +36 meses
+  const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(document.getElementById('v-ini').value);
+  const fim=document.getElementById('v-fim');
+  if(m && !fim.dataset.manual){ const d=new Date(+m[3],+m[2]-1,+m[1]); d.setMonth(d.getMonth()+36); fim.value=d.toLocaleDateString('pt-BR'); fim.nextElementSibling.textContent=fim.value; }
+}
+function tvLimpar(){ if(!confirm('Limpar todos os campos?')) return; document.querySelectorAll('input').forEach(i=>{i.value='';delete i.dataset.manual;}); document.getElementById('o-loc').value='elevadores sociais'; tvInit(); }
+function tvInit(){
+  const hoje=new Date();
+  const n=document.getElementById('num'); if(!n.value) n.value='TV-COND-'+hoje.getFullYear()+'-'+String(Math.floor(Math.random()*9000)+1000);
+  const d=document.getElementById('data'); if(!d.value) d.value=hoje.toLocaleDateString('pt-BR');
+  const de=document.getElementById('data-ext'); if(!de.value) de.value=hoje.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+  syncAll();
+}
+document.getElementById('o-local').addEventListener('input',e=>{e.target.dataset.manual=e.target.value?'1':'';});
+document.getElementById('v-fim').addEventListener('input',e=>{e.target.dataset.manual=e.target.value?'1':'';});
+document.querySelectorAll('input').forEach(el=>el.addEventListener('input',syncAll));
+tvInit();
+window.addEventListener('beforeprint',()=>{syncAll();document.title='Termo Tela Vertical - '+(document.getElementById('c-nome').value||'condominio');});
+</script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tela Vertical — Onboarding do Anunciante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--tv-navy:#16294F;--tv-navy-deep:#0E1B36;--tv-gold:#C0A062;--tv-gold-light:#E2CFA3;--tv-champagne:#F3EDE2;--tv-sky:#6FC7E8;--tv-white:#FFFFFF;--tv-ink:#1B1F2A;--tv-muted:#6B7280;--tv-line:rgba(22,41,79,.14);--tv-font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--tv-radius:18px;--tv-shadow:0 10px 40px rgba(22,41,79,.12);--wa:#25D366}
+*{box-sizing:border-box;margin:0;padding:0}
+@page{size:A4;margin:14mm 14mm 16mm}
+html{scroll-behavior:smooth}
+body{font-family:var(--tv-font);background:var(--tv-champagne);color:var(--tv-ink);line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+.eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--tv-gold);font-weight:700}
+h1,h2,h3{font-weight:800;line-height:1.1;letter-spacing:-.02em;color:var(--tv-navy)}
+h2{font-size:28px;margin:6px 0 8px}
+h2 .gold{color:var(--tv-gold)}
+.sub{color:var(--tv-muted);font-size:15px;max-width:720px;margin-bottom:22px}
+.predial{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap;line-height:1}
+.predial .g{font-weight:400;letter-spacing:.32em;color:var(--tv-gold);font-size:.62em;text-transform:uppercase}
+.predial .p{font-weight:800;color:var(--tv-navy);text-transform:uppercase}
+.hero .predial .p{color:#fff}
+
+.nav{position:sticky;top:0;z-index:60;background:rgba(243,237,226,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--tv-line)}
+.nav-in{max-width:960px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:16px}
+.nav svg{height:28px;width:auto}
+.nav-links{display:flex;gap:14px;flex:1;overflow-x:auto}
+.nav-links a{font-size:12.5px;font-weight:600;color:var(--tv-muted);text-decoration:none;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-family:var(--tv-font);font-weight:600;font-size:14px;padding:12px 24px;border-radius:999px;text-decoration:none;transition:.18s;white-space:nowrap}
+.btn-navy{background:var(--tv-navy);color:#fff}
+.btn-gold{background:var(--tv-gold);color:var(--tv-navy)}
+.btn-wa{background:var(--wa);color:#fff}
+.btn-sm{padding:8px 16px;font-size:12.5px}
+.btn:hover{transform:translateY(-1px)}
+
+.hero{background:linear-gradient(135deg,var(--tv-navy-deep),var(--tv-navy) 60%,#1F3A6B);color:#fff;padding:54px 0 48px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-200px;top:-200px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(111,199,232,.22),transparent 62%);pointer-events:none}
+.hero .wrap{position:relative;z-index:1}
+.hero svg.logo{height:52px;width:auto;margin-bottom:22px}
+.hero h1{color:#fff;font-size:38px;margin:8px 0 12px}
+.hero h1 .gold{color:var(--tv-gold)}
+.hero p{color:rgba(255,255,255,.78);font-size:16px;max-width:620px}
+.hero .assin{margin-top:18px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:8px}
+.hero .assin .predial{font-size:16px}
+
+section.sec{padding:48px 0}
+section.sec.white{background:#fff}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.step{background:#fff;border-radius:var(--tv-radius);padding:20px;box-shadow:var(--tv-shadow);position:relative}
+.white .step{background:var(--tv-champagne);box-shadow:none}
+.step .n{width:34px;height:34px;border-radius:50%;background:var(--tv-navy);color:var(--tv-gold-light);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;margin-bottom:10px}
+.step h3{font-size:15px;margin-bottom:4px}
+.step p{font-size:13px;color:var(--tv-muted)}
+.step .prazo{display:inline-block;margin-top:10px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tv-navy);background:rgba(111,199,232,.25);border-radius:999px;padding:4px 10px}
+
+.specs{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:start}
+.spec-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.spec{background:var(--tv-champagne);border-radius:14px;padding:14px 16px}
+.spec .k{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tv-muted);font-weight:600}
+.spec .v{font-size:16px;font-weight:700;color:var(--tv-navy);margin-top:2px}
+.spec .v small{font-size:11.5px;font-weight:500;color:var(--tv-muted);display:block}
+.gabarito{background:var(--tv-navy);border-radius:var(--tv-radius);padding:18px;color:#fff}
+.gabarito .k{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:600;margin-bottom:10px}
+.gabarito svg{width:100%;height:auto;display:block}
+.gabarito p{font-size:12px;color:rgba(255,255,255,.75);margin-top:10px}
+.tips{margin-top:18px;background:#fff;border:1px solid var(--tv-line);border-left:5px solid var(--tv-gold);border-radius:14px;padding:14px 18px;font-size:13.5px}
+.white .tips{background:var(--tv-champagne)}
+.tips b{color:var(--tv-navy)}
+.tips ul{margin:6px 0 0 18px}
+.tips li{margin:3px 0}
+
+.prazos{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+.prazo-card{background:#fff;border-radius:14px;padding:16px;box-shadow:var(--tv-shadow);text-align:center}
+.prazo-card .big{font-size:26px;font-weight:800;color:var(--tv-gold);line-height:1}
+.prazo-card .t{font-size:12.5px;color:var(--tv-ink);margin-top:6px;font-weight:500}
+.prazo-card .s{font-size:11px;color:var(--tv-muted);margin-top:2px}
+
+/* Briefing */
+.form{background:#fff;border-radius:var(--tv-radius);box-shadow:var(--tv-shadow);padding:26px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--tv-navy);font-weight:700}
+.fg label small{text-transform:none;letter-spacing:0;font-weight:400;color:var(--tv-muted)}
+.fg input,.fg select,.fg textarea{font:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--tv-line);border-radius:10px;background:var(--tv-champagne);color:var(--tv-ink);outline:none;width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--tv-sky);background:#fff;box-shadow:0 0 0 3px rgba(111,199,232,.25)}
+.fg textarea{min-height:76px;resize:vertical}
+.fp{display:none;font-size:12.5px;padding:6px 0;border-bottom:1px dotted var(--tv-line);min-height:1.4em;white-space:pre-wrap}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.preview{margin-top:16px;background:var(--tv-champagne);border-radius:12px;padding:14px 16px;font-size:12.5px;white-space:pre-wrap;color:var(--tv-ink);border:1px dashed var(--tv-line);max-height:260px;overflow:auto}
+.foot{background:var(--tv-navy-deep);color:rgba(255,255,255,.6);font-size:12px;padding:22px 0;text-align:center;line-height:1.8}
+.foot b{color:#fff}
+.toast{position:fixed;right:22px;bottom:22px;z-index:90;background:var(--tv-navy);color:#fff;font-size:12.5px;padding:12px 16px;border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.3);opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:820px){.steps,.prazos{grid-template-columns:1fr 1fr}.specs,.spec-list,.fgrid{grid-template-columns:1fr}.hero h1{font-size:30px}h2{font-size:24px}}
+@media(max-width:520px){.steps,.prazos{grid-template-columns:1fr}}
+@media print{
+  body{background:#fff}
+  .nav,.actions,.preview,.no-print{display:none!important}
+  .hero{padding:26px 0 24px;border-radius:0}
+  .hero h1{font-size:28px}
+  section.sec{padding:20px 0}
+  #sec-specs,#sec-prazos{break-before:page}
+  #sec-briefing{break-inside:avoid}
+  .step,.spec,.prazo-card,.gabarito,.tips,.form,.prazos{box-shadow:none;break-inside:avoid}
+  .steps{grid-template-columns:repeat(3,1fr)}.prazos{grid-template-columns:repeat(4,1fr)}
+  .specs{grid-template-columns:1.15fr .85fr;gap:16px}.spec-list{grid-template-columns:1fr 1fr;gap:8px}.fgrid{grid-template-columns:1fr 1fr;gap:8px 16px}
+  .spec{padding:10px 12px}.spec .v{font-size:14px}
+  .gabarito{padding:12px}.gabarito svg{max-height:330px;margin:0 auto}
+  h2{font-size:22px}.sub{font-size:13px;margin-bottom:14px}
+  .step{padding:14px}.step p{font-size:12px}
+  .fg label{font-size:10px}.fp{font-size:12px;padding:3px 0}
+  .foot{display:none}
+  .print-only{display:block!important}
+  #sec-briefing{padding-bottom:8px}
+  .fg input,.fg select,.fg textarea{display:none}
+  .fp{display:block}
+  .form{padding:0}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav no-print">
+  <div class="nav-in">
+    <!-- LOGO --><svg role="img" aria-label="Tela Vertical" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200"><title>Tela Vertical — logo horizontal</title><g transform="translate(24,16)"><path fill="#16294F" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#16294F" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#16294F" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g></svg>
+    <div class="nav-links"><a href="#sec-passos">Passo a passo</a><a href="#sec-specs">Especificações</a><a href="#sec-prazos">Prazos</a><a href="#sec-briefing">Briefing</a></div>
+    <button class="btn btn-navy btn-sm" onclick="window.print()">⬇ PDF</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <!-- LOGO --><svg class="logo"   role="img" aria-label="Tela Vertical" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200"><title>Tela Vertical — logo horizontal</title><g transform="translate(24,16)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g><g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#FFFFFF" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#FFFFFF" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g></svg>
+    <div class="eyebrow">Onboarding do anunciante</div>
+    <h1>Bem-vindo à Tela Vertical.<br><span class="gold">Sua marca no elevador em poucos passos.</span></h1>
+    <p>Este guia mostra o que acontece do contrato ao relatório mensal, as especificações da peça e um briefing rápido para a produção da sua arte. Leva 5 minutos.</p>
+    <div class="assin">uma empresa do <!-- LOGO PREDIAL --><span class="predial"><span class="g">Grupo</span><span class="p">Predial</span></span></div>
+  </div>
+</header>
+
+<!-- PASSO A PASSO -->
+<section class="sec" id="sec-passos">
+  <div class="wrap">
+    <div class="eyebrow">Pós-venda</div>
+    <h2>Do contrato ao relatório: <span class="gold">6 passos</span></h2>
+    <p class="sub">Cada etapa tem um responsável e um prazo. Você só precisa participar de duas: o briefing e a aprovação da arte.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Contrato</h3><p>Assinatura do contrato de veiculação (ou PI). A reserva dos condomínios só é efetivada com o contrato assinado.</p><span class="prazo">Fechamento 10 dias antes do início</span></div>
+      <div class="step"><div class="n">2</div><h3>Briefing</h3><p>Você preenche o briefing desta página (empresa, objetivo, oferta, chamada, cores e logo). É o que orienta a arte.</p><span class="prazo">Logo após o contrato</span></div>
+      <div class="step"><div class="n">3</div><h3>Produção da arte</h3><p>Sua agência produz a peça no gabarito técnico — ou indicamos parceiros de confiança. A produção não está inclusa no plano.</p><span class="prazo">Arte final 5 dias úteis antes</span></div>
+      <div class="step"><div class="n">4</div><h3>Aprovação</h3><p>Conferimos formato, legibilidade e adequação ao ambiente residencial. Você aprova a versão final por WhatsApp ou e-mail.</p><span class="prazo">Layout sujeito à aprovação</span></div>
+      <div class="step"><div class="n">5</div><h3>Veiculação</h3><p>A arte aprovada é publicada nas telas contratadas. Trocas de arte durante o período não têm custo adicional.</p><span class="prazo">No ar em até 48 h</span></div>
+      <div class="step"><div class="n">6</div><h3>Relatório mensal</h3><p>Você recebe o relatório de veiculação com o mapa de inserções por tela, gerado pelo sistema de gestão das telas.</p><span class="prazo">Todo mês</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ESPECIFICAÇÕES -->
+<section class="sec white" id="sec-specs">
+  <div class="wrap">
+    <div class="eyebrow">Material</div>
+    <h2>Especificações técnicas da peça</h2>
+    <p class="sub">A tela do elevador é vertical; a área do anúncio ocupa a parte superior, em formato paisagem. A faixa inferior é reservada aos comunicados do condomínio.</p>
+    <div class="specs">
+      <div>
+        <div class="spec-list">
+          <div class="spec"><div class="k">Tamanho da peça</div><div class="v">1100 × 900 px<small>paisagem · 72 dpi · RGB</small></div></div>
+          <div class="spec"><div class="k">Formatos aceitos</div><div class="v">MP4 · JPG · PNG<small>vídeo em H.264; imagem estática sem compressão excessiva</small></div></div>
+          <div class="spec"><div class="k">Duração</div><div class="v">10 segundos<small>padrão · 20 s (2×) e 30 s (3×) sob consulta</small></div></div>
+          <div class="spec"><div class="k">Áudio</div><div class="v">Sem áudio<small>a tela não reproduz som — a mensagem precisa ser visual</small></div></div>
+          <div class="spec"><div class="k">Peso máximo</div><div class="v">[[DEFINIR]]<small>recomendado: vídeo até 20 MB · imagem até 2 MB</small></div></div>
+          <div class="spec"><div class="k">Inserções</div><div class="v">250 / dia por tela<small>exposição de 3 a 5× ao dia por pessoa</small></div></div>
+        </div>
+        <div class="tips"><b>Boas práticas para a peça funcionar no elevador:</b>
+          <ul>
+            <li>Uma ideia por peça: título curto, oferta clara e uma chamada (CTA).</li>
+            <li>Texto grande — mínimo 40 px de altura — e alto contraste. Ninguém lê letra pequena em 10 segundos.</li>
+            <li>Logo visível nos primeiros 2 segundos; contato (WhatsApp, Instagram ou endereço) em toda a duração.</li>
+            <li>Vídeo sem depender de som: nada de narração ou legenda que precise de áudio.</li>
+            <li>Evite bordas finas nas margens — mantenha 40 px de área de segurança.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="gabarito">
+        <div class="k">Gabarito · tela vertical</div>
+        <svg viewBox="0 0 300 470" role="img" aria-label="Gabarito da tela: área do anúncio 1100 por 900 no topo e faixa de comunicados abaixo">
+          <rect x="6" y="6" width="288" height="458" rx="16" fill="#0E1B36" stroke="#6FC7E8" stroke-width="2"/>
+          <rect x="22" y="22" width="256" height="209" rx="6" fill="#16294F" stroke="#C0A062" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <rect x="32" y="32" width="236" height="189" rx="4" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="150" y="112" text-anchor="middle" font-family="Poppins, Arial" font-weight="800" font-size="20" fill="#FFFFFF">SEU ANÚNCIO</text>
+          <text x="150" y="134" text-anchor="middle" font-family="Poppins, Arial" font-weight="600" font-size="13" fill="#C0A062">1100 × 900 px</text>
+          <text x="150" y="152" text-anchor="middle" font-family="Poppins, Arial" font-size="9.5" fill="rgba(255,255,255,.6)">área de segurança 40 px (linha interna)</text>
+          <rect x="22" y="243" width="256" height="90" rx="6" fill="rgba(255,255,255,.08)"/>
+          <text x="150" y="278" text-anchor="middle" font-family="Poppins, Arial" font-weight="600" font-size="11" fill="#6FC7E8">NOTÍCIAS / CONTEÚDO EDITORIAL</text>
+          <text x="150" y="296" text-anchor="middle" font-family="Poppins, Arial" font-size="9" fill="rgba(255,255,255,.55)">alternado com outros anunciantes</text>
+          <rect x="22" y="345" width="256" height="82" rx="6" fill="rgba(192,160,98,.18)"/>
+          <text x="150" y="380" text-anchor="middle" font-family="Poppins, Arial" font-weight="600" font-size="11" fill="#E2CFA3">COMUNICADOS DO CONDOMÍNIO</text>
+          <text x="150" y="398" text-anchor="middle" font-family="Poppins, Arial" font-size="9" fill="rgba(255,255,255,.55)">faixa fixa da administração</text>
+          <rect x="22" y="437" width="256" height="14" rx="3" fill="rgba(255,255,255,.08)"/>
+          <text x="150" y="447" text-anchor="middle" font-family="Poppins, Arial" font-size="7.5" fill="rgba(255,255,255,.5)">data · hora · clima · Tela Vertical</text>
+        </svg>
+        <p>Envie a peça pronta pelo WhatsApp (43) 99696-0078 ou por contato@telavertical.com.br. Precisa do arquivo-modelo? Peça o gabarito em PSD/Canva.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRAZOS -->
+<section class="sec" id="sec-prazos">
+  <div class="wrap">
+    <div class="eyebrow">Calendário</div>
+    <h2>Prazos que valem para toda campanha</h2>
+    <p class="sub">Os mesmos prazos do mídia kit. Contando de trás para a frente a partir da data de início da campanha.</p>
+    <div class="prazos">
+      <div class="prazo-card"><div class="big">D-10</div><div class="t">Fechamento</div><div class="s">contrato ou PI assinado com no mínimo 10 dias de antecedência ao início da exibição</div></div>
+      <div class="prazo-card"><div class="big">D-5</div><div class="t">Arte final</div><div class="s">entregue com no mínimo 5 dias úteis de antecedência; layout sujeito à aprovação</div></div>
+      <div class="prazo-card"><div class="big">48 h</div><div class="t">No ar</div><div class="s">arte aprovada entra em veiculação em até 48 horas</div></div>
+      <div class="prazo-card"><div class="big">Dia 15</div><div class="t">Pagamento</div><div class="s">faturamento mensal com nota fiscal; vencimento todo dia 15</div></div>
+    </div>
+    <div class="tips" style="margin-top:16px"><b>Trocas de arte:</b> sem custo adicional durante o período contratado — envie a nova peça com 3 dias úteis de antecedência e ela entra no lugar da anterior. <b>Relatório:</b> mensal, com o mapa de inserções por tela.</div>
+  </div>
+</section>
+
+<!-- BRIEFING -->
+<section class="sec white" id="sec-briefing">
+  <div class="wrap">
+    <div class="eyebrow">Briefing</div>
+    <h2>Conte o que a sua peça precisa dizer</h2>
+    <p class="sub">Preencha e clique em "Enviar por WhatsApp" ou "Enviar por e-mail" — o texto é montado sozinho. Se preferir, imprima e envie a folha.</p>
+    <div class="form">
+      <div class="fgrid">
+        <div class="fg"><label for="b-empresa">Empresa / marca</label><input id="b-empresa" placeholder="Nome como deve aparecer na tela"><div class="fp"></div></div>
+        <div class="fg"><label for="b-segmento">Segmento</label><select id="b-segmento"><option value="">Selecione…</option><option>Imobiliária / construtora</option><option>Saúde (clínica, laboratório, odonto)</option><option>Educação / escola / cursos</option><option>Alimentação / delivery / restaurante</option><option>Supermercado / varejo</option><option>Beleza / estética / academia</option><option>Serviços (seguros, financeiro, jurídico)</option><option>Automotivo</option><option>Pet</option><option>Casa e decoração</option><option>Outro</option></select><div class="fp"></div></div>
+        <div class="fg full"><label for="b-objetivo">Objetivo da campanha <small>— o que precisa acontecer?</small></label><select id="b-objetivo"><option value="">Selecione…</option><option>Lembrança de marca (institucional)</option><option>Divulgar oferta / promoção</option><option>Lançamento de produto ou serviço</option><option>Gerar contatos (WhatsApp / site)</option><option>Trazer pessoas ao ponto físico</option><option>Data comemorativa / sazonal</option></select><div class="fp"></div></div>
+        <div class="fg full"><label for="b-publico">Público <small>— quem você quer atingir?</small></label><input id="b-publico" placeholder="ex.: famílias da Gleba Palhano; síndicos; jovens adultos; donos de pet"><div class="fp"></div></div>
+        <div class="fg full"><label for="b-oferta">Oferta / mensagem principal <small>— uma frase</small></label><textarea id="b-oferta" placeholder="ex.: Primeira consulta com 30% de desconto para moradores do condomínio"></textarea><div class="fp"></div></div>
+        <div class="fg"><label for="b-cta">Chamada (CTA)</label><input id="b-cta" placeholder="ex.: Chame no WhatsApp · Visite a loja · Acesse o site"><div class="fp"></div></div>
+        <div class="fg"><label for="b-contato-peca">Contato que aparece na peça</label><input id="b-contato-peca" placeholder="WhatsApp, @instagram, site ou endereço"><div class="fp"></div></div>
+        <div class="fg full"><label for="b-cores">Cores / logo / identidade <small>— envie o logo em PNG ou vetor por WhatsApp/e-mail</small></label><input id="b-cores" placeholder="ex.: azul #0A3D91 e branco; logo em anexo; fonte Montserrat"><div class="fp"></div></div>
+        <div class="fg"><label for="b-formato">Formato preferido</label><select id="b-formato"><option value="">Selecione…</option><option>Imagem estática (JPG/PNG)</option><option>Vídeo 10 s (MP4, sem áudio)</option><option>Já tenho a arte pronta</option><option>Preciso de indicação de produção</option></select><div class="fp"></div></div>
+        <div class="fg"><label for="b-inicio">Início desejado</label><input id="b-inicio" placeholder="dd/mm/aaaa"><div class="fp"></div></div>
+        <div class="fg"><label for="b-resp">Responsável</label><input id="b-resp" placeholder="Nome de quem aprova a arte"><div class="fp"></div></div>
+        <div class="fg"><label for="b-contato">Contato do responsável</label><input id="b-contato" placeholder="WhatsApp e e-mail"><div class="fp"></div></div>
+        <div class="fg full"><label for="b-obs">Observações <small>— restrições, referências, o que não pode aparecer</small></label><textarea id="b-obs"></textarea><div class="fp"></div></div>
+      </div>
+      <div class="actions no-print">
+        <a class="btn btn-wa" id="btn-wa" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+        <a class="btn btn-navy" id="btn-mail" href="#">Enviar por e-mail</a>
+        <button class="btn btn-gold" onclick="copiar()">Copiar texto</button>
+        <button class="btn btn-sm" style="background:transparent;color:var(--tv-muted);border:1px solid var(--tv-line)" onclick="limpar()">Limpar</button>
+      </div>
+      <pre class="preview no-print" id="preview"></pre>
+      <p class="print-only" style="display:none;font-size:9px;color:var(--tv-muted);margin-top:10px;border-top:1px solid var(--tv-line);padding-top:6px">Envie esta folha para WhatsApp (43) 99696-0078 ou contato@telavertical.com.br · Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial · MGB Mídia Comunicação LTDA · CNPJ 23.770.170/0001-50 · Londrina/PR</p>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap"><b>Tela Vertical · Mídia em Elevadores</b> — uma empresa do Grupo Predial<br>Eder Balbino · WhatsApp (43) 99696-0078 · contato@telavertical.com.br · @telavertical<br>MGB Mídia Comunicação LTDA · CNPJ 23.770.170/0001-50 · Londrina/PR</div>
+</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const F=[['b-empresa','Empresa/marca'],['b-segmento','Segmento'],['b-objetivo','Objetivo'],['b-publico','Público'],['b-oferta','Oferta/mensagem'],['b-cta','Chamada (CTA)'],['b-contato-peca','Contato na peça'],['b-cores','Cores/logo'],['b-formato','Formato'],['b-inicio','Início desejado'],['b-resp','Responsável'],['b-contato','Contato'],['b-obs','Observações']];
+const $=id=>document.getElementById(id);
+function val(id){const el=$(id);return el.tagName==='SELECT'?(el.value||''):el.value.trim();}
+function montar(){
+  const linhas=F.map(([id,l])=>{const v=val(id);return v?`• ${l}: ${v}`:null;}).filter(Boolean);
+  return 'BRIEFING — Tela Vertical\n'+(linhas.length?linhas.join('\n'):'(preencha os campos acima)')+'\n\nEnviado pela página de onboarding · telavertical.com.br';
+}
+function sync(){
+  F.forEach(([id])=>{const el=$(id);const fp=el.nextElementSibling;if(fp&&fp.classList.contains('fp'))fp.textContent=el.tagName==='SELECT'?(el.value?el.options[el.selectedIndex].text:''):el.value;});
+  const t=montar();
+  $('preview').textContent=t;
+  $('btn-wa').href='https://wa.me/5543996960078?text='+encodeURIComponent(t);
+  $('btn-mail').href='mailto:contato@telavertical.com.br?subject='+encodeURIComponent('Briefing Tela Vertical — '+(val('b-empresa')||'anunciante'))+'&body='+encodeURIComponent(t);
+  try{localStorage.setItem('tv-briefing',JSON.stringify(Object.fromEntries(F.map(([id])=>[id,$(id).value]))));}catch(e){}
+}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function copiar(){navigator.clipboard?.writeText(montar()).then(()=>toast('Briefing copiado.')).catch(()=>toast('Não foi possível copiar — selecione o texto da prévia.'));}
+function limpar(){if(!confirm('Limpar o briefing?'))return;F.forEach(([id])=>{const el=$(id);if(el.tagName==='SELECT')el.selectedIndex=0;else el.value='';});try{localStorage.removeItem('tv-briefing');}catch(e){}sync();}
+F.forEach(([id])=>{$(id).addEventListener('input',sync);$(id).addEventListener('change',sync);});
+try{const s=JSON.parse(localStorage.getItem('tv-briefing')||'null');if(s)F.forEach(([id])=>{if(s[id]!=null)$(id).value=s[id];});}catch(e){}
+sync();
+window.addEventListener('beforeprint',()=>{sync();document.title='Onboarding Anunciante Tela Vertical'+(val('b-empresa')?' - '+val('b-empresa'):'');});
+</script>
+</body>
+</html>

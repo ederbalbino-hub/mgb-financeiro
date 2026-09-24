@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit Instagram · Lançamento @telavertical — Tela Vertical</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ===== tokens (brand/tokens.css) ===== */
+:root{--tv-navy:#16294F;--tv-navy-deep:#0E1B36;--tv-gold:#C0A062;--tv-gold-light:#E2CFA3;--tv-champagne:#F3EDE2;--tv-sky:#6FC7E8;--tv-white:#FFFFFF;--tv-ink:#1B1F2A;--tv-muted:#6B7280;--tv-line:rgba(22,41,79,.12);--tv-font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--tv-radius:18px;--tv-shadow:0 10px 40px rgba(22,41,79,.12);--s:.33}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--tv-font);color:var(--tv-ink);background:var(--tv-champagne);line-height:1.55;font-size:15px}
+a{color:var(--tv-navy)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+h1,h2,h3,h4{color:var(--tv-navy);line-height:1.15;letter-spacing:-.01em}
+.eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--tv-gold);font-weight:700}
+.assin{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--tv-muted)}
+.card{background:var(--tv-white);border-radius:var(--tv-radius);box-shadow:var(--tv-shadow);padding:24px}
+.btn{background:var(--tv-navy);color:#fff;border:0;border-radius:999px;padding:11px 20px;font-weight:600;font-family:inherit;font-size:13px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;text-decoration:none}
+.btn.gold{background:var(--tv-gold);color:var(--tv-navy)}
+.btn.ghost{background:transparent;border:1.5px solid var(--tv-navy);color:var(--tv-navy)}
+.btn.sm{padding:6px 12px;font-size:12px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:rgba(22,41,79,.06);padding:1px 5px;border-radius:5px}
+.pend{background:#FFF3C4;color:#7A5A00;padding:1px 6px;border-radius:5px;font-weight:600;font-size:.9em}
+
+/* header */
+header.top{background:linear-gradient(135deg,var(--tv-navy-deep),var(--tv-navy) 60%,#1E3A6E);color:#fff;padding:44px 0 36px;position:relative;overflow:hidden}
+header.top::after{content:'';position:absolute;right:-140px;top:-140px;width:460px;height:460px;border-radius:50%;background:radial-gradient(circle,rgba(192,160,98,.28),transparent 65%)}
+header.top .logo{width:220px;height:auto}
+header.top h1{color:#fff;font-size:clamp(26px,4vw,40px);font-weight:800;margin:18px 0 8px}
+header.top h1 .g{color:var(--tv-gold-light)}
+header.top p{color:rgba(255,255,255,.8);max-width:720px}
+.predial{display:inline-flex;align-items:baseline;gap:6px;font-family:var(--tv-font);white-space:nowrap}
+.predial .g{color:var(--tv-gold);font-weight:400;letter-spacing:.32em;font-size:.62em}
+.predial .p{color:var(--tv-navy);font-weight:800;letter-spacing:.02em;font-size:1em}
+.on-dark .predial .p{color:#fff}
+
+/* nav */
+nav.menu{position:sticky;top:0;z-index:50;background:rgba(243,237,226,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--tv-line)}
+nav.menu .wrap{display:flex;gap:6px;overflow-x:auto;padding:10px 20px}
+nav.menu a{white-space:nowrap;font-size:13px;font-weight:600;color:var(--tv-navy);text-decoration:none;padding:7px 14px;border-radius:999px}
+nav.menu a:hover{background:rgba(22,41,79,.08)}
+nav.menu .spacer{flex:1}
+
+section{padding:48px 0 20px}
+section h2{font-size:clamp(22px,3vw,30px);font-weight:800;margin:6px 0 8px}
+section .lead{color:var(--tv-muted);max-width:820px;margin-bottom:22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:860px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+.grid2>*,.grid3>*,.grid4>*{min-width:0}
+.reel .tbl{overflow-x:auto}
+
+/* bio */
+.bio p.txt{font-size:15px;white-space:pre-line;margin:8px 0 10px;color:var(--tv-ink)}
+.bio .meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tv-muted)}
+.bio .cnt b{color:var(--tv-navy)}
+.bio .cnt.over b{color:#B42318}
+
+/* destaques */
+.dest{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.dest .ring{width:110px;height:110px;border-radius:50%;padding:4px;background:linear-gradient(135deg,var(--tv-gold),var(--tv-gold-light))}
+.dest .ring .in{width:100%;height:100%;border-radius:50%;background:var(--tv-navy);display:flex;align-items:center;justify-content:center}
+.dest svg{width:52px;height:52px}
+.dest b{font-size:14px;color:var(--tv-navy)}
+.dest small{font-size:12px;color:var(--tv-muted)}
+
+/* sequência */
+table.seq{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--tv-radius);overflow:hidden;box-shadow:var(--tv-shadow);font-size:13px}
+table.seq th{background:var(--tv-navy);color:#fff;text-align:left;padding:12px 12px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+table.seq td{padding:14px 12px;vertical-align:top;border-bottom:1px solid var(--tv-line)}
+table.seq tr:last-child td{border-bottom:0}
+table.seq td.d{font-weight:800;color:var(--tv-navy);font-size:16px;white-space:nowrap}
+table.seq td.d small{display:block;font-size:10px;color:var(--tv-muted);font-weight:500;letter-spacing:.1em}
+table.seq td.h{font-weight:700;color:var(--tv-navy);min-width:150px}
+table.seq td.leg{min-width:300px;white-space:pre-line;color:var(--tv-ink)}
+table.seq td.leg .tags{color:var(--tv-muted);font-size:12px;display:block;margin-top:6px}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.pill.f{background:rgba(22,41,79,.08);color:var(--tv-navy)}
+.pill.p1{background:rgba(22,41,79,.12);color:var(--tv-navy)}
+.pill.p2{background:rgba(192,160,98,.22);color:#7A5A16}
+.pill.p3{background:rgba(111,199,232,.25);color:#0B5E7A}
+.pill.p4{background:rgba(46,125,91,.15);color:#2E7D5B}
+.copy{margin-top:8px}
+.seq-wrap{overflow-x:auto;border-radius:var(--tv-radius)}
+@media(max-width:860px){table.seq,table.seq thead,table.seq tbody,table.seq tr,table.seq td{display:block}table.seq thead{display:none}table.seq tr{border-bottom:8px solid var(--tv-champagne)}table.seq td{border-bottom:0;padding:8px 14px}table.seq td::before{content:attr(data-l);display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tv-gold);font-weight:700}table.seq td.d{padding-top:16px}}
+
+/* ===== artes ===== */
+.idx{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+.idx button{background:#fff;border:1.5px solid var(--tv-line);border-radius:999px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:600;color:var(--tv-navy);cursor:pointer}
+.idx button.sel,.idx button:hover{background:var(--tv-navy);color:#fff;border-color:var(--tv-navy)}
+.idx button i{font-style:normal;color:var(--tv-gold);margin-right:5px}
+.idx button.sel i{color:var(--tv-gold-light)}
+.artes-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px}
+.artes-bar .hint{font-size:12px;color:var(--tv-muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+.frame{width:calc(1080px*var(--s));height:calc(1080px*var(--s));position:relative;border-radius:10px;overflow:hidden;box-shadow:var(--tv-shadow);background:#fff;cursor:pointer;outline:3px solid transparent;outline-offset:3px;transition:outline-color .2s}
+.frame.sel{outline-color:var(--tv-gold)}
+.frame .arte{width:1080px;height:1080px;transform:scale(var(--s));transform-origin:0 0;position:absolute;left:0;top:0}
+.frame-item .cap{font-size:12px;color:var(--tv-muted);margin-top:8px;display:flex;justify-content:space-between;gap:8px}
+.frame-item .cap b{color:var(--tv-navy)}
+.frame-item .cap button{background:none;border:0;color:var(--tv-gold);font-weight:700;cursor:pointer;font-family:inherit;font-size:12px}
+
+/* --- arte base (1080×1080) --- */
+.arte{font-family:var(--tv-font);position:relative;overflow:hidden;color:#fff;background:var(--tv-navy)}
+.arte *{box-sizing:border-box}
+.arte.light{background:var(--tv-champagne);color:var(--tv-ink)}
+.arte .pad{position:absolute;inset:0;padding:84px}
+.arte .eb{font-size:22px;letter-spacing:.32em;text-transform:uppercase;color:var(--tv-gold);font-weight:700}
+.arte .h{font-weight:800;line-height:1.02;letter-spacing:-.025em}
+.arte .h .gold{color:var(--tv-gold)}
+.arte .h .sky{color:var(--tv-sky)}
+.arte .sub{font-size:30px;line-height:1.35;font-weight:400}
+.arte.light .sub{color:#3C4356}
+.arte .glow{position:absolute;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,rgba(192,160,98,.28),transparent 62%);pointer-events:none}
+.arte .glow.sky{background:radial-gradient(circle,rgba(111,199,232,.22),transparent 62%)}
+.arte .foot{position:absolute;left:84px;right:84px;bottom:64px;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.arte .foot .lg{height:64px;width:auto}
+.arte .foot .as{font-size:17px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;color:rgba(255,255,255,.75);text-align:right;line-height:1.5}
+.arte.light .foot .as{color:var(--tv-muted)}
+.arte .foto{background:linear-gradient(160deg,#1E3A6E 0%,var(--tv-navy) 45%,var(--tv-navy-deep) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:rgba(255,255,255,.75);font-size:22px;letter-spacing:.08em;position:relative;overflow:hidden}
+.arte .foto::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 40px,rgba(255,255,255,.035) 40px 41px)}
+.arte .foto b{display:block;font-size:34px;letter-spacing:.2em;color:var(--tv-gold-light);margin-bottom:8px;position:relative}
+.arte .foto span{position:relative;max-width:80%;line-height:1.4}
+.arte .chip{display:inline-block;border:2px solid var(--tv-gold);color:var(--tv-gold-light);border-radius:999px;padding:12px 30px;font-size:22px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.arte.light .chip{color:var(--tv-navy);background:rgba(192,160,98,.12)}
+.arte .wa{display:inline-flex;align-items:center;gap:16px;background:var(--tv-gold);color:var(--tv-navy);border-radius:999px;padding:22px 40px;font-size:32px;font-weight:700}
+.arte .wa svg{width:40px;height:40px}
+.arte .predial{font-size:64px}
+.arte .predial .g{font-size:34px}
+/* screen illustration (elevator display) */
+.scr{position:relative;width:360px;height:620px;border-radius:26px;background:#0B1730;box-shadow:0 0 0 12px #2B3245,0 0 0 16px #5A6272,0 40px 90px rgba(0,0,0,.45);overflow:hidden}
+.scr::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.14),transparent 45%)}
+.scr .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:30px;text-align:center}
+.inox{position:absolute;inset:0;background:linear-gradient(90deg,#6B7280 0%,#C9CED6 18%,#8F97A4 36%,#D8DCE2 52%,#7C8592 70%,#B9BFC8 88%,#6B7280 100%)}
+.inox::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 2px,transparent 2px 6px)}
+
+/* reels */
+.reel h3{font-size:18px;margin-bottom:4px}
+.reel .meta{font-size:12px;color:var(--tv-muted);margin-bottom:12px}
+.reel table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0 10px}
+.reel th{text-align:left;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tv-gold);padding:6px 8px;border-bottom:1px solid var(--tv-line)}
+.reel td{padding:8px;border-bottom:1px dashed var(--tv-line);vertical-align:top}
+.reel td:first-child{white-space:nowrap;font-weight:700;color:var(--tv-navy)}
+.reel .row{display:flex;gap:8px;font-size:13px;margin:6px 0}
+.reel .row b{min-width:110px;color:var(--tv-navy)}
+.gancho{background:var(--tv-navy);color:#fff;border-radius:12px;padding:12px 16px;font-weight:600;font-size:14px;margin-bottom:10px}
+.gancho small{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--tv-gold-light);font-weight:700;margin-bottom:4px}
+
+footer{background:var(--tv-navy-deep);color:rgba(255,255,255,.7);font-size:12px;text-align:center;padding:26px 20px;margin-top:40px}
+
+/* ===== MODO EXPORTAÇÃO ===== */
+#exit-export{display:none;position:fixed;right:16px;bottom:16px;z-index:999}
+body.export{background:#fff}
+body.export>*:not(#artes):not(svg){display:none!important}
+body.export #artes{padding:0}
+body.export #artes .wrap{max-width:none;padding:0}
+body.export #artes .wrap>*:not(.grid){display:none}
+body.export .grid{display:block}
+body.export .frame-item{display:none}
+body.export .frame-item.sel{display:block}
+body.export .frame-item .cap{display:none}
+body.export .frame{--s:1;width:1080px;height:1080px;border-radius:0;box-shadow:none;outline:0;cursor:default}
+body.export #exit-export{display:inline-flex}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGO (oficial — Monolito, 24/09/2026; fonte: brand/logo/*.svg) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="lg-escuro" viewBox="0 0 560 200">
+    <g transform="translate(24,16)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g>
+    <g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#FFFFFF" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#FFFFFF" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g>
+  </symbol>
+  <symbol id="lg-claro" viewBox="0 0 560 200">
+    <g transform="translate(24,16)"><path fill="#16294F" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g>
+    <g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif"><text x="164" y="98" font-size="64" font-weight="600" fill="#16294F" letter-spacing="1">TELA</text><text x="166" y="148" font-size="34" font-weight="300" fill="#16294F" letter-spacing="10">VERTICAL</text><rect x="166" y="160" width="60" height="3" fill="#C0A062"/></g>
+  </symbol>
+  <symbol id="lg-icone" viewBox="0 0 104 168">
+    <path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/>
+  </symbol>
+  <symbol id="lg-vertical" viewBox="0 0 340 360">
+    <g transform="translate(118,16)"><path fill="#FFFFFF" fill-rule="evenodd" d="M20,0 H84 A20,20 0 0 1 104,20 V148 A20,20 0 0 1 84,168 H20 A20,20 0 0 1 0,148 V20 A20,20 0 0 1 20,0 Z M52,44 L82,80 L66,80 L66,122 L38,122 L38,80 L22,80 Z"/><rect x="34" y="138" width="36" height="6" rx="3" fill="#C0A062"/></g>
+    <g font-family="Poppins, Montserrat, 'Segoe UI', Arial, sans-serif" text-anchor="middle"><text x="170" y="266" font-size="60" font-weight="600" fill="#FFFFFF" letter-spacing="1">TELA</text><text x="174" y="312" font-size="28" font-weight="300" fill="#FFFFFF" letter-spacing="9">VERTICAL</text><rect x="140" y="326" width="60" height="3" fill="#C0A062"/></g>
+  </symbol>
+  <symbol id="ic-wa" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 2a8 8 0 1 1-4.1 14.9l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 0 1 12 4Zm-3.2 4.3c-.2 0-.5 0-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.2 5 4.4 2.5 1 3 .8 3.5.7.5 0 1.7-.7 2-1.4.2-.7.2-1.3.1-1.4l-.5-.3-2-1c-.3-.1-.5-.1-.7.1l-.9 1.1c-.2.2-.3.2-.6.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.3 0-.4.1-.6l.5-.6.3-.5c.1-.2 0-.4 0-.5l-.9-2.2c-.2-.5-.4-.5-.6-.5h-.5Z"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <!-- LOGO -->
+    <svg class="logo" viewBox="0 0 560 200"><use href="#lg-escuro"/></svg>
+    <div class="eyebrow" style="margin-top:18px;color:var(--tv-gold-light)">Kit Instagram · lançamento @telavertical</div>
+    <h1>Tudo pronto pras <span class="g">2 semanas</span> de lançamento</h1>
+    <p>Bio, destaques, sequência dia a dia com legendas, 12 artes de feed (1080×1080) na marca e roteiros de 4 reels. Coerente com o plano de mídia set–dez: 4 pilares, colab com a Predial, assinatura "uma empresa do Grupo Predial" em tudo.</p>
+    <p style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.6)">Pendências marcadas em <span class="pend">[[ ]]</span>. Fotos são placeholders. Logo oficial (Monolito).</p>
+  </div>
+</header>
+
+<nav class="menu"><div class="wrap">
+  <a href="#bio">Bio</a><a href="#destaques">Destaques</a><a href="#sequencia">Sequência 14 dias</a><a href="#artes">Artes (12)</a><a href="#reels">Reels (4)</a>
+  <span class="spacer"></span>
+  <a href="#artes" onclick="enterExport();return false" style="background:var(--tv-gold);color:var(--tv-navy)">Modo exportação</a>
+</div></nav>
+
+<!-- ============ BIO ============ -->
+<section id="bio"><div class="wrap">
+  <div class="eyebrow">01 · Perfil</div>
+  <h2>Bio do @telavertical</h2>
+  <p class="lead">Até 150 caracteres. Nome do perfil: <b>Tela Vertical · Mídia em Elevadores</b>. Categoria: Empresa de mídia/publicidade. Link: wa.me/5543996960078 (até o site telavertical.com.br entrar no ar). Avatar: <code>brand/logo/tela-vertical-icone-navy.svg</code> (ou <code>png/</code> do brand).</p>
+  <div class="grid3">
+    <div class="card bio"><div class="eyebrow">Opção A · direta</div><p class="txt" data-bio>Mídia em elevadores 🏢 uma empresa do Grupo Predial
+Comunicados do síndico + notícias + sua marca, onde todo morador passa.
+📍 Londrina</p><div class="meta"><span class="cnt"></span><button class="btn sm ghost" onclick="copyEl(this)">Copiar</button></div></div>
+    <div class="card bio"><div class="eyebrow">Opção B · síndico</div><p class="txt" data-bio>A tela oficial de avisos do seu condomínio — no elevador, custo zero.
+Uma empresa do Grupo Predial 🏢 Londrina
+📲 Peça a sua ↓</p><div class="meta"><span class="cnt"></span><button class="btn sm ghost" onclick="copyEl(this)">Copiar</button></div></div>
+    <div class="card bio"><div class="eyebrow">Opção C · anunciante</div><p class="txt" data-bio>Sua marca 3 a 5× por dia na rotina de quem decide 🏢
+Telas em elevadores de Londrina · uma empresa do Grupo Predial
+📲 Anuncie ↓</p><div class="meta"><span class="cnt"></span><button class="btn sm ghost" onclick="copyEl(this)">Copiar</button></div></div>
+  </div>
+</div></section>
+
+<!-- ============ DESTAQUES ============ -->
+<section id="destaques"><div class="wrap">
+  <div class="eyebrow">02 · Destaques</div>
+  <h2>4 destaques fixos</h2>
+  <p class="lead">Capas em navy com ícone dourado (padrão abaixo, exportável pelo modo exportação das artes — arte 11 serve de base). Um destaque por pilar de conteúdo do plano.</p>
+  <div class="grid4">
+    <div class="card dest"><div class="ring"><div class="in"><svg viewBox="0 0 64 64" fill="none" stroke="#C0A062" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="8" width="44" height="48" rx="6"/><path d="M20 22h24M20 32h24M20 42h14"/><circle cx="46" cy="46" r="9" fill="#16294F"/><path d="M42 46l3 3 5-6"/></svg></div></div><b>Síndicos</b><small>dicas, custo zero, como pedir a tela · Pilar 1</small></div>
+    <div class="card dest"><div class="ring"><div class="in"><svg viewBox="0 0 64 64" fill="none" stroke="#C0A062" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="6" width="24" height="52" rx="6"/><path d="M32 17l8 10h-4.5v12h-7V27H24z"/><path d="M28 50h8"/></svg></div></div><b>Instalações</b><small>"mais um condomínio conectado", bastidores · Pilar 2</small></div>
+    <div class="card dest"><div class="ring"><div class="in"><svg viewBox="0 0 64 64" fill="none" stroke="#C0A062" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 26v12h8l16 10V16L18 26z"/><path d="M42 24a10 10 0 0 1 0 16M48 18a18 18 0 0 1 0 28"/></svg></div></div><b>Anunciantes</b><small>por que o elevador vende, cases, planos · Pilar 3</small></div>
+    <div class="card dest"><div class="ring"><div class="in"><svg viewBox="0 0 64 64" fill="none" stroke="#C0A062" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 56h48M14 56V22l18-12 18 12v34"/><path d="M26 56V40h12v16M26 30h4M34 30h4"/></svg></div></div><b>Institucional</b><small>Predial × Tela Vertical, imprensa, eventos · Pilar 4</small></div>
+  </div>
+</div></section>
+
+<!-- ============ SEQUÊNCIA ============ -->
+<section id="sequencia"><div class="wrap">
+  <div class="eyebrow">03 · Sequência de lançamento</div>
+  <h2>14 dias, um post por dia</h2>
+  <p class="lead">Marcos do plano de mídia: D1 teaser · D3 card (colab nos 2 perfis) · D5 reel Jadson + Eder · D8 carrossel "o que muda" · D12 Tarobá News · D14 números. Os demais dias alternam os 4 pilares. Começar numa segunda-feira <span class="pend">[[DATA D1]]</span>. Postar entre 11h30 e 12h30 ou 18h30 e 19h30.</p>
+  <div class="seq-wrap"><table class="seq">
+    <thead><tr><th>Dia</th><th>Formato</th><th>Pilar</th><th>Headline</th><th>Legenda completa</th><th>CTA</th></tr></thead>
+    <tbody>
+    <tr><td class="d" data-l="Dia">D1<small>SEG</small></td><td data-l="Formato"><span class="pill f">Feed · imagem</span><br><small>Arte 1</small></td><td data-l="Pilar"><span class="pill p4">Institucional</span></td><td class="h" data-l="Headline">Algo grande está subindo.</td><td class="leg" data-l="Legenda">Nos próximos dias, os elevadores de Londrina ganham uma novidade. Fica de olho. ⬆️<span class="tags">#Londrina #EmBreve #Condominio</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Ativa o sininho 🔔"</td></tr>
+    <tr><td class="d" data-l="Dia">D2<small>TER</small></td><td data-l="Formato"><span class="pill f">Stories · 3 telas</span></td><td data-l="Pilar"><span class="pill p2">Prova social</span></td><td class="h" data-l="Headline">Seu prédio tem tela no elevador?</td><td class="leg" data-l="Legenda">Tela 1 — enquete: "Seu prédio tem tela no elevador?" (Sim / Ainda não)
+Tela 2 — foto real de uma tela ligada <span class="pend">[[FOTO]]</span> com o texto "Spoiler: em 11 condomínios de Londrina, já tem."
+Tela 3 — fundo navy: "Amanhã a gente conta tudo."<span class="tags">(stories não levam hashtag; usar sticker de localização Londrina)</span></td><td data-l="CTA">Responder a enquete</td></tr>
+    <tr><td class="d" data-l="Dia">D3<small>QUA</small></td><td data-l="Formato"><span class="pill f">Feed · card (colab @grupopredial)</span><br><small>Arte 2 ou o card oficial</small></td><td data-l="Pilar"><span class="pill p4">Institucional</span></td><td class="h" data-l="Headline">Nasce a Tela Vertical.</td><td class="leg" data-l="Legenda">O Grupo Predial — uma das maiores administradoras de condomínios de Londrina, com mais de 160 condomínios — agora é sócio da nossa operação de mídia em elevadores.
+
+A MGB Mídia Elevadores passa a se chamar Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial.
+
+O que a gente faz: a tela oficial de avisos dentro do elevador. Comunicados do síndico, notícias da cidade, campanhas de utilidade pública e marcas locais — sem custo pro condomínio.
+
+Hoje são 35 telas em 11 condomínios. E muito andar pela frente. 🏢⬆️<span class="tags">#TelaVertical #GrupoPredial #MidiaEmElevadores #Londrina #Condominio #Sindico #DOOH</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Segue @telavertical e @grupopredial"</td></tr>
+    <tr><td class="d" data-l="Dia">D4<small>QUI</small></td><td data-l="Formato"><span class="pill f">Stories · repost</span></td><td data-l="Pilar"><span class="pill p4">Institucional</span></td><td class="h" data-l="Headline">Obrigado, Londrina.</td><td class="leg" data-l="Legenda">Tela 1 — repost do post da Predial com "Saiu nos dois perfis 🤝".
+Tela 2 — prints de comentários/mensagens recebidas (com autorização) e "Obrigado pelas mensagens!".
+Tela 3 — "Amanhã: o Jadson e o Eder explicam por que fizeram isso." + contagem regressiva.</td><td data-l="CTA">Sticker de contagem regressiva</td></tr>
+    <tr><td class="d" data-l="Dia">D5<small>SEX</small></td><td data-l="Formato"><span class="pill f">Reel · 45–60 s</span><br><small>Capa: Arte 3 · Roteiro R1</small></td><td data-l="Pilar"><span class="pill p4">Institucional</span></td><td class="h" data-l="Headline">A visão por trás da sociedade.</td><td class="leg" data-l="Legenda">Por que uma administradora de condomínios entraria numa empresa de mídia?
+
+O Jadson Molina (Grupo Predial) e o Eder Balbino (MGB Mídia) explicam em 1 minuto. Spoiler: não é sobre anúncio. É sobre o aviso que ninguém viu. 🎬<span class="tags">#TelaVertical #GrupoPredial #Londrina #Condominio #Sindico #NegociosLocais</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Manda pra um síndico"</td></tr>
+    <tr><td class="d" data-l="Dia">D6<small>SÁB</small></td><td data-l="Formato"><span class="pill f">Feed · imagem</span><br><small>Arte 6</small></td><td data-l="Pilar"><span class="pill p1">Autoridade</span></td><td class="h" data-l="Headline">Mural ninguém lê. A tela, todo mundo vê.</td><td class="leg" data-l="Legenda">Síndico, faz o teste: quantos moradores leram o último aviso do mural? E no grupo, quantos rolaram sem abrir?
+
+O elevador é o único lugar por onde todo morador passa, todos os dias — de 3 a 5 vezes. É por isso que a tela do elevador virou o canal oficial do condomínio.
+
+📌 Salva esse post pra próxima assembleia.<span class="tags">#TelaVertical #Sindico #Condominio #ComunicacaoCondominial #Londrina #GrupoPredial</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Salva o post"</td></tr>
+    <tr><td class="d" data-l="Dia">D7<small>DOM</small></td><td data-l="Formato"><span class="pill f">Stories · bastidor</span></td><td data-l="Pilar"><span class="pill p2">Prova social</span></td><td class="h" data-l="Headline">Como é por dentro.</td><td class="leg" data-l="Legenda">Tela 1 — vídeo de 15 s andando de elevador com a tela ligada <span class="pend">[[VÍDEO]]</span>: "Assim que o morador vê."
+Tela 2 — close na tela mostrando um comunicado do síndico e uma notícia do Tarobá News.
+Tela 3 — caixinha: "Quer ver no seu prédio? Manda o nome do condomínio."</td><td data-l="CTA">Caixinha de perguntas</td></tr>
+    <tr><td class="d" data-l="Dia">D8<small>SEG</small></td><td data-l="Formato"><span class="pill f">Feed · carrossel 5 slides</span><br><small>Artes 4 e 5 (+3 no mesmo modelo)</small></td><td data-l="Pilar"><span class="pill p1">Autoridade</span></td><td class="h" data-l="Headline">O que muda pro seu condomínio?</td><td class="leg" data-l="Legenda">Muita gente perguntou: "e pro meu condomínio, o que muda?" Arrasta pro lado 👉
+
+1. Custo zero. Instalação, manutenção e operação por conta da Tela Vertical.
+2. O comunicado do síndico tem prioridade. Obra, assembleia, manutenção — na tela em até 24 h. <span class="pend">[[APROVAR prazo]]</span>
+3. Notícias da cidade em tempo real (Tarobá News) e campanhas de utilidade pública.
+4. A chancela do Grupo Predial: a administradora que você já conhece, agora do lado de dentro.
+5. Nada a assinar pra quem já tem. E fila prioritária pros condomínios da Predial.
+
+Síndico, quer a tela no seu prédio? Chama a gente no WhatsApp: (43) 99696-0078.<span class="tags">#TelaVertical #GrupoPredial #Sindico #Condominio #Londrina #CustoZero</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Chama no WhatsApp"</td></tr>
+    <tr><td class="d" data-l="Dia">D9<small>TER</small></td><td data-l="Formato"><span class="pill f">Reel · 20–30 s</span><br><small>Capa: Arte 7 · Roteiro R2</small></td><td data-l="Pilar"><span class="pill p2">Prova social</span></td><td class="h" data-l="Headline">Mais um condomínio conectado.</td><td class="leg" data-l="Legenda">Tela nº <span class="pend">[[36]]</span> no ar! ⬆️
+
+Hoje foi a vez do <span class="pend">[[CONDOMÍNIO]]</span>, no <span class="pend">[[bairro]]</span> — <span class="pend">[[n]]</span> moradores que agora recebem os avisos do síndico onde todo mundo passa.
+
+Bem-vindo à rede. Rumo às 50. 📍<span class="tags">#TelaVertical #CondominioConectado #Londrina #GrupoPredial #MidiaEmElevadores</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Seu prédio é o próximo?"</td></tr>
+    <tr><td class="d" data-l="Dia">D10<small>QUA</small></td><td data-l="Formato"><span class="pill f">Feed · imagem</span><br><small>Arte 8</small></td><td data-l="Pilar"><span class="pill p3">Anunciante</span></td><td class="h" data-l="Headline">Por que o elevador vende?</td><td class="leg" data-l="Legenda">Sem pular, sem rolar, sem trocar de canal. Dentro do elevador, a sua marca tem a atenção inteira — 3 a 5 vezes por dia, com o mesmo público de médio e alto padrão.
+
+📊 86% das pessoas lembram de um anúncio out-of-home (OAAA).
+📊 Mais de 80 mil pessoas por mês na nossa rede.
+📊 Relatório de exibição por tela, todo mês.
+
+Quer ver os planos? WhatsApp (43) 99696-0078.<span class="tags">#TelaVertical #MidiaIndoor #DOOH #Londrina #MarketingLocal #Anuncie #GrupoPredial</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Pede a tabela no WhatsApp"</td></tr>
+    <tr><td class="d" data-l="Dia">D11<small>QUI</small></td><td data-l="Formato"><span class="pill f">Stories · perguntas</span></td><td data-l="Pilar"><span class="pill p3">Anunciante</span></td><td class="h" data-l="Headline">Quanto custa anunciar?</td><td class="leg" data-l="Legenda">Tela 1 — caixinha: "Pergunta tudo sobre anunciar no elevador."
+Telas 2–5 — responder as 4 perguntas mais comuns em vídeo selfie do Eder (custa quanto <span class="pend">[[VALOR — do mídia kit]]</span>, quanto tempo fica, dá pra escolher o condomínio, tem relatório).
+Tela 6 — link do WhatsApp: "Quer uma proposta? Clica aqui."</td><td data-l="CTA">Sticker de link (WhatsApp)</td></tr>
+    <tr><td class="d" data-l="Dia">D12<small>SEX</small></td><td data-l="Formato"><span class="pill f">Feed · imagem</span><br><small>Arte 9</small></td><td data-l="Pilar"><span class="pill p4">Institucional</span></td><td class="h" data-l="Headline">Saiu na imprensa.</td><td class="leg" data-l="Legenda">O Tarobá News contou a história: o Grupo Predial investe em um novo segmento, e nasce a Tela Vertical. 📰
+
+Obrigado ao portal — que, aliás, já tem as notícias rodando nas nossas telas todos os dias.
+
+Link da matéria nos stories.<span class="tags">#TelaVertical #GrupoPredial #TarobaNews #Londrina #MidiaEmElevadores</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Link nos stories"</td></tr>
+    <tr><td class="d" data-l="Dia">D13<small>SÁB</small></td><td data-l="Formato"><span class="pill f">Reel · 30–45 s</span><br><small>Roteiro R3</small></td><td data-l="Pilar"><span class="pill p1">Autoridade</span></td><td class="h" data-l="Headline">3 avisos que todo síndico precisa dar (e como fazer todo mundo ler).</td><td class="leg" data-l="Legenda">Obra, assembleia e inadimplência: os três avisos que mais geram briga quando "ninguém ficou sabendo".
+
+Nesse reel, uma forma simples de comunicar cada um — com elegância e sem sobrar pra ninguém dizer que não viu. 🎬
+
+Salva e manda pro conselho.<span class="tags">#TelaVertical #Sindico #Condominio #GestaoCondominial #Londrina #GrupoPredial</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Salva e manda pro conselho"</td></tr>
+    <tr><td class="d" data-l="Dia">D14<small>DOM</small></td><td data-l="Formato"><span class="pill f">Feed · imagem</span><br><small>Arte 10</small></td><td data-l="Pilar"><span class="pill p2">Prova social</span></td><td class="h" data-l="Headline">35 telas. 11 condomínios. Próxima parada: 50.</td><td class="leg" data-l="Legenda">Duas semanas de Tela Vertical, uma empresa do Grupo Predial.
+
+Onde a gente está: 35 telas em 11 condomínios, mais de 80 mil pessoas por mês.
+Onde a gente vai: 50 telas — e 70 até dezembro.
+
+Quem acompanha, cobra. 😉 Síndico, o seu condomínio entra nessa conta?<span class="tags">#TelaVertical #GrupoPredial #Londrina #Condominio #Sindico #Meta50</span><button class="btn sm ghost copy" onclick="copyLeg(this)">Copiar legenda</button></td><td data-l="CTA">"Chama a gente"</td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:12px;color:var(--tv-muted);margin-top:12px">Depois do D14 entra a cadência normal do plano: 3 posts de feed/semana (1 por pilar, alternando), 2 reels/semana, stories 3–4×/semana e 1 colab/mês com @grupopredial. Artes 11 e 12 são coringas (institucional e "anuncie") para essa fase.</p>
+</div></section>
+
+<!-- ============ ARTES ============ -->
+<section id="artes"><div class="wrap">
+  <div class="eyebrow">04 · Artes de feed</div>
+  <h2>12 artes · 1080×1080</h2>
+  <p class="lead">Desenhadas em HTML/CSS/SVG na marca. Fotos são placeholders <span class="pend">[[FOTO]]</span>. Para exportar: selecione a arte no índice e clique em <b>Modo exportação</b> — a página mostra só a arte em tamanho real (1080×1080) para screenshot. <code>Esc</code> volta. Atalho por URL: <code>?arte=3</code>.</p>
+  <div class="artes-bar">
+    <button class="btn gold" onclick="enterExport()">Modo exportação</button>
+    <button class="btn ghost" onclick="prevArt()">‹ anterior</button>
+    <button class="btn ghost" onclick="nextArt()">próxima ›</button>
+    <span class="hint">Selecionada: <b id="sel-name">Arte 1</b></span>
+  </div>
+  <div class="idx" id="idx"></div>
+
+  <div class="grid" id="grid">
+
+    <!-- ===== ARTE 1 · Teaser D1 ===== -->
+    <div class="frame-item" data-name="01 · Teaser — Algo grande está subindo"><div class="frame"><div class="arte">
+      <div class="glow" style="left:90px;top:-260px"></div>
+      <div class="pad" style="display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center">
+        <div class="eb" style="color:var(--tv-sky)">Em breve · Londrina</div>
+        <div style="position:relative;margin-top:10px">
+          <div class="scr" style="height:470px;width:300px"><div class="in">
+            <svg viewBox="0 0 64 64" width="120" height="120" fill="none" stroke="#6FC7E8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 52V14M16 30l16-16 16 16"/></svg>
+            <div style="font-size:40px;font-weight:800;line-height:1.1;color:#fff">10</div>
+            <div style="font-size:16px;letter-spacing:.3em;color:rgba(255,255,255,.55)">SUBINDO</div>
+          </div></div>
+        </div>
+        <div>
+          <div class="h" style="font-size:82px">Algo grande<br>está <span class="sky">subindo.</span></div>
+          <div class="sub" style="margin-top:22px;color:rgba(255,255,255,.7)">Nos próximos dias, nos elevadores de Londrina.</div>
+        </div>
+      </div>
+    </div></div><div class="cap"><b>Arte 1</b> D1 · Teaser <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 2 · Anúncio D3 ===== -->
+    <div class="frame-item" data-name="02 · Nasce a Tela Vertical (card do anúncio)"><div class="frame"><div class="arte light">
+      <div style="position:absolute;left:0;top:0;width:560px;height:1080px;padding:84px 40px 84px 84px;display:flex;flex-direction:column;justify-content:space-between">
+        <div class="on-dark" style="color:var(--tv-navy)"><!-- LOGO PREDIAL --><span class="predial" style="font-size:56px"><span class="g">GRUPO</span><span class="p" style="color:var(--tv-navy)">PREDIAL</span></span><div style="height:3px;background:linear-gradient(90deg,var(--tv-gold),transparent);margin-top:10px;width:420px"></div></div>
+        <div>
+          <div class="eb" style="color:var(--tv-navy);font-size:19px;letter-spacing:.14em;margin-bottom:18px">Grupo Predial investe em novo segmento</div>
+          <div class="h" style="font-size:96px;color:var(--tv-navy)">Nasce a<br><span class="gold">Tela<br>Vertical</span></div>
+        </div>
+        <div class="assin" style="font-size:16px;letter-spacing:.16em;color:var(--tv-muted)">Mídia em Elevadores<br>uma empresa do Grupo Predial</div>
+      </div>
+      <div style="position:absolute;left:560px;top:0;width:520px;height:1080px">
+        <div class="foto" style="position:absolute;inset:0;justify-content:flex-end;padding-bottom:70px;background:linear-gradient(90deg,#8F97A4,#D8DCE2 30%,#9AA2AE 60%,#C9CED6 100%);color:#3C4356"><b style="color:#16294F">[[FOTO]]</b><span style="color:#3C4356">elevador inox com a tela (usar a foto do card oficial)</span></div>
+        <div class="scr" style="position:absolute;left:80px;top:230px;width:330px;height:600px"><div class="in"><!-- LOGO --><svg viewBox="0 0 340 360" width="290" height="307"><use href="#lg-vertical"/></svg></div></div>
+      </div>
+    </div></div><div class="cap"><b>Arte 2</b> D3 · Anúncio (colab) <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 3 · Capa do reel D5 ===== -->
+    <div class="frame-item" data-name="03 · Capa reel — A visão por trás da sociedade"><div class="frame"><div class="arte">
+      <div class="glow" style="right:-300px;bottom:-300px"></div>
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div class="eb">Reel · Jadson Molina × Eder Balbino</div>
+        <div style="display:flex;gap:28px;justify-content:center">
+          <div style="width:400px;height:480px;border-radius:28px;padding:5px;background:linear-gradient(160deg,var(--tv-gold),var(--tv-gold-light))"><div class="foto" style="width:100%;height:100%;border-radius:24px"><b>[[FOTO]]</b><span>Jadson Molina<br>Grupo Predial</span></div></div>
+          <div style="width:400px;height:480px;border-radius:28px;padding:5px;background:linear-gradient(160deg,var(--tv-sky),var(--tv-gold-light))"><div class="foto" style="width:100%;height:100%;border-radius:24px"><b>[[FOTO]]</b><span>Eder Balbino<br>MGB Mídia · Tela Vertical</span></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:26px">
+          <div style="width:110px;height:110px;border-radius:50%;background:var(--tv-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="48" height="48" fill="#16294F"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="h" style="font-size:66px">A visão por trás<br>da <span class="gold">sociedade.</span></div>
+        </div>
+      </div>
+    </div></div><div class="cap"><b>Arte 3</b> D5 · Capa do reel <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 4 · Capa carrossel D8 ===== -->
+    <div class="frame-item" data-name="04 · Carrossel capa — O que muda pro seu condomínio?"><div class="frame"><div class="arte light">
+      <div class="glow" style="right:-360px;top:-360px;opacity:.7"></div>
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="eb">Pra síndicos e conselheiros</div><div class="chip" style="font-size:18px;padding:10px 22px">1 / 5</div></div>
+        <div>
+          <div class="h" style="font-size:108px;color:var(--tv-navy)">O que muda<br>pro seu<br><span class="gold">condomínio?</span></div>
+          <div class="sub" style="margin-top:30px">Agora que a Tela Vertical é uma empresa do Grupo Predial.</div>
+        </div>
+        <div class="foot" style="position:static">
+          <div style="display:flex;align-items:center;gap:14px;font-size:24px;font-weight:600;color:var(--tv-navy)">Arrasta pro lado <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#C0A062" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M13 5l7 7-7 7"/></svg></div>
+          <svg class="lg" viewBox="0 0 560 200"><use href="#lg-claro"/></svg>
+        </div>
+      </div>
+    </div></div><div class="cap"><b>Arte 4</b> D8 · Carrossel (capa) <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 5 · Carrossel slide 2 ===== -->
+    <div class="frame-item" data-name="05 · Carrossel slide 2 — Custo zero"><div class="frame"><div class="arte light" style="background:#fff">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:22px;background:linear-gradient(180deg,var(--tv-gold),var(--tv-gold-light))"></div>
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:space-between;padding-left:110px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="eb">O que muda · 1 de 4</div><div class="chip" style="font-size:18px;padding:10px 22px">2 / 5</div></div>
+        <div>
+          <div class="h" style="font-size:150px;color:var(--tv-navy);line-height:.95">Custo<br><span class="gold">zero.</span></div>
+          <div class="sub" style="margin-top:34px;max-width:820px">Instalação, manutenção e operação por conta da Tela Vertical. O condomínio não paga nada — nunca.</div>
+          <div style="display:flex;gap:16px;margin-top:40px;flex-wrap:wrap">
+            <span class="chip" style="font-size:20px">✓ Instalação</span><span class="chip" style="font-size:20px">✓ Manutenção</span><span class="chip" style="font-size:20px">✓ Operação</span>
+          </div>
+        </div>
+        <div class="foot" style="position:static"><span class="assin" style="font-size:15px">Tela Vertical · uma empresa do Grupo Predial</span><svg class="lg" viewBox="0 0 560 200"><use href="#lg-claro"/></svg></div>
+      </div>
+    </div></div><div class="cap"><b>Arte 5</b> D8 · Carrossel (slide 2; repetir para 3–5) <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 6 · Autoridade D6 ===== -->
+    <div class="frame-item" data-name="06 · Mural ninguém lê. A tela, todo mundo vê."><div class="frame"><div class="arte">
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div class="eb">Comunicação de condomínio</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:40px">
+          <!-- mural com papéis -->
+          <svg viewBox="0 0 400 420" width="400" height="420" style="opacity:.55">
+            <rect x="10" y="10" width="380" height="400" rx="14" fill="#6B5A3E"/><rect x="26" y="26" width="348" height="368" rx="8" fill="#8B7350"/>
+            <g fill="#F3EDE2"><rect x="50" y="50" width="120" height="150" transform="rotate(-6 110 125)"/><rect x="200" y="60" width="130" height="120" transform="rotate(4 265 120)"/><rect x="70" y="220" width="140" height="150" transform="rotate(3 140 295)"/><rect x="230" y="210" width="110" height="160" transform="rotate(-5 285 290)"/></g>
+            <g stroke="#B9AE9B" stroke-width="4"><path d="M70 80h80M70 100h60M70 120h70M70 140h50" transform="rotate(-6 110 125)"/><path d="M215 90h100M215 110h80M215 130h90" transform="rotate(4 265 120)"/><path d="M90 250h100M90 270h80M90 290h100M90 310h60" transform="rotate(3 140 295)"/><path d="M245 240h80M245 260h60M245 280h80M245 300h50" transform="rotate(-5 285 290)"/></g>
+            <g fill="#C0A062"><circle cx="110" cy="52" r="7"/><circle cx="265" cy="66" r="7"/><circle cx="140" cy="222" r="7"/><circle cx="285" cy="212" r="7"/></g>
+          </svg>
+          <svg viewBox="0 0 24 24" width="70" height="70" fill="none" stroke="#C0A062" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <div class="scr" style="width:300px;height:500px;box-shadow:0 0 0 12px #2B3245,0 0 0 16px #5A6272,0 0 120px rgba(111,199,232,.35)"><div class="in" style="gap:14px;align-items:flex-start;text-align:left;padding:34px">
+            <div style="font-size:13px;letter-spacing:.3em;color:var(--tv-gold)">COMUNICADO</div>
+            <div style="font-size:30px;font-weight:800;line-height:1.15">Assembleia<br>quinta, 19h30</div>
+            <div style="font-size:15px;color:rgba(255,255,255,.7);line-height:1.4">Salão de festas. Pauta: orçamento 2027 e obra da fachada.</div>
+            <div style="margin-top:auto;font-size:12px;letter-spacing:.2em;color:var(--tv-sky)">SÍNDICO · [[NOME]]</div>
+          </div></div>
+        </div>
+        <div>
+          <div class="h" style="font-size:78px">Mural ninguém lê.<br>A tela, <span class="gold">todo mundo vê.</span></div>
+          <div class="foot" style="position:static;margin-top:34px"><span class="as" style="text-align:left">Uma empresa do Grupo Predial</span><svg class="lg" viewBox="0 0 560 200"><use href="#lg-escuro"/></svg></div>
+        </div>
+      </div>
+    </div></div><div class="cap"><b>Arte 6</b> D6 · Autoridade <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 7 · Prova social D9 ===== -->
+    <div class="frame-item" data-name="07 · Mais um condomínio conectado"><div class="frame"><div class="arte">
+      <div class="foto" style="position:absolute;inset:0;justify-content:flex-start;padding-top:250px"><b>[[FOTO]]</b><span>tela recém-instalada na cabine (vertical, com a marca ligada)</span></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,27,54,.1) 30%,rgba(14,27,54,.92) 70%)"></div>
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="chip">Mais um condomínio conectado</div><div style="background:var(--tv-gold);color:var(--tv-navy);border-radius:20px;padding:14px 22px;font-weight:800;font-size:26px;text-align:center;line-height:1.1">TELA<br><span style="font-size:44px">Nº [[36]]</span></div></div>
+        <div>
+          <div class="eb" style="color:var(--tv-sky)">Bem-vindo à rede</div>
+          <div class="h" style="font-size:96px;margin-top:10px">[[Nome do<br>condomínio]]</div>
+          <div class="sub" style="margin-top:16px;color:rgba(255,255,255,.8)">[[Bairro]] · [[000]] moradores · agora com a tela oficial de avisos no elevador.</div>
+          <div class="foot" style="position:static;margin-top:44px"><span class="as" style="text-align:left">Uma empresa do Grupo Predial</span><svg class="lg" viewBox="0 0 560 200"><use href="#lg-escuro"/></svg></div>
+        </div>
+      </div>
+    </div></div><div class="cap"><b>Arte 7</b> D9 · Instalação (capa do reel) <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 8 · Anunciante D10 ===== -->
+    <div class="frame-item" data-name="08 · Por que o elevador vende?"><div class="frame"><div class="arte light">
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div class="eb">Pra quem anuncia</div>
+        <div class="h" style="font-size:104px;color:var(--tv-navy)">Por que o<br>elevador <span class="gold">vende?</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+          <div style="background:var(--tv-navy);border-radius:24px;padding:30px 26px;color:#fff"><div style="font-size:56px;font-weight:800;color:var(--tv-gold-light);line-height:1.2">3–5×</div><div style="font-size:19px;line-height:1.3;margin-top:8px;color:rgba(255,255,255,.8)">por dia, a mesma pessoa vê a sua marca</div></div>
+          <div style="background:var(--tv-navy);border-radius:24px;padding:30px 26px;color:#fff"><div style="font-size:56px;font-weight:800;color:var(--tv-gold-light);line-height:1.2;white-space:nowrap">+80 mil</div><div style="font-size:19px;line-height:1.3;margin-top:8px;color:rgba(255,255,255,.8)">pessoas por mês na rede</div></div>
+          <div style="background:var(--tv-navy);border-radius:24px;padding:30px 26px;color:#fff"><div style="font-size:56px;font-weight:800;color:var(--tv-gold-light);line-height:1.2">86%</div><div style="font-size:19px;line-height:1.3;margin-top:8px;color:rgba(255,255,255,.8)">lembram do anúncio (OAAA)</div></div>
+        </div>
+        <div class="sub" style="max-width:860px">Sem pular, sem rolar, sem trocar de canal: no elevador a atenção é inteira. Relatório de exibição por tela, todo mês.</div>
+        <div class="foot" style="position:static"><span class="wa" style="font-size:26px;padding:18px 32px"><svg viewBox="0 0 24 24"><use href="#ic-wa"/></svg>(43) 99696-0078</span><svg class="lg" viewBox="0 0 560 200"><use href="#lg-claro"/></svg></div>
+      </div>
+    </div></div><div class="cap"><b>Arte 8</b> D10 · Anunciante <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 9 · Saiu na imprensa D12 ===== -->
+    <div class="frame-item" data-name="09 · Saiu na imprensa (Tarobá News)"><div class="frame"><div class="arte">
+      <div class="glow sky" style="left:-300px;bottom:-300px"></div>
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="eb">Saiu na imprensa</div><div class="chip" style="font-size:18px;padding:10px 22px">Tarobá News</div></div>
+        <div style="position:relative">
+          <div style="position:absolute;left:-20px;top:-120px;font-size:300px;font-weight:900;color:var(--tv-gold);opacity:.35;line-height:1">“</div>
+          <div style="background:#fff;color:var(--tv-ink);border-radius:26px;padding:56px 60px;box-shadow:0 40px 80px rgba(0,0,0,.35);transform:rotate(-1.5deg)">
+            <div style="font-size:14px;letter-spacing:.24em;text-transform:uppercase;color:#B42318;font-weight:700;margin-bottom:16px">Negócios · Londrina</div>
+            <div style="font-size:50px;font-weight:800;line-height:1.1;color:var(--tv-navy)">Grupo Predial investe em novo segmento e lança a Tela Vertical, mídia em elevadores de Londrina</div>
+            <div style="font-size:22px;color:var(--tv-muted);margin-top:22px;line-height:1.4">Administradora com mais de 160 condomínios adquire 50% da operação; rede já tem 35 telas em 11 condomínios.</div>
+            <div style="display:flex;gap:12px;margin-top:26px"><div style="height:6px;width:260px;background:#E5E7EB;border-radius:3px"></div><div style="height:6px;width:180px;background:#E5E7EB;border-radius:3px"></div></div>
+          </div>
+        </div>
+        <div class="foot" style="position:static"><span class="as" style="text-align:left">Link da matéria nos stories<br>Uma empresa do Grupo Predial</span><svg class="lg" viewBox="0 0 560 200"><use href="#lg-escuro"/></svg></div>
+      </div>
+    </div></div><div class="cap"><b>Arte 9</b> D12 · Imprensa <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 10 · Números D14 ===== -->
+    <div class="frame-item" data-name="10 · 35 telas · 11 condomínios · Próxima parada: 50"><div class="frame"><div class="arte" style="background:var(--tv-navy-deep)">
+      <div class="glow" style="right:-250px;top:-250px"></div>
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div class="eb">Duas semanas de Tela Vertical</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:baseline;gap:24px"><span style="font-size:190px;font-weight:800;line-height:.95;color:#fff;letter-spacing:-.04em">35</span><span style="font-size:40px;font-weight:600;color:rgba(255,255,255,.75)">telas</span></div>
+          <div style="display:flex;align-items:baseline;gap:24px"><span style="font-size:190px;font-weight:800;line-height:.95;color:#fff;letter-spacing:-.04em">11</span><span style="font-size:40px;font-weight:600;color:rgba(255,255,255,.75)">condomínios</span></div>
+          <div style="display:flex;align-items:baseline;gap:24px"><span style="font-size:120px;font-weight:800;line-height:1;color:var(--tv-sky);letter-spacing:-.03em">+80 mil</span><span style="font-size:40px;font-weight:600;color:rgba(255,255,255,.75)">pessoas/mês</span></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:20px"><svg viewBox="0 0 64 64" width="70" height="70" fill="none" stroke="#C0A062" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M32 54V12M14 30l18-18 18 18"/></svg><div class="h" style="font-size:56px">Próxima parada: <span class="gold">50.</span></div></div>
+          <svg class="lg" style="height:56px;margin-left:20px" viewBox="0 0 560 200"><use href="#lg-escuro"/></svg>
+        </div>
+      </div>
+    </div></div><div class="cap"><b>Arte 10</b> D14 · Números <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 11 · Institucional (coringa) ===== -->
+    <div class="frame-item" data-name="11 · Institucional — uma empresa do Grupo Predial"><div class="frame"><div class="arte light">
+      <div class="glow" style="left:-300px;top:-300px;opacity:.6"></div>
+      <div class="pad" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:44px">
+        <div class="eb">Tela Vertical · Mídia em Elevadores</div>
+        <!-- LOGO -->
+        <svg viewBox="0 0 560 200" style="width:640px;height:auto"><use href="#lg-claro"/></svg>
+        <div style="display:flex;align-items:center;gap:30px;width:100%;max-width:720px"><div style="flex:1;height:2px;background:var(--tv-line)"></div><span style="font-size:22px;letter-spacing:.3em;color:var(--tv-muted);text-transform:uppercase">uma empresa do</span><div style="flex:1;height:2px;background:var(--tv-line)"></div></div>
+        <!-- LOGO PREDIAL -->
+        <span class="predial" style="font-size:96px"><span class="g" style="font-size:44px">GRUPO</span><span class="p">PREDIAL</span></span>
+        <div class="sub" style="margin-top:6px">160+ condomínios administrados · 35 telas em 11 condomínios · Londrina-PR</div>
+      </div>
+      <div class="foot"><span class="assin" style="font-size:15px">@telavertical</span><span class="assin" style="font-size:15px">(43) 99696-0078</span></div>
+    </div></div><div class="cap"><b>Arte 11</b> Coringa · Institucional (base pras capas de destaque) <button onclick="exportThis(this)">exportar</button></div></div>
+
+    <!-- ===== ARTE 12 · Anuncie (coringa) ===== -->
+    <div class="frame-item" data-name="12 · Sua marca aqui — Anuncie"><div class="frame"><div class="arte">
+      <div class="inox" style="left:620px;width:460px;opacity:.9"></div>
+      <div style="position:absolute;left:620px;top:0;bottom:0;width:6px;background:linear-gradient(180deg,#3C4356,#E5E7EB,#3C4356)"></div>
+      <div class="scr" style="position:absolute;left:690px;top:180px;width:320px;height:600px"><div class="in" style="gap:18px">
+        <div style="width:100%;height:280px;border:3px dashed rgba(255,255,255,.45);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:var(--tv-gold-light);text-align:center;line-height:1.3">[[SUA<br>MARCA]]</div>
+        <div style="font-size:16px;color:rgba(255,255,255,.7);line-height:1.4">Anúncio de 10 a 15 s<br>250 inserções/dia por tela</div>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.2em;color:var(--tv-sky)"><svg viewBox="0 0 104 168" width="18" height="26"><use href="#lg-icone"/></svg>TELA VERTICAL</div>
+      </div></div>
+      <div class="pad" style="width:640px;display:flex;flex-direction:column;justify-content:space-between">
+        <div class="eb">Anuncie no elevador</div>
+        <div>
+          <div class="h" style="font-size:92px">Sua marca<br>aqui. <span class="gold">3 a 5×</span><br>por dia.</div>
+          <div class="sub" style="margin-top:26px;color:rgba(255,255,255,.75);max-width:520px">Na rotina de quem decide: moradores de condomínios de médio e alto padrão de Londrina.</div>
+        </div>
+        <div>
+          <span class="wa"><svg viewBox="0 0 24 24"><use href="#ic-wa"/></svg>(43) 99696-0078</span>
+          <div class="as" style="margin-top:30px;font-size:16px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6)">Uma empresa do Grupo Predial</div>
+        </div>
+      </div>
+    </div></div><div class="cap"><b>Arte 12</b> Coringa · Anuncie <button onclick="exportThis(this)">exportar</button></div></div>
+
+  </div>
+</div></section>
+
+<!-- ============ REELS ============ -->
+<section id="reels"><div class="wrap">
+  <div class="eyebrow">05 · Reels</div>
+  <h2>Roteiros de 4 reels</h2>
+  <p class="lead">Vertical 9:16, legendas abertas sempre (muita gente assiste sem som). Áudios: usar trending do momento só se for instrumental e "premium"; o padrão é trilha de piano/cordas da biblioteca do Instagram.</p>
+  <div class="grid2">
+
+    <div class="card reel">
+      <h3>R1 · A visão por trás da sociedade</h3>
+      <div class="meta">D5 · 45–60 s · Pilar Institucional · gravar com Jadson e Eder num hall/elevador de condomínio da Predial <span class="pend">[[AGENDAR]]</span></div>
+      <div class="gancho"><small>Gancho · 3 s</small>Eder, pra câmera, dentro do elevador: "Por que uma administradora de condomínios compraria metade de uma empresa de mídia?"</div>
+      <div class="tbl"><table><thead><tr><th>Cena</th><th>Imagem</th><th>Fala / áudio</th><th>Texto na tela</th></tr></thead><tbody>
+      <tr><td>1 · 3–12 s</td><td>Jadson no hall, plano médio, tela do elevador ao fundo</td><td>Jadson: "Porque o maior problema do síndico não é aviso — é aviso que não chega. Mural ninguém lê, grupo ninguém abre."</td><td>"o aviso que ninguém viu"</td></tr>
+      <tr><td>2 · 12–22 s</td><td>Corte pro elevador; porta abre, tela ligada com comunicado</td><td>Eder: "O elevador é o único lugar por onde todo morador passa, todos os dias. Três, quatro, cinco vezes."</td><td>"todo morador · todos os dias"</td></tr>
+      <tr><td>3 · 22–35 s</td><td>Os dois lado a lado; b-roll de telas em 2 condomínios</td><td>Jadson: "Quando vi funcionando, entendi que era um canal oficial do condomínio. Então o Grupo Predial entrou como sócio." Eder: "E nasceu a Tela Vertical."</td><td>"Nasce a Tela Vertical" · "uma empresa do Grupo Predial"</td></tr>
+      <tr><td>4 · 35–48 s</td><td>Motion: 35 → 50 → 70 sobre navy</td><td>Eder: "35 telas, 11 condomínios. Até dezembro, 70. Começando pelos condomínios da Predial." Jadson: "Sem custo nenhum pro condomínio."</td><td>"35 → 70 telas" · "custo zero"</td></tr>
+      <tr><td>5 · 48–55 s</td><td>Os dois, olhando pra câmera</td><td>Jadson: "Síndico, fala com a Predial." Eder: "Ou chama a gente no WhatsApp."</td><td>logo + (43) 99696-0078</td></tr>
+      </tbody></table></div>
+      <div class="row"><b>Áudio</b><span>fala direta + trilha leve de piano no fundo (−18 dB); sem música nos primeiros 3 s</span></div>
+      <div class="row"><b>CTA final</b><span>"Manda esse vídeo pro seu síndico." Fixar comentário com o WhatsApp.</span></div>
+    </div>
+
+    <div class="card reel">
+      <h3>R2 · Mais um condomínio conectado</h3>
+      <div class="meta">D9 e a cada instalação · 20–30 s · Pilar Prova social · filmar com celular na hora da instalação <span class="pend">[[CONDOMÍNIO]]</span></div>
+      <div class="gancho"><small>Gancho · 3 s</small>Close na furadeira/parafuso entrando na parede da cabine, som real. Texto: "Tela nº [[36]] entrando…"</div>
+      <div class="tbl"><table><thead><tr><th>Cena</th><th>Imagem</th><th>Fala / áudio</th><th>Texto na tela</th></tr></thead><tbody>
+      <tr><td>1 · 3–10 s</td><td>Timelapse da instalação (suporte, monitor, cabo)</td><td>Só trilha, andamento rápido</td><td>"[[Condomínio]] · [[bairro]]"</td></tr>
+      <tr><td>2 · 10–18 s</td><td>Tela liga: vinheta Tela Vertical → comunicado do síndico → notícia</td><td>Som de "ligar" + trilha</td><td>"comunicados do síndico · notícias · utilidade pública"</td></tr>
+      <tr><td>3 · 18–25 s</td><td>Porta do elevador fecha com a tela ligada; morador entra e olha</td><td>Trilha resolve</td><td>"[[000]] moradores conectados"</td></tr>
+      <tr><td>4 · 25–30 s</td><td>Cartela navy</td><td>—</td><td>"Rumo às 50 telas" · logo · "uma empresa do Grupo Predial"</td></tr>
+      </tbody></table></div>
+      <div class="row"><b>Áudio</b><span>trending instrumental "build-up" (sem voz) ou trilha percussiva da biblioteca</span></div>
+      <div class="row"><b>CTA final</b><span>"Seu prédio é o próximo? Chama no WhatsApp." Marcar o perfil do condomínio se tiver.</span></div>
+    </div>
+
+    <div class="card reel">
+      <h3>R3 · 3 avisos que todo síndico precisa dar</h3>
+      <div class="meta">D13 · 30–45 s · Pilar Autoridade · Eder (ou Jadson) falando pra câmera, selfie ou tripé, em um hall de condomínio</div>
+      <div class="gancho"><small>Gancho · 3 s</small>"Três avisos que geram briga no condomínio quando ninguém fica sabendo." (dedo levantando 1-2-3)</div>
+      <div class="tbl"><table><thead><tr><th>Cena</th><th>Imagem</th><th>Fala / áudio</th><th>Texto na tela</th></tr></thead><tbody>
+      <tr><td>1 · 3–13 s</td><td>Fala pra câmera; insert de tela com aviso de obra</td><td>"Um: obra. Avisa antes, avisa o horário e avisa quando termina. Ninguém reclama do barulho que já esperava."</td><td>"1 · OBRA: antes, horário, fim"</td></tr>
+      <tr><td>2 · 13–23 s</td><td>Insert de tela com "Assembleia — quinta, 19h30"</td><td>"Dois: assembleia. Data, hora e a pauta em uma frase. Se a pessoa entende o que vai ser decidido, ela aparece."</td><td>"2 · ASSEMBLEIA: data + pauta em 1 frase"</td></tr>
+      <tr><td>3 · 23–33 s</td><td>Insert de tela com aviso genérico de inadimplência (sem nome)</td><td>"Três: inadimplência. Nunca expõe ninguém. Fala do impacto pro condomínio e do canal pra negociar."</td><td>"3 · INADIMPLÊNCIA: sem expor, com saída"</td></tr>
+      <tr><td>4 · 33–42 s</td><td>Elevador, tela ligada</td><td>"E o lugar onde todo mundo lê? O elevador. É pra isso que existe a Tela Vertical — sem custo pro condomínio."</td><td>"onde todo mundo lê" · logo</td></tr>
+      </tbody></table></div>
+      <div class="row"><b>Áudio</b><span>voz limpa (lapela) + trilha neutra baixa</span></div>
+      <div class="row"><b>CTA final</b><span>"Salva e manda pro conselho." Fixar comentário: "Quer a tela no seu prédio? (43) 99696-0078".</span></div>
+    </div>
+
+    <div class="card reel">
+      <h3>R4 · 30 segundos dentro do elevador</h3>
+      <div class="meta">Pilar Anunciante (cadência pós-lançamento, ou D10 em vez da imagem) · 30 s · POV do morador</div>
+      <div class="gancho"><small>Gancho · 3 s</small>POV: porta do elevador fechando, você "preso" com a tela. Texto: "30 segundos. Sem pular. Sem rolar."</div>
+      <div class="tbl"><table><thead><tr><th>Cena</th><th>Imagem</th><th>Fala / áudio</th><th>Texto na tela</th></tr></thead><tbody>
+      <tr><td>1 · 3–12 s</td><td>POV subindo, a tela passa: comunicado → notícia → anúncio de marca local <span class="pend">[[ANUNCIANTE ATUAL — autorizar]]</span></td><td>Off (Eder): "É assim que o morador vê a sua marca. Toda vez que sobe. Toda vez que desce."</td><td>"3 a 5× por dia"</td></tr>
+      <tr><td>2 · 12–20 s</td><td>Motion sobre navy: 3 tiles de número</td><td>Off: "Mais de 80 mil pessoas por mês. 86% lembram do anúncio. E você recebe o relatório de cada tela."</td><td>"+80 mil/mês · 86% recall · relatório por tela"</td></tr>
+      <tr><td>3 · 20–27 s</td><td>Porta abre no andar; corte pra tela com "[[SUA MARCA]]"</td><td>Off: "Sua marca aqui. Na rotina de quem decide."</td><td>"Sua marca aqui"</td></tr>
+      <tr><td>4 · 27–30 s</td><td>Cartela</td><td>—</td><td>WhatsApp (43) 99696-0078 · logo · "uma empresa do Grupo Predial"</td></tr>
+      </tbody></table></div>
+      <div class="row"><b>Áudio</b><span>som ambiente real do elevador nos 3 primeiros segundos, depois trilha corporativa curta</span></div>
+      <div class="row"><b>CTA final</b><span>"Pede a tabela no WhatsApp" (sticker de link no story que compartilha o reel).</span></div>
+    </div>
+
+  </div>
+</div></section>
+
+<footer>Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial · Kit Instagram de lançamento · set/2026 · MGB Mídia</footer>
+
+<button id="exit-export" class="btn" onclick="exitExport()">Sair do modo exportação (Esc)</button>
+
+<script>
+// ----- bio counters
+document.querySelectorAll('.bio').forEach(c=>{const t=c.querySelector('[data-bio]').textContent.trim();const n=[...t].length;const el=c.querySelector('.cnt');el.innerHTML='<b>'+n+'</b> / 150 caracteres';if(n>150)el.classList.add('over')});
+function copyText(t,btn){navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>{const o=btn.textContent;btn.textContent='Copiado ✓';setTimeout(()=>btn.textContent=o,1400)})}
+function copyEl(btn){copyText(btn.closest('.bio').querySelector('[data-bio]').textContent.trim(),btn)}
+function copyLeg(btn){const td=btn.closest('td').cloneNode(true);td.querySelectorAll('button').forEach(b=>b.remove());const tags=td.querySelector('.tags');let tg='';if(tags){tg='\n\n'+tags.textContent.trim();tags.remove()}copyText(td.textContent.trim()+tg,btn)}
+
+// ----- artes: índice, seleção, escala
+const items=[...document.querySelectorAll('.frame-item')];const idx=document.getElementById('idx');let cur=0;
+items.forEach((it,i)=>{const b=document.createElement('button');b.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+it.dataset.name.replace(/^\d+ · /,'');b.onclick=()=>{select(i);it.scrollIntoView({behavior:'smooth',block:'center'})};idx.appendChild(b);it.querySelector('.frame').onclick=()=>select(i)});
+function select(i){cur=(i+items.length)%items.length;items.forEach((it,j)=>{it.classList.toggle('sel',j===cur);it.querySelector('.frame').classList.toggle('sel',j===cur)});[...idx.children].forEach((b,j)=>b.classList.toggle('sel',j===cur));document.getElementById('sel-name').textContent='Arte '+(cur+1)+' — '+items[cur].dataset.name.replace(/^\d+ · /,'')}
+function prevArt(){select(cur-1);if(!document.body.classList.contains('export'))items[cur].scrollIntoView({behavior:'smooth',block:'center'})}
+function nextArt(){select(cur+1);if(!document.body.classList.contains('export'))items[cur].scrollIntoView({behavior:'smooth',block:'center'})}
+function fit(){const g=document.getElementById('grid');if(document.body.classList.contains('export'))return;const w=Math.min(340,g.clientWidth);document.documentElement.style.setProperty('--s',(w/1080).toFixed(4))}
+window.addEventListener('resize',fit);fit();select(0);
+
+// ----- modo exportação
+function enterExport(){document.body.classList.add('export');window.scrollTo(0,0);document.title='arte-'+String(cur+1).padStart(2,'0')+'-telavertical'}
+function exitExport(){document.body.classList.remove('export');document.title='Kit Instagram · Lançamento @telavertical — Tela Vertical';fit();items[cur].scrollIntoView({block:'center'})}
+function exportThis(btn){select(items.indexOf(btn.closest('.frame-item')));enterExport()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')exitExport();if(document.body.classList.contains('export')){if(e.key==='ArrowRight'){nextArt();document.title='arte-'+String(cur+1).padStart(2,'0')+'-telavertical'}if(e.key==='ArrowLeft'){prevArt();document.title='arte-'+String(cur+1).padStart(2,'0')+'-telavertical'}}});
+const q=new URLSearchParams(location.search).get('arte');if(q){select(parseInt(q,10)-1);enterExport()}
+</script>
+</body>
+</html>
