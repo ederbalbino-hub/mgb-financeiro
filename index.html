@@ -6277,6 +6277,13 @@ function copiarSpot() {
     </div>
     <div id="ferr-nota" style="display:none">
       <div id="f-nota-config" class="ferr-card" style="display:none;margin-bottom:14px;background:#FFF8E8;border-color:#F0C36D"></div>
+      <div class="ferr-card" style="margin-bottom:14px">
+        <div class="ferr-t">📆 Alíquota ISS deste mês</div><div class="ferr-d">A alíquota efetiva do Simples Nacional muda todo mês (recalculada pelo faturamento dos últimos 12 meses). Atualize aqui na primeira semana do mês — o valor fica salvo e preenche sozinho toda nota nova até você trocar de novo.</div>
+        <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;flex-wrap:wrap">
+          <div><label class="ferr-lbl">Alíquota ISS vigente (%)</label><input id="f-nota-aliq-mes" class="ferr-in" style="max-width:140px" inputmode="decimal" placeholder="ex.: 3,50" oninput="fNotaSalvarAliqMes()"></div>
+          <div id="f-nota-aliq-info" class="ferr-info"></div>
+        </div>
+      </div>
       <div class="ferr-grid" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
         <div class="ferr-card">
           <div class="ferr-t">📄 Emitir nota + boleto</div><div class="ferr-d">Via <b>Asaas</b> — gera o boleto (com PIX) e a nota fiscal juntos, numa tacada só. Escolha o cliente: nome/CNPJ vêm do cadastro, só confira e-mail, código de serviço e alíquota antes de emitir de verdade.</div>
@@ -6299,9 +6306,10 @@ function copiarSpot() {
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
             <div><label class="ferr-lbl">Código de serviço</label><input id="f-nota-cod" class="ferr-in" placeholder="confirmar c/ contador"></div>
             <div><label class="ferr-lbl">Valor total (R$)</label><input id="f-nota-valor" class="ferr-in" inputmode="decimal" placeholder="ex.: 1.250,00"></div>
-            <div><label class="ferr-lbl">Alíquota ISS (%)</label><input id="f-nota-iss" class="ferr-in" inputmode="decimal" placeholder="confirmar c/ contador"></div>
+            <div><label class="ferr-lbl">Alíquota ISS (%)</label><input id="f-nota-iss" class="ferr-in" inputmode="decimal" placeholder="preenche pela config acima"></div>
           </div>
-          <div class="ferr-info" style="margin-top:6px;color:#B45309">⚠️ Confirme com o contador o código de serviço e a alíquota de ISS antes de emitir a primeira nota em <b>produção</b>. Use o Sandbox pra testar à vontade.</div>
+          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;color:var(--muted);cursor:pointer"><input type="checkbox" id="f-nota-retem"> Cliente é de <b>Londrina</b> — reter ISS na nota</label>
+          <div class="ferr-info" style="margin-top:6px;color:#B45309">⚠️ Confirme com o contador o código de serviço antes de emitir a primeira nota em <b>produção</b>. Use o Sandbox pra testar à vontade.</div>
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
             <button class="ferr-btn" onclick="fNotaEmitir()" id="f-nota-btn">📄 Emitir nota + boleto</button>
             <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fNotaLimpar()">Novo</button>
@@ -6781,10 +6789,29 @@ function fNotaInit(){
   const sel=document.getElementById('f-nota-cli'); if(!sel) return;
   const cfg=document.getElementById('f-nota-config');
   if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Configure o backend antes de emitir de verdade</div><div class="ferr-d" style="color:#92400E">1) Na conta <a href="https://www.asaas.com" target="_blank">Asaas</a>, suba o certificado A1 e configure os dados fiscais (Configurações → Notas Fiscais). 2) Gere uma chave sandbox e uma de produção (Configurações → Integrações → API Key). 3) Peça pro Eder configurar <code>ASAAS_API_KEY</code> / <code>ASAAS_API_KEY_SANDBOX</code> nas env vars do Vercel do projeto <code>mgb-financeiro</code>. Até lá, o botão Emitir vai dar erro de configuração — normal.</div>'; }
+  const aliqEl=document.getElementById('f-nota-aliq-mes');
+  if(aliqEl && !aliqEl.value && notaConfig.aliquotaMes!=null) aliqEl.value=fRecNum(notaConfig.aliquotaMes);
+  fNotaAliqInfo();
   const atual=sel.value; let html='<option value="">— escolha o cliente —</option>';
   MODULES.forEach(m=>{ const itens=fRecClientes().filter(c=>c.mod===m.id); if(!itens.length) return; html+='<optgroup label="'+m.icon+' '+m.label+'">'+itens.map(c=>'<option value="'+m.id+'|'+c.item.replace(/"/g,'&quot;')+'">'+c.item+'</option>').join('')+'</optgroup>'; });
   sel.innerHTML=html; if(atual) sel.value=atual;
   fNotaLista();
+}
+function fNotaAliqInfo(){
+  const el=document.getElementById('f-nota-aliq-info'); if(!el) return;
+  if(notaConfig.aliquotaMes==null){ el.textContent=''; return; }
+  const mesAtual=new Date().toISOString().slice(0,7);
+  el.innerHTML = notaConfig.atualizadaEm===mesAtual
+    ? '<span style="color:var(--green)">✓ já atualizada este mês</span>'
+    : '<span style="color:#B45309">⚠ essa alíquota é de um mês anterior — confira se ainda vale</span>';
+}
+function fNotaSalvarAliqMes(){
+  const v=fRecParseValor(document.getElementById('f-nota-aliq-mes').value);
+  notaConfig={ aliquotaMes: v||null, atualizadaEm: new Date().toISOString().slice(0,7) };
+  try{ scheduleSave(); }catch(e){}
+  fNotaAliqInfo();
+  // já reflete no campo da nota em andamento, se estiver vazio
+  const issEl=document.getElementById('f-nota-iss'); if(issEl && !issEl.value && v) issEl.value=fRecNum(v);
 }
 function fNotaCliente(){
   const v=document.getElementById('f-nota-cli').value; if(!v) return;
@@ -6795,10 +6822,12 @@ function fNotaCliente(){
   document.getElementById('f-nota-tom-doc').value=info.cnpj||'';
   const base=(REC_DESC[mod]||'Prestação de serviços de mídia — {item}').replace('{item}',item);
   document.getElementById('f-nota-desc').value=base;
+  const issEl=document.getElementById('f-nota-iss'); if(issEl && !issEl.value && notaConfig.aliquotaMes!=null) issEl.value=fRecNum(notaConfig.aliquotaMes);
 }
 function fNotaLimpar(){
+  // não apaga f-nota-aliq-mes: é a configuração do mês, fica valendo pra próxima nota
   ['f-nota-tom-nome','f-nota-tom-doc','f-nota-tom-email','f-nota-desc','f-nota-cod','f-nota-valor','f-nota-iss'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('f-nota-cli').value=''; document.getElementById('f-nota-mod').textContent=''; document.getElementById('f-nota-status').innerHTML='';
+  document.getElementById('f-nota-cli').value=''; document.getElementById('f-nota-mod').textContent=''; document.getElementById('f-nota-status').innerHTML=''; document.getElementById('f-nota-retem').checked=false;
 }
 async function fNotaEmitir(){
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
@@ -6807,6 +6836,7 @@ async function fNotaEmitir(){
   const m=MODULES.find(x=>x.id===mod)||{};
   const nome=g('f-nota-tom-nome'), doc=g('f-nota-tom-doc').replace(/\D/g,''), email=g('f-nota-tom-email');
   const desc=g('f-nota-desc'), cod=g('f-nota-cod'), iss=fRecParseValor(g('f-nota-iss'));
+  const retemIss=!!document.getElementById('f-nota-retem').checked;
   const valor=fRecParseValor(g('f-nota-valor'));
   if(!nome){ alert('Escolha o cliente / preencha o tomador.'); return; }
   if(!email){ alert('Informe o e-mail do tomador (a Asaas precisa pra enviar boleto e nota).'); return; }
@@ -6815,7 +6845,7 @@ async function fNotaEmitir(){
   if(ambiente==='producao' && !confirm('Isso vai gerar um BOLETO e uma NOTA FISCAL REAIS em produção. Confirma?')) return;
   const btn=document.getElementById('f-nota-btn'); const st=document.getElementById('f-nota-status');
   btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Enviando pra Asaas…</div>';
-  const payload={ tomador:{nome, cnpj:doc||undefined, email}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, aliquotaIss:iss||undefined} };
+  const payload={ tomador:{nome, cnpj:doc||undefined, email}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, aliquotaIss:iss||undefined, retemIss} };
   try{
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     const j=await r.json();
@@ -7719,6 +7749,7 @@ let recibos = [];
 let reciboId = 1;
 let notas = [];
 let notaId = 1;
+let notaConfig = { aliquotaMes: null }; // alíquota ISS do Simples Nacional, atualizada manualmente todo mês
 
 // ── DESPESAS COMPARTILHADAS (Elevadores) ─────────────────────────────────
 // despesasComp = [{id, nome, forn, valor, inicio, meses, telas:[]}]
@@ -11182,7 +11213,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas,
+    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas, notaConfig,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -11272,6 +11303,9 @@ function deserializeState(obj){
   if(obj.notas && Array.isArray(obj.notas)){
     notas=obj.notas;
     notaId=notas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.notaConfig && typeof obj.notaConfig==='object'){
+    notaConfig=obj.notaConfig;
   }
   if(obj.despPagamentos && typeof obj.despPagamentos==='object'){
     despPagamentos=obj.despPagamentos;

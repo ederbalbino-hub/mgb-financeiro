@@ -107,7 +107,7 @@ export default async function handler(req, res) {
           deductions: 0,
           effectiveDate: new Date().toISOString().slice(0, 10),
           municipalServiceCode: servico.codigo || undefined,
-          taxes: valores.aliquotaIss ? { iss: valores.aliquotaIss, retainIss: false } : undefined,
+          taxes: valores.aliquotaIss ? { iss: valores.aliquotaIss, retainIss: !!valores.retemIss } : undefined,
         });
       } catch (e) {
         // a cobrança já foi criada mesmo se a nota falhar (ex: cadastro fiscal da conta incompleto) —
