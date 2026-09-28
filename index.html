@@ -2706,6 +2706,7 @@ const eCondominios = [
   { id:'tay',               nome:'Tay',                    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:600,  publico:600,  status:'ativo' },
   { id:'uptown',            nome:'Uptown',                 bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:600,  publico:600,  status:'ativo' },
   // Liberty Residence (Nossa Sra. de Lourdes, Centro · 78 moradores · 1 tela) entra aqui na instalação — Out/2026: { id:'liberty', nome:'Liberty Residence', bairro:'Nossa Sra. de Lourdes, Centro', torres:1, telas:1, moradores:78, publico:78, status:'ativo' },
+  { id:'villa-solare', nome:'Villa Solare', bairro:'Gleba Palhano, Zona Sul', torres:2, telas:2, moradores:234, publico:234, status:'ativo' },
   // Comerciais
   { id:'ed-ayrton-senna-1', nome:'Ed. Ayrton Senna 1',    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:null, publico:35000, status:'ativo', tipo:'Comercial' },
   { id:'ed-ayrton-senna-2', nome:'Ed. Ayrton Senna 2',    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:null, publico:35000, status:'ativo', tipo:'Comercial' },
@@ -7700,7 +7701,7 @@ const MODULES=[
   {id:'mb',    label:'MB — Móveis Brasília',icon:'🏪',color:'#6C55DB',desc:'Painel de telas — unidades',agrupado:true,
    items:['Benjamin','Saul Elkind','Santa Catarina','Calçadão','Rolândia','Cornélio Procópio']},
   {id:'elev',  label:'Elevadores',icon:'🛗',color:'#189A66',desc:'Mídia em telas de elevador',agrupado:false,
-   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Tay','Uptown','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2','Ever','Ampezzo','Itamaraty','Liberty']},
+   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Tay','Uptown','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2','Ever','Ampezzo','Itamaraty','Liberty','Villa Solare']},
   {id:'vaapty',label:'Vaapty',icon:'🚗',color:'#D6367F',desc:'TV Vaapty — franqueados',agrupado:false,
    items:['Franqueado Piloto','Expansão']},
   {id:'radio', label:'Rádio Interna',icon:'📻',color:'#D97706',desc:'Rádio interna — clientes',agrupado:false,
@@ -11594,6 +11595,36 @@ function elevMigrarCondos(){
   scheduleSave();
 }
 
+// ── CONDOMÍNIOS NOVOS NO MÓDULO ELEVADORES (alimentado pelo script da skill /novo-condominio) ──────────
+// Cada entrada vira unidade do módulo Elevadores + linha recorrente "Sistema TV / 4Yousee" de ELEV_CUSTO_TV (1 × R$ 70), uma única vez POR UNIDADE
+// (flag migracoes['elevNovo:<item>']). Idempotente e só roda com estado REAL do Sheets. 'ini' = mês de início do custo (YYYY-MM).
+const ELEV_NOVOS=[
+  {item:'Villa Solare', ini:'2026-09'},
+  // <novos>
+];
+function elevMigrarNovos(){
+  if(!_cargaSheetsOk) return;
+  const m=MODULES.find(x=>x.id==='elev'); if(!m) return;
+  if(!db.elev) db.elev={};
+  if(!rec.elev) rec.elev={};
+  let mudou=false;
+  ELEV_NOVOS.forEach(c=>{
+    const key='elevNovo:'+c.item;
+    if(migracoes[key]) return;
+    if(!m.items.includes(c.item)) m.items.push(c.item);
+    if(!db.elev[c.item]) db.elev[c.item]=[];
+    if(rec.elev[c.item]===undefined) rec.elev[c.item]={valor:0,inicio:'',meses:12};
+    const tem=db.elev[c.item].some(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
+    if(!tem){
+      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:ELEV_CUSTO_TV,cc:c.item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:c.ini};
+      applyToFin(e,+1);
+      db.elev[c.item].push(e);
+    }
+    migracoes[key]=true; mudou=true;
+  });
+  if(mudou) scheduleSave();
+}
+
 // Salva com debounce — espera 2s após última mudança
 function scheduleSave(){
   clearTimeout(saveTimer);
@@ -12815,7 +12846,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
