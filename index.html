@@ -2705,6 +2705,7 @@ const eCondominios = [
   { id:'bella-fiori',       nome:'Resid. Bella Fiori',     bairro:'Vale dos Tucanos, Zona Sul',torres:2, telas:2, moradores:500,  publico:1200, status:'ativo' },
   { id:'tay',               nome:'Tay',                    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:600,  publico:600,  status:'ativo' },
   { id:'uptown',            nome:'Uptown',                 bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:600,  publico:600,  status:'ativo' },
+  // Liberty Residence (Nossa Sra. de Lourdes, Centro · 78 moradores · 1 tela) entra aqui na instalação — Out/2026: { id:'liberty', nome:'Liberty Residence', bairro:'Nossa Sra. de Lourdes, Centro', torres:1, telas:1, moradores:78, publico:78, status:'ativo' },
   // Comerciais
   { id:'ed-ayrton-senna-1', nome:'Ed. Ayrton Senna 1',    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:null, publico:35000, status:'ativo', tipo:'Comercial' },
   { id:'ed-ayrton-senna-2', nome:'Ed. Ayrton Senna 2',    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:null, publico:35000, status:'ativo', tipo:'Comercial' },
@@ -7699,7 +7700,7 @@ const MODULES=[
   {id:'mb',    label:'MB — Móveis Brasília',icon:'🏪',color:'#6C55DB',desc:'Painel de telas — unidades',agrupado:true,
    items:['Benjamin','Saul Elkind','Santa Catarina','Calçadão','Rolândia','Cornélio Procópio']},
   {id:'elev',  label:'Elevadores',icon:'🛗',color:'#189A66',desc:'Mídia em telas de elevador',agrupado:false,
-   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Tay','Uptown','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2']},
+   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Tay','Uptown','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2','Ever','Ampezzo','Itamaraty','Liberty']},
   {id:'vaapty',label:'Vaapty',icon:'🚗',color:'#D6367F',desc:'TV Vaapty — franqueados',agrupado:false,
    items:['Franqueado Piloto','Expansão']},
   {id:'radio', label:'Rádio Interna',icon:'📻',color:'#D97706',desc:'Rádio interna — clientes',agrupado:false,
@@ -11345,6 +11346,7 @@ let syncStatus = 'idle';
 // local (ainda default/vazio) por cima dos dados reais do servidor, caso o usuário mexa em
 // algo antes do carregamento inicial terminar.
 let _cargaInicialCompleta = false;
+let _cargaSheetsOk = false;
 
 function setSyncStatus(s, msg=''){
   syncStatus = s;
@@ -11362,8 +11364,10 @@ function setSyncStatus(s, msg=''){
   el.style.color = m.color;
 }
 
+let migracoes = {}; // flags de migrações one-shot já aplicadas (persistido)
 function serializeState(){
   return {
+    migracoes,
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
@@ -11374,6 +11378,7 @@ function serializeState(){
 
 function deserializeState(obj){
   if(!obj) return;
+  if(obj.migracoes && typeof obj.migracoes==='object') migracoes = obj.migracoes;
   if(obj.moduleItems){
     MODULES.forEach(m=>{
       if(obj.moduleItems[m.id]) m.items = obj.moduleItems[m.id];
@@ -11525,6 +11530,7 @@ async function loadFromSheets(){
       const obj = JSON.parse(text);
       if(Object.keys(obj).length > 0){
         deserializeState(obj);
+        _cargaSheetsOk = true; // só migra dados se o estado REAL veio do Sheets (nunca sobre o estado default/offline)
         syncFinanceiro();
         setSyncStatus('saved');
         setTimeout(()=>setSyncStatus('idle'), 2000);
@@ -11541,6 +11547,51 @@ async function loadFromSheets(){
   _cargaInicialCompleta = true; // libera o saveToSheets() dali em diante (sucesso ou erro, mas só depois de tentar)
   // SEMPRE renderiza, mesmo com erro
   return true;
+}
+
+
+// ── MIGRAÇÃO 28/09/2026 — Elevadores: condomínios que faltavam + custo único Sistema TV ─────────
+// Regra do Eder: custo fixo mensal de licença (4Yousee "Sistema TV") = R$ 70 por CONDOMÍNIO, valor único (antes: R$ 50 × nº de telas).
+// 1) inclui Ever, Ampezzo (D'Ampezzo), Itamaraty (já na rede) e Liberty (instala Out/2026);
+// 2) em TODAS as unidades a linha recorrente "Sistema TV/4Yousee" passa pra 1 × R$ 70 (ajusta fin[][] pelo delta — mesmo método do addItem);
+//    unidade sem a linha ganha uma nova (12 meses).
+// One-shot (flag em migracoes) e idempotente. Só roda com estado REAL vindo do Sheets (_cargaSheetsOk).
+const ELEV_CUSTO_TV = 70;
+const ELEV_MIG_20260928=[
+  {item:'Ever',      ini:'2026-09'},
+  {item:'Ampezzo',   ini:'2026-09'},
+  {item:'Itamaraty', ini:'2026-09'},
+  {item:'Liberty',   ini:'2026-10'}
+];
+function elevMigrarCondos(){
+  if(!_cargaSheetsOk || migracoes.elevCustoTV70_20260928) return;
+  const m=MODULES.find(x=>x.id==='elev'); if(!m) return;
+  if(!db.elev) db.elev={};
+  if(!rec.elev) rec.elev={};
+  ELEV_MIG_20260928.forEach(c=>{
+    if(!m.items.includes(c.item)) m.items.push(c.item);
+    if(!db.elev[c.item]) db.elev[c.item]=[];
+    if(rec.elev[c.item]===undefined) rec.elev[c.item]={valor:0,inicio:'',meses:12};
+  });
+  const ini=Object.fromEntries(ELEV_MIG_20260928.map(c=>[c.item,c.ini]));
+  m.items.forEach(item=>{
+    if(!db.elev[item]) db.elev[item]=[];
+    const rows=db.elev[item];
+    const r=rows.find(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
+    if(r){
+      if(r.q!==1 || r.u!==ELEV_CUSTO_TV){
+        applyToFin(r,-1);
+        r.q=1; r.u=ELEV_CUSTO_TV;
+        applyToFin(r,+1);
+      }
+    } else {
+      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:ELEV_CUSTO_TV,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:ini[item]||new Date().toISOString().slice(0,7)};
+      applyToFin(e,+1);
+      rows.push(e);
+    }
+  });
+  migracoes.elevCustoTV70_20260928=true;
+  scheduleSave();
 }
 
 // Salva com debounce — espera 2s após última mudança
@@ -12764,7 +12815,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
