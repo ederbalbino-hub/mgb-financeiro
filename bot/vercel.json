@@ -8,6 +8,9 @@
     },
     "api/asaas.js": {
       "maxDuration": 30
+    },
+    "api/email.js": {
+      "maxDuration": 60
     }
   }
 }

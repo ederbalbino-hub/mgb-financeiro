@@ -5916,6 +5916,7 @@ function copiarSpot() {
       <span class="ferr-tab" onclick="showFerrTab('etq',this)">🏷️ Etiquetas</span>
       <span class="ferr-tab" onclick="showFerrTab('recibo',this)">🧾 Recibos</span>
       <span class="ferr-tab" onclick="showFerrTab('nota',this)">📄 Nota Fiscal</span>
+      <span class="ferr-tab" onclick="showFerrTab('leo',this)">🧴 Léo</span>
       <span class="ferr-tab" onclick="showFerrTab('calc',this)">Calculadoras</span>
       <span class="ferr-tab" onclick="showFerrTab('backup',this)">Backup</span>
       <span class="ferr-tab" onclick="showFerrTab('status',this)">📡 Monitoramento</span>
@@ -6328,6 +6329,29 @@ function copiarSpot() {
       <div class="ferr-card" style="margin-top:14px">
         <div class="ferr-t">Notas emitidas</div><div class="ferr-d">Ficam guardadas junto com o financeiro (sincronizado). Atualize o status ou exclua.</div>
         <div id="f-nota-lista" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div id="ferr-leo" style="display:none">
+      <div id="f-leo-config" class="ferr-card" style="display:none;margin-bottom:14px;background:#FFF8E8;border-color:#F0C36D"></div>
+      <div class="ferr-card">
+        <div class="ferr-t">🧴 Léo Cosméticos — 31 unidades</div>
+        <div class="ferr-d">Fluxo próprio: <b>sem boleto</b> (cliente paga PIX fora do sistema) — só a nota fiscal. As 31 notas são emitidas e depois mandadas <b>num único e-mail</b> pro financeiro do Léo, em vez de 31 e-mails separados. Dados ficam só aqui no hub (não na planilha).</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px;margin-top:10px;align-items:flex-end">
+          <div><label class="ferr-lbl">Ambiente</label><select id="f-leo-amb" class="ferr-in"><option value="sandbox">🧪 Sandbox</option><option value="producao">🔴 Produção</option></select></div>
+          <div><label class="ferr-lbl">Competência</label><input id="f-leo-comp" class="ferr-in" placeholder="ex.: Setembro/2026"></div>
+          <div><label class="ferr-lbl">E-mail de destino (consolidado)</label><input id="f-leo-email-destino" class="ferr-in" placeholder="boletos@leocosmeticosshop.com.br"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
+          <button class="ferr-btn" onclick="fLeoEmitirTodas()" id="f-leo-btn-emitir">🧴 Emitir as 31 notas</button>
+          <button class="ferr-btn" style="background:#0D9488" onclick="fLeoEnviarEmail()" id="f-leo-btn-email">📧 Enviar e-mail consolidado</button>
+          <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fLeoResetar()">↺ Resetar status (novo mês)</button>
+          <span id="f-leo-resumo" class="ferr-info"></span>
+        </div>
+        <div id="f-leo-status" style="margin-top:10px"></div>
+      </div>
+      <div class="ferr-card" style="margin-top:14px">
+        <div class="ferr-t">Unidades</div><div class="ferr-d">Valor e e-mail são editáveis por unidade (clique em "editar"). Retém ISS calculado automaticamente pela cidade.</div>
+        <div id="f-leo-lista" style="margin-top:10px;overflow-x:auto"></div>
       </div>
     </div>
     <div id="ferr-calc" style="display:none">
@@ -6776,15 +6800,17 @@ function fRecReimprimir(id){ const r=recibos.find(x=>x.id===id); if(r) fRecAbrir
 function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod+'|'+r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); fRecCompSet(r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
 function fRecExcluir(id){ const r=recibos.find(x=>x.id===id); if(!r) return; if(!confirm('Excluir o recibo '+r.numero+'?')) return; recibos=recibos.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fRecLista(); }
 function showFerrTab(t, el){
-  ['pdf','img','video','qr','etq','recibo','nota','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  ['pdf','img','video','qr','etq','recibo','nota','leo','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
   document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
   if(t==='status') loadFerrStatus();
   if(t==='etq') fEtqInit();
   if(t==='recibo') fRecInit();
   if(t==='nota') fNotaInit();
+  if(t==='leo') fLeoInit();
 }
 /* ---- NOTA FISCAL + BOLETO (sub-aba 📄, via Asaas) ---- */
 const NOTA_API_URL = 'https://mgb-financeiro.vercel.app/api/asaas';
+const EMAIL_API_URL = 'https://mgb-financeiro.vercel.app/api/email';
 function fNotaInit(){
   const sel=document.getElementById('f-nota-cli'); if(!sel) return;
   const cfg=document.getElementById('f-nota-config');
@@ -6891,6 +6917,134 @@ function fNotaLista(){
       '<td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+(n.boletoUrl?'<a href="'+n.boletoUrl+'" target="_blank" style="margin-right:10px">boleto</a>':'')+(n.pdfUrl?'<a href="'+n.pdfUrl+'" target="_blank" style="margin-right:10px">nota PDF</a>':'')+(n.xmlUrl?'<a href="'+n.xmlUrl+'" target="_blank" style="margin-right:10px">XML</a>':'')+'<a href="#" onclick="event.preventDefault();fNotaAtualizarStatus('+n.id+')" style="margin-right:10px">atualizar</a><a href="#" onclick="event.preventDefault();fNotaExcluir('+n.id+')" style="color:var(--red)">excluir</a></td></tr>').join('')+'</table>';
 }
 function fNotaExcluir(id){ const n=notas.find(x=>x.id===id); if(!n) return; if(!confirm('Excluir o registro desse lançamento do histórico? (Isso NÃO cancela o boleto/nota na Asaas.)')) return; notas=notas.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fNotaLista(); }
+
+/* ---- LÉO COSMÉTICOS (sub-aba 🧴) — 31 unidades, só nota (sem boleto), 1 e-mail consolidado ---- */
+// Seed inicial (importado uma vez da planilha "MGB Faturamento - Clientes" em 28/09/2026) — a partir
+// daqui é só editado aqui no hub, não usa mais a planilha (pedido do Eder).
+const LEO_SEED=[{"id": "leo-901", "nome": "Leo Cosméticos Ltda (Maranhão)", "cnpj": "08.718.972/0033-05", "email": "boletos@leocosmeticosshop.com.br", "endereco": "MARANHAO, 177, 170", "bairro": "CENTRO", "cidade": "Londrina", "uf": "PR", "cep": "86010-903", "valor": 264.0}, {"id": "leo-902", "nome": "Leo Cosméticos Ltda (Benjamin)", "cnpj": "08.718.972/0028-48", "email": "boletos@leocosmeticosshop.com.br", "endereco": "MINAS GERAIS, 88, LOJA 02", "bairro": "CENTRO", "cidade": "Londrina", "uf": "PR", "cep": "86010-170", "valor": 264.0}, {"id": "leo-910", "nome": "Leo Cosméticos Ltda (Boulevard)", "cnpj": "08.718.972/0029-29", "email": "boletos@leocosmeticosshop.com.br", "endereco": "THEODORO VICTORELLI, 150, LOJA 32/33 PISO TERREO", "bairro": "HELENA", "cidade": "Londrina", "uf": "PR", "cep": "86027-750", "valor": 264.0}, {"id": "leo-913", "nome": "Leo Cosméticos Ltda (Norte)", "cnpj": "08.718.972/0030-62", "email": "boletos@leocosmeticosshop.com.br", "endereco": "AMERICO DEOLINDO GARLA, 224, LOJA SLN00139 PAVMTO01", "bairro": "", "cidade": "Londrina", "uf": "PR", "cep": "86079-225", "valor": 264.0}, {"id": "leo-915", "nome": "Leo Cosméticos Ltda (Catuai)", "cnpj": "08.718.972/0031-43", "email": "boletos@leocosmeticosshop.com.br", "endereco": "CELSO GARCIA CID, KM 377, 5600, LOJA SCL00A22", "bairro": "GLEBA FAZENDA", "cidade": "Londrina", "uf": "PR", "cep": "86050-901", "valor": 264.0}, {"id": "leo-932", "nome": "Leo Cosméticos Ltda (Aurorai)", "cnpj": "08.718.972/0032-24", "email": "boletos@leocosmeticosshop.com.br", "endereco": "AYRTON SENNA DA SILVA, 400, LOJA 34 35 E 36 ANDAR 01", "bairro": "GLEBA", "cidade": "Londrina", "uf": "PR", "cep": "86050-460", "valor": 264.0}, {"id": "leo-36", "nome": "Leo Cosméticos Ltda (Blumenau)", "cnpj": "08.718.972/0008-02", "email": "boletos@leocosmeticosshop.com.br", "endereco": "BR 470, 3.000, LOJA L.92", "bairro": "SALTO DO NORTE", "cidade": "Blumenau", "uf": "SC", "cep": "89065-800", "valor": 264.0}, {"id": "leo-37", "nome": "Leo Cosméticos Ltda (Cascavel)", "cnpj": "08.718.972/0007-13", "email": "boletos@leocosmeticosshop.com.br", "endereco": "BRASIL, 3561, LOJA 2.058", "bairro": "REGIAO DO LAGO", "cidade": "Cascavel", "uf": "PR", "cep": "85812-500", "valor": 264.0}, {"id": "leo-903", "nome": "Leo Cosméticos Ltda (Arapongas)", "cnpj": "08.718.972/0006-32", "email": "boletos@leocosmeticosshop.com.br", "endereco": "FLAMINGOS, 316", "bairro": "CENTRO", "cidade": "Arapongas", "uf": "PR", "cep": "86700-040", "valor": 264.0}, {"id": "leo-904", "nome": "Leo Cosméticos Ltda (Maringá 04)", "cnpj": "08.718.972/0004-70", "email": "boletos@leocosmeticosshop.com.br", "endereco": "BRASIL, 3974", "bairro": "ZONA 01", "cidade": "Maringá", "uf": "PR", "cep": "87013-000", "valor": 264.0}, {"id": "leo-905", "nome": "Leo Cosméticos Ltda (Apucarana)", "cnpj": "08.718.972/0003-90", "email": "boletos@leocosmeticosshop.com.br", "endereco": "PONTA GROSSA, 1462", "bairro": "CENTRO", "cidade": "Apucarana", "uf": "PR", "cep": "86800-030", "valor": 264.0}, {"id": "leo-914", "nome": "Leo Cosméticos Ltda (Maringá 914)", "cnpj": "08.718.972/0005-51", "email": "boletos@leocosmeticosshop.com.br", "endereco": "BRASIL, 3492, SALA 01", "bairro": "ZONA 01", "cidade": "Maringá", "uf": "PR", "cep": "87013-000", "valor": 264.0}, {"id": "leo-916", "nome": "Leo Cosméticos Ltda (Palladium)", "cnpj": "08.718.972/0010-19", "email": "boletos@leocosmeticosshop.com.br", "endereco": "PRESIDENTE KENNEDY, 4121, LOJA 3009 ANDAR L3", "bairro": "PORTAO", "cidade": "Curitiba", "uf": "PR", "cep": "80610-905", "valor": 264.0}, {"id": "leo-917", "nome": "Leo Cosméticos Ltda (Estação)", "cnpj": "08.718.972/0011-08", "email": "boletos@leocosmeticosshop.com.br", "endereco": "SETE DE SETEMBRO, 2775", "bairro": "REBOUCAS", "cidade": "Curitiba", "uf": "PR", "cep": "80230-010", "valor": 264.0}, {"id": "leo-918", "nome": "Leo Cosméticos Ltda (Shop. Curitiba)", "cnpj": "08.718.972/0012-80", "email": "boletos@leocosmeticosshop.com.br", "endereco": "BRIGADEIRO FRANCO, 2300", "bairro": "LOJA 325 ANDAR 01 COND SHOPPING", "cidade": "Curitiba", "uf": "PR", "cep": "80250-030", "valor": 264.0}, {"id": "leo-919", "nome": "Leo Cosméticos Ltda (Jockey)", "cnpj": "08.718.972/0013-61", "email": "boletos@leocosmeticosshop.com.br", "endereco": "VICTOR FERREIRA DO AMARAL, 2633, LOJA 1044 ANDAR L01", "bairro": "TARUMA", "cidade": "Curitiba", "uf": "PR", "cep": "82810-350", "valor": 264.0}, {"id": "leo-920", "nome": "Leo Cosméticos Ltda (Garten)", "cnpj": "08.718.972/0014-42", "email": "boletos@leocosmeticosshop.com.br", "endereco": "ROLF WIEST, 333, SALA L. 58", "bairro": "BOM RETIRO", "cidade": "Joinville", "uf": "SC", "cep": "89223-005", "valor": 264.0}, {"id": "leo-922", "nome": "Leo Cosméticos Ltda (Itaguaçu)", "cnpj": "08.718.972/0016-04", "email": "boletos@leocosmeticosshop.com.br", "endereco": "GERONCIO THIVES, 1.079, SALA 80 A 84", "bairro": "BARREIROS", "cidade": "São José", "uf": "SC", "cep": "88117-900", "valor": 264.0}, {"id": "leo-923", "nome": "Leo Cosméticos Ltda (Continente)", "cnpj": "08.718.972/0018-76", "email": "boletos@leocosmeticosshop.com.br", "endereco": "BR 101, KM 210, LOJA 03A", "bairro": "DISTRITO INDUSTRIAL", "cidade": "São José", "uf": "SC", "cep": "88104-800", "valor": 264.0}, {"id": "leo-924", "nome": "Leo Cosméticos Ltda (São José dos Pinhais)", "cnpj": "08.718.972/0017-95", "email": "boletos@leocosmeticosshop.com.br", "endereco": "IZABEL A REDENTORA, 1431, LOJA 236 A 241", "bairro": "CENTRO", "cidade": "São José dos Pinhais", "uf": "PR", "cep": "83005-010", "valor": 264.0}, {"id": "leo-925", "nome": "Leo Cosméticos Ltda (Cantareira)", "cnpj": "08.718.972/0019-57", "email": "boletos@leocosmeticosshop.com.br", "endereco": "RAIMUNDO PEREIRA DE MAGALHAES, 11001, LOJA 1060/1061", "bairro": "JARDIM", "cidade": "São Paulo", "uf": "SP", "cep": "02984-035", "valor": 264.0}, {"id": "leo-926", "nome": "Leo Cosméticos Ltda (Barigui)", "cnpj": "08.718.972/0023-33", "email": "boletos@leocosmeticosshop.com.br", "endereco": "PROFESSOR PEDRO VIRIATO PARIGOT DE SOUZA, 600", "bairro": "MOSSUNGUE", "cidade": "Curitiba", "uf": "PR", "cep": "81200-100", "valor": 264.0}, {"id": "leo-927", "nome": "Leo Cosméticos Ltda (Tatuapé)", "cnpj": "08.718.972/0021-71", "email": "boletos@leocosmeticosshop.com.br", "endereco": "GONCALVES CRESPO, 78", "bairro": "TATUAPE", "cidade": "São Paulo", "uf": "SP", "cep": "03066-030", "valor": 264.0}, {"id": "leo-928", "nome": "Leo Cosméticos Ltda (Umuarama)", "cnpj": "08.718.972/0020-90", "email": "boletos@leocosmeticosshop.com.br", "endereco": "PARANA, 8455, LOJA 120/121/122/138", "bairro": "ZONA III", "cidade": "Umuarama", "uf": "PR", "cep": "87502-000", "valor": 264.0}, {"id": "leo-929", "nome": "Leo Cosméticos Ltda (Calçadão)", "cnpj": "08.718.972/0027-67", "email": "boletos@leocosmeticosshop.com.br", "endereco": "XV DE NOVEMBRO, 299, COND JACOB WOISKI ED", "bairro": "CENTRO", "cidade": "Curitiba", "uf": "PR", "cep": "80020-310", "valor": 264.0}, {"id": "leo-930", "nome": "Leo Cosméticos Ltda (Campo Largo)", "cnpj": "08.718.972/0015-23", "email": "boletos@leocosmeticosshop.com.br", "endereco": "BR-277 PONTA GROSSA CURITIBA, S/N, KM 122 LOJA 1001", "bairro": "ITAQUI", "cidade": "Campo Largo", "uf": "PR", "cep": "83604-175", "valor": 264.0}, {"id": "leo-931", "nome": "Leo Cosméticos Ltda (Mueller)", "cnpj": "08.718.972/0025-03", "email": "boletos@leocosmeticosshop.com.br", "endereco": "VISCONDE DE TAUNAY, 235, LOJA T14/15", "bairro": "CENTRO", "cidade": "Joinville", "uf": "SC", "cep": "89201-908", "valor": 264.0}, {"id": "leo-934", "nome": "Leo Cosméticos Ltda (West Plaza)", "cnpj": "08.718.972/0024-14", "email": "boletos@leocosmeticosshop.com.br", "endereco": "ANTARTICA, 408, BLOCO B LOJA 3228 A 3234", "bairro": "AGUA BRANCA", "cidade": "São Paulo", "uf": "SP", "cep": "05003-020", "valor": 264.0}, {"id": "leo-938", "nome": "Leo Cosméticos Ltda (Guarulhos)", "cnpj": "08.718.972/0009-85", "email": "boletos@leocosmeticosshop.com.br", "endereco": "ENGENHEIRO CAMILO OLIVETTI, 295, LOJA H02/H07 PAVMTO1", "bairro": "", "cidade": "Guarulhos", "uf": "SP", "cep": "07042-040", "valor": 264.0}, {"id": "leo-935", "nome": "Leo Cosméticos Ltda (Av. Center)", "cnpj": "08.718.972/0022-52", "email": "boletos@leocosmeticosshop.com.br", "endereco": "SAO PAULO, 743, LOJA I100 I108 I109 L110", "bairro": "ZONA ARMAZEM", "cidade": "Maringá", "uf": "PR", "cep": "87013-313", "valor": 264.0}, {"id": "leo-939", "nome": "Leo Cosméticos Ltda (Santo Amaro)", "cnpj": "08.718.972/0026-86", "email": "boletos@leocosmeticosshop.com.br", "endereco": "AMADOR BUENO, 229", "bairro": "SANTO AMARO", "cidade": "São Paulo", "uf": "SP", "cep": "04752-005", "valor": 264.0}];
+let leoUnidades = []; // persistido — seed do LEO_SEED na 1ª vez, depois só editado aqui
+function fLeoRetemIss(u){ return (u.cidade||'').trim().toLowerCase()==='londrina'; }
+function fLeoInit(){
+  const cfg=document.getElementById('f-leo-config');
+  if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Falta configurar antes de emitir de verdade</div><div class="ferr-d" style="color:#92400E">Mesmo backend da aba Nota Fiscal (<code>ASAAS_API_KEY</code>/<code>ASAAS_API_KEY_SANDBOX</code>) + <code>RESEND_API_KEY</code>/<code>RESEND_FROM</code> pro e-mail consolidado (conta grátis em <a href="https://resend.com" target="_blank">resend.com</a>, precisa verificar o domínio de envio).</div>'; }
+  if(!leoUnidades.length){
+    leoUnidades = LEO_SEED.map(u=>({...u, status:'pendente', invoiceId:null, pdfUrl:null, erro:null}));
+    try{ scheduleSave(); }catch(e){}
+  }
+  const destino=document.getElementById('f-leo-email-destino');
+  if(destino && !destino.value) destino.value=(leoUnidades[0]&&leoUnidades[0].email)||'';
+  const compEl=document.getElementById('f-leo-comp');
+  if(compEl && !compEl.value){ const d=new Date(); compEl.value=MESES[d.getMonth()]+'/'+d.getFullYear(); }
+  fLeoLista();
+}
+function fLeoResumo(){
+  const el=document.getElementById('f-leo-resumo'); if(!el) return;
+  const emitidas=leoUnidades.filter(u=>u.status==='emitida').length;
+  const erros=leoUnidades.filter(u=>u.status==='erro').length;
+  el.textContent=emitidas+'/'+leoUnidades.length+' emitidas'+(erros?' · '+erros+' com erro':'');
+}
+function fLeoBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…',emitida:'✅ emitida',erro:'⚠ erro',enviada:'📧 enviada'}[s]||s); }
+function fLeoLista(){
+  const el=document.getElementById('f-leo-lista'); if(!el) return;
+  fLeoResumo();
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:820px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th style="text-align:left;padding:4px 6px">Unidade</th><th style="text-align:left;padding:4px 6px">Cidade/UF</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Status</th><th></th></tr>'+
+    leoUnidades.map(u=>'<tr><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+u.nome.replace('Leo Cosméticos Ltda ','')+'</td><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+u.cidade+'/'+u.uf+'</td><td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(u.valor||0)+'</td><td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(fLeoRetemIss(u)?'sim':'não')+'</td><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fLeoBadge(u.status)+(u.erro?' <span style="color:var(--red)" title="'+u.erro.replace(/"/g,'')+'">(!)</span>':'')+'</td>'+
+      '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap"><a href="#" onclick="event.preventDefault();fLeoEditarValor(\''+u.id+'\')" style="margin-right:8px">editar valor</a>'+(u.pdfUrl?'<a href="'+u.pdfUrl+'" target="_blank" style="margin-right:8px">PDF</a>':'')+(u.status==='erro'?'<a href="#" onclick="event.preventDefault();fLeoEmitirUma(\''+u.id+'\')">reemitir</a>':'')+'</td></tr>').join('')+'</table>';
+}
+function fLeoEditarValor(id){
+  const u=leoUnidades.find(x=>x.id===id); if(!u) return;
+  const novo=prompt('Novo valor pra '+u.nome+':', fRecNum(u.valor));
+  if(novo==null) return;
+  u.valor=fRecParseValor(novo);
+  try{ scheduleSave(); }catch(e){}
+  fLeoLista();
+}
+async function fLeoEmitirUma(id){
+  const u=leoUnidades.find(x=>x.id===id); if(!u) return;
+  const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
+  const comp=document.getElementById('f-leo-comp').value||'';
+  u.status='emitindo'; u.erro=null; fLeoLista();
+  const payload={
+    tomador:{ nome:u.nome, cnpj:u.cnpj, email:u.email },
+    servico:{ codigo:'171001', descricao:'Gestão e veiculação de rádio interna — '+comp },
+    valores:{ total:u.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:fLeoRetemIss(u) },
+    semCobranca:true,
+  };
+  try{
+    const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('Asaas respondeu '+r.status));
+    u.invoiceId=j.invoiceId; u.status=j.status==='AUTHORIZED'?'emitida':'emitindo';
+    if(!u.invoiceId) throw new Error(j.invoiceErro||'Não retornou invoiceId.');
+  }catch(e){
+    u.status='erro'; u.erro=e.message;
+  }
+  try{ scheduleSave(); }catch(e){}
+  fLeoLista();
+  return u.status;
+}
+async function fLeoAguardarAutorizacao(id, tentativas){
+  tentativas=tentativas||0;
+  const u=leoUnidades.find(x=>x.id===id); if(!u||!u.invoiceId||u.status==='emitida') return;
+  if(tentativas>15) return; // ~1.5min, depois fica pra conferir manual (link "PDF"/"reemitir" na lista)
+  const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
+  try{
+    const r=await fetch(NOTA_API_URL+'?action=status&ambiente='+ambiente+'&invoiceId='+encodeURIComponent(u.invoiceId));
+    const j=await r.json();
+    if(r.ok){ u.pdfUrl=j.pdfUrl||u.pdfUrl; if(j.status==='AUTHORIZED'){ u.status='emitida'; try{ scheduleSave(); }catch(e){} fLeoLista(); return; } if(j.status==='ERROR'){ u.status='erro'; u.erro=j.erro||'Erro na emissão'; try{ scheduleSave(); }catch(e){} fLeoLista(); return; } }
+  }catch(e){}
+  setTimeout(()=>fLeoAguardarAutorizacao(id,tentativas+1), 6000);
+}
+async function fLeoEmitirTodas(){
+  const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
+  if(ambiente==='producao' && !confirm('Isso vai emitir até '+leoUnidades.length+' NOTAS FISCAIS REAIS em produção (sem boleto). Confirma?')) return;
+  const btn=document.getElementById('f-leo-btn-emitir'); const st=document.getElementById('f-leo-status');
+  btn.disabled=true; btn.style.opacity='.6';
+  const pendentes=leoUnidades.filter(u=>u.status!=='emitida');
+  let ok=0, falhas=0;
+  for(let i=0;i<pendentes.length;i++){
+    st.innerHTML='<div class="ferr-info">Emitindo '+(i+1)+'/'+pendentes.length+'… ('+pendentes[i].nome+')</div>';
+    const status=await fLeoEmitirUma(pendentes[i].id);
+    if(status==='erro') falhas++; else ok++;
+    await new Promise(res=>setTimeout(res,400)); // não martelar a API
+  }
+  st.innerHTML='<div class="ferr-info" style="color:'+(falhas?'var(--red)':'var(--green)')+'">✓ '+ok+' enviada(s) pra Asaas'+(falhas?', '+falhas+' com erro (veja a lista)':'')+'. Aguardando autorização das notas…</div>';
+  btn.disabled=false; btn.style.opacity='1';
+  leoUnidades.filter(u=>u.invoiceId&&u.status!=='emitida'&&u.status!=='erro').forEach(u=>fLeoAguardarAutorizacao(u.id));
+}
+function fLeoResetar(){
+  if(!confirm('Resetar o status de todas as unidades pra "pendente"? Use isso ao virar o mês, pra emitir de novo. (Não apaga valor nem e-mail editados.)')) return;
+  leoUnidades.forEach(u=>{ u.status='pendente'; u.invoiceId=null; u.pdfUrl=null; u.erro=null; });
+  try{ scheduleSave(); }catch(e){}
+  fLeoLista();
+  document.getElementById('f-leo-status').innerHTML='';
+}
+async function fLeoEnviarEmail(){
+  const prontas=leoUnidades.filter(u=>u.status==='emitida'&&u.invoiceId);
+  if(!prontas.length){ alert('Nenhuma nota emitida ainda pra mandar.'); return; }
+  const destino=document.getElementById('f-leo-email-destino').value.trim();
+  if(!destino){ alert('Informe o e-mail de destino.'); return; }
+  const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
+  const comp=document.getElementById('f-leo-comp').value||'';
+  if(!confirm('Mandar 1 e-mail pra '+destino+' com '+prontas.length+' nota(s) fiscal(is) anexada(s)?')) return;
+  const btn=document.getElementById('f-leo-btn-email'); const st=document.getElementById('f-leo-status');
+  btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Baixando PDFs e enviando e-mail…</div>';
+  try{
+    const r=await fetch(EMAIL_API_URL+'?action=enviar-notas', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+      ambiente, para:destino, assunto:'Notas fiscais MGB Mídia — Léo Cosméticos — '+comp,
+      mensagem:'Seguem em anexo as notas fiscais referentes às unidades faturadas em '+comp+' ('+prontas.length+' nota(s)).',
+      notas: prontas.map(u=>({ invoiceId:u.invoiceId, nomeArquivo:'nota-'+u.id })),
+    })});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('Erro '+r.status));
+    prontas.forEach(u=>u.status='enviada');
+    try{ scheduleSave(); }catch(e){}
+    fLeoLista();
+    st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ E-mail enviado com '+j.enviados+' nota(s)'+(j.falharam&&j.falharam.length?' — '+j.falharam.length+' não puderam ser baixadas':'')+'.</div>';
+  }catch(e){
+    st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+'</div>';
+  }finally{ btn.disabled=false; btn.style.opacity='1'; }
+}
 /* ---- IMAGEM helpers ---- */
 function fImgLoad(file){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=URL.createObjectURL(file); }); }
 function fCanvasFrom(img,w,h){ const cv=document.createElement('canvas'); cv.width=w||img.naturalWidth; cv.height=h||img.naturalHeight; cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); return cv; }
@@ -11213,7 +11367,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas, notaConfig,
+    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas, notaConfig, leoUnidades,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -11306,6 +11460,9 @@ function deserializeState(obj){
   }
   if(obj.notaConfig && typeof obj.notaConfig==='object'){
     notaConfig=obj.notaConfig;
+  }
+  if(obj.leoUnidades && Array.isArray(obj.leoUnidades) && obj.leoUnidades.length){
+    leoUnidades=obj.leoUnidades;
   }
   if(obj.despPagamentos && typeof obj.despPagamentos==='object'){
     despPagamentos=obj.despPagamentos;
