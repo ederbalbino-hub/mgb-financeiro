@@ -5915,6 +5915,7 @@ function copiarSpot() {
       <span class="ferr-tab" onclick="showFerrTab('qr',this)">QR &amp; Links</span>
       <span class="ferr-tab" onclick="showFerrTab('etq',this)">🏷️ Etiquetas</span>
       <span class="ferr-tab" onclick="showFerrTab('recibo',this)">🧾 Recibos</span>
+      <span class="ferr-tab" onclick="showFerrTab('nota',this)">📄 Nota Fiscal</span>
       <span class="ferr-tab" onclick="showFerrTab('calc',this)">Calculadoras</span>
       <span class="ferr-tab" onclick="showFerrTab('backup',this)">Backup</span>
       <span class="ferr-tab" onclick="showFerrTab('status',this)">📡 Monitoramento</span>
@@ -6272,6 +6273,53 @@ function copiarSpot() {
       <div class="ferr-card" style="margin-top:14px">
         <div class="ferr-t">Recibos emitidos</div><div class="ferr-d">Ficam guardados junto com o financeiro (sincronizado). Reimprima ou exclua.</div>
         <div id="f-rec-lista" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div id="ferr-nota" style="display:none">
+      <div id="f-nota-config" class="ferr-card" style="display:none;margin-bottom:14px;background:#FFF8E8;border-color:#F0C36D"></div>
+      <div class="ferr-grid" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
+        <div class="ferr-card">
+          <div class="ferr-t">📄 Emitir nota fiscal (NFS-e)</div><div class="ferr-d">Via <b>Notaas</b>. Escolha o cliente: nome/CNPJ vêm do cadastro, só confira e-mail, código de serviço e alíquota antes de emitir de verdade.</div>
+          <label class="ferr-lbl" style="margin-top:10px">Ambiente</label>
+          <select id="f-nota-amb" class="ferr-in">
+            <option value="sandbox">🧪 Sandbox (teste — não gera nota real)</option>
+            <option value="producao">🔴 Produção (emite nota fiscal de verdade)</option>
+          </select>
+          <label class="ferr-lbl" style="margin-top:8px">Cliente</label>
+          <select id="f-nota-cli" class="ferr-in" onchange="fNotaCliente()"></select>
+          <div id="f-nota-mod" class="ferr-info" style="margin-top:4px"></div>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px">
+            <div><label class="ferr-lbl">Tomador (nome / razão social)</label><input id="f-nota-tom-nome" class="ferr-in"></div>
+            <div><label class="ferr-lbl">CNPJ / CPF</label><input id="f-nota-tom-doc" class="ferr-in"></div>
+          </div>
+          <label class="ferr-lbl" style="margin-top:8px">E-mail do tomador <span style="font-weight:400;color:var(--muted)">(recebe a nota)</span></label>
+          <input id="f-nota-tom-email" class="ferr-in" type="email" placeholder="financeiro@cliente.com.br">
+          <label class="ferr-lbl" style="margin-top:8px">Descrição do serviço</label>
+          <textarea id="f-nota-desc" class="ferr-in" rows="2"></textarea>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+            <div><label class="ferr-lbl">Código de serviço</label><input id="f-nota-cod" class="ferr-in" placeholder="confirmar c/ contador"></div>
+            <div><label class="ferr-lbl">Valor total (R$)</label><input id="f-nota-valor" class="ferr-in" inputmode="decimal" placeholder="ex.: 1.250,00"></div>
+            <div><label class="ferr-lbl">Alíquota ISS (%)</label><input id="f-nota-iss" class="ferr-in" inputmode="decimal" placeholder="confirmar c/ contador"></div>
+          </div>
+          <div class="ferr-info" style="margin-top:6px;color:#B45309">⚠️ Confirme com o contador o código de serviço e a alíquota de ISS antes de emitir a primeira nota em <b>produção</b>. Use o Sandbox pra testar à vontade.</div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="ferr-btn" onclick="fNotaEmitir()" id="f-nota-btn">📄 Emitir nota</button>
+            <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fNotaLimpar()">Novo</button>
+          </div>
+          <div id="f-nota-status" style="margin-top:10px"></div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">Como funciona</div><div class="ferr-d">
+            1. Escolha Sandbox pra testar sem gerar nota real (ambiente separado da Notaas).<br>
+            2. Preencha tomador, serviço e valor.<br>
+            3. Clique em Emitir — a nota vai pra fila da Notaas e o status atualiza sozinho aqui embaixo.<br>
+            4. Quando sair "emitida", os links de PDF e XML aparecem no histórico.
+          </div>
+        </div>
+      </div>
+      <div class="ferr-card" style="margin-top:14px">
+        <div class="ferr-t">Notas emitidas</div><div class="ferr-d">Ficam guardadas junto com o financeiro (sincronizado). Atualize o status ou exclua.</div>
+        <div id="f-nota-lista" style="margin-top:10px"></div>
       </div>
     </div>
     <div id="ferr-calc" style="display:none">
@@ -6720,12 +6768,97 @@ function fRecReimprimir(id){ const r=recibos.find(x=>x.id===id); if(r) fRecAbrir
 function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod+'|'+r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); fRecCompSet(r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
 function fRecExcluir(id){ const r=recibos.find(x=>x.id===id); if(!r) return; if(!confirm('Excluir o recibo '+r.numero+'?')) return; recibos=recibos.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fRecLista(); }
 function showFerrTab(t, el){
-  ['pdf','img','video','qr','etq','recibo','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  ['pdf','img','video','qr','etq','recibo','nota','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
   document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
   if(t==='status') loadFerrStatus();
   if(t==='etq') fEtqInit();
   if(t==='recibo') fRecInit();
+  if(t==='nota') fNotaInit();
 }
+/* ---- NOTA FISCAL (sub-aba 📄, via Notaas) ---- */
+const NOTA_API_URL = 'https://mgb-financeiro.vercel.app/api/nota';
+function fNotaInit(){
+  const sel=document.getElementById('f-nota-cli'); if(!sel) return;
+  const cfg=document.getElementById('f-nota-config');
+  if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Configure o backend antes de emitir de verdade</div><div class="ferr-d" style="color:#92400E">1) Crie a conta em <a href="https://www.notaas.com.br" target="_blank">notaas.com.br</a> e faça upload do certificado A1 no painel deles. 2) Gere uma chave sandbox e uma de produção em API Keys. 3) Peça pro Eder configurar <code>NOTAAS_API_KEY</code> / <code>NOTAAS_API_KEY_SANDBOX</code> nas env vars do Vercel do projeto <code>mgb-financeiro</code>. Até lá, o botão Emitir vai dar erro de configuração — normal.</div>'; }
+  const atual=sel.value; let html='<option value="">— escolha o cliente —</option>';
+  MODULES.forEach(m=>{ const itens=fRecClientes().filter(c=>c.mod===m.id); if(!itens.length) return; html+='<optgroup label="'+m.icon+' '+m.label+'">'+itens.map(c=>'<option value="'+m.id+'|'+c.item.replace(/"/g,'&quot;')+'">'+c.item+'</option>').join('')+'</optgroup>'; });
+  sel.innerHTML=html; if(atual) sel.value=atual;
+  fNotaLista();
+}
+function fNotaCliente(){
+  const v=document.getElementById('f-nota-cli').value; if(!v) return;
+  const [mod,item]=v.split('|'); const m=MODULES.find(x=>x.id===mod)||{};
+  document.getElementById('f-nota-mod').textContent='Módulo: '+(m.label||mod);
+  const info=(typeof clientesInfo!=='undefined'&&clientesInfo[mod]&&clientesInfo[mod][item])||{};
+  document.getElementById('f-nota-tom-nome').value=info.razao||info.fantasia||item;
+  document.getElementById('f-nota-tom-doc').value=info.cnpj||'';
+  const base=(REC_DESC[mod]||'Prestação de serviços de mídia — {item}').replace('{item}',item);
+  document.getElementById('f-nota-desc').value=base;
+}
+function fNotaLimpar(){
+  ['f-nota-tom-nome','f-nota-tom-doc','f-nota-tom-email','f-nota-desc','f-nota-cod','f-nota-valor','f-nota-iss'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('f-nota-cli').value=''; document.getElementById('f-nota-mod').textContent=''; document.getElementById('f-nota-status').innerHTML='';
+}
+async function fNotaEmitir(){
+  const g=id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
+  const ambiente=g('f-nota-amb')||'sandbox';
+  const cli=g('f-nota-cli'); const [mod,item]=cli?cli.split('|'):['',''];
+  const m=MODULES.find(x=>x.id===mod)||{};
+  const nome=g('f-nota-tom-nome'), doc=g('f-nota-tom-doc').replace(/\D/g,''), email=g('f-nota-tom-email');
+  const desc=g('f-nota-desc'), cod=g('f-nota-cod'), iss=fRecParseValor(g('f-nota-iss'));
+  const valor=fRecParseValor(g('f-nota-valor'));
+  if(!nome){ alert('Escolha o cliente / preencha o tomador.'); return; }
+  if(!email){ alert('Informe o e-mail do tomador (a Notaas precisa pra enviar a nota).'); return; }
+  if(!desc){ alert('Informe a descrição do serviço.'); return; }
+  if(!(valor>0)){ alert('Informe o valor.'); return; }
+  if(ambiente==='producao' && !confirm('Isso vai emitir uma NOTA FISCAL REAL em produção. Confirma?')) return;
+  const btn=document.getElementById('f-nota-btn'); const st=document.getElementById('f-nota-status');
+  btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Enviando pra Notaas…</div>';
+  const payload={ tomador:{nome, cnpj:doc||undefined, email}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, aliquotaIss:iss||undefined} };
+  try{
+    const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('Notaas respondeu '+r.status));
+    const nota={ id:notaId++, invoiceId:j.invoiceId, status:j.status||'processing', ambiente, mod, modLabel:m.label||'', cliente:item||nome, tomador:nome, valor, data:new Date().toISOString().slice(0,10), ts:Date.now(), pdfUrl:null, xmlUrl:null };
+    notas.push(nota); try{ scheduleSave(); }catch(e){}
+    st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ Enviada! Acompanhando status…</div>';
+    fNotaLista();
+    fNotaPoll(nota.id);
+  }catch(e){
+    st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+'</div>';
+  }finally{ btn.disabled=false; btn.style.opacity='1'; }
+}
+async function fNotaAtualizarStatus(id){
+  const n=notas.find(x=>x.id===id); if(!n||!n.invoiceId) return;
+  try{
+    const r=await fetch(NOTA_API_URL+'?action=status&invoiceId='+encodeURIComponent(n.invoiceId)+'&ambiente='+(n.ambiente||'sandbox'));
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('Notaas respondeu '+r.status));
+    n.status=j.status||n.status; n.pdfUrl=j.pdfUrl||n.pdfUrl; n.xmlUrl=j.xmlUrl||n.xmlUrl; n.numero=j.numero||n.numero; n.erro=j.erro||null;
+    try{ scheduleSave(); }catch(e){}
+    fNotaLista();
+    return n.status;
+  }catch(e){ console.error('fNotaAtualizarStatus:',e); }
+}
+function fNotaPoll(id, tentativas){
+  tentativas=tentativas||0;
+  if(tentativas>20) return; // ~2min de polling (6s * 20), depois é só atualizar manual na lista
+  fNotaAtualizarStatus(id).then(status=>{
+    if(status==='issued'||status==='authorized'||status==='error'||status==='rejected') return;
+    setTimeout(()=>fNotaPoll(id,tentativas+1), 6000);
+  });
+}
+function fNotaLista(){
+  const el=document.getElementById('f-nota-lista'); if(!el) return;
+  const lst=[...notas].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!lst.length){ el.innerHTML='<div class="ferr-info">Nenhuma nota emitida ainda.</div>'; return; }
+  const badge=s=>({issued:'✅ emitida',authorized:'✅ emitida',processing:'⏳ processando',error:'⚠ erro',rejected:'⚠ rejeitada'}[s]||s||'?');
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em"><th style="text-align:left;padding:4px 6px">Data</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:left;padding:4px 6px">Ambiente</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:right;padding:4px 6px">Valor</th><th></th></tr>'+
+    lst.map(n=>'<tr><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+(n.data||'').split('-').reverse().join('/')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+n.cliente+' <span style="color:var(--muted);font-size:10.5px">'+(n.modLabel||'')+'</span></td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+(n.ambiente==='producao'?'🔴 produção':'🧪 sandbox')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+badge(n.status)+(n.erro?' <span style="color:var(--red)">('+n.erro+')</span>':'')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(n.valor||0)+'</td>'+
+      '<td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+(n.pdfUrl?'<a href="'+n.pdfUrl+'" target="_blank" style="margin-right:10px">PDF</a>':'')+(n.xmlUrl?'<a href="'+n.xmlUrl+'" target="_blank" style="margin-right:10px">XML</a>':'')+'<a href="#" onclick="event.preventDefault();fNotaAtualizarStatus('+n.id+')" style="margin-right:10px">atualizar</a><a href="#" onclick="event.preventDefault();fNotaExcluir('+n.id+')" style="color:var(--red)">excluir</a></td></tr>').join('')+'</table>';
+}
+function fNotaExcluir(id){ const n=notas.find(x=>x.id===id); if(!n) return; if(!confirm('Excluir o registro dessa nota do histórico? (Isso NÃO cancela a nota na Notaas/prefeitura.)')) return; notas=notas.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fNotaLista(); }
 /* ---- IMAGEM helpers ---- */
 function fImgLoad(file){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=URL.createObjectURL(file); }); }
 function fCanvasFrom(img,w,h){ const cv=document.createElement('canvas'); cv.width=w||img.naturalWidth; cv.height=h||img.naturalHeight; cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); return cv; }
@@ -7582,6 +7715,8 @@ let etiquetas = [];
 let etiquetaId = 1;
 let recibos = [];
 let reciboId = 1;
+let notas = [];
+let notaId = 1;
 
 // ── DESPESAS COMPARTILHADAS (Elevadores) ─────────────────────────────────
 // despesasComp = [{id, nome, forn, valor, inicio, meses, telas:[]}]
@@ -11045,7 +11180,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos,
+    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -11131,6 +11266,10 @@ function deserializeState(obj){
   if(obj.recibos && Array.isArray(obj.recibos)){
     recibos=obj.recibos;
     reciboId=recibos.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.notas && Array.isArray(obj.notas)){
+    notas=obj.notas;
+    notaId=notas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
   }
   if(obj.despPagamentos && typeof obj.despPagamentos==='object'){
     despPagamentos=obj.despPagamentos;
