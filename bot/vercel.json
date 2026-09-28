@@ -6,7 +6,7 @@
     "api/banco.js": {
       "maxDuration": 30
     },
-    "api/nota.js": {
+    "api/asaas.js": {
       "maxDuration": 30
     }
   }
