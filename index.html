@@ -11552,17 +11552,24 @@ async function loadFromSheets(){
 
 
 // ── MIGRAÇÃO 28/09/2026 — Elevadores: condomínios que faltavam + custo único Sistema TV ─────────
-// Regra do Eder: custo fixo mensal de licença (4Yousee "Sistema TV") = R$ 70 por CONDOMÍNIO, valor único (antes: R$ 50 × nº de telas).
+// Regra do Eder (corrigida em 28/09): custo fixo mensal de licença (4Yousee "Sistema TV") = R$ 70 por TELA (um sistema por elevador/torre) → linha recorrente = nº de telas × R$ 70 (antes: R$ 50 × telas).
 // 1) inclui Ever, Ampezzo (D'Ampezzo), Itamaraty (já na rede) e Liberty (instala Out/2026);
-// 2) em TODAS as unidades a linha recorrente "Sistema TV/4Yousee" passa pra 1 × R$ 70 (ajusta fin[][] pelo delta — mesmo método do addItem);
+// 2) em TODAS as unidades a linha recorrente "Sistema TV/4Yousee" passa pra telas × R$ 70 (ajusta fin[][] pelo delta — mesmo método do addItem);
 //    unidade sem a linha ganha uma nova (12 meses).
 // One-shot (flag em migracoes) e idempotente. Só roda com estado REAL vindo do Sheets (_cargaSheetsOk).
-const ELEV_CUSTO_TV = 70;
+const ELEV_CUSTO_TV = 70; // R$ por TELA/mês
+// nº de telas das unidades que já existiam (bate com o q original das linhas; as novas trazem 'telas' na própria entrada)
+const ELEV_TELAS={'Lagoa Dourada':7,'Lake Portinari':3,'Spazio Louvre':5,'Terra Parque':2,'Residencial Málaga':3,'Spot':2,'Ayrton Senna 1':2,'Ayrton Senna 2':2,'Bella Fiori':2,'Tay':2,'Uptown':2};
+function elevTelasDe(item){
+  if(ELEV_TELAS[item]) return ELEV_TELAS[item];
+  const c=ELEV_MIG_20260928.concat(ELEV_NOVOS).find(x=>x.item===item);
+  return c?c.telas:0;
+}
 const ELEV_MIG_20260928=[
-  {item:'Ever',      ini:'2026-09'},
-  {item:'Ampezzo',   ini:'2026-09'},
-  {item:'Itamaraty', ini:'2026-09'},
-  {item:'Liberty',   ini:'2026-10'}
+  {item:'Ever',      ini:'2026-09', telas:2},
+  {item:'Ampezzo',   ini:'2026-09', telas:1},
+  {item:'Itamaraty', ini:'2026-09', telas:1},
+  {item:'Liberty',   ini:'2026-10', telas:1}
 ];
 function elevMigrarCondos(){
   if(!_cargaSheetsOk || migracoes.elevCustoTV70_20260928) return;
@@ -11580,13 +11587,14 @@ function elevMigrarCondos(){
     const rows=db.elev[item];
     const r=rows.find(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
     if(r){
-      if(r.q!==1 || r.u!==ELEV_CUSTO_TV){
+      const tq=elevTelasDe(item)||r.q||1;
+      if(r.q!==tq || r.u!==ELEV_CUSTO_TV){
         applyToFin(r,-1);
-        r.q=1; r.u=ELEV_CUSTO_TV;
+        r.q=tq; r.u=ELEV_CUSTO_TV;
         applyToFin(r,+1);
       }
     } else {
-      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:ELEV_CUSTO_TV,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:ini[item]||new Date().toISOString().slice(0,7)};
+      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:elevTelasDe(item)||1,u:ELEV_CUSTO_TV,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:ini[item]||new Date().toISOString().slice(0,7)};
       applyToFin(e,+1);
       rows.push(e);
     }
@@ -11596,10 +11604,10 @@ function elevMigrarCondos(){
 }
 
 // ── CONDOMÍNIOS NOVOS NO MÓDULO ELEVADORES (alimentado pelo script da skill /novo-condominio) ──────────
-// Cada entrada vira unidade do módulo Elevadores + linha recorrente "Sistema TV / 4Yousee" de ELEV_CUSTO_TV (1 × R$ 70), uma única vez POR UNIDADE
+// Cada entrada vira unidade do módulo Elevadores + linha recorrente "Sistema TV / 4Yousee" de (telas × ELEV_CUSTO_TV = R$ 70 por tela), uma única vez POR UNIDADE
 // (flag migracoes['elevNovo:<item>']). Idempotente e só roda com estado REAL do Sheets. 'ini' = mês de início do custo (YYYY-MM).
 const ELEV_NOVOS=[
-  {item:'Villa Solare', ini:'2026-09'},
+  {item:'Villa Solare', ini:'2026-09', telas:2},
   // <novos>
 ];
 function elevMigrarNovos(){
@@ -11616,13 +11624,30 @@ function elevMigrarNovos(){
     if(rec.elev[c.item]===undefined) rec.elev[c.item]={valor:0,inicio:'',meses:12};
     const tem=db.elev[c.item].some(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
     if(!tem){
-      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:ELEV_CUSTO_TV,cc:c.item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:c.ini};
+      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:c.telas||1,u:ELEV_CUSTO_TV,cc:c.item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:c.ini};
       applyToFin(e,+1);
       db.elev[c.item].push(e);
     }
     migracoes[key]=true; mudou=true;
   });
   if(mudou) scheduleSave();
+}
+
+// ── CORREÇÃO 28/09: custo é POR TELA (R$ 70 × telas), não por condomínio ─────────────────────────────
+// A migração anterior (elevCustoTV70_20260928) já tinha gravado 1 × R$ 70 em cada unidade no Sheets real. Esta roda 1x e recoloca
+// q = nº de telas (u = R$ 70), ajustando fin[][] pelo delta. Só mexe na linha "Sistema TV/4Yousee" de cada unidade.
+function elevAjustarPorTela(){
+  if(!_cargaSheetsOk || migracoes.elevCustoPorTela_20260928) return;
+  const m=MODULES.find(x=>x.id==='elev'); if(!m || !db.elev) return;
+  m.items.forEach(item=>{
+    const tq=elevTelasDe(item); if(!tq) return;
+    const r=(db.elev[item]||[]).find(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
+    if(r && (r.q!==tq || r.u!==ELEV_CUSTO_TV)){
+      applyToFin(r,-1); r.q=tq; r.u=ELEV_CUSTO_TV; applyToFin(r,+1);
+    }
+  });
+  migracoes.elevCustoPorTela_20260928=true;
+  scheduleSave();
 }
 
 // Salva com debounce — espera 2s após última mudança
@@ -12846,7 +12871,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
