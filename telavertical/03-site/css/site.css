@@ -1,4 +1,4 @@
-/* Tela Vertical · Mídia em Elevadores — uma empresa do Grupo Predial
+/* Tela Vertical Mídia · Elevadores — uma empresa do Grupo Predial
    CSS compartilhado do site (importa os tokens de marca) */
 @import url('tokens.css');
 
@@ -265,6 +265,7 @@ td.hl{color:var(--tv-navy);font-weight:700}
 /* ===== CONTATO ===== */
 .contact-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 .contact-card{display:flex;gap:14px;align-items:flex-start;background:#fff;border:1px solid var(--tv-line);border-radius:16px;padding:20px;text-decoration:none;color:var(--tv-ink)}
+.contact-card span{min-width:0;overflow-wrap:anywhere}
 .contact-card b{display:block;color:var(--tv-navy)}
 .contact-card small{color:var(--tv-muted);font-size:.84rem}
 
