@@ -6860,8 +6860,6 @@ const NOTA_API_URL = 'https://mgb-financeiro.vercel.app/api/asaas';
 const EMAIL_API_URL = 'https://mgb-financeiro.vercel.app/api/email';
 function fNotaInit(){
   const sel=document.getElementById('f-nota-cli'); if(!sel) return;
-  const cfg=document.getElementById('f-nota-config');
-  if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Configure o backend antes de emitir de verdade</div><div class="ferr-d" style="color:#92400E">1) Na conta <a href="https://www.asaas.com" target="_blank">Asaas</a>, suba o certificado A1 e configure os dados fiscais (Configurações → Notas Fiscais). 2) Gere uma chave sandbox e uma de produção (Configurações → Integrações → API Key). 3) Peça pro Eder configurar <code>ASAAS_API_KEY</code> / <code>ASAAS_API_KEY_SANDBOX</code> nas env vars do Vercel do projeto <code>mgb-financeiro</code>. Até lá, o botão Emitir vai dar erro de configuração — normal.</div>'; }
   const aliqEl=document.getElementById('f-nota-aliq-mes');
   if(aliqEl && !aliqEl.value && notaConfig.aliquotaMes!=null) aliqEl.value=fRecNum(notaConfig.aliquotaMes);
   fNotaAliqInfo();
@@ -6979,7 +6977,7 @@ let leoUnidades = []; // persistido — seed do LEO_SEED na 1ª vez, depois só 
 function fLeoRetemIss(u){ return (u.cidade||'').trim().toLowerCase()==='londrina'; }
 function fLeoInit(){
   const cfg=document.getElementById('f-leo-config');
-  if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Falta configurar antes de emitir de verdade</div><div class="ferr-d" style="color:#92400E">Mesmo backend da aba Nota Fiscal (<code>ASAAS_API_KEY</code>/<code>ASAAS_API_KEY_SANDBOX</code>) + <code>RESEND_API_KEY</code>/<code>RESEND_FROM</code> pro e-mail consolidado (conta grátis em <a href="https://resend.com" target="_blank">resend.com</a>, precisa verificar o domínio de envio).</div>'; }
+  if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Falta só o e-mail consolidado</div><div class="ferr-d" style="color:#92400E">Emitir nota já funciona normal. Só o botão "Enviar e-mail consolidado" depende do domínio verificado na <a href="https://resend.com" target="_blank">Resend</a> + <code>RESEND_API_KEY</code>/<code>RESEND_FROM</code> no Vercel — em configuração.</div>'; }
   if(!leoUnidades.length){
     leoUnidades = LEO_SEED.map(u=>({...u, status:'pendente', invoiceId:null, pdfUrl:null, erro:null}));
     try{ scheduleSave(); }catch(e){}
@@ -7104,8 +7102,6 @@ const FATURAMENTO_API_URL = 'https://script.google.com/macros/s/AKfycbwdlNqijPhK
 const FAT_MANUAL_MODULOS = ['Tarobá','Bureau de Mídia']; // sempre manual, nunca entra no lote (comissão fecha depois)
 let fatLinhas = [];
 function fFatInit(){
-  const cfg=document.getElementById('f-fat-config');
-  if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Antes de usar</div><div class="ferr-d" style="color:#92400E">Precisa da mesma configuração da aba Nota Fiscal (<code>ASAAS_API_KEY</code>) + o script da planilha autorizado uma vez pelo Eder no navegador. Se "Carregar planilha" der erro de autorização, abra o link do script uma vez e clique em Permitir.</div>'; }
   const compEl=document.getElementById('f-fat-comp');
   if(compEl && !compEl.value){ const d=new Date(); compEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
   const aliqEl=document.getElementById('f-fat-aliq');
