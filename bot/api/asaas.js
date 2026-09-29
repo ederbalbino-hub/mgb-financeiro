@@ -6,11 +6,14 @@
 //   POST /api/asaas?action=emitir&ambiente=sandbox|producao
 //        body: { tomador:{nome,cnpj,email,telefone?}, servico:{codigo?,descricao},
 //                valores:{total,aliquotaIss?,retemIss?}, vencimento?:'YYYY-MM-DD',
-//                semCobranca?:true }
+//                semCobranca?:true, semNota?:true }
 //        -> cria (ou reaproveita) o cliente, cria a cobrança (boleto+PIX) e a nota fiscal
 //           vinculada a ela. Devolve {customerId,paymentId,invoiceId,boletoUrl,invoiceUrl,status}
 //        Com semCobranca:true, NÃO cria boleto/cobrança nenhuma — só a nota fiscal, vinculada
 //        direto ao cliente (caso do Léo Cosméticos: cliente paga por PIX fora do sistema).
+//        Com semNota:true, NÃO cria nota fiscal nenhuma — só o boleto+PIX (caso de cliente que
+//        não quer nota, ex.: Mercadão — recibo à parte cobre isso, se precisar). Os dois nunca
+//        juntos (não sobraria nada pra emitir).
 //   GET  /api/asaas?action=status&paymentId=...&invoiceId=...&ambiente=sandbox|producao
 //        -> status atual do pagamento e da nota (pdf/xml quando prontos). paymentId é opcional
 //           (não existe quando a nota foi emitida com semCobranca:true).
@@ -84,9 +87,12 @@ export default async function handler(req, res) {
     // ── cria cliente + cobrança (boleto/PIX) + nota fiscal vinculada, numa tacada ──
     if (action === "emitir") {
       if (req.method !== "POST") return res.status(405).json({ error: "Use POST." });
-      const { tomador, servico, valores, vencimento, semCobranca } = req.body || {};
+      const { tomador, servico, valores, vencimento, semCobranca, semNota } = req.body || {};
       if (!tomador?.nome || !servico?.descricao || !(valores?.total > 0)) {
         return res.status(400).json({ error: "Faltam dados: tomador.nome, servico.descricao ou valores.total." });
+      }
+      if (semCobranca && semNota) {
+        return res.status(400).json({ error: "semCobranca e semNota não podem ser true ao mesmo tempo — não sobraria nada pra emitir." });
       }
 
       const customerId = await acharOuCriarCliente(ambiente, tomador);
@@ -106,23 +112,30 @@ export default async function handler(req, res) {
 
       let invoice = null,
         invoiceErro = null;
-      try {
-        const invoiceBody = {
-          serviceDescription: servico.descricao,
-          value: valores.total,
-          deductions: 0,
-          effectiveDate: new Date().toISOString().slice(0, 10),
-          municipalServiceCode: servico.codigo || undefined,
-          taxes: valores.aliquotaIss ? { iss: valores.aliquotaIss, retainIss: !!valores.retemIss } : undefined,
-        };
-        if (payment) invoiceBody.payment = payment.id;
-        else invoiceBody.customer = customerId; // sem cobrança: nota vinculada direto ao cliente
-        invoice = await asaas(ambiente, "POST", "/invoices", invoiceBody);
-      } catch (e) {
-        // a cobrança já foi criada mesmo se a nota falhar (ex: cadastro fiscal da conta incompleto) —
-        // devolve o que deu certo e o erro específico da nota, em vez de jogar tudo fora.
-        invoiceErro = e.message;
+      if (!semNota) {
+        try {
+          const invoiceBody = {
+            serviceDescription: servico.descricao,
+            value: valores.total,
+            deductions: 0,
+            effectiveDate: new Date().toISOString().slice(0, 10),
+            municipalServiceCode: servico.codigo || undefined,
+            taxes: valores.aliquotaIss ? { iss: valores.aliquotaIss, retainIss: !!valores.retemIss } : undefined,
+          };
+          if (payment) invoiceBody.payment = payment.id;
+          else invoiceBody.customer = customerId; // sem cobrança: nota vinculada direto ao cliente
+          invoice = await asaas(ambiente, "POST", "/invoices", invoiceBody);
+        } catch (e) {
+          // a cobrança já foi criada mesmo se a nota falhar (ex: cadastro fiscal da conta incompleto) —
+          // devolve o que deu certo e o erro específico da nota, em vez de jogar tudo fora.
+          invoiceErro = e.message;
+        }
       }
+
+      let status;
+      if (invoice) status = invoice.status;
+      else if (semNota) status = "boleto_sem_nota"; // só boleto, de propósito — não é "pendente"
+      else status = payment ? "boleto_ok_nota_pendente" : "nota_pendente";
 
       return res.status(202).json({
         ambiente,
@@ -131,7 +144,7 @@ export default async function handler(req, res) {
         boletoUrl: payment?.bankSlipUrl || null,
         invoiceUrl: payment?.invoiceUrl || null,
         invoiceId: invoice?.id || null,
-        status: invoice ? invoice.status : payment ? "boleto_ok_nota_pendente" : "nota_pendente",
+        status,
         invoiceErro,
       });
     }
