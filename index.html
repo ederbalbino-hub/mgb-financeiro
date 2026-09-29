@@ -5919,6 +5919,7 @@ function copiarSpot() {
       <span class="ferr-tab" onclick="showFerrTab('recibo',this)">🧾 Recibos</span>
       <span class="ferr-tab" onclick="showFerrTab('nota',this)">📄 Nota Fiscal</span>
       <span class="ferr-tab" onclick="showFerrTab('leo',this)">🧴 Léo</span>
+      <span class="ferr-tab" onclick="showFerrTab('fat',this)">🚀 Faturamento</span>
       <span class="ferr-tab" onclick="showFerrTab('calc',this)">Calculadoras</span>
       <span class="ferr-tab" onclick="showFerrTab('backup',this)">Backup</span>
       <span class="ferr-tab" onclick="showFerrTab('status',this)">📡 Monitoramento</span>
@@ -6354,6 +6355,31 @@ function copiarSpot() {
       <div class="ferr-card" style="margin-top:14px">
         <div class="ferr-t">Unidades</div><div class="ferr-d">Valor e e-mail são editáveis por unidade (clique em "editar"). Retém ISS calculado automaticamente pela cidade.</div>
         <div id="f-leo-lista" style="margin-top:10px;overflow-x:auto"></div>
+      </div>
+    </div>
+    <div id="ferr-fat" style="display:none">
+      <div id="f-fat-config" class="ferr-card" style="display:none;margin-bottom:14px;background:#FFF8E8;border-color:#F0C36D"></div>
+      <div class="ferr-card">
+        <div class="ferr-t">🚀 Disparar faturamento do mês</div>
+        <div class="ferr-d">Lê a planilha "MGB Faturamento - Clientes" e emite nota + boleto pra quem você marcar. Nada é emitido automaticamente — você revisa e escolhe antes de clicar.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
+          <div><label class="ferr-lbl">Ambiente</label><select id="f-fat-amb" class="ferr-in"><option value="sandbox">🧪 Sandbox</option><option value="producao">🔴 Produção</option></select></div>
+          <div><label class="ferr-lbl">Competência</label><input id="f-fat-comp" class="ferr-in" placeholder="ex.: 2026-10"></div>
+          <div><label class="ferr-lbl">Alíquota ISS do mês</label><input id="f-fat-aliq" class="ferr-in" placeholder="vem da aba Nota Fiscal" disabled></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
+          <button class="ferr-btn" onclick="fFatCarregar()" id="f-fat-btn-carregar">🔄 Carregar planilha</button>
+          <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fFatSelecionarTodos()">Marcar todos</button>
+          <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fFatLimparSelecao()">Limpar seleção</button>
+          <button class="ferr-btn" style="background:#0D9488" onclick="fFatEmitirSelecionados()" id="f-fat-btn-emitir">Emitir selecionados</button>
+          <span id="f-fat-resumo" class="ferr-info"></span>
+        </div>
+        <div id="f-fat-status" style="margin-top:10px"></div>
+      </div>
+      <div class="ferr-card" style="margin-top:14px">
+        <div class="ferr-t">Clientes ativos na planilha</div>
+        <div class="ferr-d">Tarobá e Rádio Ops (Bureau de Mídia) ficam marcados como sempre-manual — emita eles pela aba Nota Fiscal quando fechar a comissão do mês, não por aqui.</div>
+        <div id="f-fat-lista" style="margin-top:10px;overflow-x:auto"></div>
       </div>
     </div>
     <div id="ferr-calc" style="display:none">
@@ -6802,13 +6828,14 @@ function fRecReimprimir(id){ const r=recibos.find(x=>x.id===id); if(r) fRecAbrir
 function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod+'|'+r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); fRecCompSet(r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
 function fRecExcluir(id){ const r=recibos.find(x=>x.id===id); if(!r) return; if(!confirm('Excluir o recibo '+r.numero+'?')) return; recibos=recibos.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fRecLista(); }
 function showFerrTab(t, el){
-  ['pdf','img','video','qr','etq','recibo','nota','leo','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  ['pdf','img','video','qr','etq','recibo','nota','leo','fat','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
   document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
   if(t==='status') loadFerrStatus();
   if(t==='etq') fEtqInit();
   if(t==='recibo') fRecInit();
   if(t==='nota') fNotaInit();
   if(t==='leo') fLeoInit();
+  if(t==='fat') fFatInit();
 }
 /* ---- NOTA FISCAL + BOLETO (sub-aba 📄, via Asaas) ---- */
 const NOTA_API_URL = 'https://mgb-financeiro.vercel.app/api/asaas';
@@ -7046,6 +7073,123 @@ async function fLeoEnviarEmail(){
   }catch(e){
     st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+'</div>';
   }finally{ btn.disabled=false; btn.style.opacity='1'; }
+}
+
+/* ---- FATURAMENTO EM LOTE (sub-aba 🚀) — lê a planilha "MGB Faturamento - Clientes" ---- */
+const FATURAMENTO_API_URL = 'https://script.google.com/macros/s/AKfycbwdlNqijPhK5MfOFhQ-4lo72hA-3G1J-iPZbdoOZAQGv_8z7NG4QBjNxDIhmZNFOIa8/exec';
+const FAT_MANUAL_MODULOS = ['Tarobá','Bureau de Mídia']; // sempre manual, nunca entra no lote (comissão fecha depois)
+let fatLinhas = [];
+function fFatInit(){
+  const cfg=document.getElementById('f-fat-config');
+  if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Antes de usar</div><div class="ferr-d" style="color:#92400E">Precisa da mesma configuração da aba Nota Fiscal (<code>ASAAS_API_KEY</code>) + o script da planilha autorizado uma vez pelo Eder no navegador. Se "Carregar planilha" der erro de autorização, abra o link do script uma vez e clique em Permitir.</div>'; }
+  const compEl=document.getElementById('f-fat-comp');
+  if(compEl && !compEl.value){ const d=new Date(); compEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  const aliqEl=document.getElementById('f-fat-aliq');
+  if(aliqEl) aliqEl.value = notaConfig.aliquotaMes!=null ? (fRecNum(notaConfig.aliquotaMes)+'%') : '⚠ configure na aba Nota Fiscal';
+  fFatLista();
+}
+function fFatEhManual(modulo){ return FAT_MANUAL_MODULOS.indexOf(modulo)>-1; }
+async function fFatCarregar(){
+  const btn=document.getElementById('f-fat-btn-carregar'); const st=document.getElementById('f-fat-status');
+  btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Lendo a planilha…</div>';
+  try{
+    const r=await fetch(FATURAMENTO_API_URL+'?action=listar');
+    const j=await r.json();
+    if(j.erro) throw new Error(j.erro);
+    fatLinhas=(j.rows||[]).map(row=>({ ...row, selecionado:false, status:'pendente', erro:null, invoiceId:null, paymentId:null, boletoUrl:null }));
+    st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
+    fFatLista();
+  }catch(e){
+    st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+' — se for erro de autorização, abra o link do script uma vez no navegador e clique em Permitir.</div>';
+  }finally{ btn.disabled=false; btn.style.opacity='1'; }
+}
+function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)) r.selecionado=true; }); fFatLista(); }
+function fFatLimparSelecao(){ fatLinhas.forEach(r=>r.selecionado=false); fFatLista(); }
+function fFatToggle(id){ const r=fatLinhas.find(x=>x.id===id); if(r) r.selecionado=!r.selecionado; fFatLista(); }
+function fFatResumo(){
+  const el=document.getElementById('f-fat-resumo'); if(!el) return;
+  const sel=fatLinhas.filter(r=>r.selecionado).length;
+  el.textContent = fatLinhas.length ? (sel+' selecionado(s) de '+fatLinhas.length) : '';
+}
+function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
+function fFatLista(){
+  const el=document.getElementById('f-fat-lista'); if(!el) return;
+  fFatResumo();
+  if(!fatLinhas.length){ el.innerHTML='<div class="ferr-info">Clique em "Carregar planilha" pra ver os clientes ativos.</div>'; return; }
+  const comp=(document.getElementById('f-fat-comp')||{}).value||'';
+  const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th></tr>'+
+    lst.map(r=>{
+      const manual=fFatEhManual(r.modulo);
+      const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
+      return '<tr style="'+(manual?'opacity:.5':'')+'"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(manual?'<span title="Sempre manual, use a aba Nota Fiscal" style="color:var(--muted)">🔒</span>':'<input type="checkbox" '+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(r.valor||0)+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado||'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td></tr>';
+    }).join('')+'</table>';
+}
+async function fFatEmitirUma(row){
+  const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
+  const comp=document.getElementById('f-fat-comp').value||'';
+  row.status='emitindo'; row.erro=null; fFatLista();
+  const payload={
+    tomador:{ nome:row.cliente, cnpj:row.cnpj, email:row.email },
+    servico:{ codigo:String(row.ctribnac||''), descricao:(row.descricao||'Prestação de serviços de mídia')+' — competência '+comp },
+    valores:{ total:row.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
+  };
+  try{
+    const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('Asaas respondeu '+r.status));
+    row.paymentId=j.paymentId; row.invoiceId=j.invoiceId; row.boletoUrl=j.boletoUrl||null;
+    if(!row.invoiceId) throw new Error(j.invoiceErro||'Não retornou invoiceId.');
+    row.status='aguardando-nota';
+  }catch(e){ row.status='erro'; row.erro=e.message; }
+  fFatLista();
+  return row.status;
+}
+async function fFatAguardarAutorizacao(id, tentativas){
+  tentativas=tentativas||0;
+  const row=fatLinhas.find(x=>x.id===id); if(!row||!row.invoiceId||row.status==='emitida') return;
+  if(tentativas>20) return; // ~2min, depois só fica "aguardando-nota" — dá pra conferir manual na Asaas
+  const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
+  try{
+    const r=await fetch(NOTA_API_URL+'?action=status&ambiente='+ambiente+'&invoiceId='+encodeURIComponent(row.invoiceId)+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):''));
+    const j=await r.json();
+    if(r.ok){
+      row.boletoUrl=row.boletoUrl||j.boletoUrl||null;
+      if(j.status==='AUTHORIZED'){
+        row.status='emitida'; fFatLista();
+        const comp=document.getElementById('f-fat-comp').value||'';
+        fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(j.numero||'')+'&valorBoleto='+encodeURIComponent(row.valor)).catch(()=>{});
+        return;
+      }
+      if(j.status==='ERROR'){ row.status='erro'; row.erro=j.erro||'Erro na emissão da nota'; fFatLista(); return; }
+    }
+  }catch(e){}
+  setTimeout(()=>fFatAguardarAutorizacao(id,tentativas+1), 6000);
+}
+async function fFatEmitirSelecionados(){
+  const selecionados=fatLinhas.filter(r=>r.selecionado&&!fFatEhManual(r.modulo));
+  if(!selecionados.length){ alert('Marque pelo menos um cliente.'); return; }
+  if(notaConfig.aliquotaMes==null){ alert('Configure a alíquota ISS do mês na aba Nota Fiscal antes de emitir.'); return; }
+  const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
+  if(!confirm('Isso vai emitir nota + boleto pra '+selecionados.length+' cliente(s) em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+'. Confirma?')) return;
+  const btn=document.getElementById('f-fat-btn-emitir'); const st=document.getElementById('f-fat-status');
+  btn.disabled=true; btn.style.opacity='.6';
+  let ok=0, falhas=0;
+  for(let i=0;i<selecionados.length;i++){
+    st.innerHTML='<div class="ferr-info">Emitindo '+(i+1)+'/'+selecionados.length+'… ('+selecionados[i].cliente+')</div>';
+    const status=await fFatEmitirUma(selecionados[i]);
+    if(status==='erro') falhas++; else ok++;
+    await new Promise(res=>setTimeout(res,400));
+  }
+  st.innerHTML='<div class="ferr-info" style="color:'+(falhas?'var(--red)':'var(--green)')+'">✓ '+ok+' enviada(s) pra Asaas'+(falhas?', '+falhas+' com erro (veja a lista)':'')+'. Acompanhando autorização das notas…</div>';
+  btn.disabled=false; btn.style.opacity='1';
+  selecionados.filter(r=>r.invoiceId&&r.status!=='erro').forEach(r=>fFatAguardarAutorizacao(r.id));
 }
 /* ---- IMAGEM helpers ---- */
 function fImgLoad(file){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=URL.createObjectURL(file); }); }
