@@ -866,6 +866,7 @@ body{-webkit-font-smoothing:antialiased}
     <div class="sb-lbl" style="margin-top:10px">Financeiro</div>
     <div class="sb-nav-item" id="nav-custos" title="Financeiro MGB" onclick="goPage('overview')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20v-7M11 20V5M17 20v-10"/><path d="M3 20h18"/></svg>Financeiro MGB</div>
     <div class="sb-nav-item" id="nav-pessoal" title="Pessoal" onclick="goPage('pessoal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>Pessoal</div>
+    <div class="sb-nav-item" id="nav-contabilidade" title="Contabilidade" onclick="goPage('contabilidade')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l3 3v15H6V6z"/><path d="M9 3v4H6M9 12h6M9 16h6"/></svg>Contabilidade</div>
     <div class="sb-lbl" style="margin-top:10px">Operação</div>
     <div class="sb-nav-item" id="nav-contratos" title="Contratos" onclick="goOperacional('contratos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>Contratos</div>
     <div class="sb-nav-item" id="nav-estudio" title="Estúdio" onclick="goOperacional('estudio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Estúdio</div>
@@ -5916,10 +5917,6 @@ function copiarSpot() {
       <span class="ferr-tab" onclick="showFerrTab('video',this)">Vídeo</span>
       <span class="ferr-tab" onclick="showFerrTab('qr',this)">QR &amp; Links</span>
       <span class="ferr-tab" onclick="showFerrTab('etq',this)">🏷️ Etiquetas</span>
-      <span class="ferr-tab" onclick="showFerrTab('recibo',this)">🧾 Recibos</span>
-      <span class="ferr-tab" onclick="showFerrTab('nota',this)">📄 Nota Fiscal</span>
-      <span class="ferr-tab" onclick="showFerrTab('leo',this)">🧴 Léo</span>
-      <span class="ferr-tab" onclick="showFerrTab('fat',this)">🚀 Faturamento</span>
       <span class="ferr-tab" onclick="showFerrTab('calc',this)">Calculadoras</span>
       <span class="ferr-tab" onclick="showFerrTab('backup',this)">Backup</span>
       <span class="ferr-tab" onclick="showFerrTab('status',this)">📡 Monitoramento</span>
@@ -6239,7 +6236,88 @@ function copiarSpot() {
     </div>
 
     <!-- ══════ CALCULADORAS ══════ -->
-    <div id="ferr-recibo" style="display:none">
+    <div id="ferr-calc" style="display:none">
+      <div class="ferr-grid">
+        <div class="ferr-card">
+          <div class="ferr-t">％ Porcentagem</div><div class="ferr-d">Quanto é B% de A, com acréscimo e desconto.</div>
+          <div style="display:flex;gap:6px;align-items:center"><input id="c-pct-a" type="number" class="ferr-in" placeholder="Valor A" oninput="calcPct()"><span style="color:var(--muted)">e</span><input id="c-pct-b" type="number" class="ferr-in" placeholder="% B" oninput="calcPct()"></div>
+          <div id="c-pct-out" class="ferr-info" style="color:var(--text);margin-top:10px"></div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">📈 Juros compostos</div><div class="ferr-d">Simula investimento/financiamento.</div>
+          <div style="display:flex;gap:6px"><input id="c-j-p" type="number" class="ferr-in" placeholder="Capital R$" oninput="calcJuros()"><input id="c-j-i" type="number" class="ferr-in" placeholder="% ao mês" oninput="calcJuros()"><input id="c-j-n" type="number" class="ferr-in" placeholder="meses" oninput="calcJuros()"></div>
+          <div id="c-j-out" class="ferr-info" style="color:var(--text);margin-top:10px"></div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">➗ Regra de 3</div><div class="ferr-d">A está para B, assim como C está para X.</div>
+          <div style="display:flex;gap:6px;align-items:center"><input id="c-r3-a" type="number" class="ferr-in" placeholder="A" oninput="calcR3()"><span style="color:var(--muted)">→</span><input id="c-r3-b" type="number" class="ferr-in" placeholder="B" oninput="calcR3()"></div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="c-r3-c" type="number" class="ferr-in" placeholder="C" oninput="calcR3()"><span style="color:var(--muted)">→</span><span style="flex:1;color:var(--text)" id="c-r3-out" class="ferr-info"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ BACKUP ══════ -->
+    <div id="ferr-backup" style="display:none">
+      <div class="ferr-grid">
+        <div class="ferr-card">
+          <div class="ferr-t">⬇ Baixar backup completo</div>
+          <div class="ferr-d">Salva <b>tudo</b> (Financeiro, Pessoal, Blocos Rádio, regras e ajustes) num arquivo <code>.json</code>. Guarde no PC ou no Google Drive.</div>
+          <button onclick="mgbBackupBaixar()" class="ferr-btn">⬇ Baixar backup agora</button>
+          <div id="bkp-info" class="ferr-info"></div>
+        </div>
+        <div class="ferr-card">
+          <div class="ferr-t">♻ Restaurar backup</div>
+          <div class="ferr-d" style="color:#D97706">⚠ Substitui todos os dados atuais pelos do arquivo. Use só pra recuperar.</div>
+          <input type="file" accept="application/json,.json" onchange="mgbBackupRestaurar(this)" class="ferr-file">
+        </div>
+        <div class="ferr-card" style="grid-column:span 2">
+          <div style="font-size:11px;color:var(--muted);line-height:1.6">💡 <b>Como funciona:</b> o sistema já sincroniza sozinho no Google Sheets (Financeiro/Pessoal) e no servidor (Blocos). O backup é a sua <b>cópia offline</b> — protege se a planilha, a conta Google ou a hospedagem cair. Recomendo baixar um a cada semana, ou antes de mexer em algo grande.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ STATUS / MONITORAMENTO (telas 4YouSee + rádio Vaapty) ══════ -->
+    <div id="ferr-status" style="display:none">
+      <div style="padding:0 22px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;color:var(--muted)">Painéis que já existem em agenciamgb.com.br, puxados ao vivo aqui dentro.</div>
+        <button class="ferr-btn" style="padding:6px 14px;font-size:11px" onclick="loadFerrStatus()">🔄 Atualizar</button>
+      </div>
+
+      <div style="padding:0 22px 14px">
+        <div class="ferr-card">
+          <div class="ferr-t">📺 Telas — Painel 4YouSee</div>
+          <div class="ferr-d" id="ferr-telas-atualizado">Carregando…</div>
+          <div id="ferr-telas-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
+          <input class="ferr-in" id="ferr-telas-busca" placeholder="Buscar tela por nome..." style="margin-bottom:10px" oninput="renderFerrTelasLista()">
+          <div id="ferr-telas-lista" style="max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+
+      <div style="padding:0 22px 28px">
+        <div class="ferr-card">
+          <div class="ferr-t">🎧 Rádio Vaapty</div>
+          <div class="ferr-d">Rádio tocada nas lojas Vaapty — status de conexão das unidades.</div>
+          <div id="ferr-radio-status" style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Carregando…</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="ferr-btn" style="text-decoration:none" href="https://agenciamgb.com.br/radios/vaapty/" target="_blank">▶ Abrir player</a>
+            <a class="ferr-btn" style="text-decoration:none;background:var(--surface2);color:var(--text);border:1px solid var(--border2)" href="https://agenciamgb.com.br/radios/vaapty/status/" target="_blank">📋 Painel original</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div id="page-contabilidade" style="display:none">
+    <div class="page-hdr">
+      <div><div class="page-title">Contabilidade</div><div class="page-sub">Recibos, notas fiscais e boletos — Asaas</div></div>
+    </div>
+    <div style="padding:6px 22px 12px">
+      <span class="ferr-tab on" onclick="showContabTab('recibo',this)">🧾 Recibos</span>
+      <span class="ferr-tab" onclick="showContabTab('nota',this)">📄 Nota Fiscal</span>
+      <span class="ferr-tab" onclick="showContabTab('leo',this)">🧴 Léo</span>
+      <span class="ferr-tab" onclick="showContabTab('fat',this)">🚀 Faturamento</span>
+    </div>
+    <div id="ferr-recibo">
       <div class="ferr-grid" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
         <div class="ferr-card">
           <div class="ferr-t">🧾 Emitir recibo</div><div class="ferr-d">Escolha o cliente: módulo e descrição do serviço vêm sozinhos. Só o valor é manual. PIX fixo da conta C6 (financeiro@agenciamgb.com.br).</div>
@@ -6365,7 +6443,7 @@ function copiarSpot() {
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
           <div><label class="ferr-lbl">Ambiente</label><select id="f-fat-amb" class="ferr-in"><option value="sandbox">🧪 Sandbox</option><option value="producao">🔴 Produção</option></select></div>
           <div><label class="ferr-lbl">Competência</label><input id="f-fat-comp" class="ferr-in" placeholder="ex.: 2026-10"></div>
-          <div><label class="ferr-lbl">Alíquota ISS do mês</label><input id="f-fat-aliq" class="ferr-in" placeholder="vem da aba Nota Fiscal" disabled></div>
+          <div><label class="ferr-lbl">Alíquota ISS do mês</label><input id="f-fat-aliq" class="ferr-in" inputmode="decimal" placeholder="ex.: 3,50" oninput="fAliqSalvar(this.value)"></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
           <button class="ferr-btn" onclick="fFatCarregar()" id="f-fat-btn-carregar">🔄 Carregar planilha</button>
@@ -6382,77 +6460,8 @@ function copiarSpot() {
         <div id="f-fat-lista" style="margin-top:10px;overflow-x:auto"></div>
       </div>
     </div>
-    <div id="ferr-calc" style="display:none">
-      <div class="ferr-grid">
-        <div class="ferr-card">
-          <div class="ferr-t">％ Porcentagem</div><div class="ferr-d">Quanto é B% de A, com acréscimo e desconto.</div>
-          <div style="display:flex;gap:6px;align-items:center"><input id="c-pct-a" type="number" class="ferr-in" placeholder="Valor A" oninput="calcPct()"><span style="color:var(--muted)">e</span><input id="c-pct-b" type="number" class="ferr-in" placeholder="% B" oninput="calcPct()"></div>
-          <div id="c-pct-out" class="ferr-info" style="color:var(--text);margin-top:10px"></div>
-        </div>
-        <div class="ferr-card">
-          <div class="ferr-t">📈 Juros compostos</div><div class="ferr-d">Simula investimento/financiamento.</div>
-          <div style="display:flex;gap:6px"><input id="c-j-p" type="number" class="ferr-in" placeholder="Capital R$" oninput="calcJuros()"><input id="c-j-i" type="number" class="ferr-in" placeholder="% ao mês" oninput="calcJuros()"><input id="c-j-n" type="number" class="ferr-in" placeholder="meses" oninput="calcJuros()"></div>
-          <div id="c-j-out" class="ferr-info" style="color:var(--text);margin-top:10px"></div>
-        </div>
-        <div class="ferr-card">
-          <div class="ferr-t">➗ Regra de 3</div><div class="ferr-d">A está para B, assim como C está para X.</div>
-          <div style="display:flex;gap:6px;align-items:center"><input id="c-r3-a" type="number" class="ferr-in" placeholder="A" oninput="calcR3()"><span style="color:var(--muted)">→</span><input id="c-r3-b" type="number" class="ferr-in" placeholder="B" oninput="calcR3()"></div>
-          <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="c-r3-c" type="number" class="ferr-in" placeholder="C" oninput="calcR3()"><span style="color:var(--muted)">→</span><span style="flex:1;color:var(--text)" id="c-r3-out" class="ferr-info"></span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════ BACKUP ══════ -->
-    <div id="ferr-backup" style="display:none">
-      <div class="ferr-grid">
-        <div class="ferr-card">
-          <div class="ferr-t">⬇ Baixar backup completo</div>
-          <div class="ferr-d">Salva <b>tudo</b> (Financeiro, Pessoal, Blocos Rádio, regras e ajustes) num arquivo <code>.json</code>. Guarde no PC ou no Google Drive.</div>
-          <button onclick="mgbBackupBaixar()" class="ferr-btn">⬇ Baixar backup agora</button>
-          <div id="bkp-info" class="ferr-info"></div>
-        </div>
-        <div class="ferr-card">
-          <div class="ferr-t">♻ Restaurar backup</div>
-          <div class="ferr-d" style="color:#D97706">⚠ Substitui todos os dados atuais pelos do arquivo. Use só pra recuperar.</div>
-          <input type="file" accept="application/json,.json" onchange="mgbBackupRestaurar(this)" class="ferr-file">
-        </div>
-        <div class="ferr-card" style="grid-column:span 2">
-          <div style="font-size:11px;color:var(--muted);line-height:1.6">💡 <b>Como funciona:</b> o sistema já sincroniza sozinho no Google Sheets (Financeiro/Pessoal) e no servidor (Blocos). O backup é a sua <b>cópia offline</b> — protege se a planilha, a conta Google ou a hospedagem cair. Recomendo baixar um a cada semana, ou antes de mexer em algo grande.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════ STATUS / MONITORAMENTO (telas 4YouSee + rádio Vaapty) ══════ -->
-    <div id="ferr-status" style="display:none">
-      <div style="padding:0 22px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <div style="font-size:11px;color:var(--muted)">Painéis que já existem em agenciamgb.com.br, puxados ao vivo aqui dentro.</div>
-        <button class="ferr-btn" style="padding:6px 14px;font-size:11px" onclick="loadFerrStatus()">🔄 Atualizar</button>
-      </div>
-
-      <div style="padding:0 22px 14px">
-        <div class="ferr-card">
-          <div class="ferr-t">📺 Telas — Painel 4YouSee</div>
-          <div class="ferr-d" id="ferr-telas-atualizado">Carregando…</div>
-          <div id="ferr-telas-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
-          <input class="ferr-in" id="ferr-telas-busca" placeholder="Buscar tela por nome..." style="margin-bottom:10px" oninput="renderFerrTelasLista()">
-          <div id="ferr-telas-lista" style="max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:6px"></div>
-        </div>
-      </div>
-
-      <div style="padding:0 22px 28px">
-        <div class="ferr-card">
-          <div class="ferr-t">🎧 Rádio Vaapty</div>
-          <div class="ferr-d">Rádio tocada nas lojas Vaapty — status de conexão das unidades.</div>
-          <div id="ferr-radio-status" style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Carregando…</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="ferr-btn" style="text-decoration:none" href="https://agenciamgb.com.br/radios/vaapty/" target="_blank">▶ Abrir player</a>
-            <a class="ferr-btn" style="text-decoration:none;background:var(--surface2);color:var(--text);border:1px solid var(--border2)" href="https://agenciamgb.com.br/radios/vaapty/status/" target="_blank">📋 Painel original</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
+
 
 </main>
 </div>
@@ -6828,15 +6837,24 @@ function fRecReimprimir(id){ const r=recibos.find(x=>x.id===id); if(r) fRecAbrir
 function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod+'|'+r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); fRecCompSet(r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
 function fRecExcluir(id){ const r=recibos.find(x=>x.id===id); if(!r) return; if(!confirm('Excluir o recibo '+r.numero+'?')) return; recibos=recibos.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fRecLista(); }
 function showFerrTab(t, el){
-  ['pdf','img','video','qr','etq','recibo','nota','leo','fat','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
-  document.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on');
+  ['pdf','img','video','qr','etq','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  const pg=document.getElementById('page-ferramentas');
+  if(pg) pg.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on'));
+  if(el)el.classList.add('on');
   if(t==='status') loadFerrStatus();
   if(t==='etq') fEtqInit();
+}
+function showContabTab(t, el){
+  ['recibo','nota','leo','fat'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
+  const pg=document.getElementById('page-contabilidade');
+  if(pg) pg.querySelectorAll('.ferr-tab').forEach(x=>x.classList.remove('on'));
+  if(el)el.classList.add('on');
   if(t==='recibo') fRecInit();
   if(t==='nota') fNotaInit();
   if(t==='leo') fLeoInit();
   if(t==='fat') fFatInit();
 }
+function initContabilidade(){ showContabTab('recibo', document.querySelector('#page-contabilidade .ferr-tab')); }
 /* ---- NOTA FISCAL + BOLETO (sub-aba 📄, via Asaas) ---- */
 const NOTA_API_URL = 'https://mgb-financeiro.vercel.app/api/asaas';
 const EMAIL_API_URL = 'https://mgb-financeiro.vercel.app/api/email';
@@ -6860,14 +6878,20 @@ function fNotaAliqInfo(){
     ? '<span style="color:var(--green)">✓ já atualizada este mês</span>'
     : '<span style="color:#B45309">⚠ essa alíquota é de um mês anterior — confira se ainda vale</span>';
 }
-function fNotaSalvarAliqMes(){
-  const v=fRecParseValor(document.getElementById('f-nota-aliq-mes').value);
+function fAliqSalvar(valorStr){
+  const v=fRecParseValor(valorStr);
   notaConfig={ aliquotaMes: v||null, atualizadaEm: new Date().toISOString().slice(0,7) };
   try{ scheduleSave(); }catch(e){}
+  // sincroniza os dois campos (Nota Fiscal e Faturamento) sem sobrescrever o que o usuário está digitando neles
+  ['f-nota-aliq-mes','f-fat-aliq'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && document.activeElement!==el) el.value = v ? fRecNum(v) : '';
+  });
   fNotaAliqInfo();
   // já reflete no campo da nota em andamento, se estiver vazio
   const issEl=document.getElementById('f-nota-iss'); if(issEl && !issEl.value && v) issEl.value=fRecNum(v);
 }
+function fNotaSalvarAliqMes(){ fAliqSalvar(document.getElementById('f-nota-aliq-mes').value); }
 function fNotaCliente(){
   const v=document.getElementById('f-nota-cli').value; if(!v) return;
   const [mod,item]=v.split('|'); const m=MODULES.find(x=>x.id===mod)||{};
@@ -7085,7 +7109,7 @@ function fFatInit(){
   const compEl=document.getElementById('f-fat-comp');
   if(compEl && !compEl.value){ const d=new Date(); compEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
   const aliqEl=document.getElementById('f-fat-aliq');
-  if(aliqEl) aliqEl.value = notaConfig.aliquotaMes!=null ? (fRecNum(notaConfig.aliquotaMes)+'%') : '⚠ configure na aba Nota Fiscal';
+  if(aliqEl && !aliqEl.value && notaConfig.aliquotaMes!=null) aliqEl.value=fRecNum(notaConfig.aliquotaMes);
   fFatLista();
 }
 function fFatEhManual(modulo){ return FAT_MANUAL_MODULOS.indexOf(modulo)>-1; }
@@ -8629,13 +8653,13 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 function goPage(p){
   curPage=p;
-  ['home','overview','custos','pessoal','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads','propvaapty','radioops'].forEach(id=>{
+  ['home','overview','custos','pessoal','contabilidade','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads','propvaapty','radioops'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
   var target=document.getElementById('page-'+p);
   if(target) target.style.display='block';
-  ['nav-home','nav-custos','nav-pessoal','nav-contratos','nav-estudio','nav-relatorios','nav-ferramentas','nav-gerador','nav-midiakit','nav-apresmgb','nav-sindicos','nav-leads','nav-propvaapty','nav-radioops'].forEach(id=>{
+  ['nav-home','nav-custos','nav-pessoal','nav-contabilidade','nav-contratos','nav-estudio','nav-relatorios','nav-ferramentas','nav-gerador','nav-midiakit','nav-apresmgb','nav-sindicos','nav-leads','nav-propvaapty','nav-radioops'].forEach(id=>{
     var el=document.getElementById(id);
     if(el) el.classList.remove('on');
   });
@@ -8661,6 +8685,7 @@ function goPage(p){
     if(fpv && !fpv.src) fpv.src='proposta-vaapty.html?t='+Date.now(); // lazy + cache-bust
   }
   if(p==='ferramentas'){ var elf=document.getElementById('nav-ferramentas'); if(elf) elf.classList.add('on'); try{initFerramentas();}catch(e){} }
+  if(p==='contabilidade'){ var elc=document.getElementById('nav-contabilidade'); if(elc) elc.classList.add('on'); try{initContabilidade();}catch(e){} }
   if(p==='leads'){ var eld=document.getElementById('nav-leads'); if(eld) eld.classList.add('on'); try{buildLeads();}catch(e){} }
   if(p==='radioops'){ var elr=document.getElementById('nav-radioops'); if(elr) elr.classList.add('on'); try{buildRadioOps();}catch(e){} try{ ropsSetTab(localStorage.getItem('rops_tab')||'painel'); }catch(e){} }
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
