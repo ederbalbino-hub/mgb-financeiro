@@ -6901,6 +6901,28 @@ function fNotaCliente(){
   const base=(REC_DESC[mod]||'Prestação de serviços de mídia — {item}').replace('{item}',item);
   document.getElementById('f-nota-desc').value=base;
   const issEl=document.getElementById('f-nota-iss'); if(issEl && !issEl.value && notaConfig.aliquotaMes!=null) issEl.value=fRecNum(notaConfig.aliquotaMes);
+  // Rádio Moinho (Bureau): a Nota MGB do mês já vem calculada sozinha no Rádio Ops (fee+comissão+Connectmix) — puxa automático
+  const modEl=document.getElementById('f-nota-mod'), valorEl=document.getElementById('f-nota-valor');
+  if(mod==='radioops' && item==='Moinho Globo' && valorEl && !valorEl.value){
+    const hoje=new Date(); const rf=(typeof ropsFinMes==='function')?ropsFinMes(hoje.getFullYear(),hoje.getMonth()):{receita:0};
+    if(rf.receita>0){
+      valorEl.value=fRecNum(rf.receita);
+      modEl.innerHTML='Módulo: '+(m.label||mod)+' · <span style="color:var(--green)">✓ Nota MGB de '+MESES[hoje.getMonth()]+'/'+hoje.getFullYear()+' puxada do Rádio Ops</span>';
+    }else{
+      modEl.innerHTML='Módulo: '+(m.label||mod)+' · <span style="color:#B45309">⚠ não achei a Nota MGB deste mês no Rádio Ops — confira lá (aba Financeiro) e digite o valor manual</span>';
+    }
+  }
+  // Tarobá: mesma ideia — a receita mensal por unidade (Rádio/TV Tarobá Londrina/Cascavel) já é lançada
+  // na página do módulo (Financeiro MGB → Tarobá); puxa sozinho pra cá em vez de digitar de novo
+  if(mod==='taroba' && valorEl && !valorEl.value){
+    const hoje=new Date(); const vlr=(typeof recTarobaGetMes==='function')?recTarobaGetMes(item,hoje.getFullYear(),hoje.getMonth()):0;
+    if(vlr>0){
+      valorEl.value=fRecNum(vlr);
+      modEl.innerHTML='Módulo: '+(m.label||mod)+' · <span style="color:var(--green)">✓ valor de '+MESES[hoje.getMonth()]+'/'+hoje.getFullYear()+' puxado da página do módulo</span>';
+    }else{
+      modEl.innerHTML='Módulo: '+(m.label||mod)+' · <span style="color:#B45309">⚠ '+item+' ainda não tem valor lançado este mês (Financeiro MGB → Tarobá) — digite manual ou lance lá primeiro</span>';
+    }
+  }
 }
 function fNotaLimpar(){
   // não apaga f-nota-aliq-mes: é a configuração do mês, fica valendo pra próxima nota
