@@ -8785,13 +8785,21 @@ function buildSidebar(){
 const PLANO_CAIXA_URL='https://script.google.com/macros/s/AKfycbz-77CBmSrRHB2uYjZNNkazXFt9kYHYL7aQQwz4nil5t9Kmof-6xNsZ8snt5hSrGD_l/exec';
 const PLANO_CAIXA_TOKEN='1d9716ba3d52e39f7cbe4bc19c49149d';
 let _ultimoSyncEmpresa='';
+function escHubId(s){ return String(s).replace(/[^a-zA-Z0-9]+/g,'_'); }
 function syncResumoEmpresaPlanoDeCaixa(ano,mes,receita,despesa){
   const mesRef=ano+'-'+String(mes+1).padStart(2,'0');
-  const chave=mesRef+'|'+receita+'|'+despesa;
+  const dKey=despPagKey(ano,mes);
+  // lista individual (já vem pronta de coletaDespesasMes — não reimplemento recorrência/parcelamento
+  // aqui, só relayo o que o Hub já calculou) pra aparecer dia a dia no Plano de Caixa também.
+  const lista=coletaDespesasMes(ano,mes).map(function(d){
+    const pg=(((despPagamentos[d.m.id]||{})[d.item]||{})[d.idx]||{})[dKey]||{};
+    return { id:'hub_'+escHubId(d.m.id)+'_'+escHubId(d.item)+'_'+escHubId(d.idx), descricao:d.r.d||d.item, detalhe:d.r.f||'', valor:d.vlrMes, pago:!!pg.pago };
+  });
+  const chave=mesRef+'|'+receita+'|'+despesa+'|'+JSON.stringify(lista.map(function(x){return x.id+':'+x.valor+':'+x.pago;}));
   if(chave===_ultimoSyncEmpresa) return; // só manda se mudou algo desde o último envio
   _ultimoSyncEmpresa=chave;
   fetch(PLANO_CAIXA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({token:PLANO_CAIXA_TOKEN,acao:'resumoEmpresa',mesRef:mesRef,receita:receita,despesa:despesa})
+    body:JSON.stringify({token:PLANO_CAIXA_TOKEN,acao:'resumoEmpresa',mesRef:mesRef,receita:receita,despesa:despesa,despesas:lista})
   }).catch(()=>{});
 }
 function escQ(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
