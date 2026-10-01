@@ -8775,6 +8775,24 @@ function buildSidebar(){
   lEl.style.color=vis?(lucroMes>0?'var(--green)':lucroMes<0?'var(--red)':'var(--hint)'):'var(--hint)';
   try{ localStorage.setItem('mgb_sb_footer', JSON.stringify({mes:g('sb-mes-lbl').textContent,rec:g('sb-rec-mes').textContent,desp:g('sb-desp-mes').textContent,lucro:lEl.textContent,lucroColor:(!vis?'rgba(36,26,56,0.77)':(lucroMes>0?'#189A66':lucroMes<0?'#f87171':'rgba(36,26,56,0.77)'))})); }catch(e){}
   try{ buildLeadsBadge(); }catch(e){}
+  syncResumoEmpresaPlanoDeCaixa(anoAtual,mesAtual,recMes,despMes);
+}
+// ── SYNC pro Plano de Caixa (app pessoal) ───────────────────────────────────
+// Empurra só os 2 números já calculados aqui (Receita/Despesa do mês) toda vez que
+// a sidebar recalcula — não lê módulo por módulo, só repassa o total pronto. Token
+// simples (não é segredo de alta segurança) tem que bater com TOKEN_SYNC_EMPRESA no
+// Code.gs do Plano de Caixa. no-cors = fire-and-forget, mesmo padrão do SHEETS_URL.
+const PLANO_CAIXA_URL='https://script.google.com/macros/s/AKfycbz-77CBmSrRHB2uYjZNNkazXFt9kYHYL7aQQwz4nil5t9Kmof-6xNsZ8snt5hSrGD_l/exec';
+const PLANO_CAIXA_TOKEN='1d9716ba3d52e39f7cbe4bc19c49149d';
+let _ultimoSyncEmpresa='';
+function syncResumoEmpresaPlanoDeCaixa(ano,mes,receita,despesa){
+  const mesRef=ano+'-'+String(mes+1).padStart(2,'0');
+  const chave=mesRef+'|'+receita+'|'+despesa;
+  if(chave===_ultimoSyncEmpresa) return; // só manda se mudou algo desde o último envio
+  _ultimoSyncEmpresa=chave;
+  fetch(PLANO_CAIXA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({token:PLANO_CAIXA_TOKEN,acao:'resumoEmpresa',mesRef:mesRef,receita:receita,despesa:despesa})
+  }).catch(()=>{});
 }
 function escQ(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 function sbClick(modId,item){drillMod(modId);switchItem(item);closeSidebar();}
