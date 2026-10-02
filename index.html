@@ -1436,6 +1436,56 @@ body{-webkit-font-smoothing:antialiased}
       </div><!-- /acc-body-dcomp -->
     </div><!-- /desp-comp-section -->
 
+    <div id="elev-invest-section" style="display:none">
+      <div class="acc-hdr open" id="acc-hdr-einvest" onclick="toggleAcc('einvest')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="sec-title">💰 Investimento — Instalação (sócios)</div>
+          <span style="font-size:10px;color:var(--hint)" id="einvest-sum"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
+          <button class="anunc-btn" onclick="toggleElevInvestForm()" style="color:var(--gold,#C0A062);border-color:rgba(192,160,98,.4)">＋ Novo investimento</button>
+          <span class="acc-toggle">›</span>
+        </div>
+      </div>
+      <div class="acc-body" id="acc-body-einvest" style="max-height:3000px">
+        <div class="anunc-section">
+        <div class="anunc-form" id="einvest-form">
+          <div class="anunc-form-row">
+            <div class="anunc-form-field" style="width:170px">
+              <label class="anunc-form-lbl">Condomínio</label>
+              <select class="anunc-form-inp" id="ei-item" style="width:100%"></select>
+            </div>
+            <div class="anunc-form-field" style="flex:1;min-width:160px">
+              <label class="anunc-form-lbl">Descrição</label>
+              <input class="anunc-form-inp" id="ei-desc" placeholder="ex: Instalação (telas, cabos, kits)" style="width:100%">
+            </div>
+            <div class="anunc-form-field" style="width:120px">
+              <label class="anunc-form-lbl">Valor (R$)</label>
+              <input class="anunc-form-inp" id="ei-valor" type="number" step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="anunc-form-field" style="width:110px">
+              <label class="anunc-form-lbl">Pago por</label>
+              <select class="anunc-form-inp" id="ei-pagopor" style="width:100%">
+                <option value="jadson">Jadson</option>
+                <option value="eder">Eder</option>
+              </select>
+            </div>
+            <div class="anunc-form-field" style="width:130px">
+              <label class="anunc-form-lbl">📅 Data</label>
+              <input class="anunc-form-inp" id="ei-data" type="date" style="color-scheme:dark">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button onclick="saveElevInvest()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--gold,#C0A062);color:#1B2337;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
+            <button onclick="cancelElevInvest()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+        <div class="kpis" id="einvest-totais" style="margin:14px 0"></div>
+        <div class="anunc-grid" id="einvest-grid"></div>
+      </div><!-- /anunc-section -->
+      </div><!-- /acc-body-einvest -->
+    </div><!-- /elev-invest-section -->
+
     <div class="rec-section">
       <div class="rec-card">
         <!-- Accordion: Receita -->
@@ -8110,6 +8160,13 @@ let notaConfig = { aliquotaMes: null }; // alíquota ISS do Simples Nacional, at
 // despesasComp = [{id, nome, forn, valor, inicio, meses, telas:[]}]
 let despesasComp = [];
 let despCompId = 1;
+// ── INVESTIMENTO · INSTALAÇÃO (sócios Jadson/Eder — Elevadores/Tela Vertical) ────────────
+// elevInvestimentos = [{id, item, descricao, valor, pagoPor:'jadson'|'eder', data, criadoEm}]
+// Substitui a planilha Excel de controle (CC Jadson × CC Eder) — alimentado na mão aqui
+// ou automaticamente pela skill /novo-condominio (ver ELEV_INVEST_NOVOS mais abaixo).
+let elevInvestimentos = [];
+let elevInvestId = 1;
+let editElevInvestId = null;
 // anunciantes = [{id, nome, valor, inicio, meses, telas:[]}]
 let anunciantes = [];
 let anuncId = 1;
@@ -10296,6 +10353,99 @@ function buildDespComp(){
   }
 }
 
+// ── INVESTIMENTO · INSTALAÇÃO (sócios) ───────────────────────────────────────
+function elevInvestTotais(){
+  const jadson=elevInvestimentos.filter(x=>x.pagoPor==='jadson').reduce((a,x)=>a+(x.valor||0),0);
+  const eder=elevInvestimentos.filter(x=>x.pagoPor==='eder').reduce((a,x)=>a+(x.valor||0),0);
+  return {jadson,eder,total:jadson+eder,dif:jadson-eder};
+}
+function buildElevInvest(){
+  const isElev=curMod==='elev';
+  const sec=g('elev-invest-section'); if(!sec) return;
+  sec.style.display=isElev?'':'none';
+  if(!isElev) return;
+  const sel=g('ei-item'); const elevMod=MODULES.find(m=>m.id==='elev');
+  if(sel && elevMod){
+    const atual=sel.value;
+    sel.innerHTML=elevMod.items.map(it=>`<option value="${it.replace(/"/g,'&quot;')}">${it}</option>`).join('');
+    if(elevMod.items.includes(atual)) sel.value=atual;
+  }
+  const t=elevInvestTotais();
+  g('einvest-sum').textContent=elevInvestimentos.length?`${elevInvestimentos.length} lançamento(s) · ${f(t.total)} investido`:'';
+  g('einvest-totais').innerHTML=`
+    <div class="kpi"><div class="kpi-lbl">Investido até agora</div><div class="kpi-val">${f(t.total)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">CC Jadson</div><div class="kpi-val">${f(t.jadson)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">CC Eder</div><div class="kpi-val">${f(t.eder)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Diferença (Jadson − Eder)</div><div class="kpi-val" style="color:${t.dif>=0?'var(--green)':'var(--red)'}">${t.dif>=0?'+':''}${f(t.dif)}</div></div>`;
+  const grid=g('einvest-grid');
+  if(!elevInvestimentos.length){
+    grid.innerHTML=`<div class="anunc-empty">Nenhum investimento lançado ainda.<br><span style="font-size:10px">Nasce sozinho quando um condomínio novo é cadastrado, ou lance na mão aqui.</span></div>`;
+  } else {
+    grid.innerHTML=elevInvestimentos.slice().sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(x=>{
+      const dataLbl=x.data?x.data.split('-').reverse().join('/'):'—';
+      const cor=x.pagoPor==='jadson'?'var(--gold,#C0A062)':'var(--sky,#6FC7E8)';
+      return `<div class="anunc-card">
+        <div class="anunc-nome">${x.item}</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">${x.descricao||''}</div>
+        <div class="anunc-valor" style="color:${cor}">${f(x.valor)}</div>
+        <div class="anunc-info">${x.pagoPor==='jadson'?'Jadson':'Eder'} · ${dataLbl}</div>
+        <div class="anunc-actions" style="margin-top:8px">
+          <button class="anunc-btn" onclick="editElevInvest(${x.id})">✎ Editar</button>
+          <button class="anunc-btn del" onclick="delElevInvest(${x.id})">✕ Remover</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+function toggleElevInvestForm(){
+  editElevInvestId=null;
+  const form=g('einvest-form');
+  const open=form.classList.contains('open');
+  form.classList.toggle('open',!open);
+  if(!open){
+    buildElevInvest();
+    g('ei-desc').value='Instalação (telas, cabos, kits)'; g('ei-valor').value=''; g('ei-pagopor').value='jadson';
+    g('ei-data').value=new Date().toISOString().slice(0,10);
+  }
+}
+function cancelElevInvest(){
+  editElevInvestId=null;
+  g('einvest-form').classList.remove('open');
+  buildElevInvest();
+}
+function editElevInvest(id){
+  const x=elevInvestimentos.find(v=>v.id===id); if(!x) return;
+  editElevInvestId=id;
+  g('einvest-form').classList.add('open');
+  buildElevInvest();
+  g('ei-item').value=x.item; g('ei-desc').value=x.descricao||''; g('ei-valor').value=x.valor;
+  g('ei-pagopor').value=x.pagoPor; g('ei-data').value=x.data||'';
+}
+function saveElevInvest(){
+  const item=g('ei-item').value;
+  const descricao=g('ei-desc').value.trim();
+  const valor=parseFloat(g('ei-valor').value)||0;
+  const pagoPor=g('ei-pagopor').value;
+  const data=g('ei-data').value;
+  if(!item||!valor||!data){ alert('Preencha condomínio, valor e data.'); return; }
+  if(editElevInvestId){
+    const x=elevInvestimentos.find(v=>v.id===editElevInvestId);
+    if(x) Object.assign(x,{item,descricao,valor,pagoPor,data});
+  } else {
+    elevInvestimentos.push({id:elevInvestId++, item, descricao, valor, pagoPor, data, criadoEm:new Date().toISOString()});
+  }
+  editElevInvestId=null;
+  g('einvest-form').classList.remove('open');
+  buildElevInvest();
+  scheduleSave();
+}
+function delElevInvest(id){
+  if(!confirm('Remover esse investimento?')) return;
+  elevInvestimentos=elevInvestimentos.filter(x=>x.id!==id);
+  buildElevInvest();
+  scheduleSave();
+}
+
 function despCompPreview(){
   const valor=parseFloat(g('dc-valor').value)||0;
   const telas=[...g('dc-telas').querySelectorAll('[data-tela].selected')].map(el=>el.dataset.tela);
@@ -11597,7 +11747,7 @@ let migracoes = {}; // flags de migrações one-shot já aplicadas (persistido)
 function serializeState(){
   return {
     migracoes,
-    db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, recPagamentos,
+    db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, elevInvestimentos, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
     pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas, notaConfig, leoUnidades,
@@ -11664,6 +11814,10 @@ function deserializeState(obj){
   if(obj.despesasComp && Array.isArray(obj.despesasComp)){
     despesasComp=obj.despesasComp;
     despCompId=despesasComp.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.elevInvestimentos && Array.isArray(obj.elevInvestimentos)){
+    elevInvestimentos=obj.elevInvestimentos;
+    elevInvestId=elevInvestimentos.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
   }
   if(obj.recPagamentos && typeof obj.recPagamentos==='object'){
     recPagamentos=obj.recPagamentos;
@@ -11834,6 +11988,8 @@ function elevMigrarCondos(){
 // ── CONDOMÍNIOS NOVOS NO MÓDULO ELEVADORES (alimentado pelo script da skill /novo-condominio) ──────────
 // Cada entrada vira unidade do módulo Elevadores + linha recorrente "Sistema TV / 4Yousee" de (telas × ELEV_CUSTO_TV = R$ 70 por tela), uma única vez POR UNIDADE
 // (flag migracoes['elevNovo:<item>']). Idempotente e só roda com estado REAL do Sheets. 'ini' = mês de início do custo (YYYY-MM).
+// instJadson/instEder/instDesc/instData (opcionais): investimento de instalação pago por cada sócio — vira
+// lançamento em elevInvestimentos (flag migracoes['elevInvest:<item>']), substitui a planilha Excel de CC Jadson × CC Eder.
 const ELEV_NOVOS=[
   {item:'Villa Solare', ini:'2026-09', telas:2},
   // <novos>
@@ -11846,17 +12002,26 @@ function elevMigrarNovos(){
   let mudou=false;
   ELEV_NOVOS.forEach(c=>{
     const key='elevNovo:'+c.item;
-    if(migracoes[key]) return;
-    if(!m.items.includes(c.item)) m.items.push(c.item);
-    if(!db.elev[c.item]) db.elev[c.item]=[];
-    if(rec.elev[c.item]===undefined) rec.elev[c.item]={valor:0,inicio:'',meses:12};
-    const tem=db.elev[c.item].some(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
-    if(!tem){
-      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:c.telas||1,u:ELEV_CUSTO_TV,cc:c.item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:c.ini};
-      applyToFin(e,+1);
-      db.elev[c.item].push(e);
+    if(!migracoes[key]){
+      if(!m.items.includes(c.item)) m.items.push(c.item);
+      if(!db.elev[c.item]) db.elev[c.item]=[];
+      if(rec.elev[c.item]===undefined) rec.elev[c.item]={valor:0,inicio:'',meses:12};
+      const tem=db.elev[c.item].some(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
+      if(!tem){
+        const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:c.telas||1,u:ELEV_CUSTO_TV,cc:c.item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:c.ini};
+        applyToFin(e,+1);
+        db.elev[c.item].push(e);
+      }
+      migracoes[key]=true; mudou=true;
     }
-    migracoes[key]=true; mudou=true;
+    const keyInv='elevInvest:'+c.item;
+    if(!migracoes[keyInv] && (c.instJadson||c.instEder)){
+      const data=c.instData||(c.ini+'-05');
+      const desc=c.instDesc||'Instalação (telas, cabos, kits)';
+      if(c.instJadson) elevInvestimentos.push({id:elevInvestId++, item:c.item, descricao:desc, valor:c.instJadson, pagoPor:'jadson', data, criadoEm:new Date().toISOString()});
+      if(c.instEder) elevInvestimentos.push({id:elevInvestId++, item:c.item, descricao:desc, valor:c.instEder, pagoPor:'eder', data, criadoEm:new Date().toISOString()});
+      migracoes[keyInv]=true; mudou=true;
+    }
   });
   if(mudou) scheduleSave();
 }
@@ -13080,11 +13245,11 @@ function buildAll(){
   buildSidebar();buildModTabs();buildItemTabs();
   g('pg-title').textContent=`${mod().icon}  ${mod().label}`;
   g('pg-sub').textContent=mod().desc;
-  buildKPIs();buildAnunciantes();buildDespComp();buildReceitas();buildPayback();buildCharts();buildParcelas();buildTable();buildFooter();
+  buildKPIs();buildAnunciantes();buildDespComp();buildElevInvest();buildReceitas();buildPayback();buildCharts();buildParcelas();buildTable();buildFooter();
   refreshAccLabels();
 }
 function refresh(){
-  buildSidebar();buildKPIs();buildAnunciantes();buildDespComp();buildReceitas();buildPayback();buildCharts();buildParcelas();buildTable();buildFooter();
+  buildSidebar();buildKPIs();buildAnunciantes();buildDespComp();buildElevInvest();buildReceitas();buildPayback();buildCharts();buildParcelas();buildTable();buildFooter();
   if(curPage==='overview')buildOverview();
   scheduleSave();
 }
