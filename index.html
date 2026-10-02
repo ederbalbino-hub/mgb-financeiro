@@ -7029,6 +7029,7 @@ async function fNotaAtualizarStatus(id){
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('Asaas respondeu '+r.status));
     if(j.status) n.status=j.status; n.pdfUrl=j.pdfUrl||n.pdfUrl; n.xmlUrl=j.xmlUrl||n.xmlUrl; n.numero=j.numero||n.numero; n.erro=j.erro||n.erro||null;
+    if(j.paymentStatus) n.paymentStatus=j.paymentStatus;
     n.boletoUrl=n.boletoUrl||j.boletoUrl||null; n.invoiceUrl=n.invoiceUrl||j.invoiceUrl||null;
     try{ scheduleSave(); }catch(e){}
     fNotaLista();
@@ -7048,8 +7049,16 @@ function fNotaLista(){
   const lst=[...notas].sort((a,b)=>(b.ts||0)-(a.ts||0));
   if(!lst.length){ el.innerHTML='<div class="ferr-info">Nenhuma nota emitida ainda.</div>'; return; }
   const badge=s=>({AUTHORIZED:'✅ emitida',SCHEDULED:'⏳ agendada',PROCESSING:'⏳ processando',processing:'⏳ processando',ERROR:'⚠ erro',CANCELED:'⚠ cancelada',boleto_ok_nota_pendente:'⏳ boleto ok, nota pendente',boleto_sem_nota:'🧾 só boleto (sem nota)'}[s]||s||'?');
+  // Status de PAGAMENTO do boleto (diferente do status da nota acima) — pede "atualizar" pra
+  // consultar a Asaas na hora, sem precisar abrir o site deles.
+  const badgePag=n=>{
+    if(!n.paymentId) return '';
+    const map={PENDING:{i:'⚪',t:'aguardando',c:'var(--muted)'},OVERDUE:{i:'🔴',t:'vencido',c:'var(--red)'},RECEIVED:{i:'🟢',t:'pago',c:'var(--green)'},CONFIRMED:{i:'🟢',t:'pago',c:'var(--green)'},RECEIVED_IN_CASH:{i:'🟢',t:'pago',c:'var(--green)'},REFUNDED:{i:'⚫',t:'estornado',c:'var(--muted)'},DELETED:{i:'⚫',t:'cancelado',c:'var(--muted)'}};
+    const m=map[n.paymentStatus]||{i:'⚪',t:'aguardando',c:'var(--muted)'};
+    return ' <span style="color:'+m.c+';font-weight:600">· '+m.i+' '+m.t+'</span>';
+  };
   el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em"><th style="text-align:left;padding:4px 6px">Data</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:left;padding:4px 6px">Ambiente</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:right;padding:4px 6px">Valor</th><th></th></tr>'+
-    lst.map(n=>'<tr><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+(n.data||'').split('-').reverse().join('/')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+n.cliente+' <span style="color:var(--muted);font-size:10.5px">'+(n.modLabel||'')+'</span></td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+(n.ambiente==='producao'?'🔴 produção':'🧪 sandbox')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+badge(n.status)+(n.erro?' <span style="color:var(--red)">('+n.erro+')</span>':'')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(n.valor||0)+'</td>'+
+    lst.map(n=>'<tr><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+(n.data||'').split('-').reverse().join('/')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+n.cliente+' <span style="color:var(--muted);font-size:10.5px">'+(n.modLabel||'')+'</span></td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+(n.ambiente==='producao'?'🔴 produção':'🧪 sandbox')+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+badge(n.status)+(n.erro?' <span style="color:var(--red)">('+n.erro+')</span>':'')+badgePag(n)+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(n.valor||0)+'</td>'+
       '<td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+(n.boletoUrl?'<a href="'+n.boletoUrl+'" target="_blank" style="margin-right:10px">boleto</a>':'')+(n.pdfUrl?'<a href="'+n.pdfUrl+'" target="_blank" style="margin-right:10px">nota PDF</a>':'')+(n.xmlUrl?'<a href="'+n.xmlUrl+'" target="_blank" style="margin-right:10px">XML</a>':'')+'<a href="#" onclick="event.preventDefault();fNotaAtualizarStatus('+n.id+')" style="margin-right:10px">atualizar</a><a href="#" onclick="event.preventDefault();fNotaExcluir('+n.id+')" style="color:var(--red)">excluir</a></td></tr>').join('')+'</table>';
 }
 function fNotaExcluir(id){ const n=notas.find(x=>x.id===id); if(!n) return; if(!confirm('Excluir o registro desse lançamento do histórico? (Isso NÃO cancela o boleto/nota na Asaas.)')) return; notas=notas.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fNotaLista(); }
@@ -7201,7 +7210,7 @@ async function fFatCarregar(){
     const r=await fetch(FATURAMENTO_API_URL+'?action=listar');
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
-    fatLinhas=(j.rows||[]).map(row=>({ ...row, selecionado:false, status:'pendente', erro:null, invoiceId:null, paymentId:null, boletoUrl:null }));
+    fatLinhas=(j.rows||[]).map(row=>({ ...row, selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
     fFatLista();
   }catch(e){
@@ -7217,13 +7226,28 @@ function fFatResumo(){
   el.textContent = fatLinhas.length ? (sel+' selecionado(s) de '+fatLinhas.length) : '';
 }
 function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
+// Status de PAGAMENTO (diferente do status de emissão acima) — vem da planilha, atualizado pelo
+// webhook da Asaas (bot/api/asaas-webhook.js) assim que o cliente paga ou o boleto vence.
+function fFatBadgePagamento(r){
+  const s=r.statusPagamento;
+  if(!r.paymentId) return '<span style="color:var(--muted)">—</span>';
+  const map={
+    pago:{icone:'🟢',txt:'pago',cor:'var(--green)'},
+    vencido:{icone:'🔴',txt:'vencido',cor:'var(--red)'},
+    pendente:{icone:'⚪',txt:'aguardando',cor:'var(--muted)'},
+    cancelado:{icone:'⚫',txt:'cancelado',cor:'var(--muted)'},
+  };
+  const m=map[s]||{icone:'⚪',txt:s||'aguardando',cor:'var(--muted)'};
+  const quando=r.statusPagamentoEm?(' <span style="color:var(--muted);font-size:10px" title="atualizado em">· '+new Date(r.statusPagamentoEm).toLocaleDateString('pt-BR')+'</span>'):'';
+  return '<span style="color:'+m.cor+';font-weight:600">'+m.icone+' '+m.txt+'</span>'+quando;
+}
 function fFatLista(){
   const el=document.getElementById('f-fat-lista'); if(!el) return;
   fFatResumo();
   if(!fatLinhas.length){ el.innerHTML='<div class="ferr-info">Clique em "Carregar planilha" pra ver os clientes ativos.</div>'; return; }
   const comp=(document.getElementById('f-fat-comp')||{}).value||'';
   const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
-  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th></tr>'+
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th></tr>'+
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
@@ -7233,7 +7257,8 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(r.valor||0)+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado||'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td></tr>';
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td></tr>';
     }).join('')+'</table>';
 }
 async function fFatEmitirUma(row){
@@ -7249,7 +7274,7 @@ async function fFatEmitirUma(row){
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('Asaas respondeu '+r.status));
-    row.paymentId=j.paymentId; row.invoiceId=j.invoiceId; row.boletoUrl=j.boletoUrl||null;
+    row.paymentId=j.paymentId; row.invoiceId=j.invoiceId; row.boletoUrl=j.boletoUrl||null; row.statusPagamento='pendente';
     if(!row.invoiceId) throw new Error(j.invoiceErro||'Não retornou invoiceId.');
     row.status='aguardando-nota';
   }catch(e){ row.status='erro'; row.erro=e.message; }
@@ -7269,7 +7294,7 @@ async function fFatAguardarAutorizacao(id, tentativas){
       if(j.status==='AUTHORIZED'){
         row.status='emitida'; fFatLista();
         const comp=document.getElementById('f-fat-comp').value||'';
-        fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(j.numero||'')+'&valorBoleto='+encodeURIComponent(row.valor)).catch(()=>{});
+        fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(j.numero||'')+'&valorBoleto='+encodeURIComponent(row.valor)+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
         return;
       }
       if(j.status==='ERROR'){ row.status='erro'; row.erro=j.erro||'Erro na emissão da nota'; fFatLista(); return; }
