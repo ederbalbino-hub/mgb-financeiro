@@ -12026,6 +12026,18 @@ function elevMigrarNovos(){
   if(mudou) scheduleSave();
 }
 
+// ── HISTÓRICO DO EXCEL (02/10/2026) — antes do Hub ter essa seção, instalação era controlada em
+// MGB_Midia_Despesas_Elevadores_v2.xlsx (aba Dashboard: 👤 CC JADSON/EDER — a aba Lançamentos tinha
+// um bug na fórmula da célula "CC Jadson — Total", que pegava o Total Geral por engano; os números
+// usados aqui vêm da aba Dashboard, que bate com a soma independente linha a linha). One-shot.
+function elevMigrarHistoricoInvest(){
+  if(!_cargaSheetsOk || migracoes.elevInvestHistorico_20261002) return;
+  elevInvestimentos.push({id:elevInvestId++, item:'Histórico', descricao:'Histórico pré-Hub (planilha Excel, 9 itens)', valor:9607.41, pagoPor:'jadson', data:'2026-10-02', criadoEm:new Date().toISOString()});
+  elevInvestimentos.push({id:elevInvestId++, item:'Histórico', descricao:'Histórico pré-Hub (planilha Excel, 19 itens)', valor:14117.21, pagoPor:'eder', data:'2026-10-02', criadoEm:new Date().toISOString()});
+  migracoes.elevInvestHistorico_20261002=true;
+  scheduleSave();
+}
+
 // ── CORREÇÃO 28/09: custo é POR TELA (R$ 70 × telas), não por condomínio ─────────────────────────────
 // A migração anterior (elevCustoTV70_20260928) já tinha gravado 1 × R$ 70 em cada unidade no Sheets real. Esta roda 1x e recoloca
 // q = nº de telas (u = R$ 70), ajustando fin[][] pelo delta. Só mexe na linha "Sistema TV/4Yousee" de cada unidade.
@@ -13264,7 +13276,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
