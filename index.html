@@ -8882,9 +8882,27 @@ function syncResumoEmpresaPlanoDeCaixa(ano,mes,receita,despesa){
   const chave=mesRef+'|'+receita+'|'+despesa+'|'+JSON.stringify(lista.map(function(x){return x.id+':'+x.valor+':'+x.pago;}));
   if(chave===_ultimoSyncEmpresa) return; // só manda se mudou algo desde o último envio
   _ultimoSyncEmpresa=chave;
-  fetch(PLANO_CAIXA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({token:PLANO_CAIXA_TOKEN,acao:'resumoEmpresa',mesRef:mesRef,receita:receita,despesa:despesa,despesas:lista})
-  }).catch(()=>{});
+  enviarFormIframe_(PLANO_CAIXA_URL,{token:PLANO_CAIXA_TOKEN,acao:'resumoEmpresa',mesRef:mesRef,receita:String(receita),despesa:String(despesa),despesas:JSON.stringify(lista)});
+}
+// Envia via <form> num iframe escondido em vez de fetch() — um fetch (até no-cors) fica
+// sujeito ao COEP que o coi-serviceworker liga nessa página (pro ffmpeg.wasm), que bloqueia
+// qualquer resposta cross-origin sem cabeçalho CORP (o Apps Script não manda). Submissão de
+// formulário é navegação, não fetch, então não esbarra nem em COEP nem em CORS.
+function enviarFormIframe_(url,campos){
+  const nomeFrame='_syncFrame_'+Date.now();
+  const iframe=document.createElement('iframe');
+  iframe.name=nomeFrame; iframe.style.display='none';
+  document.body.appendChild(iframe);
+  const form=document.createElement('form');
+  form.method='POST'; form.action=url; form.target=nomeFrame; form.style.display='none';
+  Object.keys(campos).forEach(function(k){
+    const inp=document.createElement('input');
+    inp.type='hidden'; inp.name=k; inp.value=campos[k];
+    form.appendChild(inp);
+  });
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(function(){ try{form.remove(); iframe.remove();}catch(e){} },15000);
 }
 // Fecha o ciclo: puxa do Plano de Caixa quem já foi marcado "pago" por lá e aplica aqui
 // (despPagamentos + scheduleSave). "Pago" só gruda, nunca desfaz — olha os meses -1/0/+1
@@ -13333,7 +13351,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); try{puxarStatusEmpresaDoPlanoDeCaixa();}catch(e){console.error('puxarStatusEmpresaDoPlanoDeCaixa',e);} }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
