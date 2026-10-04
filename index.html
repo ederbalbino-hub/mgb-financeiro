@@ -8886,6 +8886,38 @@ function syncResumoEmpresaPlanoDeCaixa(ano,mes,receita,despesa){
     body:JSON.stringify({token:PLANO_CAIXA_TOKEN,acao:'resumoEmpresa',mesRef:mesRef,receita:receita,despesa:despesa,despesas:lista})
   }).catch(()=>{});
 }
+// Fecha o ciclo: puxa do Plano de Caixa quem já foi marcado "pago" por lá e aplica aqui
+// (despPagamentos + scheduleSave). "Pago" só gruda, nunca desfaz — olha os meses -1/0/+1
+// pra pegar o que for recente. GET sem no-cors (precisa ler a resposta) — só funciona se
+// o navegador tiver cookie de login do Google (a implantação "Qualquer pessoa" ainda assim
+// pode pedir login; se falhar, fica em silêncio e tenta de novo na próxima vez).
+function puxarStatusEmpresaDoPlanoDeCaixa(){
+  fetch(PLANO_CAIXA_URL+'?acao=statusDespesasEmpresa&token='+encodeURIComponent(PLANO_CAIXA_TOKEN))
+    .then(r=>r.json())
+    .then(mapa=>{
+      if(!mapa||mapa.erro) return;
+      let mudou=false;
+      const now=new Date();
+      [-1,0,1].forEach(delta=>{
+        const d=new Date(now.getFullYear(), now.getMonth()+delta, 1);
+        const ano=d.getFullYear(), mes=d.getMonth(), dKey=despPagKey(ano,mes);
+        coletaDespesasMes(ano,mes).forEach(item=>{
+          const hid='hub_'+escHubId(item.m.id)+'_'+escHubId(item.item)+'_'+escHubId(item.idx);
+          if(mapa[hid]!=='pago') return;
+          if(!despPagamentos[item.m.id]) despPagamentos[item.m.id]={};
+          if(!despPagamentos[item.m.id][item.item]) despPagamentos[item.m.id][item.item]={};
+          if(!despPagamentos[item.m.id][item.item][item.idx]) despPagamentos[item.m.id][item.item][item.idx]={};
+          const atual=despPagamentos[item.m.id][item.item][item.idx][dKey];
+          if(!atual||!atual.pago){
+            despPagamentos[item.m.id][item.item][item.idx][dKey]={pago:true,dataPago:new Date().toLocaleDateString('pt-BR'),obs:(atual&&atual.obs)||''};
+            mudou=true;
+          }
+        });
+      });
+      if(mudou){ try{buildVisaoDespesas();}catch(e){} try{buildSidebar();}catch(e){} scheduleSave(); }
+    })
+    .catch(()=>{});
+}
 function escQ(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 function sbClick(modId,item){drillMod(modId);switchItem(item);closeSidebar();}
 
@@ -13301,7 +13333,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); try{puxarStatusEmpresaDoPlanoDeCaixa();}catch(e){console.error('puxarStatusEmpresaDoPlanoDeCaixa',e);} }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
