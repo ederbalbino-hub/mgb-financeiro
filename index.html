@@ -1647,7 +1647,7 @@ body{-webkit-font-smoothing:antialiased}
     </div>
     <div class="hub-nav">
       <div class="hub-tab active" data-tab="mercadao" onclick="showOpPanel('mercadao',this)">Contrato Mercadão</div>
-      <div class="hub-tab" data-tab="elevador" onclick="showOpPanel('elevador',this)">Contrato Elevador</div>
+      <div class="hub-tab" data-tab="elevador" onclick="showOpPanel('elevador',this)">Contrato Tela Vertical</div>
       <div class="hub-tab" data-tab="vaapty" onclick="showOpPanel('vaapty',this)">Contrato Vaapty</div>
       <div class="hub-tab" data-tab="parceria" onclick="showOpPanel('parceria',this)">Parceria Cond.</div>
       <div class="hub-tab" data-tab="pasta" onclick="showOpPanel('pasta',this)">Contratos Salvos</div>
@@ -2431,15 +2431,15 @@ document.getElementById('data_inicio').value = new Date().toISOString().split('T
 <link href=&quot;https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap&quot; rel=&quot;stylesheet&quot;>
 <style>
 :root {
-  --purple: #6B21A8; --magenta: #D946EF; --pink: #EC4899; --lilac: #C084FC;
-  --bg: #F8F5FF; --card: #FFFFFF; --border: #E9E0F5; --text: #1E0A3C;
+  --purple: #16294F; --magenta: #C0A062; --pink: #C0A062; --lilac: #E2CFA3;
+  --bg: #F3EDE2; --card: #FFFFFF; --border: #DEE3EC; --text: #16294F;
   --muted: #4B5563; --success: #10B981; --error: #EF4444;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
 
 /* HEADER */
-.header { background:linear-gradient(135deg,#1E0A3C,#6B21A8,#D946EF); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; }
+.header { background:linear-gradient(135deg,#16294F,#16294F,#C0A062); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; }
 .header h1 { color:#fff; font-size:18px; font-weight:700; }
 .header p { color:rgba(255,255,255,.7); font-size:12px; }
 .header-actions { display:flex; gap:8px; }
@@ -2466,7 +2466,7 @@ body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); 
 .form-group { display:flex; flex-direction:column; gap:5px; }
 .form-group.full { grid-column:1/-1; }
 label { font-size:11px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:.5px; }
-input, select, textarea { padding:10px 13px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-family:'Inter',sans-serif; color:var(--text); background:#FDFBFF; transition:border-color .2s; }
+input, select, textarea { padding:10px 13px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-family:'Inter',sans-serif; color:var(--text); background:#FAF8F4; transition:border-color .2s; }
 input:focus, select:focus, textarea:focus { outline:none; border-color:var(--magenta); box-shadow:0 0 0 3px rgba(217,70,239,.1); }
 @media(max-width:768px){
   .form-grid{display:block!important}
@@ -2478,25 +2478,25 @@ input:focus, select:focus, textarea:focus { outline:none; border-color:var(--mag
 }
 input.success { border-color:var(--success); }
 input.error { border-color:var(--error); }
-input[readonly] { background:#f0ebf8; cursor:default; }
+input[readonly] { background:#EDEFF4; cursor:default; }
 textarea { resize:vertical; min-height:70px; }
 .hint { font-size:11px; color:#6B7280; font-style:italic; }
 
 /* TOGGLE */
 .toggle-group { display:flex; border-radius:8px; overflow:hidden; border:1.5px solid var(--border); }
-.toggle-option { flex:1; padding:10px 14px; text-align:center; cursor:pointer; font-size:13px; font-weight:600; background:#FDFBFF; color:var(--muted); transition:all .2s; }
+.toggle-option { flex:1; padding:10px 14px; text-align:center; cursor:pointer; font-size:13px; font-weight:600; background:#FAF8F4; color:var(--muted); transition:all .2s; }
 .toggle-option.active { background:linear-gradient(135deg,var(--purple),var(--magenta)); color:#fff; }
 
 /* CONDO */
 .condo-grid { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
-.condo-card { border:2px solid var(--border); border-radius:10px; padding:14px; cursor:pointer; transition:all .2s; background:#FDFBFF; position:relative; }
+.condo-card { border:2px solid var(--border); border-radius:10px; padding:14px; cursor:pointer; transition:all .2s; background:#FAF8F4; position:relative; }
 .condo-card:hover { border-color:var(--lilac); transform:translateY(-1px); }
 .condo-card.selected { border-color:var(--magenta); background:linear-gradient(135deg,rgba(107,33,168,.04),rgba(217,70,239,.06)); }
 .condo-card.selected::after { content:&quot;✓&quot;; position:absolute; top:8px; right:10px; width:22px; height:22px; border-radius:50%; background:var(--magenta); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
 .condo-name { font-weight:700; font-size:13px; color:var(--text); }
 .condo-info { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.4; }
 .condo-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:10px; font-weight:700; margin-top:5px; text-transform:uppercase; }
-.badge-ativo { background:rgba(16,185,129,.12); color:#059669; }
+.badge-ativo { background:rgba(16,185,129,.12); color:#0E9F6E; }
 .badge-expansao { background:rgba(217,70,239,.12); color:var(--purple); }
 
 /* SUMMARY */
@@ -2507,7 +2507,7 @@ textarea { resize:vertical; min-height:70px; }
 
 /* PLANO */
 .plan-grid { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); }
-.plan-card { border:2px solid var(--border); border-radius:10px; padding:18px; text-align:center; cursor:pointer; transition:all .2s; background:#FDFBFF; }
+.plan-card { border:2px solid var(--border); border-radius:10px; padding:18px; text-align:center; cursor:pointer; transition:all .2s; background:#FAF8F4; }
 .plan-card:hover { border-color:var(--lilac); }
 .plan-card.selected { border-color:var(--magenta); background:linear-gradient(135deg,rgba(107,33,168,.04),rgba(217,70,239,.06)); }
 .plan-name { font-size:15px; font-weight:700; color:var(--text); }
@@ -2525,12 +2525,12 @@ textarea { resize:vertical; min-height:70px; }
 .contract-row { display:flex; justify-content:space-between; padding:5px 0; font-size:12px; border-bottom:1px dotted #eee; }
 .contract-row .lbl { color:var(--muted); }
 .contract-row .val { font-weight:600; color:var(--text); text-align:right; max-width:60%; }
-.contract-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; color:#1E0A3C; }
-.contract-table th { background:#1E0A3C; color:#fff !important; padding:7px 10px; text-align:left; font-size:10px; text-transform:uppercase; }
-.contract-table td { padding:7px 10px; border-bottom:1px solid var(--border); color:#1E0A3C !important; }
-.contract-table td strong { color:#1E0A3C !important; }
-.contract-table tr:nth-child(even) { background:#F8F5FF; }
-.contract-table tr td { color:#1E0A3C !important; }
+.contract-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; color:#16294F; }
+.contract-table th { background:#16294F; color:#fff !important; padding:7px 10px; text-align:left; font-size:10px; text-transform:uppercase; }
+.contract-table td { padding:7px 10px; border-bottom:1px solid var(--border); color:#16294F !important; }
+.contract-table td strong { color:#16294F !important; }
+.contract-table tr:nth-child(even) { background:#F3EDE2; }
+.contract-table tr td { color:#16294F !important; }
 .contract-total { text-align:right; margin-top:14px; padding:14px; background:linear-gradient(135deg,rgba(107,33,168,.06),rgba(217,70,239,.08)); border-radius:10px; }
 .contract-total .big { font-size:26px; font-weight:800; color:var(--purple); }
 .contract-total .small { font-size:11px; color:var(--muted); }
@@ -2557,7 +2557,7 @@ textarea { resize:vertical; min-height:70px; }
   #e-sec-contrato { display:block !important; }
   .contract-preview { border:none; padding:0; }
   .card { box-shadow:none; border:none; padding:0; }
-  .contract-table th { background:#1E0A3C !important; color:#fff !important; -webkit-print-color-adjust:exact !important; }
+  .contract-table th { background:#16294F !important; color:#fff !important; -webkit-print-color-adjust:exact !important; }
 }
 </style>
 </head>
@@ -2565,7 +2565,7 @@ textarea { resize:vertical; min-height:70px; }
 
 <div class=&quot;header&quot;>
   <div>
-    <h1>MGB Mídia — Contrato de Elevadores</h1>
+    <h1>Tela Vertical — Contrato de Elevadores</h1>
     <p>Mapa de Mídia / Contrato de Veiculação</p>
   </div>
   <div class=&quot;header-actions&quot;>
@@ -2725,7 +2725,7 @@ textarea { resize:vertical; min-height:70px; }
         <div class=&quot;sum-item&quot;><div class=&quot;sum-lbl&quot;>Multiplicador</div><div class=&quot;sum-num&quot; id=&quot;e-inv-mult&quot;>1x</div></div>
         <div class=&quot;sum-item&quot;><div class=&quot;sum-lbl&quot;>Valor mensal</div><div class=&quot;sum-num&quot; id=&quot;e-inv-mensal&quot;>R$ 0</div></div>
         <div class=&quot;sum-item&quot;><div class=&quot;sum-lbl&quot;>Duração</div><div class=&quot;sum-num&quot; id=&quot;e-inv-dur&quot;>-</div></div>
-        <div class=&quot;sum-item&quot;><div class=&quot;sum-lbl&quot;>Total</div><div class=&quot;sum-num&quot; style=&quot;color:#D946EF&quot; id=&quot;e-inv-total&quot;>R$ 0</div></div>
+        <div class=&quot;sum-item&quot;><div class=&quot;sum-lbl&quot;>Total</div><div class=&quot;sum-num&quot; style=&quot;color:#C0A062&quot; id=&quot;e-inv-total&quot;>R$ 0</div></div>
       </div>
     </div>
     <div class=&quot;actions&quot;>
@@ -2804,7 +2804,7 @@ function eMaskPhone(el){let v=el.value.replace(/\D/g,'').slice(0,11);if(v.length
 
 async function eBuscarCNPJ(cnpj){
   const hint=document.getElementById('e-cnpj-hint'),inp=document.getElementById('e-cnpj');
-  inp.classList.remove('success','error');hint.textContent='🔍 Consultando...';hint.style.color='#6B21A8';
+  inp.classList.remove('success','error');hint.textContent='🔍 Consultando...';hint.style.color='#16294F';
   const apis=[
     ()=>fetch('https://publica.cnpj.ws/cnpj/'+cnpj).then(r=>r.ok?r.json():Promise.reject()).then(d=>({nome:d.razao_social||'',fantasia:d.estabelecimento?.nome_fantasia||'',logradouro:d.estabelecimento?.logradouro||'',numero:d.estabelecimento?.numero||'',complemento:d.estabelecimento?.complemento||'',bairro:d.estabelecimento?.bairro||'',cidade:d.estabelecimento?.cidade?.nome||'',uf:d.estabelecimento?.estado?.sigla||'',cep:(d.estabelecimento?.cep||'').replace(/\D/g,''),tel:d.estabelecimento?.ddd1&amp;&amp;d.estabelecimento?.telefone1?d.estabelecimento.ddd1+d.estabelecimento.telefone1:'',email:d.estabelecimento?.email||''})),
     ()=>fetch('https://brasilapi.com.br/api/cnpj/v1/'+cnpj).then(r=>r.ok?r.json():Promise.reject()).then(d=>({nome:d.razao_social||'',fantasia:d.nome_fantasia||'',logradouro:d.logradouro||'',numero:d.numero||'',complemento:d.complemento||'',bairro:d.bairro||'',cidade:d.municipio||'',uf:d.uf||'',cep:d.cep?String(d.cep).replace(/\D/g,''):'',tel:d.ddd_telefone_1||'',email:d.email||''})),
@@ -2821,7 +2821,7 @@ async function eBuscarCNPJ(cnpj){
       if(d.cep)document.getElementById('e-cep').value=d.cep.replace(/(\d{5})(\d{3})/,'$1-$2');
       if(d.tel &amp;&amp; !document.getElementById('e-tel').value){const el=document.getElementById('e-tel');el.value=d.tel;eMaskPhone(el);}
       if(d.email &amp;&amp; !document.getElementById('e-email').value)set('e-email',d.email.toLowerCase());
-      inp.classList.add('success');hint.textContent='✅ Dados preenchidos!';hint.style.color='#059669';return;
+      inp.classList.add('success');hint.textContent='✅ Dados preenchidos!';hint.style.color='#0E9F6E';return;
     }catch{continue;}
   }
   inp.classList.add('error');hint.textContent='⚠️ Não foi possível consultar. Preencha manualmente.';hint.style.color='#EF4444';
@@ -2835,7 +2835,7 @@ async function eBuscarCEP(cep){
     const set=(id,v)=>{const el=document.getElementById(id);if(el&amp;&amp;v)el.value=v;};
     set('e-logradouro',d.logradouro);set('e-bairro',d.bairro);set('e-cidade',d.localidade);
     if(d.uf)document.getElementById('e-estado').value=d.uf;
-    inp.classList.add('success');hint.textContent='✅ Endereço preenchido!';hint.style.color='#059669';
+    inp.classList.add('success');hint.textContent='✅ Endereço preenchido!';hint.style.color='#0E9F6E';
   }catch{
     inp.classList.add('error');hint.textContent='⚠️ CEP não encontrado.';hint.style.color='#EF4444';
     setTimeout(()=>{inp.classList.remove('error');hint.style.color='';hint.textContent='Digite o CEP para preencher automaticamente';},3000);
@@ -2964,23 +2964,23 @@ function eGerar(){
   const end=[egv('e-logradouro'),egv('e-numero')?'nº '+egv('e-numero'):'',egv('e-complemento'),egv('e-bairro'),egv('e-cidade')+(egv('e-estado')?'/'+egv('e-estado'):''),egv('e-cep')].filter(Boolean).join(', ');
   let fimDate='';
   if(inicio){const d=new Date(inicio+'T00:00:00');d.setMonth(d.getMonth()+meses);fimDate=d.toLocaleDateString('pt-BR');}
-  const svgH='<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;760&quot; height=&quot;100&quot; viewBox=&quot;0 0 760 100&quot;><defs><linearGradient id=&quot;eg&quot; x1=&quot;0%&quot; y1=&quot;0%&quot; x2=&quot;100%&quot; y2=&quot;0%&quot;><stop offset=&quot;0%&quot; stop-color=&quot;#1E0A3C&quot;/><stop offset=&quot;50%&quot; stop-color=&quot;#6B21A8&quot;/><stop offset=&quot;100%&quot; stop-color=&quot;#D946EF&quot;/></linearGradient></defs><rect width=&quot;760&quot; height=&quot;100&quot; rx=&quot;12&quot; fill=&quot;url(#eg)&quot;/><rect width=&quot;6&quot; height=&quot;60&quot; x=&quot;28&quot; y=&quot;20&quot; rx=&quot;3&quot; fill=&quot;#D946EF&quot;/><text x=&quot;44&quot; y=&quot;45&quot; fill=&quot;white&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;22&quot; font-weight=&quot;800&quot; letter-spacing=&quot;-0.5&quot;>MGB Mídia</text><text x=&quot;44&quot; y=&quot;67&quot; fill=&quot;rgba(255,255,255,.65)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;11&quot;>Elevando a sua comunicação</text><line x1=&quot;380&quot; y1=&quot;20&quot; x2=&quot;380&quot; y2=&quot;80&quot; stroke=&quot;rgba(255,255,255,.12)&quot; stroke-width=&quot;1&quot;/><text x=&quot;400&quot; y=&quot;38&quot; fill=&quot;rgba(255,255,255,.5)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;9&quot; font-weight=&quot;600&quot; letter-spacing=&quot;1.5&quot;>CONTRATO DE VEICULAÇÃO</text><text x=&quot;400&quot; y=&quot;56&quot; fill=&quot;white&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;13&quot; font-weight=&quot;700&quot;>Mídia em Elevadores</text><text x=&quot;400&quot; y=&quot;73&quot; fill=&quot;rgba(255,255,255,.55)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;10&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</text></svg>';
+  const svgH='<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;760&quot; height=&quot;100&quot; viewBox=&quot;0 0 760 100&quot;><defs><linearGradient id=&quot;eg&quot; x1=&quot;0%&quot; y1=&quot;0%&quot; x2=&quot;100%&quot; y2=&quot;0%&quot;><stop offset=&quot;0%&quot; stop-color=&quot;#16294F&quot;/><stop offset=&quot;50%&quot; stop-color=&quot;#16294F&quot;/><stop offset=&quot;100%&quot; stop-color=&quot;#C0A062&quot;/></linearGradient></defs><rect width=&quot;760&quot; height=&quot;100&quot; rx=&quot;12&quot; fill=&quot;url(#eg)&quot;/><rect width=&quot;6&quot; height=&quot;60&quot; x=&quot;28&quot; y=&quot;20&quot; rx=&quot;3&quot; fill=&quot;#C0A062&quot;/><text x=&quot;44&quot; y=&quot;45&quot; fill=&quot;white&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;22&quot; font-weight=&quot;800&quot; letter-spacing=&quot;-0.5&quot;>Tela Vertical</text><text x=&quot;44&quot; y=&quot;67&quot; fill=&quot;rgba(255,255,255,.65)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;11&quot;>Elevando a sua comunicação</text><line x1=&quot;380&quot; y1=&quot;20&quot; x2=&quot;380&quot; y2=&quot;80&quot; stroke=&quot;rgba(255,255,255,.12)&quot; stroke-width=&quot;1&quot;/><text x=&quot;400&quot; y=&quot;38&quot; fill=&quot;rgba(255,255,255,.5)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;9&quot; font-weight=&quot;600&quot; letter-spacing=&quot;1.5&quot;>CONTRATO DE VEICULAÇÃO</text><text x=&quot;400&quot; y=&quot;56&quot; fill=&quot;white&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;13&quot; font-weight=&quot;700&quot;>Mídia em Elevadores</text><text x=&quot;400&quot; y=&quot;73&quot; fill=&quot;rgba(255,255,255,.55)&quot; font-family=&quot;Inter,Arial,sans-serif&quot; font-size=&quot;10&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</text></svg>';
   const b64=btoa(unescape(encodeURIComponent(svgH)));
   const condoRows=sel.map(c=>{
     const p=c.publico||c.moradores||0;
     const ins=(c.telas||1)*INS_DIA*INS_MES;
-    return '<tr style=&quot;color:#1E0A3C&quot;><td style=&quot;color:#1E0A3C&quot;><strong style=&quot;color:#1E0A3C&quot;>'+c.nome+'</strong>'+(c.tipo?' ('+c.tipo+')':'')+'</td><td style=&quot;color:#1E0A3C&quot;>'+c.bairro+'</td><td style=&quot;color:#1E0A3C&quot;>'+(c.torres||'—')+'</td><td style=&quot;color:#1E0A3C&quot;>'+(c.telas||'—')+'</td><td style=&quot;color:#1E0A3C&quot;>'+(p?p.toLocaleString('pt-BR'):'—')+'</td><td style=&quot;color:#1E0A3C&quot;>'+ins.toLocaleString('pt-BR')+'</td><td style=&quot;color:#1E0A3C&quot;>'+(p*FREQ_IMPACTO).toLocaleString('pt-BR')+'</td></tr>';
+    return '<tr style=&quot;color:#16294F&quot;><td style=&quot;color:#16294F&quot;><strong style=&quot;color:#16294F&quot;>'+c.nome+'</strong>'+(c.tipo?' ('+c.tipo+')':'')+'</td><td style=&quot;color:#16294F&quot;>'+c.bairro+'</td><td style=&quot;color:#16294F&quot;>'+(c.torres||'—')+'</td><td style=&quot;color:#16294F&quot;>'+(c.telas||'—')+'</td><td style=&quot;color:#16294F&quot;>'+(p?p.toLocaleString('pt-BR'):'—')+'</td><td style=&quot;color:#16294F&quot;>'+ins.toLocaleString('pt-BR')+'</td><td style=&quot;color:#16294F&quot;>'+(p*FREQ_IMPACTO).toLocaleString('pt-BR')+'</td></tr>';
   }).join('');
   const pessTot=sel.reduce((s,c)=>s+(c.publico||c.moradores||0),0);
   const impTot=pessTot*FREQ_IMPACTO;
   const torTot=sel.reduce((s,c)=>s+(c.torres||0),0);
-  const condoTotal='<tr style=&quot;font-weight:700;background:#F0E6FF;color:#1E0A3C&quot;><td style=&quot;color:#1E0A3C&quot;>TOTAL</td><td style=&quot;color:#1E0A3C&quot;></td><td style=&quot;color:#1E0A3C&quot;>'+torTot+'</td><td style=&quot;color:#1E0A3C&quot;>'+telas+'</td><td style=&quot;color:#1E0A3C&quot;>'+pessTot.toLocaleString('pt-BR')+'</td><td style=&quot;color:#1E0A3C&quot;>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td style=&quot;color:#1E0A3C&quot;>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
+  const condoTotal='<tr style=&quot;font-weight:700;background:#F3EDE2;color:#16294F&quot;><td style=&quot;color:#16294F&quot;>TOTAL</td><td style=&quot;color:#16294F&quot;></td><td style=&quot;color:#16294F&quot;>'+torTot+'</td><td style=&quot;color:#16294F&quot;>'+telas+'</td><td style=&quot;color:#16294F&quot;>'+pessTot.toLocaleString('pt-BR')+'</td><td style=&quot;color:#16294F&quot;>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td style=&quot;color:#16294F&quot;>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
 
-  const headerHTML='<div style=&quot;background:linear-gradient(135deg,#1E0A3C 0%,#6B21A8 55%,#D946EF 100%);padding:14px 24px;border-radius:8px 8px 0 0;color:#fff;margin:-32px -32px 12px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
+  const headerHTML='<div style=&quot;background:linear-gradient(135deg,#16294F 0%,#16294F 55%,#C0A062 100%);padding:14px 24px;border-radius:8px 8px 0 0;color:#fff;margin:-32px -32px 12px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
     '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
-      '<div style=&quot;width:5px;height:44px;background:#D946EF;border-radius:3px;flex-shrink:0&quot;></div>'+
+      '<div style=&quot;width:5px;height:44px;background:#C0A062;border-radius:3px;flex-shrink:0&quot;></div>'+
       '<div>'+
-        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.5px&quot;>MGB Mídia</div>'+
+        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.5px&quot;>Tela Vertical</div>'+
         '<div style=&quot;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px&quot;>Elevando a sua comunicação</div>'+
       '</div>'+
     '</div>'+
@@ -3003,11 +3003,11 @@ function eGerar(){
       erow('Responsável',egv('e-resp')+(egv('e-cargo')?' ('+egv('e-cargo')+')':''))+erow('Telefone',egv('e-tel'))+erow('E-mail',egv('e-email'))+'</div>'+
 
       '<div>'+
-        '<div class=&quot;contract-section&quot;><h3>2. Dados da Contratada</h3>'+erow('Razão Social','MGB Elevadores Mídia LTDA')+erow('Nome Fantasia','MGB Mídia')+erow('CNPJ','23.770.170/0001-50')+erow('Endereço','Londrina / PR')+erow('Contato','comercial@agenciamgb.com.br · (43) 99696-0078')+'</div>'+
+        '<div class=&quot;contract-section&quot;><h3>2. Dados da Contratada</h3>'+erow('Razão Social','MGB Elevadores Mídia LTDA')+erow('Nome Fantasia','Tela Vertical')+erow('CNPJ','23.770.170/0001-50')+erow('Endereço','Londrina / PR')+erow('Contato','contato@telavertical.com.br · (43) 99696-0078')+'</div>'+
         '<div class=&quot;contract-section&quot; style=&quot;margin-top:10px&quot;><h3>4. Plano e Investimento</h3>'+erow('Plano',plano.nome+' ('+meses+(meses===1?' mês':' meses')+')')+erow('Vigência',(inicio?new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR'):'___/___/______')+' a '+(fimDate||'___/___/______'))+erow('Valor/Tela/Mês','R$ '+vtM.toLocaleString('pt-BR',{minimumFractionDigits:2})+(mult>1?' ('+mult+'x)':''))+(desc>0?erow('Desconto',desc.toFixed(2).replace('.',',')+'%'):'')+erow('Pagamento',pgtoTxt)+'</div>'+
         '<div style=&quot;display:flex;gap:20px;margin-top:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.1));border-radius:8px;border:1px solid rgba(232,121,176,.2)&quot;>'+
-          '<div><div style=&quot;font-size:9px;color:#6B7280;text-transform:uppercase;font-weight:600&quot;>Mensal</div><div style=&quot;font-size:18px;font-weight:800;color:#E879B0&quot;>R$ '+mensal.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
-          '<div><div style=&quot;font-size:9px;color:#6B7280;text-transform:uppercase;font-weight:600&quot;>Total ('+meses+'x)</div><div style=&quot;font-size:18px;font-weight:800;color:#059669&quot;>R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
+          '<div><div style=&quot;font-size:9px;color:#6B7280;text-transform:uppercase;font-weight:600&quot;>Mensal</div><div style=&quot;font-size:18px;font-weight:800;color:#C0A062&quot;>R$ '+mensal.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
+          '<div><div style=&quot;font-size:9px;color:#6B7280;text-transform:uppercase;font-weight:600&quot;>Total ('+meses+'x)</div><div style=&quot;font-size:18px;font-weight:800;color:#0E9F6E&quot;>R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
         '</div>'+
       '</div>'+
     '</div>'+
@@ -3017,7 +3017,7 @@ function eGerar(){
       '<table class=&quot;contract-table&quot;><thead><tr><th>Condomínio</th><th>Bairro</th><th>Torres</th><th>Telas</th><th>Pessoas/mês</th><th>Ins./mês</th><th>Impactos/mês</th></tr></thead><tbody>'+
       condoRows+condoTotal+
       '</tbody></table>'+
-      '<p style=&quot;font-size:9px;color:#6B21A8;font-weight:600;margin-top:4px&quot;>Pessoas impactadas/mês: '+pessTot.toLocaleString('pt-BR')+' · Frequência média DOOH elevador (3x): '+impTot.toLocaleString('pt-BR')+' impactos/mês</p>'+
+      '<p style=&quot;font-size:9px;color:#16294F;font-weight:600;margin-top:4px&quot;>Pessoas impactadas/mês: '+pessTot.toLocaleString('pt-BR')+' · Frequência média DOOH elevador (3x): '+impTot.toLocaleString('pt-BR')+' impactos/mês</p>'+
     '</div>'+
 
     // ── Linha 3: 5. Specs (esq) + 6. Termos+Assinaturas (dir) ──
@@ -3025,7 +3025,7 @@ function eGerar(){
       '<div class=&quot;contract-section&quot;><h3>5. Especificações Técnicas</h3>'+erow('Duração',durSpot+'s — Sem áudio'+(mult>1?' ('+mult+'x)':''))+erow('Formato',fmtTxt)+erow('Resolução','1080 x 1100 px')+erow('Exibições','Entrega mínima de '+INS_DIA+' inserções/dia (~'+(INS_DIA*INS_MES).toLocaleString('pt-BR')+'/mês por tela)')+(egv('e-obs')?erow('Observações',egv('e-obs')):'')+'</div>'+
 
       '<div class=&quot;clauses&quot;>'+
-        '<h3 style=&quot;font-size:9px;font-weight:700;color:#E879B0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #EAD9FF&quot;>6. Termos e Condições</h3>'+
+        '<h3 style=&quot;font-size:9px;font-weight:700;color:#C0A062;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #DEE3EC&quot;>6. Termos e Condições</h3>'+
         '<h4>6.1. Objeto</h4><p>Veiculação de conteúdo publicitário do CONTRATANTE nas telas de mídia digital em elevadores da CONTRATADA, nos condomínios especificados na cláusula 3.</p>'+
         '<h4>6.2. Obrigações da Contratada</h4><p>a) Garantir a exibição nas frequências estabelecidas. b) Manter os equipamentos em funcionamento. c) Fornecer relatórios mensais. d) Em caso de problemas técnicos ou não-entrega do quantitativo, veicular em outros condomínios de mesmo perfil para compensação, mediante alinhamento prévio com o CONTRATANTE.</p>'+
         '<h4>6.3. Obrigações do Contratante</h4><p>a) Fornecer material nas especificações com mínimo 3 dias úteis de antecedência. b) Efetuar pagamentos nas datas. c) Responsabilizar-se pelo conteúdo.</p>'+
@@ -3035,7 +3035,7 @@ function eGerar(){
         '<h4>6.7. Foro</h4><p>Comarca de Londrina/PR.</p>'+
         '<div class=&quot;sig-area sig-compact&quot; style=&quot;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:2px&quot;>'+
           '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:2px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:8.5px;font-weight:600&quot;>'+(nome||'______________________________')+'</div><div class=&quot;srole&quot; style=&quot;font-size:6.5px;color:#6B7280&quot;>CONTRATANTE · '+docLbl+': '+(doc||'_______________')+' · Londrina/PR, '+today.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})+'</div></div>'+
-          '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:2px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:8.5px;font-weight:600&quot;>MGB Mídia</div><div class=&quot;srole&quot; style=&quot;font-size:6.5px;color:#6B7280&quot;>CONTRATADA · CNPJ: 23.770.170/0001-50</div></div>'+
+          '<div class=&quot;sig-line&quot; style=&quot;border-top:1px solid #333;padding-top:2px;text-align:center&quot;><div class=&quot;sname&quot; style=&quot;font-size:8.5px;font-weight:600&quot;>Tela Vertical</div><div class=&quot;srole&quot; style=&quot;font-size:6.5px;color:#6B7280&quot;>CONTRATADA · CNPJ: 23.770.170/0001-50</div></div>'+
         '</div>'+
       '</div>'+
     '</div>';
@@ -3068,20 +3068,20 @@ function ePrintContract(){
   style.id='e-print-style';
   style.textContent=
     '@page{size:A4 landscape;margin:8mm 10mm}'+
-    '#e-print-clone{display:none;background:#fff;color:#2A1760;font-family:Inter,Arial,sans-serif;padding:0;font-size:8px;line-height:1.3;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}'+
+    '#e-print-clone{display:none;background:#fff;color:#0E1B36;font-family:Inter,Arial,sans-serif;padding:0;font-size:8px;line-height:1.3;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}'+
     '#e-print-clone *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}'+
     '#e-print-clone > div:first-child{margin:0 0 8px 0 !important;border-radius:8px !important}'+
-    '#e-print-clone h3{font-size:9px;color:#6B21A8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;padding-bottom:1px;border-bottom:1px solid #EAD9FF}'+
-    '#e-print-clone h4{font-size:8px;font-weight:700;color:#2A1760;margin:1px 0 0}'+
+    '#e-print-clone h3{font-size:9px;color:#16294F;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;padding-bottom:1px;border-bottom:1px solid #DEE3EC}'+
+    '#e-print-clone h4{font-size:8px;font-weight:700;color:#0E1B36;margin:1px 0 0}'+
     '#e-print-clone p{font-size:8px;line-height:1.3;margin-bottom:1px}'+
     '#e-print-clone .contract-section{margin-bottom:3px}'+
-    '#e-print-clone .contract-row{display:flex;justify-content:space-between;padding:1px 0;font-size:8px;border-bottom:1px dotted #EAD9FF}'+
+    '#e-print-clone .contract-row{display:flex;justify-content:space-between;padding:1px 0;font-size:8px;border-bottom:1px dotted #DEE3EC}'+
     '#e-print-clone .contract-row .lbl{color:#6B7280}'+
-    '#e-print-clone .contract-row .val{font-weight:600;color:#2A1760;text-align:right;max-width:62%}'+
+    '#e-print-clone .contract-row .val{font-weight:600;color:#0E1B36;text-align:right;max-width:62%}'+
     '#e-print-clone .contract-table{width:100%;border-collapse:collapse;font-size:7.2px;margin-top:2px}'+
-    '#e-print-clone .contract-table th{background:#2A1760;color:#241A38;padding:2px 4px;text-align:left;font-size:6.8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
-    '#e-print-clone .contract-table td{padding:1.5px 4px;border-bottom:1px solid #EAD9FF}'+
-    '#e-print-clone .contract-table tr:nth-child(even){background:#F8F5FF;-webkit-print-color-adjust:exact}'+
+    '#e-print-clone .contract-table th{background:#0E1B36;color:#241A38;padding:2px 4px;text-align:left;font-size:6.8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '#e-print-clone .contract-table td{padding:1.5px 4px;border-bottom:1px solid #DEE3EC}'+
+    '#e-print-clone .contract-table tr:nth-child(even){background:#F3EDE2;-webkit-print-color-adjust:exact}'+
     '#e-print-clone .clauses{font-size:6.8px;line-height:1.28}'+
     '#e-print-clone .clauses h4{font-size:6.8px;margin:1px 0 0}'+
     '#e-print-clone .clauses p{font-size:6.8px;margin-bottom:0}'+
@@ -4062,7 +4062,7 @@ vCalc();
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">7.1. O presente contrato poderá ser rescindido por qualquer das partes, a qualquer tempo, mediante notificação escrita com antecedência mínima de 90 (noventa) dias, em razão dos compromissos comerciais assumidos pela CONTRATADA junto a anunciantes vinculados ao espaço.<br>7.2. A rescisão antecipada por iniciativa do CONTRATANTE, sem justa causa, antes de completados 12 (doze) meses de vigência, sujeitará o CONTRATANTE ao pagamento de multa compensatória no valor equivalente a 03 (três) meses de valoração média do espaço publicitário comercializado nas telas do condomínio no período imediatamente anterior à rescisão.<br>7.3. Constituem justa causa para rescisão imediata, sem ônus: (a) inadimplemento de obrigação essencial não sanado em 15 dias após notificação; (b) descumprimento da cláusula de exclusividade; (c) dano doloso aos equipamentos.<br>7.4. Na hipótese de rescisão, a CONTRATADA terá prazo de até 30 (trinta) dias para retirar os equipamentos, comprometendo-se a envidar os melhores esforços para restaurar o local afetado pela instalação.</div>
 
       <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 8ª — DOS EQUIPAMENTOS E DO COMODATO</div>
-      <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">8.1. Os equipamentos instalados são e permanecerão sendo de propriedade exclusiva da CONTRATADA, não podendo ser penhorados, alienados ou dados em garantia pelo CONTRATANTE.<br>8.2. O CONTRATANTE é depositário fiel dos equipamentos enquanto instalados em suas dependências, devendo zelar por sua integridade e segurança.<br>8.3. Em caso de sinistro (furto, roubo, incêndio, vandalismo) não imputável à CONTRATADA, o CONTRATANTE deverá: (a) comunicar imediatamente a CONTRATADA; (b) disponibilizar as imagens das câmeras de segurança do condomínio para identificação do responsável, colaborando ativamente para que a CONTRATADA possa notificar e responsabilizar o causador do dano; (c) acionar o seguro predial do condomínio, se houver, para cobertura dos equipamentos. A recusa em fornecer as imagens das câmeras configura descumprimento contratual, podendo a CONTRATADA responsabilizar subsidiariamente o CONTRATANTE pelos prejuízos sofridos.</div>
+      <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">8.1. Os equipamentos instalados são e permanecerão sendo de propriedade exclusiva da CONTRATADA, não podendo ser penhorados, alienados ou dados em garantia pelo CONTRATANTE.<br>8.2. O CONTRATANTE é depositário fiel dos equipamentos enquanto instalados em suas dependências, devendo zelar por sua integridade e segurança.<br>8.3. Em caso de sinistro (furto, roubo, incêndio, vandalismo) não imputável à CONTRATADA, o CONTRATANTE deverá: (a) comunicar imediatamente a CONTRATADA; (b) disponibilizar as imagens das câmeras de segurança do condomínio para identificação do responsável, colaborando ativamente para que a CONTRATADA possa notificar e responsabilizar o causador do dano; (c) acionar o seguro predial do condomínio, se houver, para cobertura dos equipamentos. A recusa em fornecer as imagens das câmeras configura descumprimento contratual, podendo a CONTRATADA responsabilizar subsidiariamente o CONTRATANTE pelos prejuízos sofridos.<br>8.4. Toda e qualquer manutenção nos equipamentos que exija abertura, paralisação ou acesso à casa de máquinas do elevador será realizada, sempre que possível, durante a hora técnica já contratada pelo CONTRATANTE junto à empresa de manutenção do elevador, evitando-se a contratação de deslocamento técnico avulso e custos adicionais para ambas as partes.<br>8.5. O CONTRATANTE compromete-se a informar à CONTRATADA, com antecedência mínima de 2 (dois) dias úteis, a data e o horário da próxima hora técnica agendada, sempre que houver necessidade de manutenção nos equipamentos que dependa de acesso ao elevador.</div>
 
       <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 9ª — DA PROTEÇÃO DE DADOS (LGPD)</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">9.1. As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em razão deste contrato em conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados — LGPD), adotando medidas técnicas e organizacionais adequadas para proteção dos dados.<br>9.2. Nenhuma das partes poderá compartilhar, vender ou utilizar dados pessoais de condôminos ou colaboradores para finalidades diversas das estritamente necessárias à execução deste contrato.</div>
