@@ -1303,6 +1303,7 @@ body{-webkit-font-smoothing:antialiased}
             <div style="display:flex;align-items:center;gap:10px">
               <div style="font-size:10px;color:var(--hint)" id="ov-empmov-sum"></div>
               <button class="badd" onclick="bancoModalOpen()" style="background:var(--purple);color:#fff">📥 Importar do banco</button>
+              <button class="badd" onclick="avisoAbrir(true)" style="background:var(--purple);color:#fff">🔔 Avisos do banco</button>
             </div>
           </div>
           <div style="overflow-x:auto">
@@ -2740,7 +2741,9 @@ textarea { resize:vertical; min-height:70px; }
     <div class=&quot;actions&quot;>
       <button class=&quot;btn-secondary&quot; onclick=&quot;eSwitch('plano')&quot;>← Voltar e Editar</button>
       <button class=&quot;btn-primary&quot; onclick=&quot;ePrintContract()&quot;>🖨️ Imprimir / PDF</button>
+      <button class=&quot;btn-primary&quot; id=&quot;e-ass-btn&quot; onclick=&quot;eEnviarAssinatura()&quot;>✍️ Enviar pra assinatura eletrônica</button>
     </div>
+    <div id=&quot;e-ass-status&quot; style=&quot;margin-top:10px;font-size:12.5px;color:var(--muted)&quot;></div>
   </div>
 
 </div>
@@ -3110,6 +3113,44 @@ function ePrintContract(){
     clone.remove();
     style.remove();
   },800);
+}
+/* ── Assinatura eletrônica (Assinafy, via Apps Script — ver Automacao Financeira/apps-script-assinafy) ── */
+const ASSINAFY_API_URL='https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec';
+let eAssDocId=null;
+async function eEnviarAssinatura(){
+  const out=document.getElementById('e-contract-out');
+  if(!out.innerHTML.trim()){ alert('Gere o contrato primeiro.'); return; }
+  const email=egv('e-email');
+  if(!email){ alert('Preencha o e-mail do contratante (aba 1. Cliente) antes de enviar pra assinatura.'); return; }
+  const nome=(eTipo==='pj')?(egv('e-fantasia')||egv('e-razao')):egv('e-nomepf');
+  const css=Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n');
+  const htmlDoc='&lt;!DOCTYPE html&gt;&lt;html lang=&quot;pt-BR&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;UTF-8&quot;&gt;&lt;style&gt;'+css+'body{padding:24px;background:#fff}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;div class=&quot;contract-preview&quot;&gt;'+out.innerHTML+'&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;';
+  const btn=document.getElementById('e-ass-btn'); const st=document.getElementById('e-ass-status');
+  btn.disabled=true; btn.style.opacity='.6'; st.textContent='Enviando pra assinatura…';
+  try{
+    const r=await fetch(ASSINAFY_API_URL+'?action=enviar',{method:'POST',body:JSON.stringify({
+      nomeDoc:'Contrato Tela Vertical - '+nome,
+      html:htmlDoc,
+      signatarios:[{nome:nome,email:email},{nome:'Eder Balbino — Tela Vertical',email:'ederbalbino@gmail.com'}],
+      mensagem:'Segue o contrato de mídia em elevadores da Tela Vertical para assinatura eletrônica.'
+    })});
+    const j=await r.json();
+    if(j.erro) throw new Error(j.erro);
+    eAssDocId=j.docId;
+    st.innerHTML='✅ Enviado! Assinatura pendente — &lt;a href=&quot;#&quot; onclick=&quot;event.preventDefault();eCheckAssinatura()&quot;&gt;verificar status&lt;/a&gt;';
+  }catch(err){ st.innerHTML='&lt;span style=&quot;color:var(--error)&quot;&gt;⚠ '+err.message+'&lt;/span&gt;'; }
+  finally{ btn.disabled=false; btn.style.opacity='1'; }
+}
+async function eCheckAssinatura(){
+  if(!eAssDocId) return;
+  const st=document.getElementById('e-ass-status');
+  st.textContent='Consultando…';
+  try{
+    const r=await fetch(ASSINAFY_API_URL+'?action=status&amp;docId='+encodeURIComponent(eAssDocId));
+    const j=await r.json();
+    if(j.assinado) st.innerHTML='✅ Assinado por todos! O PDF foi enviado por e-mail automaticamente.';
+    else st.innerHTML='⏳ Aguardando assinatura ('+(j.status||'?')+') — &lt;a href=&quot;#&quot; onclick=&quot;event.preventDefault();eCheckAssinatura()&quot;&gt;verificar de novo&lt;/a&gt;';
+  }catch(err){ st.textContent='⚠ '+err.message; }
 }
 function eResetForm(){
   if(!confirm('Limpar todos os dados?'))return;
@@ -3483,6 +3524,10 @@ textarea { resize:vertical; min-height:70px; }
         <button class='btn-primary' onclick='vGerar()'>📄 Gerar Contrato</button>
       </div>
       <div class='contract-preview' id='v-contract-out'></div>
+      <div class='actions' style='margin-top:14px'>
+        <button class='btn-primary' id='v-ass-btn' onclick='vEnviarAssinatura()'>✍️ Enviar pra assinatura eletrônica</button>
+      </div>
+      <div id='v-ass-status' style='margin-top:8px;font-size:12.5px;color:#6B7280'></div>
       <div class='wa-box' id='v-wa-box' style='display:none'>
         <p>✅ Contrato fechado e lançado no módulo Vaapty. Envie o contrato pro franqueado:</p>
         <button class='btn-wa' onclick='vEnviarWhats()'>📲 Enviar por WhatsApp</button>
@@ -3712,6 +3757,43 @@ function vEnviarWhats(){
   const tel = (p.telefone||'').replace(/\D/g,'');
   const url = tel ? 'https://wa.me/55'+tel+'?text='+encodeURIComponent(msg) : 'https://wa.me/?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
+}
+
+/* Assinatura eletrônica (Assinafy, via Apps Script — ver Automacao Financeira/apps-script-assinafy) */
+const ASSINAFY_API_URL = 'https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec';
+let vAssDocId = null;
+async function vEnviarAssinatura(){
+  if(!vUltimoPayload){ alert('Gere o contrato primeiro.'); return; }
+  const email = vUltimoPayload.email;
+  if(!email){ alert('Preencha o e-mail do franqueado (aba Franqueado) antes de enviar pra assinatura.'); return; }
+  const css = Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n');
+  const htmlDoc = '<!DOCTYPE html><html lang=&quot;pt-BR&quot;><head><meta charset=&quot;UTF-8&quot;><style>'+css+'body{padding:24px;background:#fff}</style></head><body><div class=&quot;contract-preview&quot;>'+document.getElementById('v-contract-out').innerHTML+'</div></body></html>';
+  const btn=document.getElementById('v-ass-btn'); const st=document.getElementById('v-ass-status');
+  btn.disabled=true; btn.style.opacity='.6'; st.textContent='Enviando pra assinatura…';
+  try{
+    const r = await fetch(ASSINAFY_API_URL+'?action=enviar', { method:'POST', body: JSON.stringify({
+      nomeDoc: 'Contrato Vaapty - '+vUltimoPayload.nome,
+      html: htmlDoc,
+      signatarios: [ {nome: vUltimoPayload.nome, email: email}, {nome:'Eder Balbino — MGB Mídia / Rede TV Vaapty', email:'ederbalbino@gmail.com'} ],
+      mensagem: 'Segue o contrato de franquia Vaapty para assinatura eletrônica.'
+    })});
+    const j = await r.json();
+    if(j.erro) throw new Error(j.erro);
+    vAssDocId = j.docId;
+    st.innerHTML = '✅ Enviado! Assinatura pendente — <a href=&quot;#&quot; onclick=&quot;event.preventDefault();vCheckAssinatura()&quot;>verificar status</a>';
+  }catch(err){ st.innerHTML = '<span style=&quot;color:#EF4444&quot;>⚠ '+err.message+'</span>'; }
+  finally{ btn.disabled=false; btn.style.opacity='1'; }
+}
+async function vCheckAssinatura(){
+  if(!vAssDocId) return;
+  const st=document.getElementById('v-ass-status');
+  st.textContent='Consultando…';
+  try{
+    const r = await fetch(ASSINAFY_API_URL+'?action=status&amp;docId='+encodeURIComponent(vAssDocId));
+    const j = await r.json();
+    if(j.assinado) st.innerHTML='✅ Assinado por todos! O PDF foi enviado por e-mail automaticamente.';
+    else st.innerHTML='⏳ Aguardando assinatura ('+(j.status||'?')+') — <a href=&quot;#&quot; onclick=&quot;event.preventDefault();vCheckAssinatura()&quot;>verificar de novo</a>';
+  }catch(err){ st.textContent='⚠ '+err.message; }
 }
 
 function vPrintContract(){ window.print(); }
@@ -5672,6 +5754,8 @@ function copiarSpot() {
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
         <span id="pes-ultima" style="font-size:10px;color:var(--muted);margin-right:2px"></span>
         <button class="anunc-btn" onclick="importExtratoOpen()" style="color:var(--purple);border-color:rgba(139,92,246,.45)">📥 Importar extrato</button>
+        <button class="anunc-btn" onclick="avisoAbrir(true)" style="color:var(--purple);border-color:rgba(139,92,246,.45)">🔔 Avisos do banco</button>
+        <button class="anunc-btn" onclick="pessoalZerar()" style="color:#DC2626;border-color:rgba(220,38,38,.45)">🗑 Zerar Pessoal</button>
         <select id="pes-mes-sel" onchange="buildPessoal()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
         <select id="pes-ano-sel" onchange="buildPessoal()" style="font-size:11px;padding:5px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);outline:none"></select>
       </div>
@@ -9654,6 +9738,107 @@ function bancoImportLancar(){
   alert('✅ Lançado: '+sel.length+' movimento(s) na Empresa.\nSincronizando com o Google Sheets.');
 }
 
+
+// ── AVISOS DO BANCO (fila local ~/Documents/MGB Mídia/Avisos Banco/fila.json, gerada pelo bot/scripts/notif-banco) ──
+// Lê o arquivo via File System Access API (Chrome/Edge), guarda o handle no IndexedDB e deixa
+// o usuário marcar cada aviso como Pessoal / Empresa / Ignorar antes de lançar. Nunca lança sozinho.
+let _avisos=null;
+function avisoIdb(){ return new Promise((res,rej)=>{ const q=indexedDB.open('mgb_avisos',1); q.onupgradeneeded=()=>q.result.createObjectStore('h'); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
+async function avisoHandleGet(){ try{ const db=await avisoIdb(); return await new Promise(r=>{ const q=db.transaction('h').objectStore('h').get('fila'); q.onsuccess=()=>r(q.result||null); q.onerror=()=>r(null); }); }catch(e){ return null; } }
+async function avisoHandleSet(h){ const db=await avisoIdb(); await new Promise((r,j)=>{ const t=db.transaction('h','readwrite'); t.objectStore('h').put(h,'fila'); t.oncomplete=r; t.onerror=()=>j(t.error); }); }
+function avisoIgn(){ try{ return JSON.parse(localStorage.getItem('mgb_avisos_ign')||'[]'); }catch(e){ return []; } }
+function avisoEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function avisoLerFila(interativo){
+  if(!window.showOpenFilePicker){ if(interativo) alert('Este recurso precisa do Chrome ou Edge (leitura de arquivo local).'); return null; }
+  let h=await avisoHandleGet();
+  if(h){
+    let p=await h.queryPermission({mode:'read'});
+    if(p!=='granted'){ if(!interativo) return null; try{ p=await h.requestPermission({mode:'read'}); }catch(e){ p='denied'; } }
+    if(p!=='granted') h=null;
+  }
+  if(!h){
+    if(!interativo) return null;
+    alert('Selecione o arquivo fila.json.\nEle fica na pasta oculta ~/.mgb-notif — na janela de seleção do Mac aperte Cmd+Shift+. para mostrar pastas ocultas (ou Cmd+Shift+G e cole ~/.mgb-notif).');
+    try{ [h]=await showOpenFilePicker({types:[{description:'fila.json',accept:{'application/json':['.json']}}]}); }catch(e){ return null; }
+    await avisoHandleSet(h);
+  }
+  try{ return JSON.parse(await (await h.getFile()).text()); }catch(e){ if(interativo) alert('Não consegui ler a fila: '+e.message); return null; }
+}
+
+// interativo=true: clique do usuário (pode pedir arquivo/permissão). false: checagem silenciosa ao abrir o Hub.
+async function avisoAbrir(interativo){
+  const fila=await avisoLerFila(!!interativo);
+  if(!fila) return;
+  const ign=avisoIgn();
+  const rows=fila.filter(it=>it&&it.id&&it.status!=='lancado'&&!ign.includes(it.id)
+      &&!pesImpDup(it.docto,true)&&!empresaMovimentos.some(m=>m._imp==='wallet-'+it.docto))
+    .map(it=>({it:it,dest:(it.destino==='pessoal'||it.destino==='empresa')?it.destino:'',cat:catExtrato(it.historico,'desp')}));
+  _avisos={rows:rows};
+  if(!rows.length){ if(interativo) alert('Nenhum aviso novo do banco.'); return; }
+  avisoRender();
+}
+
+function avisoRender(){
+  let m=document.getElementById('avisos-modal');
+  if(!m){ m=document.createElement('div'); m.id='avisos-modal'; document.body.appendChild(m); }
+  m.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)';
+  const rows=_avisos.rows;
+  let h='<div class="modal" style="width:860px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column">'
+   +'<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="modal-title">🔔 Avisos do banco</div><div class="modal-sub">'+rows.length+' aviso(s) novo(s) — escolha o destino de cada um. Sem escolha, fica pendente.</div></div>'
+   +'<button onclick="avisoFechar()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button></div>'
+   +'<div style="display:flex;gap:6px;margin:10px 0;font-size:11px;color:var(--muted);align-items:center">Marcar todos:'
+   +'<button onclick="avisoTodos(\'pessoal\')" class="anunc-btn">Pessoal</button><button onclick="avisoTodos(\'empresa\')" class="anunc-btn">Empresa</button><button onclick="avisoTodos(\'ignorar\')" class="anunc-btn">Ignorar</button></div>'
+   +'<div style="overflow:auto;flex:1;min-height:0"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border)"><th style="padding:6px 4px">Data</th><th>Estabelecimento</th><th>Cartão</th><th style="text-align:right">Valor</th><th style="padding-left:12px">Destino</th></tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    const it=r.it, sel=(v,l)=>'<option value="'+v+'"'+(r.dest===v?' selected':'')+'>'+l+'</option>';
+    h+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 4px;white-space:nowrap;color:var(--muted)">'+avisoEsc(it.data)+' '+avisoEsc(it.hora||'')+'</td>'
+     +'<td style="max-width:260px">'+avisoEsc(it.historico)+(r.cat?' <span style="font-size:10px;color:var(--muted)">· '+avisoEsc(r.cat)+'</span>':'')+'</td>'
+     +'<td style="font-size:10px;color:var(--muted)">'+avisoEsc((it.src||'').replace('wallet-',''))+'</td>'
+     +'<td style="text-align:right;white-space:nowrap;color:#D6367F;font-family:DM Mono,monospace">−'+f(it.valor)+'</td>'
+     +'<td style="padding-left:12px"><select onchange="_avisos.rows['+i+'].dest=this.value;avisoTotais()" style="font-size:12px;padding:5px 8px;border-radius:6px;background:var(--surface);color:var(--text);border:1px solid var(--border)">'
+     +'<option value="">— escolher —</option>'+sel('pessoal','Pessoal')+sel('empresa','Empresa')+sel('ignorar','Ignorar')+'</select></td></tr>';
+  });
+  h+='</tbody></table></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">'
+   +'<button onclick="avisoFechar()" style="font-size:12px;padding:9px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Fechar</button>'
+   +'<button id="avisos-lancar" onclick="avisoLancar()" style="font-size:12px;padding:9px 20px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Lançar</button></div></div>';
+  m.innerHTML=h; avisoTotais();
+}
+function avisoTodos(v){ _avisos.rows.forEach(r=>r.dest=v); avisoRender(); }
+function avisoTotais(){ const n=_avisos.rows.filter(r=>r.dest).length, b=document.getElementById('avisos-lancar'); if(!b)return; b.textContent='✓ Aplicar '+n+' escolha'+(n===1?'':'s'); b.disabled=!n; b.style.opacity=n?'1':'.5'; }
+function avisoFechar(){ const m=document.getElementById('avisos-modal'); if(m) m.remove(); }
+
+function avisoLancar(){
+  if(!_avisos) return;
+  let nP=0,nE=0,nI=0; const ign=avisoIgn();
+  _avisos.rows.forEach(r=>{
+    const it=r.it; if(!r.dest) return;
+    if(r.dest==='ignorar'){ ign.push(it.id); nI++; return; }
+    const p=it.data.split('/'), iso=p[2]+'-'+p[1]+'-'+p[0];
+    if(r.dest==='pessoal'){
+      if(pesImpDup(it.docto,true)) return;
+      const comp=pesCompetencia(iso), id=pessoalDespId++, cat=r.cat||'Outros';
+      pessoalDesp.push({id:id,desc:pesDescFromHist(it.historico),valor:it.valor,tipo:'avista',inicio:comp.inicio,meses:1,categoria:cat,valMes:{},_imp:'of-'+it.docto,dataMov:iso});
+      if(!pessoalPag[id])pessoalPag[id]={}; pessoalPag[id][comp.pk]={pago:true,dataPago:it.data}; nP++;
+    } else {
+      const _imp='wallet-'+it.docto; if(empresaMovimentos.some(m=>m._imp===_imp)) return;
+      empresaMovimentos.push({id:empresaMovId++,desc:pesDescFromHist(it.historico),valor:it.valor,lado:'desp',data:iso,mes:iso.slice(0,7),_imp:_imp,conta:'Cartão '+(it.src||'').replace('wallet-','')}); nE++;
+    }
+  });
+  try{ localStorage.setItem('mgb_avisos_ign',JSON.stringify(ign)); }catch(e){}
+  try{buildPessoal();}catch(e){} try{buildVisaoEmpresa();}catch(e){} try{buildSidebar();}catch(e){} try{scheduleSave();}catch(e){}
+  avisoFechar();
+  alert('✅ Avisos aplicados: '+nP+' no Pessoal, '+nE+' na Empresa, '+nI+' ignorados.'+((nP+nE)?'\nSincronizando com o Google Sheets.':''));
+}
+
+function pessoalZerar(){
+  const n=pessoalDesp.length+pessoalRec.length;
+  if(!confirm('⚠️ ZERAR O PESSOAL?\n\nIsso apaga TODOS os '+pessoalDesp.length+' despesas e '+pessoalRec.length+' receitas do Pessoal (todos os meses) e o histórico de pagamentos.\nAs regras de categoria aprendidas são mantidas.\n\nO Google Sheets é atualizado e NÃO há como desfazer. Continuar?')) return;
+  if(!confirm('Última confirmação: apagar '+n+' lançamentos do Pessoal agora?')) return;
+  pessoalDesp=[]; pessoalRec=[]; pessoalPag={}; pessoalRecPag={}; pessoalUltimaImport=null; pessoalDespId=1; pessoalRecId=1;
+  try{buildPessoal();}catch(e){} try{buildSidebar();}catch(e){} try{pesRenderUltima();}catch(e){} try{scheduleSave();}catch(e){}
+  alert('✅ Pessoal zerado ('+n+' lançamentos removidos). Sincronizando com o Google Sheets.');
+}
 function delEmpresaMov(id){ if(!confirm('Remover este movimento?'))return; empresaMovimentos=empresaMovimentos.filter(m=>m.id!==id); try{buildVisaoEmpresa();}catch(e){} try{scheduleSave();}catch(e){} }
 
 // deriva a sigla de origem a partir do nome do banco (dedup/rotulagem)
@@ -13351,7 +13536,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
