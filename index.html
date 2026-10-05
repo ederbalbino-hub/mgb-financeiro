@@ -8967,7 +8967,7 @@ function buildSidebar(){
 // Code.gs do Plano de Caixa. no-cors = fire-and-forget, mesmo padrão do SHEETS_URL.
 // Implantação separada ("Qualquer pessoa") só pra esse sync — o app principal do Plano de
 // Caixa continua "Só eu". Segurança aqui é o TOKEN_SYNC_EMPRESA (igual no Code.gs), não o Google.
-const PLANO_CAIXA_URL='https://script.google.com/macros/s/AKfycbyRPxmBYEOTYj2_eH7SsNL35_MZFF-2vL9os7luJWYSKszDFN04FF4zP0jmQLAGZECx/exec';
+const PLANO_CAIXA_URL=(function(){ var d='https://script.google.com/macros/s/AKfycbyRPxmBYEOTYj2_eH7SsNL35_MZFF-2vL9os7luJWYSKszDFN04FF4zP0jmQLAGZECx/exec'; try{ var u=(localStorage.getItem('plano_url')||'').trim(); return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)?u:d; }catch(e){ return d; } })(); // pode ser trocada pelo botão 🔑 Chave (localStorage 'plano_url') sem mexer no código
 const PLANO_CAIXA_TOKEN='1d9716ba3d52e39f7cbe4bc19c49149d';
 const PLANO_CAIXA_APP_URL='https://script.google.com/macros/s/AKfycbz-77CBmSrRHB2uYjZNNkazXFt9kYHYL7aQQwz4nil5t9Kmof-6xNsZ8snt5hSrGD_l/exec'; // app privado ("Só eu")
 let _ultimoSyncEmpresa='';
@@ -9881,7 +9881,10 @@ function planoMontar(){
 function planoRecarregar(){ var w=document.getElementById('plano-wrap'); if(w) w.innerHTML=''; planoMontar(); }
 function planoTrocarChave(){
   var k=prompt('Chave do Plano de Caixa:', planoChave()); if(k===null) return; k=k.trim(); if(!k) return;
-  try{ localStorage.setItem('plano_chave',k); }catch(e){} planoRecarregar();
+  try{ localStorage.setItem('plano_chave',k); }catch(e){}
+  var u=prompt('URL do app (…/exec). Deixe como está pra manter; cole outra quando criar uma implantação nova:', PLANO_CAIXA_URL);
+  if(u!==null){ u=u.trim(); if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)){ try{ localStorage.setItem('plano_url',u); }catch(e){} if(u!==PLANO_CAIXA_URL){ alert('URL atualizada. A página vai recarregar.'); location.reload(); return; } } else if(u){ alert('URL inválida — mantive a atual.'); } }
+  planoRecarregar();
 }
 function delEmpresaMov(id){ if(!confirm('Remover este movimento?'))return; empresaMovimentos=empresaMovimentos.filter(m=>m.id!==id); try{buildVisaoEmpresa();}catch(e){} try{scheduleSave();}catch(e){} }
 
