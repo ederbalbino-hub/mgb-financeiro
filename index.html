@@ -9781,7 +9781,7 @@ async function avisoLerFila(interativo){
     try{ [h]=await showOpenFilePicker({types:[{description:'fila.json',accept:{'application/json':['.json']}}]}); }catch(e){ return null; }
     await avisoHandleSet(h);
   }
-  try{ return JSON.parse(await (await h.getFile()).text()); }catch(e){ if(interativo) alert('Não consegui ler a fila: '+e.message); return null; }
+  try{ const fl=await h.getFile(); window._avisoMeta={nome:fl.name,mod:new Date(fl.lastModified).toLocaleString('pt-BR'),tam:fl.size}; return JSON.parse(await fl.text()); }catch(e){ if(interativo) alert('Não consegui ler a fila: '+e.message); return null; }
 }
 
 // interativo=true: clique do usuário (pode pedir arquivo/permissão). false: checagem silenciosa ao abrir o Hub.
@@ -9793,7 +9793,16 @@ async function avisoAbrir(interativo){
       &&!pesImpDup(it.docto,true)&&!empresaMovimentos.some(m=>m._imp==='wallet-'+it.docto))
     .map(it=>({it:it,dest:(it.destino==='pessoal'||it.destino==='empresa')?it.destino:'',cat:catExtrato(it.historico,'desp')}));
   _avisos={rows:rows};
-  if(!rows.length){ if(interativo) alert('Nenhum aviso novo do banco.'); return; }
+  if(!rows.length){
+    if(interativo){
+      const m=window._avisoMeta||{}, ja=fila.filter(it=>it&&it.id&&(ign.includes(it.id)||pesImpDup(it.docto,true)||empresaMovimentos.some(x=>x._imp==='wallet-'+it.docto))).length;
+      if(confirm('Nenhum aviso novo.\n\nArquivo lido: '+(m.nome||'?')+' ('+(m.tam||0)+' bytes, alterado em '+(m.mod||'?')+')\nItens no arquivo: '+fila.length+' · já lançados/ignorados: '+ja+'\n\nSe o arquivo ou a data parecem errados, clique OK para escolher o fila.json de novo (Documentos → MGB Mídia → Avisos Banco).')){
+        try{ const db=await avisoIdb(); await new Promise(r=>{ const t=db.transaction('h','readwrite'); t.objectStore('h').delete('fila'); t.oncomplete=r; t.onerror=r; }); }catch(e){}
+        return avisoAbrir(true);
+      }
+    }
+    return;
+  }
   avisoRender();
 }
 
