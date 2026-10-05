@@ -865,7 +865,7 @@ body{-webkit-font-smoothing:antialiased}
     <div class="sb-nav-item on" id="nav-home" title="Início" onclick="goPage('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Início</div>
     <div class="sb-lbl" style="margin-top:10px">Financeiro</div>
     <div class="sb-nav-item" id="nav-custos" title="Financeiro MGB" onclick="goPage('overview')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20v-7M11 20V5M17 20v-10"/><path d="M3 20h18"/></svg>Financeiro MGB</div>
-    <div class="sb-nav-item" id="nav-pessoal" title="Plano de Caixa" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>Plano de Caixa</div>
+    <div class="sb-nav-item" id="nav-pessoal" title="Plano de Caixa" onclick="goPage('planocaixa')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>Plano de Caixa</div>
     <div class="sb-nav-item" id="nav-contabilidade" title="Contabilidade" onclick="goPage('contabilidade')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l3 3v15H6V6z"/><path d="M9 3v4H6M9 12h6M9 16h6"/></svg>Contabilidade</div>
     <div class="sb-lbl" style="margin-top:10px">Operação</div>
     <div class="sb-nav-item" id="nav-contratos" title="Contratos" onclick="goOperacional('contratos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>Contratos</div>
@@ -951,7 +951,7 @@ body{-webkit-font-smoothing:antialiased}
             <div class="home-hub-desc" id="home-leads-desc">Clientes em negociação — não deixe esfriar</div>
             <div class="home-hub-cta">Abrir →</div>
           </div>
-          <div class="home-hub-card" style="--accent:#6C55DB" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')">
+          <div class="home-hub-card" style="--accent:#6C55DB" onclick="goPage('planocaixa')">
             <div class="home-hub-ico">💰</div>
             <div class="home-hub-title">Plano de Caixa</div>
             <div class="home-hub-desc">Fluxo de caixa pessoal · tetos e alertas</div>
@@ -5977,6 +5977,21 @@ function copiarSpot() {
   </div>
 
 
+<style>
+#page-planocaixa .plano-frame{width:100%;height:calc(100vh - 150px);min-height:560px;border:1px solid rgba(76,45,142,.16);border-radius:12px;background:#fff;display:block}
+@media(max-width:768px){#page-planocaixa .plano-frame{height:calc(100vh - 200px)}}
+</style>
+  <div id="page-planocaixa" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap">
+      <div><div class="modal-title" style="font-size:20px">💰 Plano de Caixa</div><div class="modal-sub">Empresa + pessoal, mês a mês — regras, calendário e alertas</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="anunc-btn" onclick="planoRecarregar()">↻ Recarregar</button>
+        <button class="anunc-btn" onclick="planoTrocarChave()">🔑 Chave</button>
+        <button class="anunc-btn" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')">↗ Abrir fora</button>
+      </div>
+    </div>
+    <div id="plano-wrap"></div>
+  </div>
   <div id="page-radioops" style="display:none">
     <style>
       #page-radioops .rops-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 18px}
@@ -8850,7 +8865,7 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 function goPage(p){
   curPage=p;
-  ['home','overview','custos','pessoal','contabilidade','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads','propvaapty','radioops'].forEach(id=>{
+  ['home','overview','custos','pessoal','contabilidade','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads','propvaapty','radioops','planocaixa'].forEach(id=>{
     var el=document.getElementById('page-'+id);
     if(el) el.style.display='none';
   });
@@ -8884,6 +8899,7 @@ function goPage(p){
   if(p==='ferramentas'){ var elf=document.getElementById('nav-ferramentas'); if(elf) elf.classList.add('on'); try{initFerramentas();}catch(e){} }
   if(p==='contabilidade'){ var elc=document.getElementById('nav-contabilidade'); if(elc) elc.classList.add('on'); try{initContabilidade();}catch(e){} }
   if(p==='leads'){ var eld=document.getElementById('nav-leads'); if(eld) eld.classList.add('on'); try{buildLeads();}catch(e){} }
+  if(p==='planocaixa'){ var elp=document.getElementById('nav-pessoal'); if(elp) elp.classList.add('on'); try{ planoMontar(); }catch(e){} }
   if(p==='radioops'){ var elr=document.getElementById('nav-radioops'); if(elr) elr.classList.add('on'); try{buildRadioOps();}catch(e){} try{ ropsSetTab(localStorage.getItem('rops_tab')||'painel'); }catch(e){} }
   if(p==='home'){ var el=document.getElementById('nav-home'); if(el) el.classList.add('on'); }
   if(p==='overview'){ var el=document.getElementById('nav-custos'); if(el) el.classList.add('on'); }
@@ -9837,6 +9853,24 @@ function pessoalZerar(){
   pessoalDesp=[]; pessoalRec=[]; pessoalPag={}; pessoalRecPag={}; pessoalUltimaImport=null; pessoalDespId=1; pessoalRecId=1;
   try{buildPessoal();}catch(e){} try{buildSidebar();}catch(e){} try{pesRenderUltima();}catch(e){} try{scheduleSave();}catch(e){}
   alert('✅ Pessoal zerado ('+n+' lançamentos removidos). Sincronizando com o Google Sheets.');
+}
+
+// ── PLANO DE CAIXA embutido (mesmo padrão do Rádio Ops: implantação "Qualquer pessoa" + chave) ──
+// A chave é digitada 1x e fica só no localStorage deste navegador — NUNCA no HTML (o repositório é público).
+function planoChave(){ try{ return (localStorage.getItem('plano_chave')||'').trim(); }catch(e){ return ''; } }
+function planoMontar(){
+  var w=document.getElementById('plano-wrap'); if(!w||document.getElementById('plano-frame')) return;
+  var k=planoChave();
+  if(!k){ k=(prompt('Chave do Plano de Caixa (a que o Apps Script mostrou ao rodar criarChaveDeAcesso):')||'').trim(); if(!k){ w.innerHTML='<div style="padding:30px;color:var(--muted)">Sem chave. Clique em 🔑 Chave para informar.</div>'; return; } try{ localStorage.setItem('plano_chave',k); }catch(e){} }
+  w.innerHTML='';
+  var f=document.createElement('iframe'); f.id='plano-frame'; f.className='plano-frame'; f.allow='fullscreen; clipboard-write';
+  f.setAttribute('credentialless',''); try{ f.credentialless=true; }catch(e){}  // sem cookies do Google: evita o desvio pro login ("conexão recusada")
+  f.src=PLANO_CAIXA_URL+'?k='+encodeURIComponent(k); w.appendChild(f);
+}
+function planoRecarregar(){ var w=document.getElementById('plano-wrap'); if(w) w.innerHTML=''; planoMontar(); }
+function planoTrocarChave(){
+  var k=prompt('Chave do Plano de Caixa:', planoChave()); if(k===null) return; k=k.trim(); if(!k) return;
+  try{ localStorage.setItem('plano_chave',k); }catch(e){} planoRecarregar();
 }
 function delEmpresaMov(id){ if(!confirm('Remover este movimento?'))return; empresaMovimentos=empresaMovimentos.filter(m=>m.id!==id); try{buildVisaoEmpresa();}catch(e){} try{scheduleSave();}catch(e){} }
 
@@ -13543,7 +13577,7 @@ loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{ele
   <div class="mbn-inner">
     <button class="mbn-btn on" id="mbn-home" onclick="goPage('home')"><span class="mbn-icon">🏠</span><span class="mbn-lbl">Início</span></button>
     <button class="mbn-btn" id="mbn-fin" onclick="goPage('overview')"><span class="mbn-icon">📊</span><span class="mbn-lbl">Financeiro</span></button>
-    <button class="mbn-btn" id="mbn-pes" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')"><span class="mbn-icon">💰</span><span class="mbn-lbl">Caixa</span></button>
+    <button class="mbn-btn" id="mbn-pes" onclick="goPage('planocaixa')"><span class="mbn-icon">💰</span><span class="mbn-lbl">Caixa</span></button>
     <button class="mbn-btn" id="mbn-op" onclick="goOperacional('contratos')"><span class="mbn-icon">📄</span><span class="mbn-lbl">Contratos</span></button>
     <button class="mbn-btn" id="mbn-mais" onclick="toggleSidebar()"><span class="mbn-icon">☰</span><span class="mbn-lbl">Mais</span></button>
   </div>
