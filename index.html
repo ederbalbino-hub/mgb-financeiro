@@ -865,7 +865,7 @@ body{-webkit-font-smoothing:antialiased}
     <div class="sb-nav-item on" id="nav-home" title="Início" onclick="goPage('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Início</div>
     <div class="sb-lbl" style="margin-top:10px">Financeiro</div>
     <div class="sb-nav-item" id="nav-custos" title="Financeiro MGB" onclick="goPage('overview')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20v-7M11 20V5M17 20v-10"/><path d="M3 20h18"/></svg>Financeiro MGB</div>
-    <div class="sb-nav-item" id="nav-pessoal" title="Pessoal" onclick="goPage('pessoal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>Pessoal</div>
+    <div class="sb-nav-item" id="nav-pessoal" title="Plano de Caixa" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>Plano de Caixa</div>
     <div class="sb-nav-item" id="nav-contabilidade" title="Contabilidade" onclick="goPage('contabilidade')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l3 3v15H6V6z"/><path d="M9 3v4H6M9 12h6M9 16h6"/></svg>Contabilidade</div>
     <div class="sb-lbl" style="margin-top:10px">Operação</div>
     <div class="sb-nav-item" id="nav-contratos" title="Contratos" onclick="goOperacional('contratos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>Contratos</div>
@@ -951,10 +951,10 @@ body{-webkit-font-smoothing:antialiased}
             <div class="home-hub-desc" id="home-leads-desc">Clientes em negociação — não deixe esfriar</div>
             <div class="home-hub-cta">Abrir →</div>
           </div>
-          <div class="home-hub-card" style="--accent:#6C55DB" onclick="goPage('pessoal')">
+          <div class="home-hub-card" style="--accent:#6C55DB" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')">
             <div class="home-hub-ico">💰</div>
-            <div class="home-hub-title">Pessoal</div>
-            <div class="home-hub-desc">Despesas e receitas pessoais</div>
+            <div class="home-hub-title">Plano de Caixa</div>
+            <div class="home-hub-desc">Fluxo de caixa pessoal · tetos e alertas</div>
             <div class="home-hub-cta">Abrir →</div>
           </div>
           <div class="home-hub-card" style="--accent:#D6367F" onclick="goOperacional('contratos')">
@@ -1050,7 +1050,7 @@ body{-webkit-font-smoothing:antialiased}
         </div>
 
         <!-- Saldo Pessoal -->
-        <div class="home-pessoal-card" onclick="goPage('pessoal')" style="cursor:pointer;background:rgba(255,255,255,.8);backdrop-filter:blur(20px);border:1px solid rgba(24,154,102,.2);border-radius:14px;padding:12px 18px;margin-bottom:20px;width:100%;max-width:600px;display:flex;align-items:center;justify-content:space-between;animation:fadeInUp .7s ease .35s both">
+        <div class="home-pessoal-card" style="display:none;cursor:pointer;background:rgba(255,255,255,.8);backdrop-filter:blur(20px);border:1px solid rgba(24,154,102,.2);border-radius:14px;padding:12px 18px;margin-bottom:20px;width:100%;max-width:600px;display:flex;align-items:center;justify-content:space-between;animation:fadeInUp .7s ease .35s both">
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:18px">💰</span>
             <div>
@@ -8952,6 +8952,7 @@ function buildSidebar(){
 // Caixa continua "Só eu". Segurança aqui é o TOKEN_SYNC_EMPRESA (igual no Code.gs), não o Google.
 const PLANO_CAIXA_URL='https://script.google.com/macros/s/AKfycbyJEtQsJE4-oFtwqffx5pjakqp5oxr0demzfyQKzSIphvc-WTcIrwhyoXogkWiIO2t3/exec';
 const PLANO_CAIXA_TOKEN='1d9716ba3d52e39f7cbe4bc19c49149d';
+const PLANO_CAIXA_APP_URL='https://script.google.com/macros/s/AKfycbz-77CBmSrRHB2uYjZNNkazXFt9kYHYL7aQQwz4nil5t9Kmof-6xNsZ8snt5hSrGD_l/exec'; // app privado ("Só eu")
 let _ultimoSyncEmpresa='';
 function escHubId(s){ return String(s).replace(/[^a-zA-Z0-9]+/g,'_'); }
 function syncResumoEmpresaPlanoDeCaixa(ano,mes,receita,despesa){
@@ -9797,7 +9798,7 @@ function avisoRender(){
      +'<td style="font-size:10px;color:var(--muted)">'+avisoEsc((it.src||'').replace('wallet-',''))+'</td>'
      +'<td style="text-align:right;white-space:nowrap;color:#D6367F;font-family:DM Mono,monospace">−'+f(it.valor)+'</td>'
      +'<td style="padding-left:12px"><select onchange="_avisos.rows['+i+'].dest=this.value;avisoTotais()" style="font-size:12px;padding:5px 8px;border-radius:6px;background:var(--surface);color:var(--text);border:1px solid var(--border)">'
-     +'<option value="">— escolher —</option>'+sel('pessoal','Pessoal')+sel('empresa','Empresa')+sel('ignorar','Ignorar')+'</select></td></tr>';
+     +'<option value="">— escolher —</option>'+sel('pessoal','Pessoal (Plano de Caixa)')+sel('empresa','Empresa')+sel('ignorar','Ignorar')+'</select></td></tr>';
   });
   h+='</tbody></table></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">'
    +'<button onclick="avisoFechar()" style="font-size:12px;padding:9px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Fechar</button>'
@@ -9810,25 +9811,23 @@ function avisoFechar(){ const m=document.getElementById('avisos-modal'); if(m) m
 
 function avisoLancar(){
   if(!_avisos) return;
-  let nP=0,nE=0,nI=0; const ign=avisoIgn();
+  let nP=0,nE=0,nI=0; const ign=avisoIgn(), paraPlano=[];
   _avisos.rows.forEach(r=>{
     const it=r.it; if(!r.dest) return;
     if(r.dest==='ignorar'){ ign.push(it.id); nI++; return; }
     const p=it.data.split('/'), iso=p[2]+'-'+p[1]+'-'+p[0];
     if(r.dest==='pessoal'){
-      if(pesImpDup(it.docto,true)) return;
-      const comp=pesCompetencia(iso), id=pessoalDespId++, cat=r.cat||'Outros';
-      pessoalDesp.push({id:id,desc:pesDescFromHist(it.historico),valor:it.valor,tipo:'avista',inicio:comp.inicio,meses:1,categoria:cat,valMes:{},_imp:'of-'+it.docto,dataMov:iso});
-      if(!pessoalPag[id])pessoalPag[id]={}; pessoalPag[id][comp.pk]={pago:true,dataPago:it.data}; nP++;
+      paraPlano.push({docto:it.docto,data:it.data,historico:it.historico,valor:it.valor,cartao:it.src}); ign.push(it.id); nP++;
     } else {
       const _imp='wallet-'+it.docto; if(empresaMovimentos.some(m=>m._imp===_imp)) return;
       empresaMovimentos.push({id:empresaMovId++,desc:pesDescFromHist(it.historico),valor:it.valor,lado:'desp',data:iso,mes:iso.slice(0,7),_imp:_imp,conta:'Cartão '+(it.src||'').replace('wallet-','')}); nE++;
     }
   });
+  if(paraPlano.length) enviarFormIframe_(PLANO_CAIXA_URL,{token:PLANO_CAIXA_TOKEN,acao:'avisosPessoal',avisos:JSON.stringify(paraPlano)});
   try{ localStorage.setItem('mgb_avisos_ign',JSON.stringify(ign)); }catch(e){}
   try{buildPessoal();}catch(e){} try{buildVisaoEmpresa();}catch(e){} try{buildSidebar();}catch(e){} try{scheduleSave();}catch(e){}
   avisoFechar();
-  alert('✅ Avisos aplicados: '+nP+' no Pessoal, '+nE+' na Empresa, '+nI+' ignorados.'+((nP+nE)?'\nSincronizando com o Google Sheets.':''));
+  alert('✅ Avisos aplicados: '+nP+' enviados ao Plano de Caixa (pessoal), '+nE+' na Empresa, '+nI+' ignorados.'+(nE?'\nEmpresa sincronizando com o Google Sheets.':'')+(nP?'\nConfira os pessoais no Plano de Caixa (o envio não devolve confirmação).':''));
 }
 
 function pessoalZerar(){
@@ -13544,7 +13543,7 @@ loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{ele
   <div class="mbn-inner">
     <button class="mbn-btn on" id="mbn-home" onclick="goPage('home')"><span class="mbn-icon">🏠</span><span class="mbn-lbl">Início</span></button>
     <button class="mbn-btn" id="mbn-fin" onclick="goPage('overview')"><span class="mbn-icon">📊</span><span class="mbn-lbl">Financeiro</span></button>
-    <button class="mbn-btn" id="mbn-pes" onclick="goPage('pessoal')"><span class="mbn-icon">💰</span><span class="mbn-lbl">Pessoal</span></button>
+    <button class="mbn-btn" id="mbn-pes" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')"><span class="mbn-icon">💰</span><span class="mbn-lbl">Caixa</span></button>
     <button class="mbn-btn" id="mbn-op" onclick="goOperacional('contratos')"><span class="mbn-icon">📄</span><span class="mbn-lbl">Contratos</span></button>
     <button class="mbn-btn" id="mbn-mais" onclick="toggleSidebar()"><span class="mbn-icon">☰</span><span class="mbn-lbl">Mais</span></button>
   </div>
