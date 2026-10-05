@@ -7171,7 +7171,7 @@ let leoUnidades = []; // persistido — seed do LEO_SEED na 1ª vez, depois só 
 function fLeoRetemIss(u){ return (u.cidade||'').trim().toLowerCase()==='londrina'; }
 function fLeoInit(){
   const cfg=document.getElementById('f-leo-config');
-  if(cfg){ cfg.style.display='block'; cfg.innerHTML='<div class="ferr-t" style="color:#92400E">⚙ Falta só o e-mail consolidado</div><div class="ferr-d" style="color:#92400E">Emitir nota já funciona normal. Só o botão "Enviar e-mail consolidado" depende do domínio verificado na <a href="https://resend.com" target="_blank">Resend</a> + <code>RESEND_API_KEY</code>/<code>RESEND_FROM</code> no Vercel — em configuração.</div>'; }
+  if(cfg){ cfg.style.display='none'; cfg.innerHTML=''; }
   if(!leoUnidades.length){
     leoUnidades = LEO_SEED.map(u=>({...u, status:'pendente', invoiceId:null, pdfUrl:null, erro:null}));
     try{ scheduleSave(); }catch(e){}
