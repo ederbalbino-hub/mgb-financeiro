@@ -7210,7 +7210,7 @@ async function fLeoEmitirUma(id){
   const comp=document.getElementById('f-leo-comp').value||'';
   u.status='emitindo'; u.erro=null; fLeoLista();
   const payload={
-    tomador:{ nome:u.nome, cnpj:u.cnpj, email:u.email },
+    tomador:{ nome:u.nome, cnpj:u.cnpj, email:u.email, endereco:(function(p){ return { cep:u.cep, logradouro:p[0], numero:p[1], complemento:p.slice(2).join(', '), bairro:u.bairro }; })(String(u.endereco||'').split(',').map(x=>x.trim())) },
     servico:{ codigo:'171001', descricao:'Gestão e veiculação de rádio interna — '+comp },
     valores:{ total:u.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:fLeoRetemIss(u) },
     semCobranca:true,
@@ -7366,7 +7366,7 @@ async function fFatEmitirUma(row){
   const comp=document.getElementById('f-fat-comp').value||'';
   row.status='emitindo'; row.erro=null; fFatLista();
   const payload={
-    tomador:{ nome:row.cliente, cnpj:row.cnpj, email:row.email },
+    tomador:{ nome:row.cliente, cnpj:row.cnpj, email:row.email, endereco:{ cep:row.cep, logradouro:row.logradouro, numero:row.numero, complemento:row.complemento, bairro:row.bairro } },
     servico:{ codigo:String(row.ctribnac||''), descricao:(row.descricao||'Prestação de serviços de mídia')+' — competência '+comp },
     valores:{ total:row.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
   };

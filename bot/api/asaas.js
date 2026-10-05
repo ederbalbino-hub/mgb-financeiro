@@ -58,9 +58,21 @@ async function asaas(ambiente, method, path, body) {
 // encontra o cliente pelo CNPJ/CPF; cria se não existir
 async function acharOuCriarCliente(ambiente, tomador) {
   const doc = (tomador.cnpj || "").replace(/\D/g, "");
+  // Endereço do tomador — a nota fiscal exige CEP e endereço completos no cadastro do cliente.
+  const e = tomador.endereco || {};
+  const end = {};
+  if (e.cep) end.postalCode = String(e.cep).replace(/\D/g, "");
+  if (e.logradouro) end.address = e.logradouro;
+  if (e.numero) end.addressNumber = String(e.numero);
+  if (e.complemento) end.complement = e.complemento;
+  if (e.bairro) end.province = e.bairro;
   if (doc) {
     const j = await asaas(ambiente, "GET", `/customers?cpfCnpj=${doc}`);
-    if (j.data && j.data.length) return j.data[0].id;
+    if (j.data && j.data.length) {
+      // cliente já existe (possivelmente criado antes sem endereço) — completa o cadastro
+      if (Object.keys(end).length) await asaas(ambiente, "PUT", `/customers/${j.data[0].id}`, end);
+      return j.data[0].id;
+    }
   }
   const novo = await asaas(ambiente, "POST", "/customers", {
     name: tomador.nome,
@@ -68,6 +80,7 @@ async function acharOuCriarCliente(ambiente, tomador) {
     email: tomador.email || undefined,
     phone: tomador.telefone || undefined,
     externalReference: doc || tomador.nome,
+    ...end,
   });
   return novo.id;
 }
