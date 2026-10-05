@@ -9791,7 +9791,7 @@ async function avisoAbrir(interativo){
   const ign=avisoIgn();
   const rows=fila.filter(it=>it&&it.id&&it.status!=='lancado'&&!ign.includes(it.id)
       &&!pesImpDup(it.docto,true)&&!empresaMovimentos.some(m=>m._imp==='wallet-'+it.docto))
-    .map(it=>({it:it,dest:(it.destino==='pessoal'||it.destino==='empresa')?it.destino:'',cat:catExtrato(it.historico,'desp')}));
+    .map(it=>({it:it,dest:'',sug:(it.destino==='pessoal'||it.destino==='empresa')?it.destino:'',cat:catExtrato(it.historico,'desp')}));
   _avisos={rows:rows};
   if(!rows.length){
     if(interativo){
@@ -9815,12 +9815,12 @@ function avisoRender(){
    +'<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="modal-title">🔔 Avisos do banco</div><div class="modal-sub">'+rows.length+' aviso(s) novo(s) — escolha o destino de cada um. Sem escolha, fica pendente.</div></div>'
    +'<button onclick="avisoFechar()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button></div>'
    +'<div style="display:flex;gap:6px;margin:10px 0;font-size:11px;color:var(--muted);align-items:center">Marcar todos:'
-   +'<button onclick="avisoTodos(\'pessoal\')" class="anunc-btn">Pessoal</button><button onclick="avisoTodos(\'empresa\')" class="anunc-btn">Empresa</button><button onclick="avisoTodos(\'ignorar\')" class="anunc-btn">Ignorar</button></div>'
+   +'<button onclick="avisoTodos(\'pessoal\')" class="anunc-btn">Pessoal</button><button onclick="avisoTodos(\'empresa\')" class="anunc-btn">Empresa</button><button onclick="avisoTodos(\'ignorar\')" class="anunc-btn">Ignorar</button><button onclick="avisoAceitarSug()" class="anunc-btn" style="margin-left:auto">✓ Aceitar sugestões</button></div>'
    +'<div style="overflow:auto;flex:1;min-height:0"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border)"><th style="padding:6px 4px">Data</th><th>Estabelecimento</th><th>Cartão</th><th style="text-align:right">Valor</th><th style="padding-left:12px">Destino</th></tr></thead><tbody>';
   rows.forEach((r,i)=>{
     const it=r.it, sel=(v,l)=>'<option value="'+v+'"'+(r.dest===v?' selected':'')+'>'+l+'</option>';
     h+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 4px;white-space:nowrap;color:var(--muted)">'+avisoEsc(it.data)+' '+avisoEsc(it.hora||'')+'</td>'
-     +'<td style="max-width:260px">'+avisoEsc(it.historico)+(r.cat?' <span style="font-size:10px;color:var(--muted)">· '+avisoEsc(r.cat)+'</span>':'')+'</td>'
+     +'<td style="max-width:260px">'+avisoEsc(it.historico)+(r.cat?' <span style="font-size:10px;color:var(--muted)">· '+avisoEsc(r.cat)+'</span>':'')+(r.sug?' <span style="font-size:10px;color:var(--purple)">· sugestão: '+(r.sug==='pessoal'?'Pessoal':'Empresa')+'</span>':'')+'</td>'
      +'<td style="font-size:10px;color:var(--muted)">'+avisoEsc((it.src||'').replace('wallet-',''))+'</td>'
      +'<td style="text-align:right;white-space:nowrap;color:#D6367F;font-family:DM Mono,monospace">−'+f(it.valor)+'</td>'
      +'<td style="padding-left:12px"><select onchange="_avisos.rows['+i+'].dest=this.value;avisoTotais()" style="font-size:12px;padding:5px 8px;border-radius:6px;background:var(--surface);color:var(--text);border:1px solid var(--border)">'
@@ -9831,6 +9831,7 @@ function avisoRender(){
    +'<button id="avisos-lancar" onclick="avisoLancar()" style="font-size:12px;padding:9px 20px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Lançar</button></div></div>';
   m.innerHTML=h; avisoTotais();
 }
+function avisoAceitarSug(){ _avisos.rows.forEach(r=>{ if(r.sug) r.dest=r.sug; }); avisoRender(); }
 function avisoTodos(v){ _avisos.rows.forEach(r=>r.dest=v); avisoRender(); }
 function avisoTotais(){ const n=_avisos.rows.filter(r=>r.dest).length, b=document.getElementById('avisos-lancar'); if(!b)return; b.textContent='✓ Aplicar '+n+' escolha'+(n===1?'':'s'); b.disabled=!n; b.style.opacity=n?'1':'.5'; }
 function avisoFechar(){ const m=document.getElementById('avisos-modal'); if(m) m.remove(); }
