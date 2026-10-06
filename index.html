@@ -10697,7 +10697,7 @@ function elevRelatorioMensal(){
     '@media print{body{padding:12px}}</style></head><body>'+
     '<h1>Tela Vertical — Elevadores</h1><div class="sub">Relatório mensal aos sócios · '+NOMES[mes]+' de '+ano+' · '+ELEV_TELAS_QTD+' telas</div>'+
     '<h2>Investimento dos sócios (valores)</h2><div class="k"><div>Eder<b>'+f(t.eder)+'</b></div><div>Jadson<b>'+f(t.jadson)+'</b></div><div>Total investido<b>'+f(t.total)+'</b></div></div>'+
-    '<div class="sub">Meta: '+ELEV_TELAS_QTD+' telas × '+f(ELEV_INVEST_POR_TELA)+' = '+f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)+' · Eder '+ELEV_PCT_EDER+'% / Jadson '+(100-ELEV_PCT_EDER)+'%</div>'+
+    '<div class="sub">Meta: '+ELEV_TELAS_QTD+' telas × '+f(ELEV_INVEST_POR_TELA)+' = '+f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)+'</div>'+
     '<h2>Resultado de '+NOMES[mes]+'</h2><div class="k"><div>Receita<b>'+f(r.rec)+'</b></div><div>Despesas<b>'+f(r.desp)+'</b></div><div>Resultado<b class="'+(r.resultado>=0?'pos':'neg')+'">'+(r.resultado>=0?'':'−')+f(Math.abs(r.resultado))+'</b></div></div>'+
     '<h2>Despesas do mês</h2><table><tr><th>Descrição</th><th>Item</th><th>Tipo</th><th class="n">Valor</th></tr>'+linhasDesp+'</table>'+
     '<h2>Excedente na conta do Eder</h2><div class="k"><div class="dest">Excedente de '+NOMES[mes]+' (despesa acima da receita)<b>'+f(r.excedente)+'</b></div><div class="dest">Acumulado desde '+NOMES[ELEV_EXCEDENTE_DESDE.mes]+'/'+ELEV_EXCEDENTE_DESDE.ano+'<b>'+f(acumTot)+'</b></div></div>'+
@@ -12380,16 +12380,15 @@ function elevMigrarNovos(){
 // um bug na fórmula da célula "CC Jadson — Total", que pegava o Total Geral por engano; os números
 // usados aqui vêm da aba Dashboard, que bate com a soma independente linha a linha). One-shot.
 // ── 06/10/2026: investimento fixado em 38 telas × R$ 1.200 = R$ 45.600, rateio 55% Eder / 45% Jadson,
-// lançado em VALORES (R$ 25.080 / R$ 20.520). Substitui os 2 lançamentos 'Histórico pré-Hub' da planilha Excel.
-const ELEV_TELAS_QTD=38, ELEV_INVEST_POR_TELA=1200, ELEV_PCT_EDER=55;
+// lançado em VALORES (R$ 25.000 Eder / R$ 23.000 Jadson). Substitui os 2 lançamentos 'Histórico pré-Hub' da planilha Excel.
+const ELEV_TELAS_QTD=38, ELEV_INVEST_POR_TELA=1200, ELEV_INVEST_EDER=25000, ELEV_INVEST_JADSON=23000; // valores fixos (teste 06/10)
 const ELEV_EXCEDENTE_DESDE={ano:2026,mes:9}; // out/2026 — a partir daqui o excedente despesa>receita fica na conta do Eder
 function elevMigrarInvest38Telas(){
   if(!_cargaSheetsOk || migracoes.elevInvest38Telas_20261006) return;
   elevInvestimentos=elevInvestimentos.filter(x=>!(x.item==='Histórico' && /Histórico pré-Hub/.test(x.descricao||'')));
-  const total=ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA, eder=Math.round(total*ELEV_PCT_EDER)/100, jadson=total-eder;
-  const desc=ELEV_TELAS_QTD+' telas × R$ '+ELEV_INVEST_POR_TELA.toLocaleString('pt-BR')+' — ';
-  elevInvestimentos.push({id:elevInvestId++, item:'Histórico', descricao:desc+ELEV_PCT_EDER+'% Eder', valor:eder, pagoPor:'eder', data:'2026-10-06', criadoEm:new Date().toISOString()});
-  elevInvestimentos.push({id:elevInvestId++, item:'Histórico', descricao:desc+(100-ELEV_PCT_EDER)+'% Jadson', valor:jadson, pagoPor:'jadson', data:'2026-10-06', criadoEm:new Date().toISOString()});
+  const desc='Investimento '+ELEV_TELAS_QTD+' telas — ';
+  elevInvestimentos.push({id:elevInvestId++, item:'Histórico', descricao:desc+'Eder', valor:ELEV_INVEST_EDER, pagoPor:'eder', data:'2026-10-06', criadoEm:new Date().toISOString()});
+  elevInvestimentos.push({id:elevInvestId++, item:'Histórico', descricao:desc+'Jadson', valor:ELEV_INVEST_JADSON, pagoPor:'jadson', data:'2026-10-06', criadoEm:new Date().toISOString()});
   migracoes.elevInvest38Telas_20261006=true; migracoes.elevInvestHistorico_20261002=true;
   scheduleSave();
 }
