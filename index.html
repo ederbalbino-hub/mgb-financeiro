@@ -5988,6 +5988,7 @@ function copiarSpot() {
       <div><div class="modal-title" style="font-size:20px">💰 Plano de Caixa</div><div class="modal-sub">Empresa + pessoal, mês a mês — regras, calendário e alertas</div></div>
       <div style="display:flex;gap:8px">
         <button class="anunc-btn" onclick="avisoAbrir(true)" style="color:var(--purple);border-color:rgba(139,92,246,.45)">🔔 Avisos do banco</button>
+        <button class="anunc-btn" onclick="planoSyncAgora()">⇅ Sincronizar Empresa</button>
         <button class="anunc-btn" onclick="planoRecarregar()">↻ Recarregar</button>
         <button class="anunc-btn" onclick="planoTrocarChave()">🔑 Chave</button>
         <button class="anunc-btn" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')">↗ Abrir fora</button>
@@ -9779,7 +9780,7 @@ async function avisoLerFila(interativo){
   }
   if(!h){
     if(!interativo) return null;
-    alert('Selecione o arquivo fila.json.\nEle fica na pasta oculta ~/.mgb-notif — na janela de seleção do Mac aperte Cmd+Shift+. para mostrar pastas ocultas (ou Cmd+Shift+G e cole ~/.mgb-notif).');
+    alert('Selecione o arquivo fila.json.\nEle fica em Documentos → MGB Mídia → Avisos Banco.');
     try{ [h]=await showOpenFilePicker({types:[{description:'fila.json',accept:{'application/json':['.json']}}]}); }catch(e){ return null; }
     await avisoHandleSet(h);
   }
@@ -9879,6 +9880,15 @@ function planoMontar(){
   var f=document.createElement('iframe'); f.id='plano-frame'; f.className='plano-frame'; f.allow='fullscreen; clipboard-write';
   f.setAttribute('credentialless',''); try{ f.credentialless=true; }catch(e){}  // sem cookies do Google: evita o desvio pro login ("conexão recusada")
   f.src=PLANO_CAIXA_URL+'?k='+encodeURIComponent(k); w.appendChild(f);
+}
+function planoSyncAgora(){
+  try{
+    var now=new Date(), a=now.getFullYear(), m=now.getMonth();
+    var rec=finGetRec(a,m), desp=finGetDesp(a,m), n=coletaDespesasMes(a,m).length;
+    _ultimoSyncEmpresa=''; // força o envio mesmo se nada mudou
+    syncResumoEmpresaPlanoDeCaixa(a,m,rec,desp);
+    alert('Enviado ao Plano de Caixa ('+(m+1)+'/'+a+'):\nReceita: '+f(rec)+'\nDespesa: '+f(desp)+'\nDespesas individuais: '+n+'\n\nO envio não devolve confirmação. Espere uns 10 segundos e clique em ↻ Recarregar: a data de "atualizado" na aba Empresa deve virar agora.');
+  }catch(e){ alert('Falha ao sincronizar: '+e.message); }
 }
 function planoRecarregar(){ var w=document.getElementById('plano-wrap'); if(w) w.innerHTML=''; planoMontar(); }
 function planoTrocarChave(){
