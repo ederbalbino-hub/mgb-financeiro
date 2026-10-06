@@ -5,7 +5,7 @@
 // Ações (via query ?action=...):
 //   POST /api/asaas?action=emitir&ambiente=sandbox|producao
 //        body: { tomador:{nome,cnpj,email,telefone?}, servico:{codigo?,descricao},
-//                valores:{total,aliquotaIss?,retemIss?}, vencimento?:'YYYY-MM-DD',
+//                valores:{total,aliquotaIss?,retemIss?}, vencimento?:'YYYY-MM-DD' (padrão: próximo dia 15),
 //                semCobranca?:true, semNota?:true }
 //        -> cria (ou reaproveita) o cliente, cria a cobrança (boleto+PIX) e a nota fiscal
 //           vinculada a ela. Devolve {customerId,paymentId,invoiceId,boletoUrl,invoiceUrl,status}
@@ -53,6 +53,14 @@ async function asaas(ambiente, method, path, body) {
     throw err;
   }
   return j;
+}
+
+// Vencimento padrão dos boletos: dia 15. Se hoje (no fuso de São Paulo) ainda não passou do 15, é o 15 deste mês;
+// passou, é o 15 do mês seguinte (o Asaas não aceita vencimento no passado). Léo não passa por aqui (semCobranca).
+function proximoDia15() {
+  const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const d = new Date(hoje.getFullYear(), hoje.getMonth() + (hoje.getDate() > 15 ? 1 : 0), 15);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-15";
 }
 
 // encontra o cliente pelo CNPJ/CPF; cria se não existir
@@ -112,7 +120,7 @@ export default async function handler(req, res) {
 
       let payment = null;
       if (!semCobranca) {
-        const dueDate = vencimento || new Date(Date.now() + 3 * 864e5).toISOString().slice(0, 10); // padrão: 3 dias
+        const dueDate = vencimento || proximoDia15(); // padrão: todo boleto vence dia 15 (decisão do Eder 06/10)
         payment = await asaas(ambiente, "POST", "/payments", {
           customer: customerId,
           billingType: "BOLETO",
