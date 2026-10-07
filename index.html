@@ -6576,6 +6576,7 @@ function copiarSpot() {
         <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px;margin-top:10px;align-items:flex-end">
           <div><label class="ferr-lbl">Ambiente</label><select id="f-leo-amb" class="ferr-in"><option value="sandbox">🧪 Sandbox</option><option value="producao">🔴 Produção</option></select></div>
           <div><label class="ferr-lbl">Competência</label><input id="f-leo-comp" class="ferr-in" placeholder="ex.: Setembro/2026"></div>
+          <div><label class="ferr-lbl">Alíquota ISS do mês (%)</label><input id="f-leo-aliq" class="ferr-in" inputmode="decimal" placeholder="ex.: 2,37" oninput="fAliqSalvar(this.value)" title="Mesma alíquota das abas Nota Fiscal e Faturamento — alterar aqui altera nas três"></div>
           <div><label class="ferr-lbl">E-mail de destino (consolidado)</label><input id="f-leo-email-destino" class="ferr-in" placeholder="boletos@leocosmeticosshop.com.br"></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
@@ -7038,7 +7039,7 @@ function fAliqSalvar(valorStr){
   notaConfig={ aliquotaMes: v||null, atualizadaEm: new Date().toISOString().slice(0,7) };
   try{ scheduleSave(); }catch(e){}
   // sincroniza os dois campos (Nota Fiscal e Faturamento) sem sobrescrever o que o usuário está digitando neles
-  ['f-nota-aliq-mes','f-fat-aliq'].forEach(id=>{
+  ['f-nota-aliq-mes','f-fat-aliq','f-leo-aliq'].forEach(id=>{
     const el=document.getElementById(id);
     if(el && document.activeElement!==el) el.value = v ? fRecNum(v) : '';
   });
@@ -7205,6 +7206,8 @@ function fLeoInit(){
   if(destino && !destino.value) destino.value=(leoUnidades[0]&&leoUnidades[0].email)||'';
   const compEl=document.getElementById('f-leo-comp');
   if(compEl && !compEl.value){ const d=new Date(); compEl.value=MESES[d.getMonth()]+'/'+d.getFullYear(); }
+  const aliqEl=document.getElementById('f-leo-aliq');
+  if(aliqEl && !aliqEl.value && notaConfig.aliquotaMes!=null) aliqEl.value=fRecNum(notaConfig.aliquotaMes);
   fLeoLista();
 }
 function fLeoResumo(){
@@ -7231,6 +7234,7 @@ function fLeoEditarValor(id){
 }
 async function fLeoEmitirUma(id){
   const u=leoUnidades.find(x=>x.id===id); if(!u) return;
+  if(notaConfig.aliquotaMes==null){ alert('Informe a alíquota ISS do mês antes de emitir.'); return; }
   const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
   const comp=document.getElementById('f-leo-comp').value||'';
   u.status='emitindo'; u.erro=null; fLeoLista();
@@ -7267,6 +7271,7 @@ async function fLeoAguardarAutorizacao(id, tentativas){
   setTimeout(()=>fLeoAguardarAutorizacao(id,tentativas+1), 6000);
 }
 async function fLeoEmitirTodas(){
+  if(notaConfig.aliquotaMes==null){ alert('Informe a alíquota ISS do mês antes de emitir.'); return; }
   const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
   if(ambiente==='producao' && !confirm('Isso vai emitir até '+leoUnidades.length+' NOTAS FISCAIS REAIS em produção (sem boleto). Confirma?')) return;
   const btn=document.getElementById('f-leo-btn-emitir'); const st=document.getElementById('f-leo-status');
