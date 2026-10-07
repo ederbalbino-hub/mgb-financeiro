@@ -8257,12 +8257,15 @@ function finGetRec(y,m){
 function ropsFinMes(ano,mes){
   try{
     const cache=JSON.parse(localStorage.getItem('rops_cache')||'null');
-    if(!cache||!cache.meses) return {receita:0,despesaCmx:0,radios:0};
+    if(!cache||!cache.meses) return {receita:0,despesaCmx:0,radios:0,guina:0,guinaPct:25};
     const key=(a,m)=>a+'-'+String(m+1).padStart(2,'0');
     const d=cache.meses.find(x=>x.mes===key(ano,mes));
-    if(!d) return {receita:0,despesaCmx:0,radios:0};
-    return {receita:d.notaMGB||0, despesaCmx:d.connectmix||0, radios:d.radios||0};
-  }catch(e){ return {receita:0,despesaCmx:0,radios:0}; }
+    const pct=(cache.cfg&&cache.cfg.guinaComissaoPct)||25; // % do Guina sobre a comissão de agência que a MGB recebe (acordado: 25% dos 20%)
+    if(!d) return {receita:0,despesaCmx:0,radios:0,guina:0,guinaPct:pct};
+    // Comissão do Guina: mesma régua de caixa da comissão recebida (d.comissoes já vem em visão de caixa), a partir de out/2026.
+    const guina=(key(ano,mes)>='2026-10')?Math.round((d.comissoes||0)*pct)/100:0;
+    return {receita:d.notaMGB||0, despesaCmx:d.connectmix||0, radios:d.radios||0, guina:guina, guinaPct:pct};
+  }catch(e){ return {receita:0,despesaCmx:0,radios:0,guina:0,guinaPct:25}; }
 }
 // Despesa do mês = mesma fonte que Visão Despesas (db + despesas compartilhadas)
 function finGetDesp(y,m){ return despesaTotalMes(y,m); }
@@ -8991,6 +8994,17 @@ const PLANO_CAIXA_TOKEN='1d9716ba3d52e39f7cbe4bc19c49149d';
 const PLANO_CAIXA_APP_URL='https://script.google.com/macros/s/AKfycbz-77CBmSrRHB2uYjZNNkazXFt9kYHYL7aQQwz4nil5t9Kmof-6xNsZ8snt5hSrGD_l/exec'; // app privado ("Só eu")
 let _ultimoSyncEmpresa='';
 function escHubId(s){ return String(s).replace(/[^a-zA-Z0-9]+/g,'_'); }
+// Receitas do mês, uma por cliente/item (mesma fonte do finGetRec: recOfMes + receita avulsa) — vão pro Plano de Caixa como entradas.
+function coletaReceitasMes(ano,mes){
+  const lista=[];
+  MODULES.forEach(function(mod){ mod.items.forEach(function(item){
+    const v=recOfMes(mod.id,item,ano,mes);
+    if(v>0) lista.push({ id:'hubrec_'+escHubId(mod.id)+'_'+escHubId(item), descricao:item, detalhe:mod.label, valor:v });
+  }); });
+  const manual=(finYear(ano)[mes].receita)||0;
+  if(manual>0) lista.push({ id:'hubrec_manual', descricao:'Receita avulsa', detalhe:'Hub', valor:manual });
+  return lista;
+}
 function syncResumoEmpresaPlanoDeCaixa(ano,mes,receita,despesa){
   const mesRef=ano+'-'+String(mes+1).padStart(2,'0');
   const dKey=despPagKey(ano,mes);
@@ -8999,7 +9013,7 @@ function syncResumoEmpresaPlanoDeCaixa(ano,mes,receita,despesa){
   const lista=coletaDespesasMes(ano,mes).map(function(d){
     const pg=(((despPagamentos[d.m.id]||{})[d.item]||{})[d.idx]||{})[dKey]||{};
     return { id:'hub_'+escHubId(d.m.id)+'_'+escHubId(d.item)+'_'+escHubId(d.idx), descricao:d.r.d||d.item, detalhe:d.r.f||'', valor:d.vlrMes, pago:!!pg.pago };
-  });
+  }).concat(coletaReceitasMes(ano,mes).map(function(r){ return { id:r.id, tipo:'in', descricao:r.descricao, detalhe:r.detalhe, valor:r.valor, pago:false }; }));
   const chave=mesRef+'|'+receita+'|'+despesa+'|'+JSON.stringify(lista.map(function(x){return x.id+':'+x.valor+':'+x.pago;}));
   if(chave===_ultimoSyncEmpresa) return; // só manda se mudou algo desde o último envio
   _ultimoSyncEmpresa=chave;
@@ -9387,6 +9401,18 @@ function coletaDespesasMes(selAno,selMes){
       r:{d:'Connectmix — auditoria de veiculação ('+ropsFm.radios+' rádio(s))',f:'Connectmix'},
       vlrMes:ropsFm.despesaCmx,
       tipoLbl:'Auditoria',
+      mes:selMes,ano:selAno
+    });
+  }
+  // Rádio Moinho (bureau): comissão do Guina — 25% da comissão de agência que a MGB recebe (a partir de out/2026)
+  if(ropsFm.guina>0){
+    out.push({
+      m:MODULES.find(x=>x.id==='radioops'),
+      item:'Moinho Globo',
+      idx:'_guina',
+      r:{d:'Comissão do Guina ('+ropsFm.guinaPct+'% da comissão de agência)',f:'Guina'},
+      vlrMes:ropsFm.guina,
+      tipoLbl:'Comissão',
       mes:selMes,ano:selAno
     });
   }
@@ -9901,10 +9927,10 @@ function planoSyncAgora(){
   var st=document.getElementById('plano-sync-st'); var say=function(h){ if(st) st.innerHTML=h; };
   try{
     var now=new Date(), a=now.getFullYear(), m=now.getMonth(), mesRef=a+'-'+String(m+1).padStart(2,'0');
-    var rec=finGetRec(a,m), desp=finGetDesp(a,m), n=coletaDespesasMes(a,m).length;
+    var rec=finGetRec(a,m), desp=finGetDesp(a,m), n=coletaDespesasMes(a,m).length, nr=coletaReceitasMes(a,m).length;
     _ultimoSyncEmpresa=''; // força o envio mesmo se nada mudou
     syncResumoEmpresaPlanoDeCaixa(a,m,rec,desp);
-    say('⏳ Enviado: receita '+f(rec)+' · despesa '+f(desp)+' · '+n+' despesas. Conferindo se chegou…');
+    say('⏳ Enviado: receita '+f(rec)+' · despesa '+f(desp)+' · '+n+' despesas · '+nr+' receitas. Conferindo se chegou…');
     setTimeout(async function(){
       try{
         var r=await fetch(PLANO_CAIXA_URL+'?acao=resumoEmpresa&mesRef='+mesRef+'&token='+encodeURIComponent(PLANO_CAIXA_TOKEN),{credentials:'omit'});
