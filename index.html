@@ -5994,6 +5994,7 @@ function copiarSpot() {
         <button class="anunc-btn" onclick="window.open(PLANO_CAIXA_APP_URL,'_blank')">↗ Abrir fora</button>
       </div>
     </div>
+    <div id="plano-sync-st" style="font-size:12px;color:var(--muted);margin:0 0 8px;min-height:16px"></div>
     <div id="plano-wrap"></div>
   </div>
   <div id="page-radioops" style="display:none">
@@ -6546,6 +6547,7 @@ function copiarSpot() {
           </div>
           <label id="f-nota-retem-wrap" style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;color:var(--muted);cursor:pointer"><input type="checkbox" id="f-nota-retem"> Cliente é de <b>Londrina</b> — reter ISS na nota</label>
           <div class="ferr-info" style="margin-top:6px;color:#B45309">⚠️ Confirme com o contador o código de serviço antes de emitir a primeira nota em <b>produção</b>. Use o Sandbox pra testar à vontade.</div>
+          <div id="f-nota-venc" class="ferr-info" style="margin-top:10px"></div>
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
             <button class="ferr-btn" onclick="fNotaEmitir()" id="f-nota-btn">📄 Emitir nota + boleto</button>
             <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fNotaLimpar()">Novo</button>
@@ -6605,6 +6607,7 @@ function copiarSpot() {
           <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fFatLimparSelecao()">Limpar seleção</button>
           <button class="ferr-btn" style="background:#0D9488" onclick="fFatEmitirSelecionados()" id="f-fat-btn-emitir">Emitir selecionados</button>
           <span id="f-fat-resumo" class="ferr-info"></span>
+          <span id="f-fat-venc" class="ferr-info"></span>
         </div>
         <div id="f-fat-status" style="margin-top:10px"></div>
       </div>
@@ -7093,6 +7096,17 @@ function fNotaToggleSemNota(){
     el.querySelectorAll('input').forEach(i=>i.disabled=semNota);
   });
 }
+// Vencimento padrão dos boletos: dia 15 (mesma regra do backend, bot/api/asaas.js): até o dia 15 → este mês; depois → mês seguinte.
+function fVencBoleto(){
+  const h=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  const d=new Date(h.getFullYear(),h.getMonth()+(h.getDate()>15?1:0),15), mm=String(d.getMonth()+1).padStart(2,'0');
+  return { iso:d.getFullYear()+'-'+mm+'-15', br:'15/'+mm+'/'+d.getFullYear() };
+}
+function fVencAtualizar(){
+  const v=fVencBoleto();
+  const a=document.getElementById('f-nota-venc'); if(a) a.innerHTML='📅 Vencimento do boleto: <b>'+v.br+'</b> (todo dia 15)';
+  const b=document.getElementById('f-fat-venc'); if(b) b.innerHTML='📅 Boletos vencem em <b>'+v.br+'</b> · Léo: sem boleto';
+}
 async function fNotaEmitir(){
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
   const ambiente=g('f-nota-amb')||'sandbox';
@@ -7110,7 +7124,7 @@ async function fNotaEmitir(){
   if(ambiente==='producao' && !confirm(semNota ? 'Isso vai gerar um BOLETO REAL em produção, SEM nota fiscal. Confirma?' : 'Isso vai gerar um BOLETO e uma NOTA FISCAL REAIS em produção. Confirma?')) return;
   const btn=document.getElementById('f-nota-btn'); const st=document.getElementById('f-nota-status');
   btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Enviando pra Asaas…</div>';
-  const payload={ tomador:{nome, cnpj:doc||undefined, email}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, aliquotaIss:iss||undefined, retemIss}, semNota };
+  const payload={ tomador:{nome, cnpj:doc||undefined, email}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, aliquotaIss:iss||undefined, retemIss}, vencimento:fVencBoleto().iso, semNota };
   try{
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     const j=await r.json();
@@ -7299,6 +7313,7 @@ const FATURAMENTO_API_URL = 'https://script.google.com/macros/s/AKfycbwdlNqijPhK
 const FAT_MANUAL_MODULOS = ['Tarobá','Bureau de Mídia']; // sempre manual, nunca entra no lote (comissão fecha depois)
 let fatLinhas = [];
 function fFatInit(){
+  fVencAtualizar();
   const compEl=document.getElementById('f-fat-comp');
   if(compEl && !compEl.value){ const d=new Date(); compEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
   const aliqEl=document.getElementById('f-fat-aliq');
@@ -7372,6 +7387,7 @@ async function fFatEmitirUma(row){
     tomador:{ nome:row.cliente, cnpj:row.cnpj, email:row.email, endereco:{ cep:row.cep, logradouro:row.logradouro, numero:row.numero, complemento:row.complemento, bairro:row.bairro } },
     servico:{ codigo:String(row.ctribnac||''), descricao:(row.descricao||'Prestação de serviços de mídia')+' — competência '+comp },
     valores:{ total:row.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
+    vencimento:fVencBoleto().iso,
   };
   try{
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
@@ -8901,7 +8917,7 @@ function goPage(p){
     if(fpv && !fpv.src) fpv.src='proposta-vaapty.html?t='+Date.now(); // lazy + cache-bust
   }
   if(p==='ferramentas'){ var elf=document.getElementById('nav-ferramentas'); if(elf) elf.classList.add('on'); try{initFerramentas();}catch(e){} }
-  if(p==='contabilidade'){ var elc=document.getElementById('nav-contabilidade'); if(elc) elc.classList.add('on'); try{initContabilidade();}catch(e){} }
+  if(p==='contabilidade'){ var elc=document.getElementById('nav-contabilidade'); if(elc) elc.classList.add('on'); try{initContabilidade();}catch(e){} try{fVencAtualizar();}catch(e){} }
   if(p==='leads'){ var eld=document.getElementById('nav-leads'); if(eld) eld.classList.add('on'); try{buildLeads();}catch(e){} }
   if(p==='planocaixa'){ var elp=document.getElementById('nav-pessoal'); if(elp) elp.classList.add('on'); try{ planoMontar(); }catch(e){} }
   if(p==='radioops'){ var elr=document.getElementById('nav-radioops'); if(elr) elr.classList.add('on'); try{buildRadioOps();}catch(e){} try{ ropsSetTab(localStorage.getItem('rops_tab')||'painel'); }catch(e){} }
@@ -9882,13 +9898,24 @@ function planoMontar(){
   f.src=PLANO_CAIXA_URL+'?k='+encodeURIComponent(k); w.appendChild(f);
 }
 function planoSyncAgora(){
+  var st=document.getElementById('plano-sync-st'); var say=function(h){ if(st) st.innerHTML=h; };
   try{
-    var now=new Date(), a=now.getFullYear(), m=now.getMonth();
+    var now=new Date(), a=now.getFullYear(), m=now.getMonth(), mesRef=a+'-'+String(m+1).padStart(2,'0');
     var rec=finGetRec(a,m), desp=finGetDesp(a,m), n=coletaDespesasMes(a,m).length;
     _ultimoSyncEmpresa=''; // força o envio mesmo se nada mudou
     syncResumoEmpresaPlanoDeCaixa(a,m,rec,desp);
-    alert('Enviado ao Plano de Caixa ('+(m+1)+'/'+a+'):\nReceita: '+f(rec)+'\nDespesa: '+f(desp)+'\nDespesas individuais: '+n+'\n\nO envio não devolve confirmação. Espere uns 10 segundos e clique em ↻ Recarregar: a data de "atualizado" na aba Empresa deve virar agora.');
-  }catch(e){ alert('Falha ao sincronizar: '+e.message); }
+    say('⏳ Enviado: receita '+f(rec)+' · despesa '+f(desp)+' · '+n+' despesas. Conferindo se chegou…');
+    setTimeout(async function(){
+      try{
+        var r=await fetch(PLANO_CAIXA_URL+'?acao=resumoEmpresa&mesRef='+mesRef+'&token='+encodeURIComponent(PLANO_CAIXA_TOKEN),{credentials:'omit'});
+        var j=await r.json();
+        if(!j||!j.ok){ say('⚠ O Plano de Caixa não respondeu com confirmação. Ou o envio não chegou, ou o app ainda está numa versão antiga (precisa de uma nova implantação — botão 🔑 Chave → URL).'); return; }
+        var rs=j.resumo; if(!rs){ say('⚠ Nada guardado no Plano de Caixa pra '+mesRef+'. O envio não chegou.'); return; }
+        var okv=Math.abs(+rs.receita-rec)<0.5 && Math.abs(+rs.despesa-desp)<0.5;
+        say((okv?'✅ Confirmado':'⚠ Chegou DIFERENTE')+' no Plano de Caixa: receita '+f(+rs.receita)+' · despesa '+f(+rs.despesa)+' (atualizado '+new Date(rs.atualizadoEm).toLocaleString('pt-BR')+') · '+j.despesasHub+' despesas do Hub'+(j.linhasResumo>1?' · ⚠ '+j.linhasResumo+' linhas de resumo (duplicadas)':'')+'. Clique em ↻ Recarregar.');
+      }catch(e){ say('⚠ Não consegui conferir ('+e.message+'). O envio pode ter chegado — clique em ↻ Recarregar e veja a data de "atualizado" na aba Empresa.'); }
+    },6000);
+  }catch(e){ say('⚠ Falha ao sincronizar: '+e.message); }
 }
 function planoRecarregar(){ var w=document.getElementById('plano-wrap'); if(w) w.innerHTML=''; planoMontar(); }
 function planoTrocarChave(){
