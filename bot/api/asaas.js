@@ -74,18 +74,25 @@ async function acharOuCriarCliente(ambiente, tomador) {
   if (e.numero) end.addressNumber = String(e.numero);
   if (e.complemento) end.complement = e.complemento;
   if (e.bairro) end.province = e.bairro;
+  // A planilha pode trazer vários e-mails no mesmo campo ("a@x.com, b@y.com"). A Asaas só aceita UM em `email`;
+  // o resto vai em `additionalEmails` (separados por vírgula) — o boleto/nota chega pra todos.
+  const emails = String(tomador.email || "").split(/[\s,;]+/).filter((x) => x.includes("@"));
+  const mail = {};
+  if (emails[0]) mail.email = emails[0];
+  if (emails.length > 1) mail.additionalEmails = emails.slice(1).join(",");
   if (doc) {
     const j = await asaas(ambiente, "GET", `/customers?cpfCnpj=${doc}`);
     if (j.data && j.data.length) {
       // cliente já existe (possivelmente criado antes sem endereço) — completa o cadastro
-      if (Object.keys(end).length) await asaas(ambiente, "PUT", `/customers/${j.data[0].id}`, end);
+      const atual = { ...end, ...mail };
+      if (Object.keys(atual).length) await asaas(ambiente, "PUT", `/customers/${j.data[0].id}`, atual);
       return j.data[0].id;
     }
   }
   const novo = await asaas(ambiente, "POST", "/customers", {
     name: tomador.nome,
     cpfCnpj: doc || undefined,
-    email: tomador.email || undefined,
+    ...mail,
     phone: tomador.telefone || undefined,
     externalReference: doc || tomador.nome,
     ...end,
