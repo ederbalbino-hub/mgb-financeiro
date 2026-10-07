@@ -7239,6 +7239,7 @@ async function fLeoEmitirUma(id){
     servico:{ codigo:'171001', descricao:'Gestão e veiculação de rádio interna — '+comp },
     valores:{ total:u.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:fLeoRetemIss(u) },
     semCobranca:true,
+    referencia:'leo-'+u.id+'-'+comp, // mesma unidade + mês nunca gera 2 notas (nem recarregando a página ou reenviando)
   };
   try{
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
