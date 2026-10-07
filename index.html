@@ -8254,18 +8254,20 @@ function finGetRec(y,m){
 // sem deslocar de novo aqui (deslocar duas vezes errava out em diante).
 // Receita = nota MGB cheia (inclui o Connectmix cobrado do cliente); o repasse
 // à Connectmix entra como DESPESA própria na Cobrança Mensal — líquido = fee+comissões.
+// Comissões de agência que a MGB recebe FORA do Rádio Ops e que entram na base do Guina (acertado com o Eder em 07/10/2026):
+// Evangelizar R$ 2.500 + Alvorada R$ 500, por mês, a partir de out/2026. Somam-se às comissões do Rádio Ops antes dos 25%.
+const GUINA_BASE_EXTRA=[ {nome:'Evangelizar',valor:2500}, {nome:'Alvorada',valor:500} ];
+const GUINA_INICIO='2026-10';
 function ropsFinMes(ano,mes){
-  try{
-    const cache=JSON.parse(localStorage.getItem('rops_cache')||'null');
-    if(!cache||!cache.meses) return {receita:0,despesaCmx:0,radios:0,guina:0,guinaPct:25};
-    const key=(a,m)=>a+'-'+String(m+1).padStart(2,'0');
-    const d=cache.meses.find(x=>x.mes===key(ano,mes));
-    const pct=(cache.cfg&&cache.cfg.guinaComissaoPct)||25; // % do Guina sobre a comissão de agência que a MGB recebe (acordado: 25% dos 20%)
-    if(!d) return {receita:0,despesaCmx:0,radios:0,guina:0,guinaPct:pct};
-    // Comissão do Guina: mesma régua de caixa da comissão recebida (d.comissoes já vem em visão de caixa), a partir de out/2026.
-    const guina=(key(ano,mes)>='2026-10')?Math.round((d.comissoes||0)*pct)/100:0;
-    return {receita:d.notaMGB||0, despesaCmx:d.connectmix||0, radios:d.radios||0, guina:guina, guinaPct:pct};
-  }catch(e){ return {receita:0,despesaCmx:0,radios:0,guina:0,guinaPct:25}; }
+  const key=ano+'-'+String(mes+1).padStart(2,'0');
+  let cache=null; try{ cache=JSON.parse(localStorage.getItem('rops_cache')||'null'); }catch(e){}
+  const d=(cache&&cache.meses)?cache.meses.find(x=>x.mes===key):null;
+  const pct=(cache&&cache.cfg&&cache.cfg.guinaComissaoPct)||25; // % do Guina sobre a comissão de agência que a MGB recebe (acordado: 25% dos 20%)
+  // Base do Guina: comissões do Rádio Ops (já em visão de caixa) + comissões avulsas acima; só a partir de out/2026.
+  const baseExtra=(key>=GUINA_INICIO)?GUINA_BASE_EXTRA.reduce((a,x)=>a+x.valor,0):0;
+  const baseRops=(key>=GUINA_INICIO&&d)?(d.comissoes||0):0;
+  const guina=Math.round((baseRops+baseExtra)*pct)/100;
+  return {receita:d?(d.notaMGB||0):0, despesaCmx:d?(d.connectmix||0):0, radios:d?(d.radios||0):0, guina:guina, guinaPct:pct, guinaBase:baseRops+baseExtra, guinaBaseRops:baseRops};
 }
 // Despesa do mês = mesma fonte que Visão Despesas (db + despesas compartilhadas)
 function finGetDesp(y,m){ return despesaTotalMes(y,m); }
@@ -9410,7 +9412,7 @@ function coletaDespesasMes(selAno,selMes){
       m:MODULES.find(x=>x.id==='radioops'),
       item:'Moinho Globo',
       idx:'_guina',
-      r:{d:'Comissão do Guina ('+ropsFm.guinaPct+'% da comissão de agência)',f:'Guina'},
+      r:{d:'Comissão do Guina ('+ropsFm.guinaPct+'% de R$ '+Number(ropsFm.guinaBase).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' de comissões)',f:'Guina'},
       vlrMes:ropsFm.guina,
       tipoLbl:'Comissão',
       mes:selMes,ano:selAno
