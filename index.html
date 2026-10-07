@@ -9912,7 +9912,7 @@ function planoSyncAgora(){
         if(!j||!j.ok){ say('⚠ O Plano de Caixa não respondeu com confirmação. Ou o envio não chegou, ou o app ainda está numa versão antiga (precisa de uma nova implantação — botão 🔑 Chave → URL).'); return; }
         var rs=j.resumo; if(!rs){ say('⚠ Nada guardado no Plano de Caixa pra '+mesRef+'. O envio não chegou.'); return; }
         var okv=Math.abs(+rs.receita-rec)<0.5 && Math.abs(+rs.despesa-desp)<0.5;
-        say((okv?'✅ Confirmado':'⚠ Chegou DIFERENTE')+' no Plano de Caixa: receita '+f(+rs.receita)+' · despesa '+f(+rs.despesa)+' (atualizado '+new Date(rs.atualizadoEm).toLocaleString('pt-BR')+') · '+j.despesasHub+' despesas do Hub'+(j.linhasResumo>1?' · ⚠ '+j.linhasResumo+' linhas de resumo (duplicadas)':'')+'. Clique em ↻ Recarregar.');
+        say((okv?'✅ Confirmado':'⚠ Chegou DIFERENTE')+' no Plano de Caixa: receita '+f(+rs.receita)+' · despesa '+f(+rs.despesa)+' (atualizado '+new Date(rs.atualizadoEm).toLocaleString('pt-BR')+')'+(j.despesasHub>0?' · '+j.despesasHub+' despesas do Hub':'')+(j.linhasResumo>1?' · ⚠ '+j.linhasResumo+' linhas de resumo (duplicadas)':'')+'. Clique em ↻ Recarregar.');
       }catch(e){ say('⚠ Não consegui conferir ('+e.message+'). O envio pode ter chegado — clique em ↻ Recarregar e veja a data de "atualizado" na aba Empresa.'); }
     },6000);
   }catch(e){ say('⚠ Falha ao sincronizar: '+e.message); }
