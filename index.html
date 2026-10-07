@@ -7353,7 +7353,7 @@ function fFatBoleto(r){
   return (r.issRetido&&a>0&&r.modo!=='boleto') ? Math.round((v-Math.round(v*a)/100)*100)/100 : v;
 }
 function fFatValor(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.valor=fRecParseValor(v); fFatLista(); } }
-function fFatModo(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r) r.modo=v; }
+function fFatModo(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.modo=v; fFatLista(); } } // redesenha: a coluna Boleto muda com o modo (só boleto = valor cheio)
 function fFatToggle(id){ const r=fatLinhas.find(x=>x.id===id); if(r) r.selecionado=!r.selecionado; fFatLista(); }
 function fFatResumo(){
   const el=document.getElementById('f-fat-resumo'); if(!el) return;
