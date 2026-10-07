@@ -154,6 +154,11 @@ export default async function handler(req, res) {
     if (action === "emitir") {
       if (req.method !== "POST") return res.status(405).json({ error: "Use POST." });
       const { tomador, servico, valores, vencimento, semCobranca, semNota, referencia } = req.body || {};
+      // valores.cobranca = valor do BOLETO (líquido do ISS retido pelo cliente); valores.total = valor cheio da NOTA.
+      const valorCobranca = valores?.cobranca != null ? Number(valores.cobranca) : valores?.total;
+      if (!(valorCobranca > 0) || valorCobranca > Number(valores?.total) + 0.001) {
+        return res.status(400).json({ error: "Valor do boleto inválido (deve ser maior que zero e não passar do valor da nota)." });
+      }
       const ref = referencia ? "mgb-" + String(referencia).slice(0, 80) : null;
       if (!tomador?.nome || !servico?.descricao || !(valores?.total > 0)) {
         return res.status(400).json({ error: "Faltam dados: tomador.nome, servico.descricao ou valores.total." });
@@ -173,7 +178,7 @@ export default async function handler(req, res) {
           payment = await asaas(ambiente, "POST", "/payments", {
             customer: customerId,
             billingType: "BOLETO",
-            value: valores.total,
+            value: valorCobranca,
             dueDate,
             description: servico.descricao,
             externalReference: ref || "mgb-" + Date.now(),

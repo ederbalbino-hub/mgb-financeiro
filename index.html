@@ -7124,7 +7124,7 @@ async function fNotaEmitir(){
   if(ambiente==='producao' && !confirm(semNota ? 'Isso vai gerar um BOLETO REAL em produção, SEM nota fiscal. Confirma?' : 'Isso vai gerar um BOLETO e uma NOTA FISCAL REAIS em produção. Confirma?')) return;
   const btn=document.getElementById('f-nota-btn'); const st=document.getElementById('f-nota-status');
   btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Enviando pra Asaas…</div>';
-  const payload={ tomador:{nome, cnpj:doc||undefined, email}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, aliquotaIss:iss||undefined, retemIss}, vencimento:fVencBoleto().iso, semNota };
+  const payload={ tomador:{nome, cnpj:doc||undefined, email}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, cobranca:(retemIss&&iss>0)?Math.round((valor-Math.round(valor*iss)/100)*100)/100:valor, aliquotaIss:iss||undefined, retemIss}, vencimento:fVencBoleto().iso, semNota };
   try{
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     const j=await r.json();
@@ -7345,6 +7345,11 @@ async function fFatCarregar(){
 }
 function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)) r.selecionado=true; }); fFatLista(); }
 function fFatLimparSelecao(){ fatLinhas.forEach(r=>r.selecionado=false); fFatLista(); }
+// Boleto = valor da nota MENOS o ISS retido pelo cliente (só quem retém: Londrina). O Simples (DAS) é da MGB e não entra aqui.
+function fFatBoleto(r){
+  const v=Number(r.valor)||0, a=Number(notaConfig.aliquotaMes)||0;
+  return r.issRetido&&a>0 ? Math.round((v-Math.round(v*a)/100)*100)/100 : v;
+}
 function fFatModo(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r) r.modo=v; }
 function fFatToggle(id){ const r=fatLinhas.find(x=>x.id===id); if(r) r.selecionado=!r.selecionado; fFatLista(); }
 function fFatResumo(){
@@ -7374,7 +7379,7 @@ function fFatLista(){
   if(!fatLinhas.length){ el.innerHTML='<div class="ferr-info">Clique em "Carregar planilha" pra ver os clientes ativos.</div>'; return; }
   const comp=(document.getElementById('f-fat-comp')||{}).value||'';
   const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
-  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th></tr>'+
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th></tr>'+
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
@@ -7383,6 +7388,7 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(r.valor||0)+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(manual?'—':'<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((manual||r.modo==='nota')?'—':f(fFatBoleto(r))+(r.issRetido&&Number(notaConfig.aliquotaMes)>0?' <span title="valor da nota menos o ISS retido" style="font-size:9px;color:var(--muted)">líq.</span>':''))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
@@ -7396,7 +7402,7 @@ async function fFatEmitirUma(row){
   const payload={
     tomador:{ nome:row.cliente, cnpj:row.cnpj, email:row.email, endereco:{ cep:row.cep, logradouro:row.logradouro, numero:row.numero, complemento:row.complemento, bairro:row.bairro } },
     servico:{ codigo:String(row.ctribnac||''), descricao:(row.descricao||'Prestação de serviços de mídia')+' — competência '+comp },
-    valores:{ total:row.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
+    valores:{ total:row.valor, cobranca:fFatBoleto(row), aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
     vencimento:fVencBoleto().iso,
     referencia:row.id+'-'+comp, // mesmo cliente + mês nunca gera 2 boletos/2 notas, nem recarregando a página
   };
@@ -7409,7 +7415,7 @@ async function fFatEmitirUma(row){
     row.paymentId=j.paymentId; row.invoiceId=j.invoiceId; row.boletoUrl=j.boletoUrl||null; row.statusPagamento='pendente';
     if(row.modo==='boleto'){ // sem nota: não há o que aguardar — grava na planilha como emitido (só boleto)
       row.status='emitida';
-      fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero=&valorBoleto='+encodeURIComponent(row.valor)+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
+      fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero=&valorBoleto='+encodeURIComponent(fFatBoleto(row))+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
     } else {
       if(!row.invoiceId) throw new Error(j.invoiceErro||'Não retornou invoiceId.');
       row.status='aguardando-nota';
@@ -7431,7 +7437,7 @@ async function fFatAguardarAutorizacao(id, tentativas){
       if(j.status==='AUTHORIZED'){
         row.status='emitida'; fFatLista();
         const comp=document.getElementById('f-fat-comp').value||'';
-        fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(j.numero||'')+(row.modo==='nota'?'':'&valorBoleto='+encodeURIComponent(row.valor))+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
+        fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(j.numero||'')+(row.modo==='nota'?'':'&valorBoleto='+encodeURIComponent(fFatBoleto(row)))+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
         return;
       }
       if(j.status==='ERROR'){ row.status='erro'; row.erro=j.erro||'Erro na emissão da nota'; fFatLista(); return; }
@@ -7445,7 +7451,7 @@ async function fFatEmitirSelecionados(){
   if(notaConfig.aliquotaMes==null){ alert('Configure a alíquota ISS do mês na aba Nota Fiscal antes de emitir.'); return; }
   const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
   const nAmbos=selecionados.filter(r=>(r.modo||'ambos')==='ambos').length, nNota=selecionados.filter(r=>r.modo==='nota').length, nBol=selecionados.filter(r=>r.modo==='boleto').length;
-  if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' pra '+selecionados.length+' cliente(s):\n• '+nAmbos+' nota + boleto (vence '+fVencBoleto().br+')\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nConfirma?')) return;
+  if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' pra '+selecionados.length+' cliente(s):\n• '+nAmbos+' nota + boleto (vence '+fVencBoleto().br+')\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nTotal em boletos: '+f(selecionados.filter(r=>r.modo!=='nota').reduce((a,r)=>a+fFatBoleto(r),0))+' (líquido do ISS retido)\n\nConfirma?')) return;
   const btn=document.getElementById('f-fat-btn-emitir'); const st=document.getElementById('f-fat-status');
   btn.disabled=true; btn.style.opacity='.6';
   let ok=0, falhas=0;
