@@ -7398,6 +7398,7 @@ async function fFatEmitirUma(row){
     servico:{ codigo:String(row.ctribnac||''), descricao:(row.descricao||'Prestação de serviços de mídia')+' — competência '+comp },
     valores:{ total:row.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
     vencimento:fVencBoleto().iso,
+    referencia:row.id+'-'+comp, // mesmo cliente + mês nunca gera 2 boletos/2 notas, nem recarregando a página
   };
   if(row.modo==='nota') payload.semCobranca=true;   // só nota fiscal, sem boleto (cliente paga fora, ex.: Léo)
   if(row.modo==='boleto') payload.semNota=true;     // só boleto, sem nota fiscal

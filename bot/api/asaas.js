@@ -55,6 +55,44 @@ async function asaas(ambiente, method, path, body) {
   return j;
 }
 
+// Antes de criar QUALQUER cobrança, confere se a conta tem as informações fiscais cadastradas — senão a nota falha
+// depois que o boleto já foi criado (e um 2º clique geraria outro boleto). Só bloqueia quando o Asaas diz claramente
+// que não há cadastro (404 / mensagem fiscal); qualquer outra falha na consulta não impede a emissão.
+async function verificarInfoFiscal(ambiente) {
+  try {
+    await asaas(ambiente, "GET", "/fiscalInfo");
+  } catch (e) {
+    if (e.status === 404 || /fiscal/i.test(e.message || "")) {
+      const err = new Error(`A conta do Asaas (${ambiente}) ainda não tem as informações fiscais cadastradas. Cadastre em Minha conta → Informações fiscais e tente de novo. Nenhuma cobrança foi criada.`);
+      err.status = 400;
+      throw err;
+    }
+  }
+}
+
+// Idempotência: com `referencia` (ex.: "arel-radio-2026-10") o mesmo cliente/mês nunca gera 2 boletos nem 2 notas,
+// nem se a tela for recarregada ou o botão apertado de novo. Só reaproveita se a referência BATER exatamente.
+async function acharPagamentoPorReferencia(ambiente, ref) {
+  if (!ref) return null;
+  try {
+    const j = await asaas(ambiente, "GET", `/payments?externalReference=${encodeURIComponent(ref)}&limit=10`);
+    return (j.data || []).find((p) => p.externalReference === ref && !p.deleted) || null;
+  } catch (e) {
+    return null;
+  }
+}
+async function acharNotaExistente(ambiente, { paymentId, ref }) {
+  try {
+    const q = paymentId ? `payment=${encodeURIComponent(paymentId)}` : ref ? `externalReference=${encodeURIComponent(ref)}` : null;
+    if (!q) return null;
+    const j = await asaas(ambiente, "GET", `/invoices?${q}&limit=10`);
+    const ok = (i) => !["CANCELED", "ERROR", "DENIED"].includes(i.status) && (paymentId ? i.payment === paymentId : i.externalReference === ref);
+    return (j.data || []).find(ok) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Vencimento padrão dos boletos: dia 15. Se hoje (no fuso de São Paulo) ainda não passou do 15, é o 15 deste mês;
 // passou, é o 15 do mês seguinte (o Asaas não aceita vencimento no passado). Léo não passa por aqui (semCobranca).
 function proximoDia15() {
@@ -115,7 +153,8 @@ export default async function handler(req, res) {
     // ── cria cliente + cobrança (boleto/PIX) + nota fiscal vinculada, numa tacada ──
     if (action === "emitir") {
       if (req.method !== "POST") return res.status(405).json({ error: "Use POST." });
-      const { tomador, servico, valores, vencimento, semCobranca, semNota } = req.body || {};
+      const { tomador, servico, valores, vencimento, semCobranca, semNota, referencia } = req.body || {};
+      const ref = referencia ? "mgb-" + String(referencia).slice(0, 80) : null;
       if (!tomador?.nome || !servico?.descricao || !(valores?.total > 0)) {
         return res.status(400).json({ error: "Faltam dados: tomador.nome, servico.descricao ou valores.total." });
       }
@@ -123,19 +162,23 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "semCobranca e semNota não podem ser true ao mesmo tempo — não sobraria nada pra emitir." });
       }
 
+      if (!semNota) await verificarInfoFiscal(ambiente); // falha cedo, antes de criar cliente/cobrança
       const customerId = await acharOuCriarCliente(ambiente, tomador);
 
       let payment = null;
       if (!semCobranca) {
         const dueDate = vencimento || proximoDia15(); // padrão: todo boleto vence dia 15 (decisão do Eder 06/10)
-        payment = await asaas(ambiente, "POST", "/payments", {
-          customer: customerId,
-          billingType: "BOLETO",
-          value: valores.total,
-          dueDate,
-          description: servico.descricao,
-          externalReference: "mgb-" + Date.now(),
-        });
+        payment = await acharPagamentoPorReferencia(ambiente, ref); // já existe (reenvio)? reaproveita, não duplica
+        if (!payment) {
+          payment = await asaas(ambiente, "POST", "/payments", {
+            customer: customerId,
+            billingType: "BOLETO",
+            value: valores.total,
+            dueDate,
+            description: servico.descricao,
+            externalReference: ref || "mgb-" + Date.now(),
+          });
+        }
       }
 
       let invoice = null,
@@ -152,7 +195,9 @@ export default async function handler(req, res) {
           };
           if (payment) invoiceBody.payment = payment.id;
           else invoiceBody.customer = customerId; // sem cobrança: nota vinculada direto ao cliente
-          invoice = await asaas(ambiente, "POST", "/invoices", invoiceBody);
+          if (ref) invoiceBody.externalReference = ref;
+          invoice = await acharNotaExistente(ambiente, { paymentId: payment && payment.id, ref }); // já emitida? reaproveita
+          if (!invoice) invoice = await asaas(ambiente, "POST", "/invoices", invoiceBody);
         } catch (e) {
           // a cobrança já foi criada mesmo se a nota falhar (ex: cadastro fiscal da conta incompleto) —
           // devolve o que deu certo e o erro específico da nota, em vez de jogar tudo fora.
