@@ -7384,7 +7384,7 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(r.valor||0)+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(manual?'—':'<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado||'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td></tr>';
     }).join('')+'</table>';
