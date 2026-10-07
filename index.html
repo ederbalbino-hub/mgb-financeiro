@@ -7336,7 +7336,7 @@ async function fFatCarregar(){
     const r=await fetch(FATURAMENTO_API_URL+'?action=listar');
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
-    fatLinhas=(j.rows||[]).map(row=>({ ...row, selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
+    fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:(row.boleto===false?'nota':'ambos'), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
     fFatLista();
   }catch(e){
@@ -7345,6 +7345,7 @@ async function fFatCarregar(){
 }
 function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)) r.selecionado=true; }); fFatLista(); }
 function fFatLimparSelecao(){ fatLinhas.forEach(r=>r.selecionado=false); fFatLista(); }
+function fFatModo(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r) r.modo=v; }
 function fFatToggle(id){ const r=fatLinhas.find(x=>x.id===id); if(r) r.selecionado=!r.selecionado; fFatLista(); }
 function fFatResumo(){
   const el=document.getElementById('f-fat-resumo'); if(!el) return;
@@ -7373,7 +7374,7 @@ function fFatLista(){
   if(!fatLinhas.length){ el.innerHTML='<div class="ferr-info">Clique em "Carregar planilha" pra ver os clientes ativos.</div>'; return; }
   const comp=(document.getElementById('f-fat-comp')||{}).value||'';
   const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
-  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th></tr>'+
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th></tr>'+
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
@@ -7381,6 +7382,7 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(r.valor||0)+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(manual?'—':'<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado||'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
@@ -7397,13 +7399,20 @@ async function fFatEmitirUma(row){
     valores:{ total:row.valor, aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
     vencimento:fVencBoleto().iso,
   };
+  if(row.modo==='nota') payload.semCobranca=true;   // só nota fiscal, sem boleto (cliente paga fora, ex.: Léo)
+  if(row.modo==='boleto') payload.semNota=true;     // só boleto, sem nota fiscal
   try{
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('Asaas respondeu '+r.status));
     row.paymentId=j.paymentId; row.invoiceId=j.invoiceId; row.boletoUrl=j.boletoUrl||null; row.statusPagamento='pendente';
-    if(!row.invoiceId) throw new Error(j.invoiceErro||'Não retornou invoiceId.');
-    row.status='aguardando-nota';
+    if(row.modo==='boleto'){ // sem nota: não há o que aguardar — grava na planilha como emitido (só boleto)
+      row.status='emitida';
+      fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero=&valorBoleto='+encodeURIComponent(row.valor)+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
+    } else {
+      if(!row.invoiceId) throw new Error(j.invoiceErro||'Não retornou invoiceId.');
+      row.status='aguardando-nota';
+    }
   }catch(e){ row.status='erro'; row.erro=e.message; }
   fFatLista();
   return row.status;
@@ -7421,7 +7430,7 @@ async function fFatAguardarAutorizacao(id, tentativas){
       if(j.status==='AUTHORIZED'){
         row.status='emitida'; fFatLista();
         const comp=document.getElementById('f-fat-comp').value||'';
-        fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(j.numero||'')+'&valorBoleto='+encodeURIComponent(row.valor)+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
+        fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(j.numero||'')+(row.modo==='nota'?'':'&valorBoleto='+encodeURIComponent(row.valor))+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
         return;
       }
       if(j.status==='ERROR'){ row.status='erro'; row.erro=j.erro||'Erro na emissão da nota'; fFatLista(); return; }
@@ -7434,7 +7443,8 @@ async function fFatEmitirSelecionados(){
   if(!selecionados.length){ alert('Marque pelo menos um cliente.'); return; }
   if(notaConfig.aliquotaMes==null){ alert('Configure a alíquota ISS do mês na aba Nota Fiscal antes de emitir.'); return; }
   const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
-  if(!confirm('Isso vai emitir nota + boleto pra '+selecionados.length+' cliente(s) em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+'. Confirma?')) return;
+  const nAmbos=selecionados.filter(r=>(r.modo||'ambos')==='ambos').length, nNota=selecionados.filter(r=>r.modo==='nota').length, nBol=selecionados.filter(r=>r.modo==='boleto').length;
+  if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' pra '+selecionados.length+' cliente(s):\n• '+nAmbos+' nota + boleto (vence '+fVencBoleto().br+')\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nConfirma?')) return;
   const btn=document.getElementById('f-fat-btn-emitir'); const st=document.getElementById('f-fat-status');
   btn.disabled=true; btn.style.opacity='.6';
   let ok=0, falhas=0;
