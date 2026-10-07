@@ -6613,7 +6613,7 @@ function copiarSpot() {
       </div>
       <div class="ferr-card" style="margin-top:14px">
         <div class="ferr-t">Clientes ativos na planilha</div>
-        <div class="ferr-d">Tarobá e Rádio Ops (Bureau de Mídia) ficam marcados como sempre-manual — emita eles pela aba Nota Fiscal quando fechar a comissão do mês, não por aqui.</div>
+        <div class="ferr-d">Tarobá e Bureau de Mídia são <b>valor manual</b> (✋): digite o valor da comissão do mês na própria linha. O padrão é <b>só nota, sem boleto</b>, e eles <b>não entram</b> em "Marcar todos" — marque um a um.</div>
         <div id="f-fat-lista" style="margin-top:10px;overflow-x:auto"></div>
       </div>
     </div>
@@ -7318,7 +7318,8 @@ async function fLeoEnviarEmail(){
 
 /* ---- FATURAMENTO EM LOTE (sub-aba 🚀) — lê a planilha "MGB Faturamento - Clientes" ---- */
 const FATURAMENTO_API_URL = 'https://script.google.com/macros/s/AKfycbwdlNqijPhK5MfOFhQ-4lo72hA-3G1J-iPZbdoOZAQGv_8z7NG4QBjNxDIhmZNFOIa8/exec';
-const FAT_MANUAL_MODULOS = ['Tarobá','Bureau de Mídia']; // sempre manual, nunca entra no lote (comissão fecha depois)
+const FAT_MANUAL_MODULOS = ['Tarobá','Bureau de Mídia']; // valor digitado à mão (comissão fecha depois), padrão só nota, fora do "Marcar todos"
+const FAT_DESC_TAROBA = 'PLANEJAMENTO COMISSÃO DE VENDAS'; // texto das notas reais da Tarobá (NFS-e 446/447 de 06/10/2026)
 let fatLinhas = [];
 function fFatInit(){
   fVencAtualizar();
@@ -7336,7 +7337,7 @@ async function fFatCarregar(){
     const r=await fetch(FATURAMENTO_API_URL+'?action=listar');
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
-    fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:(row.boleto===false?'nota':'ambos'), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
+    fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:((row.boleto===false||fFatEhManual(row.modulo))?'nota':'ambos'), descricao:(row.modulo==='Tarobá'?FAT_DESC_TAROBA:row.descricao), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
     fFatLista();
   }catch(e){
@@ -7350,6 +7351,7 @@ function fFatBoleto(r){
   const v=Number(r.valor)||0, a=Number(notaConfig.aliquotaMes)||0;
   return r.issRetido&&a>0 ? Math.round((v-Math.round(v*a)/100)*100)/100 : v;
 }
+function fFatValor(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.valor=fRecParseValor(v); fFatLista(); } }
 function fFatModo(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r) r.modo=v; }
 function fFatToggle(id){ const r=fatLinhas.find(x=>x.id===id); if(r) r.selecionado=!r.selecionado; fFatLista(); }
 function fFatResumo(){
@@ -7383,12 +7385,12 @@ function fFatLista(){
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
-      return '<tr style="'+(manual?'opacity:.5':'')+'"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(manual?'<span title="Sempre manual, use a aba Nota Fiscal" style="color:var(--muted)">🔒</span>':'<input type="checkbox" '+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+'</td>'+
+      return '<tr style="'+''+'"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<input type="checkbox" '+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+(manual?' <span title="valor digitado à mão, padrão só nota" style="font-size:9px;color:#B45309">✋ valor manual</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+f(r.valor||0)+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(manual?'—':'<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((manual||r.modo==='nota')?'—':f(fFatBoleto(r))+(r.issRetido&&Number(notaConfig.aliquotaMes)>0?' <span title="valor da nota menos o ISS retido" style="font-size:9px;color:var(--muted)">líq.</span>':''))+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+(manual?'<input value="'+(r.valor?String(r.valor).replace('.',','):'')+'" placeholder="valor" onchange="fFatValor(\''+r.id+'\',this.value)" style="width:92px;text-align:right;font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">':f(r.valor||0))+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((r.modo==='nota')?'—':f(fFatBoleto(r))+(r.issRetido&&Number(notaConfig.aliquotaMes)>0?' <span title="valor da nota menos o ISS retido" style="font-size:9px;color:var(--muted)">líq.</span>':''))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
@@ -7401,7 +7403,7 @@ async function fFatEmitirUma(row){
   row.status='emitindo'; row.erro=null; fFatLista();
   const payload={
     tomador:{ nome:row.cliente, cnpj:row.cnpj, email:row.email, endereco:{ cep:row.cep, logradouro:row.logradouro, numero:row.numero, complemento:row.complemento, bairro:row.bairro } },
-    servico:{ codigo:String(row.ctribnac||''), descricao:(row.descricao||'Prestação de serviços de mídia')+' — competência '+comp },
+    servico:{ codigo:String(row.ctribnac||''), descricao:(row.modulo==='Tarobá'?row.descricao:(row.descricao||'Prestação de serviços de mídia')+' — competência '+comp) },
     valores:{ total:row.valor, cobranca:fFatBoleto(row), aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
     vencimento:fVencBoleto().iso,
     referencia:row.id+'-'+comp, // mesmo cliente + mês nunca gera 2 boletos/2 notas, nem recarregando a página
@@ -7446,7 +7448,9 @@ async function fFatAguardarAutorizacao(id, tentativas){
   setTimeout(()=>fFatAguardarAutorizacao(id,tentativas+1), 6000);
 }
 async function fFatEmitirSelecionados(){
-  const selecionados=fatLinhas.filter(r=>r.selecionado&&!fFatEhManual(r.modulo));
+  const selecionados=fatLinhas.filter(r=>r.selecionado);
+  const semValor=selecionados.filter(r=>!(Number(r.valor)>0));
+  if(semValor.length){ alert('Informe o valor de: '+semValor.map(r=>r.cliente).join(', ')+'.'); return; }
   if(!selecionados.length){ alert('Marque pelo menos um cliente.'); return; }
   if(notaConfig.aliquotaMes==null){ alert('Configure a alíquota ISS do mês na aba Nota Fiscal antes de emitir.'); return; }
   const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
