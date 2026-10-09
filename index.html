@@ -12379,22 +12379,39 @@ function deserializeState(obj){
 }
 
 // Salva via Apps Script (POST)
-// ⚠️ NUNCA salva antes do primeiro loadFromSheets() terminar — senão sobrescreve os dados
-// reais do servidor com o estado local ainda vazio/default (ex: leads=[] na inicialização).
+// ⚠️ TRAVAS CONTRA PERDA DE DADOS (incidente 09/10/2026: um estado vazio sobrescreveu o mgb-dados.json):
+//  1) nunca salva antes de a carga inicial terminar;
+//  2) só salva se o estado REAL do servidor foi carregado nesta sessão (_cargaSheetsOk) — se a carga falhou, o Hub NÃO grava nada;
+//  3) recusa qualquer salvamento que encolha o estado a menos da metade do que foi carregado (_baseBytes).
+let _baseBytes = 0;          // tamanho do estado carregado do servidor — base da trava 3
+let _alertaBloqueio = false; // avisa só uma vez por sessão
 async function saveToSheets(){
   if(!_cargaInicialCompleta){
     console.warn('saveToSheets ignorado: carga inicial ainda não terminou (evita sobrescrever com estado vazio).');
     return;
   }
+  if(!_cargaSheetsOk){
+    console.error('saveToSheets BLOQUEADO: os dados do servidor não foram carregados nesta sessão — não vou gravar por cima.');
+    setSyncStatus('error', '⚠ Dados não carregados — NÃO salvei');
+    if(!_alertaBloqueio){ _alertaBloqueio=true; alert('⚠ Não consegui carregar os seus dados do servidor, então NÃO vou salvar nada (isso protege o que já está guardado).\n\nRecarregue a página. Se continuar, avise o suporte antes de editar qualquer coisa.'); }
+    return;
+  }
+  const payload = JSON.stringify(serializeState());
+  if(_baseBytes>8000 && payload.length < _baseBytes*0.5){
+    console.error('saveToSheets BLOQUEADO: o estado encolheu de', _baseBytes, 'para', payload.length, 'bytes.');
+    setSyncStatus('error', '⚠ Salvamento bloqueado (dados diminuíram demais)');
+    if(!_alertaBloqueio){ _alertaBloqueio=true; alert('⚠ Por segurança NÃO salvei: os dados ficariam menos da metade do que foram carregados (possível perda). Recarregue a página antes de continuar.'); }
+    return;
+  }
   setSyncStatus('saving');
   try {
-    const payload = JSON.stringify(serializeState());
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: {'Content-Type':'text/plain;charset=utf-8'},
       body: payload
     });
+    _baseBytes = payload.length;
     setSyncStatus('saved');
     setTimeout(()=>setSyncStatus('idle'), 3000);
   } catch(e){
@@ -12403,34 +12420,31 @@ async function saveToSheets(){
   }
 }
 
-// Carrega via Apps Script (GET)
+// Carrega via Apps Script (GET) — até 3 tentativas; só marca _cargaSheetsOk se vier estado REAL
 async function loadFromSheets(){
   setSyncStatus('loading');
-  try {
-    const res = await fetch(APPS_SCRIPT_URL + '?t=' + Date.now(), {
-      method: 'GET',
-      mode: 'cors'
-    });
-    const text = await res.text();
-    if(text && text.trim().startsWith('{')){
-      const obj = JSON.parse(text);
-      if(Object.keys(obj).length > 0){
-        deserializeState(obj);
-        _cargaSheetsOk = true; // só migra dados se o estado REAL veio do Sheets (nunca sobre o estado default/offline)
-        syncFinanceiro();
-        setSyncStatus('saved');
-        setTimeout(()=>setSyncStatus('idle'), 2000);
-      } else {
-        setSyncStatus('idle');
+  for(let t=1;t<=3&&!_cargaSheetsOk;t++){
+    try {
+      const res = await fetch(APPS_SCRIPT_URL + '?t=' + Date.now(), { method: 'GET', mode: 'cors' });
+      const text = await res.text();
+      if(text && text.trim().startsWith('{')){
+        const obj = JSON.parse(text);
+        if(Object.keys(obj).length > 0){
+          deserializeState(obj);
+          _baseBytes = text.length;
+          _cargaSheetsOk = true; // só migra/salva se o estado REAL veio do servidor (nunca sobre o estado default/offline)
+          syncFinanceiro();
+          setSyncStatus('saved');
+          setTimeout(()=>setSyncStatus('idle'), 2000);
+        }
       }
-    } else {
-      setSyncStatus('idle');
+    } catch(e){
+      console.error('Load error (tentativa '+t+'):', e);
     }
-  } catch(e){
-    console.error('Load error:', e);
-    setSyncStatus('error', 'Offline — dados locais');
+    if(!_cargaSheetsOk && t<3) await new Promise(r=>setTimeout(r,2000));
   }
-  _cargaInicialCompleta = true; // libera o saveToSheets() dali em diante (sucesso ou erro, mas só depois de tentar)
+  if(!_cargaSheetsOk) setSyncStatus('error', '⚠ Dados não carregados — não edite, recarregue');
+  _cargaInicialCompleta = true; // libera o fluxo da tela; o SALVAMENTO continua trancado enquanto _cargaSheetsOk for falso
   // SEMPRE renderiza, mesmo com erro
   return true;
 }
@@ -12579,7 +12593,7 @@ function scheduleSave(){
 
 // Exporta os leads pra uma planilha à parte, em colunas — pra dar uma olhada fora do app.
 async function leadsExportToSheet(){
-  if(!LEADS_SHEET_URL || !_cargaInicialCompleta) return;
+  if(!LEADS_SHEET_URL || !_cargaInicialCompleta || !_cargaSheetsOk) return;
   try{
     const payload = leads.map(l=>{
       const m=leadModPor(l.produto);
