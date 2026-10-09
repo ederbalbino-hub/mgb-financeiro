@@ -6599,7 +6599,7 @@ function copiarSpot() {
         <div class="ferr-d">Lê a planilha "MGB Faturamento - Clientes" e emite nota + boleto pra quem você marcar. Nada é emitido automaticamente — você revisa e escolhe antes de clicar.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
           <div><label class="ferr-lbl">Ambiente</label><select id="f-fat-amb" class="ferr-in"><option value="sandbox">🧪 Sandbox</option><option value="producao">🔴 Produção</option></select></div>
-          <div><label class="ferr-lbl">Competência</label><input id="f-fat-comp" class="ferr-in" placeholder="ex.: 2026-10"></div>
+          <div><label class="ferr-lbl">Competência</label><input id="f-fat-comp" class="ferr-in" placeholder="ex.: 2026-10" onchange="if(fatLinhas.length) fFatAplicarHistorico()"></div>
           <div><label class="ferr-lbl">Alíquota ISS do mês</label><input id="f-fat-aliq" class="ferr-in" inputmode="decimal" placeholder="ex.: 3,50" oninput="fAliqSalvar(this.value)"></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
@@ -7336,6 +7336,23 @@ function fFatInit(){
   fFatLista();
 }
 function fFatEhManual(modulo){ return FAT_MANUAL_MODULOS.indexOf(modulo)>-1; }
+// ── Histórico do Faturamento: o que já foi enviado a cada cliente em cada mês (sobrevive a recarregar a página) ──
+function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).value||''; return r.id+'|'+comp; }
+function fFatGuardar(r){
+  fatEmissoes[fFatKey(r)]={ status:r.status, modo:r.modo, valor:r.valor, boleto:fFatBoleto(r), paymentId:r.paymentId||null, invoiceId:r.invoiceId||null,
+    boletoUrl:r.boletoUrl||null, erro:r.erro||null, em:r.emitidoEm||new Date().toISOString(), nf:r.nfNumero||null };
+  try{ scheduleSave(); }catch(e){}
+}
+function fFatAplicarHistorico(){
+  fatLinhas.forEach(r=>{
+    const h=fatEmissoes[fFatKey(r)];
+    if(h){ Object.assign(r,{ status:h.status, paymentId:h.paymentId, invoiceId:h.invoiceId, boletoUrl:h.boletoUrl, erro:h.erro, emitidoEm:h.em, nfNumero:h.nf }); if(h.modo) r.modo=h.modo; r.selecionado=false; }
+    else { Object.assign(r,{ status:'pendente', paymentId:null, invoiceId:null, boletoUrl:null, erro:null, emitidoEm:null, nfNumero:null }); }
+  });
+  fFatLista();
+  // retoma a espera da autorização das notas que ficaram "aguardando nota" (a página pode ter sido atualizada no meio)
+  fatLinhas.filter(r=>r.status==='aguardando-nota'&&r.invoiceId).forEach(r=>fFatAguardarAutorizacao(r.id));
+}
 async function fFatCarregar(){
   const btn=document.getElementById('f-fat-btn-carregar'); const st=document.getElementById('f-fat-status');
   btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Lendo a planilha…</div>';
@@ -7345,12 +7362,12 @@ async function fFatCarregar(){
     if(j.erro) throw new Error(j.erro);
     fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:((row.boleto===false||fFatEhManual(row.modulo))?'nota':'ambos'), descricao:(row.modulo==='Tarobá'?FAT_DESC_TAROBA:row.descricao), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
-    fFatLista();
+    fFatAplicarHistorico();
   }catch(e){
     st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+' — se for erro de autorização, abra o link do script uma vez no navegador e clique em Permitir.</div>';
   }finally{ btn.disabled=false; btn.style.opacity='1'; }
 }
-function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)) r.selecionado=true; }); fFatLista(); }
+function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)&&r.status!=='emitida'&&r.status!=='aguardando-nota') r.selecionado=true; }); fFatLista(); }
 function fFatLimparSelecao(){ fatLinhas.forEach(r=>r.selecionado=false); fFatLista(); }
 // Boleto = valor da nota MENOS o ISS retido pelo cliente (só quem retém: Londrina). O Simples (DAS) é da MGB e não entra aqui.
 // SÓ BOLETO (sem nota) não tem ISS: o boleto sai pelo valor cheio.
@@ -7366,7 +7383,7 @@ function fFatResumo(){
   const sel=fatLinhas.filter(r=>r.selecionado).length;
   el.textContent = fatLinhas.length ? (sel+' selecionado(s) de '+fatLinhas.length) : '';
 }
-function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
+function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…','aguardando-nota':'🔄 aguardando nota',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
 // Status de PAGAMENTO (diferente do status de emissão acima) — vem da planilha, atualizado pelo
 // webhook da Asaas (bot/api/asaas-webhook.js) assim que o cliente paga ou o boleto vence.
 function fFatBadgePagamento(r){
@@ -7392,7 +7409,7 @@ function fFatLista(){
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
-      return '<tr style="'+''+'"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<input type="checkbox" '+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
+      return '<tr style="'+''+'"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<input type="checkbox" '+((r.status==='aguardando-nota'||r.status==='emitida')?'disabled title="Já enviado neste mês" ':'')+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+(manual?' <span title="valor digitado à mão, padrão só nota" style="font-size:9px;color:#B45309">✋ valor manual</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+(manual?'<input value="'+(r.valor?String(r.valor).replace('.',','):'')+'" placeholder="valor" onchange="fFatValor(\''+r.id+'\',this.value)" style="width:92px;text-align:right;font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">':f(r.valor||0))+'</td>'+
@@ -7400,11 +7417,12 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((r.modo==='nota')?'—':f(fFatBoleto(r))+(r.issRetido&&r.modo!=='boleto'&&Number(notaConfig.aliquotaMes)>0?' <span title="valor da nota menos o ISS retido" style="font-size:9px;color:var(--muted)">líq.</span>':''))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.emitidoEm&&r.status!=='pendente'?' <span style="font-size:9px;color:var(--muted)">'+new Date(r.emitidoEm).toLocaleDateString('pt-BR')+(r.nfNumero?' · NF '+r.nfNumero:'')+'</span>':'')+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td></tr>';
     }).join('')+'</table>';
 }
 async function fFatEmitirUma(row){
+  if(row.status==='aguardando-nota'||row.status==='emitida') return row.status; // já enviado neste mês
   const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
   const comp=document.getElementById('f-fat-comp').value||'';
   row.status='emitindo'; row.erro=null; fFatLista();
@@ -7430,6 +7448,7 @@ async function fFatEmitirUma(row){
       row.status='aguardando-nota';
     }
   }catch(e){ row.status='erro'; row.erro=e.message; }
+  row.emitidoEm=new Date().toISOString(); fFatGuardar(row);
   fFatLista();
   return row.status;
 }
@@ -7444,18 +7463,18 @@ async function fFatAguardarAutorizacao(id, tentativas){
     if(r.ok){
       row.boletoUrl=row.boletoUrl||j.boletoUrl||null;
       if(j.status==='AUTHORIZED'){
-        row.status='emitida'; fFatLista();
+        row.status='emitida'; row.nfNumero=j.numero||''; fFatGuardar(row); fFatLista();
         const comp=document.getElementById('f-fat-comp').value||'';
         fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(j.numero||'')+(row.modo==='nota'?'':'&valorBoleto='+encodeURIComponent(fFatBoleto(row)))+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
         return;
       }
-      if(j.status==='ERROR'){ row.status='erro'; row.erro=j.erro||'Erro na emissão da nota'; fFatLista(); return; }
+      if(j.status==='ERROR'){ row.status='erro'; row.erro=j.erro||'Erro na emissão da nota'; fFatGuardar(row); fFatLista(); return; }
     }
   }catch(e){}
   setTimeout(()=>fFatAguardarAutorizacao(id,tentativas+1), 6000);
 }
 async function fFatEmitirSelecionados(){
-  const selecionados=fatLinhas.filter(r=>r.selecionado);
+  const selecionados=fatLinhas.filter(r=>r.selecionado&&r.status!=='emitida'&&r.status!=='aguardando-nota');
   const semValor=selecionados.filter(r=>!(Number(r.valor)>0));
   if(semValor.length){ alert('Informe o valor de: '+semValor.map(r=>r.cliente).join(', ')+'.'); return; }
   if(!selecionados.length){ alert('Marque pelo menos um cliente.'); return; }
@@ -8339,6 +8358,7 @@ let recibos = [];
 let reciboId = 1;
 let notas = [];
 let notaId = 1;
+let fatEmissoes = {}; // histórico do Faturamento por cliente+mês: {'<id>|<AAAA-MM>': {status,modo,valor,boleto,paymentId,invoiceId,boletoUrl,erro,em,nf}} — vira o mês, zera sozinho
 let notaConfig = { aliquotaMes: null }; // alíquota ISS do Simples Nacional, atualizada manualmente todo mês
 
 // ── DESPESAS COMPARTILHADAS (Elevadores) ─────────────────────────────────
@@ -12200,7 +12220,7 @@ function serializeState(){
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, elevInvestimentos, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
-    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas, notaConfig, leoUnidades,
+    pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas, notaConfig, fatEmissoes, leoUnidades,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
   };
 }
@@ -12299,6 +12319,7 @@ function deserializeState(obj){
   if(obj.notaConfig && typeof obj.notaConfig==='object'){
     notaConfig=obj.notaConfig;
   }
+  if(obj.fatEmissoes && typeof obj.fatEmissoes==='object') fatEmissoes=obj.fatEmissoes;
   if(obj.leoUnidades && Array.isArray(obj.leoUnidades) && obj.leoUnidades.length){
     leoUnidades=obj.leoUnidades;
   }
