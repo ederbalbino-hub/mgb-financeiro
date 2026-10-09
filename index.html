@@ -6525,7 +6525,6 @@ function copiarSpot() {
           <div class="ferr-t">📄 Emitir nota + boleto</div><div class="ferr-d">Via <b>Asaas</b> — gera o boleto (com PIX) e a nota fiscal juntos, numa tacada só. Escolha o cliente: nome/CNPJ vêm do cadastro, só confira e-mail, código de serviço e alíquota antes de emitir de verdade.</div>
           <label class="ferr-lbl" style="margin-top:10px">Ambiente</label>
           <select id="f-nota-amb" class="ferr-in">
-            <option value="sandbox">🧪 Sandbox (teste — não gera nota/boleto real)</option>
             <option value="producao">🔴 Produção (emite de verdade)</option>
           </select>
           <label class="ferr-lbl" style="margin-top:8px">Cliente</label>
@@ -6546,7 +6545,7 @@ function copiarSpot() {
             <div id="f-nota-iss-wrap"><label class="ferr-lbl">Alíquota ISS (%)</label><input id="f-nota-iss" class="ferr-in" inputmode="decimal" placeholder="preenche pela config acima"></div>
           </div>
           <label id="f-nota-retem-wrap" style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;color:var(--muted);cursor:pointer"><input type="checkbox" id="f-nota-retem"> Cliente é de <b>Londrina</b> — reter ISS na nota</label>
-          <div class="ferr-info" style="margin-top:6px;color:#B45309">⚠️ Confirme com o contador o código de serviço antes de emitir a primeira nota em <b>produção</b>. Use o Sandbox pra testar à vontade.</div>
+          <div class="ferr-info" style="margin-top:6px;color:#B45309">⚠️ Confirme com o contador o código de serviço antes de emitir a primeira nota em <b>produção</b>.</div>
           <div id="f-nota-venc" class="ferr-info" style="margin-top:10px"></div>
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
             <button class="ferr-btn" onclick="fNotaEmitir()" id="f-nota-btn">📄 Emitir nota + boleto</button>
@@ -6556,10 +6555,9 @@ function copiarSpot() {
         </div>
         <div class="ferr-card">
           <div class="ferr-t">Como funciona</div><div class="ferr-d">
-            1. Escolha Sandbox pra testar sem gerar nada real (ambiente separado da Asaas).<br>
-            2. Preencha tomador, serviço e valor.<br>
-            3. Clique em Emitir — cria o cliente na Asaas (se novo), o boleto+PIX e a nota fiscal vinculada, tudo de uma vez.<br>
-            4. O link do boleto aparece na hora; a nota pode levar alguns segundos — o status atualiza sozinho aqui embaixo.
+            1. Preencha tomador, serviço e valor.<br>
+            2. Clique em Emitir — cria o cliente na Asaas (se novo), o boleto+PIX e a nota fiscal vinculada, tudo de uma vez.<br>
+            3. O link do boleto aparece na hora; a nota pode levar alguns segundos — o status atualiza sozinho aqui embaixo.
           </div>
         </div>
       </div>
@@ -6574,7 +6572,7 @@ function copiarSpot() {
         <div class="ferr-t">🧴 Léo Cosméticos — 31 unidades</div>
         <div class="ferr-d">Fluxo próprio: <b>sem boleto</b> (cliente paga PIX fora do sistema) — só a nota fiscal. As 31 notas são emitidas e depois mandadas <b>num único e-mail</b> pro financeiro do Léo, em vez de 31 e-mails separados. Dados ficam só aqui no hub (não na planilha).</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px;margin-top:10px;align-items:flex-end">
-          <div><label class="ferr-lbl">Ambiente</label><select id="f-leo-amb" class="ferr-in"><option value="sandbox">🧪 Sandbox</option><option value="producao">🔴 Produção</option></select></div>
+          <div><label class="ferr-lbl">Ambiente</label><select id="f-leo-amb" class="ferr-in"><option value="producao">🔴 Produção</option></select></div>
           <div><label class="ferr-lbl">Competência</label><input id="f-leo-comp" class="ferr-in" placeholder="ex.: Setembro/2026"></div>
           <div><label class="ferr-lbl">Alíquota ISS do mês (%)</label><input id="f-leo-aliq" class="ferr-in" inputmode="decimal" placeholder="ex.: 2,37" oninput="fAliqSalvar(this.value)" title="Mesma alíquota das abas Nota Fiscal e Faturamento — alterar aqui altera nas três"></div>
           <div><label class="ferr-lbl">E-mail de destino (consolidado)</label><input id="f-leo-email-destino" class="ferr-in" placeholder="boletos@leocosmeticosshop.com.br"></div>
@@ -6598,7 +6596,7 @@ function copiarSpot() {
         <div class="ferr-t">🚀 Disparar faturamento do mês</div>
         <div class="ferr-d">Lê a planilha "MGB Faturamento - Clientes" e emite nota + boleto pra quem você marcar. Nada é emitido automaticamente — você revisa e escolhe antes de clicar.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
-          <div><label class="ferr-lbl">Ambiente</label><select id="f-fat-amb" class="ferr-in"><option value="sandbox">🧪 Sandbox</option><option value="producao">🔴 Produção</option></select></div>
+          <div><label class="ferr-lbl">Ambiente</label><select id="f-fat-amb" class="ferr-in"><option value="producao">🔴 Produção</option></select></div>
           <div><label class="ferr-lbl">Competência</label><input id="f-fat-comp" class="ferr-in" placeholder="ex.: 2026-10" onchange="if(fatLinhas.length) fFatAplicarHistorico()"></div>
           <div><label class="ferr-lbl">Alíquota ISS do mês</label><input id="f-fat-aliq" class="ferr-in" inputmode="decimal" placeholder="ex.: 3,50" oninput="fAliqSalvar(this.value)"></div>
         </div>
@@ -7111,7 +7109,7 @@ function fVencAtualizar(){
 }
 async function fNotaEmitir(){
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
-  const ambiente=g('f-nota-amb')||'sandbox';
+  const ambiente=g('f-nota-amb')||'producao';
   const cli=g('f-nota-cli'); const [mod,item]=cli?cli.split('|'):['',''];
   const m=MODULES.find(x=>x.id===mod)||{};
   const nome=g('f-nota-tom-nome'), doc=g('f-nota-tom-doc').replace(/\D/g,''), email=g('f-nota-tom-email');
@@ -7236,7 +7234,7 @@ function fLeoEditarValor(id){
 async function fLeoEmitirUma(id){
   const u=leoUnidades.find(x=>x.id===id); if(!u) return;
   if(notaConfig.aliquotaMes==null){ alert('Informe a alíquota ISS do mês antes de emitir.'); return; }
-  const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
+  const ambiente=document.getElementById('f-leo-amb').value||'producao';
   const comp=document.getElementById('f-leo-comp').value||'';
   u.status='emitindo'; u.erro=null; fLeoLista();
   const payload={
@@ -7263,7 +7261,7 @@ async function fLeoAguardarAutorizacao(id, tentativas){
   tentativas=tentativas||0;
   const u=leoUnidades.find(x=>x.id===id); if(!u||!u.invoiceId||u.status==='emitida') return;
   if(tentativas>15) return; // ~1.5min, depois fica pra conferir manual (link "PDF"/"reemitir" na lista)
-  const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
+  const ambiente=document.getElementById('f-leo-amb').value||'producao';
   try{
     const r=await fetch(NOTA_API_URL+'?action=status&ambiente='+ambiente+'&invoiceId='+encodeURIComponent(u.invoiceId));
     const j=await r.json();
@@ -7273,7 +7271,7 @@ async function fLeoAguardarAutorizacao(id, tentativas){
 }
 async function fLeoEmitirTodas(){
   if(notaConfig.aliquotaMes==null){ alert('Informe a alíquota ISS do mês antes de emitir.'); return; }
-  const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
+  const ambiente=document.getElementById('f-leo-amb').value||'producao';
   if(ambiente==='producao' && !confirm('Isso vai emitir até '+leoUnidades.length+' NOTAS FISCAIS REAIS em produção (sem boleto). Confirma?')) return;
   const btn=document.getElementById('f-leo-btn-emitir'); const st=document.getElementById('f-leo-status');
   btn.disabled=true; btn.style.opacity='.6';
@@ -7301,7 +7299,7 @@ async function fLeoEnviarEmail(){
   if(!prontas.length){ alert('Nenhuma nota emitida ainda pra mandar.'); return; }
   const destino=document.getElementById('f-leo-email-destino').value.trim();
   if(!destino){ alert('Informe o e-mail de destino.'); return; }
-  const ambiente=document.getElementById('f-leo-amb').value||'sandbox';
+  const ambiente=document.getElementById('f-leo-amb').value||'producao';
   const comp=document.getElementById('f-leo-comp').value||'';
   if(!confirm('Mandar 1 e-mail pra '+destino+' com '+prontas.length+' nota(s) fiscal(is) anexada(s)?')) return;
   const btn=document.getElementById('f-leo-btn-email'); const st=document.getElementById('f-leo-status');
@@ -7358,7 +7356,7 @@ function fFatAplicarHistorico(){
 // (aba antiga, página recarregada no meio, etc.) e grava na planilha o que ainda faltar. Só lê do Asaas.
 async function fFatSincronizarAsaas(manual){
   const st=document.getElementById('f-fat-status');
-  const amb=document.getElementById('f-fat-amb').value||'sandbox', comp=(document.getElementById('f-fat-comp')||{}).value||'';
+  const amb=document.getElementById('f-fat-amb').value||'producao', comp=(document.getElementById('f-fat-comp')||{}).value||'';
   if(!fatLinhas.length){ if(manual) alert('Carregue a planilha primeiro.'); return; }
   if(manual&&st) st.innerHTML='<div class="ferr-info">Conferindo com o Asaas…</div>';
   try{
@@ -7457,7 +7455,7 @@ function fFatLista(){
 }
 async function fFatEmitirUma(row){
   if(row.status==='aguardando-nota'||row.status==='emitida') return row.status; // já enviado neste mês
-  const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
+  const ambiente=document.getElementById('f-fat-amb').value||'producao';
   const comp=document.getElementById('f-fat-comp').value||'';
   row.status='emitindo'; row.erro=null; fFatLista();
   const payload={
@@ -7490,7 +7488,7 @@ async function fFatAguardarAutorizacao(id, tentativas){
   tentativas=tentativas||0;
   const row=fatLinhas.find(x=>x.id===id); if(!row||!row.invoiceId||row.status==='emitida') return;
   if(tentativas>20) return; // ~2min, depois só fica "aguardando-nota" — dá pra conferir manual na Asaas
-  const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
+  const ambiente=document.getElementById('f-fat-amb').value||'producao';
   try{
     const r=await fetch(NOTA_API_URL+'?action=status&ambiente='+ambiente+'&invoiceId='+encodeURIComponent(row.invoiceId)+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):''));
     const j=await r.json();
@@ -7513,7 +7511,7 @@ async function fFatEmitirSelecionados(){
   if(semValor.length){ alert('Informe o valor de: '+semValor.map(r=>r.cliente).join(', ')+'.'); return; }
   if(!selecionados.length){ alert('Marque pelo menos um cliente.'); return; }
   if(notaConfig.aliquotaMes==null){ alert('Configure a alíquota ISS do mês na aba Nota Fiscal antes de emitir.'); return; }
-  const ambiente=document.getElementById('f-fat-amb').value||'sandbox';
+  const ambiente=document.getElementById('f-fat-amb').value||'producao';
   const nAmbos=selecionados.filter(r=>(r.modo||'ambos')==='ambos').length, nNota=selecionados.filter(r=>r.modo==='nota').length, nBol=selecionados.filter(r=>r.modo==='boleto').length;
   if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' pra '+selecionados.length+' cliente(s):\n• '+nAmbos+' nota + boleto (vence '+fVencBoleto().br+')\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nTotal em boletos: '+f(selecionados.filter(r=>r.modo!=='nota').reduce((a,r)=>a+fFatBoleto(r),0))+' (líquido do ISS retido, só nos que têm nota)\n\nConfirma?')) return;
   const btn=document.getElementById('f-fat-btn-emitir'); const st=document.getElementById('f-fat-status');
