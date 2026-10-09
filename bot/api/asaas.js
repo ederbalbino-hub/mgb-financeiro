@@ -99,6 +99,17 @@ async function acharNotaExistente(ambiente, { paymentId, ref }) {
 // usou o serviço PADRÃO "Prestação de serviços" — então mandamos só o NOME desse serviço (env ASAAS_SERVICO_NOME) e nunca o código.
 const SERVICO_NOME = () => String(process.env.ASAAS_SERVICO_NOME || "Prestação de serviços").trim();
 
+// Lista paginada (até 3 páginas de 100) — a conta tem poucos itens; usado pela sincronização com o Hub.
+async function listarPaginado(ambiente, path, maxPaginas = 3) {
+  const out = [];
+  for (let p = 0; p < maxPaginas; p++) {
+    const j = await asaas(ambiente, "GET", `${path}${path.includes("?") ? "&" : "?"}limit=100&offset=${p * 100}`);
+    out.push(...(j.data || []));
+    if (!j.hasMore) break;
+  }
+  return out;
+}
+
 // Vencimento padrão dos boletos: dia 15. Se hoje (no fuso de São Paulo) ainda não passou do 15, é o 15 deste mês;
 // passou, é o 15 do mês seguinte (o Asaas não aceita vencimento no passado). Léo não passa por aqui (semCobranca).
 function proximoDia15() {
@@ -233,6 +244,25 @@ export default async function handler(req, res) {
         status,
         invoiceErro,
       });
+    }
+
+    // ── sincronização: tudo que o Hub já emitiu no Asaas, por referência "<id>-<AAAA-MM>" (só leitura) ──
+    if (action === "sincronizar") {
+      const [pagos, notas] = await Promise.all([listarPaginado(ambiente, "/payments"), listarPaginado(ambiente, "/invoices")]);
+      const refs = {};
+      const chave = (x) => (x.externalReference && String(x.externalReference).startsWith("mgb-") ? String(x.externalReference).slice(4) : null);
+      pagos.filter((p) => !p.deleted).forEach((p) => {
+        const k = chave(p);
+        if (k) (refs[k] = refs[k] || {}).payment = { id: p.id, value: p.value, bankSlipUrl: p.bankSlipUrl || null, status: p.status };
+      });
+      const peso = (st) => (st === "AUTHORIZED" ? 3 : st === "CANCELED" ? 0 : 1);
+      notas.forEach((n) => {
+        const k = chave(n);
+        if (!k) return;
+        const r = (refs[k] = refs[k] || {});
+        if (!r.invoice || peso(n.status) > peso(r.invoice.status)) r.invoice = { id: n.id, status: n.status, numero: n.number || null, pdfUrl: n.pdfUrl || null };
+      });
+      return res.status(200).json({ refs });
     }
 
     // ── consulta status do pagamento + da nota ──

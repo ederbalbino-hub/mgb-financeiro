@@ -6604,6 +6604,7 @@ function copiarSpot() {
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
           <button class="ferr-btn" onclick="fFatCarregar()" id="f-fat-btn-carregar">🔄 Carregar planilha</button>
+          <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fFatSincronizarAsaas(true)">⇅ Conferir com o Asaas</button>
           <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fFatSelecionarTodos()">Marcar todos</button>
           <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fFatLimparSelecao()">Limpar seleção</button>
           <button class="ferr-btn" style="background:#0D9488" onclick="fFatEmitirSelecionados()" id="f-fat-btn-emitir">Emitir selecionados</button>
@@ -7353,6 +7354,38 @@ function fFatAplicarHistorico(){
   // retoma a espera da autorização das notas que ficaram "aguardando nota" (a página pode ter sido atualizada no meio)
   fatLinhas.filter(r=>r.status==='aguardando-nota'&&r.invoiceId).forEach(r=>fFatAguardarAutorizacao(r.id));
 }
+// Confere com o Asaas o que realmente foi emitido neste mês (boleto/nota), por cliente — corrige o que a tela perdeu
+// (aba antiga, página recarregada no meio, etc.) e grava na planilha o que ainda faltar. Só lê do Asaas.
+async function fFatSincronizarAsaas(manual){
+  const st=document.getElementById('f-fat-status');
+  const amb=document.getElementById('f-fat-amb').value||'sandbox', comp=(document.getElementById('f-fat-comp')||{}).value||'';
+  if(!fatLinhas.length){ if(manual) alert('Carregue a planilha primeiro.'); return; }
+  if(manual&&st) st.innerHTML='<div class="ferr-info">Conferindo com o Asaas…</div>';
+  try{
+    const r=await fetch(NOTA_API_URL+'?action=sincronizar&ambiente='+amb); const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('Asaas respondeu '+r.status));
+    let n=0;
+    fatLinhas.forEach(row=>{
+      const info=(j.refs||{})[row.id+'-'+comp]; if(!info) return;
+      const inv=info.invoice, pay=info.payment, hist=fatEmissoes[fFatKey(row)];
+      let novo=null;
+      if(inv){ if(inv.status==='AUTHORIZED') novo='emitida'; else if(inv.status==='ERROR') novo='erro'; else if(inv.status!=='CANCELED') novo='aguardando-nota'; }
+      else if(pay && row.modo==='boleto') novo='emitida';
+      if(!novo) return;
+      if(hist && hist.status===novo && (hist.nf||'')===String((inv&&inv.numero)||'')) return; // já está igual
+      row.status=novo; row.paymentId=(pay&&pay.id)||row.paymentId||null; row.invoiceId=(inv&&inv.id)||row.invoiceId||null;
+      row.boletoUrl=(pay&&pay.bankSlipUrl)||row.boletoUrl||null; row.nfNumero=(inv&&inv.numero)?String(inv.numero):(row.nfNumero||'');
+      row.erro=(novo==='erro')?'Erro na nota — veja no Asaas':null; row.emitidoEm=row.emitidoEm||new Date().toISOString();
+      fFatGuardar(row); n++;
+      if(novo==='emitida'){ // garante o registro na planilha (idempotente)
+        fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(row.nfNumero||'')+(row.modo==='nota'?'':'&valorBoleto='+encodeURIComponent(fFatBoleto(row)))+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
+      }
+    });
+    fFatLista();
+    fatLinhas.filter(r=>r.status==='aguardando-nota'&&r.invoiceId).forEach(r=>fFatAguardarAutorizacao(r.id));
+    if(st) st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ Conferido com o Asaas: '+(n?n+' cliente(s) atualizado(s).':'tudo certo, nada a atualizar.')+'</div>';
+  }catch(e){ if(st) st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ Não consegui conferir com o Asaas: '+e.message+'</div>'; }
+}
 async function fFatCarregar(){
   const btn=document.getElementById('f-fat-btn-carregar'); const st=document.getElementById('f-fat-status');
   btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Lendo a planilha…</div>';
@@ -7363,6 +7396,7 @@ async function fFatCarregar(){
     fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:((row.boleto===false||fFatEhManual(row.modulo))?'nota':'ambos'), descricao:(row.modulo==='Tarobá'?FAT_DESC_TAROBA:row.descricao), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
     fFatAplicarHistorico();
+    fFatSincronizarAsaas(false); // confere com o Asaas o que já foi emitido (não trava a tela)
   }catch(e){
     st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+' — se for erro de autorização, abra o link do script uma vez no navegador e clique em Permitir.</div>';
   }finally{ btn.disabled=false; btn.style.opacity='1'; }
