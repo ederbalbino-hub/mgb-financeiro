@@ -93,25 +93,11 @@ async function acharNotaExistente(ambiente, { paymentId, ref }) {
   }
 }
 
-// Serviço municipal cadastrado no Asaas (Notas Fiscais → Configurações → Serviços). Mandar só o CÓDIGO (171001) fazia o
-// Asaas criar um serviço novo e incompleto a cada nota (sem código de tributação nacional) e a nota falhava com
-// "dados obrigatórios da empresa". Aqui acha o cadastro certo e manda o ID. Nome preferido: env ASAAS_SERVICO_NOME
-// (padrão "Prestação de serviços" — o serviço padrão, com o qual a nota 448 foi autorizada em 09/10/2026).
-async function listarServicos(ambiente) {
-  const j = await asaas(ambiente, "GET", "/invoices/municipalServices?limit=100");
-  return j.data || [];
-}
-async function acharServicoPadrao(ambiente) {
-  const alvo = String(process.env.ASAAS_SERVICO_NOME || "Prestação de serviços").trim().toLowerCase();
-  try {
-    const lista = await listarServicos(ambiente);
-    const nome = (x) => String(x.description || x.name || x.municipalServiceName || x.municipalServiceCode || "").trim().toLowerCase();
-    const s = lista.find((x) => nome(x) === alvo) || null;
-    return s ? s.id : null;
-  } catch (e) {
-    return null; // se a consulta falhar, segue o comportamento antigo (código)
-  }
-}
+// Esta conta usa o PORTAL NACIONAL: o Asaas responde "O código de serviços municipais não está habilitado para esta conta".
+// Mandar municipalServiceCode (171001) fazia o Asaas criar um serviço novo e incompleto a cada nota (sem código de tributação
+// nacional) e a nota falhava com "dados obrigatórios da empresa". A nota que o contador emitiu com sucesso (nº 448, 09/10/2026)
+// usou o serviço PADRÃO "Prestação de serviços" — então mandamos só o NOME desse serviço (env ASAAS_SERVICO_NOME) e nunca o código.
+const SERVICO_NOME = () => String(process.env.ASAAS_SERVICO_NOME || "Prestação de serviços").trim();
 
 // Vencimento padrão dos boletos: dia 15. Se hoje (no fuso de São Paulo) ainda não passou do 15, é o 15 deste mês;
 // passou, é o 15 do mês seguinte (o Asaas não aceita vencimento no passado). Léo não passa por aqui (semCobranca).
@@ -221,8 +207,8 @@ export default async function handler(req, res) {
           if (payment) invoiceBody.payment = payment.id;
           else invoiceBody.customer = customerId; // sem cobrança: nota vinculada direto ao cliente
           if (ref) invoiceBody.externalReference = ref;
-          const servicoId = servico.id || (await acharServicoPadrao(ambiente));
-          if (servicoId) { invoiceBody.municipalServiceId = servicoId; delete invoiceBody.municipalServiceCode; }
+          delete invoiceBody.municipalServiceCode; // conta do portal nacional: não usa código municipal
+          invoiceBody.municipalServiceName = servico.nome || SERVICO_NOME();
           invoice = await acharNotaExistente(ambiente, { paymentId: payment && payment.id, ref }); // já emitida? reaproveita
           if (!invoice) invoice = await asaas(ambiente, "POST", "/invoices", invoiceBody);
         } catch (e) {
@@ -247,12 +233,6 @@ export default async function handler(req, res) {
         status,
         invoiceErro,
       });
-    }
-
-    // ── lista os serviços municipais cadastrados (só leitura — diagnóstico) ──
-    if (action === "servicos") {
-      const lista = await listarServicos(ambiente);
-      return res.status(200).json({ servicos: lista.map((x) => ({ id: x.id, description: x.description, name: x.name, code: x.municipalServiceCode, issTax: x.issTax })) });
     }
 
     // ── consulta status do pagamento + da nota ──
