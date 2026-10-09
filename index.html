@@ -7370,7 +7370,7 @@ async function fFatSincronizarAsaas(manual){
       const inv=info.invoice, pay=info.payment, hist=fatEmissoes[fFatKey(row)];
       let novo=null;
       if(inv){ if(inv.status==='AUTHORIZED') novo='emitida'; else if(inv.status==='ERROR') novo='erro'; else if(inv.status!=='CANCELED') novo='aguardando-nota'; }
-      else if(pay && row.modo==='boleto') novo='emitida';
+      else if(pay){ novo=(row.modo==='boleto')?'emitida':'boleto-emitido'; row.modo='boleto'; } // boleto no Asaas e nenhuma nota = foi emitido SÓ BOLETO
       if(!novo) return;
       if(hist && hist.status===novo && (hist.nf||'')===String((inv&&inv.numero)||'')) return; // já está igual
       row.status=novo; row.paymentId=(pay&&pay.id)||row.paymentId||null; row.invoiceId=(inv&&inv.id)||row.invoiceId||null;
@@ -7417,7 +7417,7 @@ function fFatResumo(){
   const sel=fatLinhas.filter(r=>r.selecionado).length;
   el.textContent = fatLinhas.length ? (sel+' selecionado(s) de '+fatLinhas.length) : '';
 }
-function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…','aguardando-nota':'🔄 aguardando nota',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
+function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…','aguardando-nota':'🔄 aguardando nota','boleto-emitido':'🧾 só boleto emitido',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
 // Status de PAGAMENTO (diferente do status de emissão acima) — vem da planilha, atualizado pelo
 // webhook da Asaas (bot/api/asaas-webhook.js) assim que o cliente paga ou o boleto vence.
 function fFatBadgePagamento(r){
