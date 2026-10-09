@@ -1159,8 +1159,7 @@ body{-webkit-font-smoothing:antialiased}
             <div class="ttitle" id="lanc-rec-titulo">Clientes — Jun/2026</div>
             <div style="display:flex;align-items:center;gap:12px">
               <div style="font-size:10px;color:var(--hint)" id="lanc-rec-sum"></div>
-              <button onclick="gerarRelContador()" title="Gera um relatório imprimível com os clientes marcados com 'NF?' para enviar ao contador"
-                style="font-size:10px;padding:5px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;white-space:nowrap">📄 Relatório p/ contador</button>
+              
             </div>
           </div>
           <div style="overflow-x:auto">
@@ -6517,8 +6516,10 @@ function copiarSpot() {
         <div class="ferr-t">📆 Alíquota ISS deste mês</div><div class="ferr-d">A alíquota efetiva do Simples Nacional muda todo mês (recalculada pelo faturamento dos últimos 12 meses). Atualize aqui na primeira semana do mês — o valor fica salvo e preenche sozinho toda nota nova até você trocar de novo.</div>
         <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;flex-wrap:wrap">
           <div><label class="ferr-lbl">Alíquota ISS vigente (%)</label><input id="f-nota-aliq-mes" class="ferr-in" style="max-width:140px" inputmode="decimal" placeholder="ex.: 3,50" oninput="fNotaSalvarAliqMes()"></div>
+          <div><label class="ferr-lbl">Simples Nacional vigente (%)</label><input id="f-nota-simples-mes" class="ferr-in" style="max-width:140px" inputmode="decimal" placeholder="ex.: 7,40" oninput="fSimplesSalvar(this.value)"></div>
           <div id="f-nota-aliq-info" class="ferr-info"></div>
         </div>
+        <div class="ferr-d" style="margin-top:6px">O imposto da aba Empresa soma as duas: ISS + Simples.</div>
       </div>
       <div class="ferr-grid" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
         <div class="ferr-card">
@@ -7019,6 +7020,8 @@ function fNotaInit(){
   const sel=document.getElementById('f-nota-cli'); if(!sel) return;
   const aliqEl=document.getElementById('f-nota-aliq-mes');
   if(aliqEl && !aliqEl.value && notaConfig.aliquotaMes!=null) aliqEl.value=fRecNum(notaConfig.aliquotaMes);
+  const simEl=document.getElementById('f-nota-simples-mes');
+  if(simEl && !simEl.value) simEl.value=fRecNum(impostoSimples());
   fNotaAliqInfo();
   const atual=sel.value; let html='<option value="">— escolha o cliente —</option>';
   MODULES.forEach(m=>{ const itens=fRecClientes().filter(c=>c.mod===m.id); if(!itens.length) return; html+='<optgroup label="'+m.icon+' '+m.label+'">'+itens.map(c=>'<option value="'+m.id+'|'+c.item.replace(/"/g,'&quot;')+'">'+c.item+'</option>').join('')+'</optgroup>'; });
@@ -7033,9 +7036,15 @@ function fNotaAliqInfo(){
     ? '<span style="color:var(--green)">✓ já atualizada este mês</span>'
     : '<span style="color:#B45309">⚠ essa alíquota é de um mês anterior — confira se ainda vale</span>';
 }
+function fSimplesSalvar(valorStr){
+  const v=fRecParseValor(valorStr);
+  notaConfig={ ...notaConfig, simplesMes: (v||v===0)&&String(valorStr).trim()!==''?v:null };
+  try{ scheduleSave(); }catch(e){}
+  try{ buildVisaoEmpresa(); }catch(e){}
+}
 function fAliqSalvar(valorStr){
   const v=fRecParseValor(valorStr);
-  notaConfig={ aliquotaMes: v||null, atualizadaEm: new Date().toISOString().slice(0,7) };
+  notaConfig={ ...notaConfig, aliquotaMes: v||null, atualizadaEm: new Date().toISOString().slice(0,7) };
   try{ scheduleSave(); }catch(e){}
   // sincroniza os dois campos (Nota Fiscal e Faturamento) sem sobrescrever o que o usuário está digitando neles
   ['f-nota-aliq-mes','f-fat-aliq','f-leo-aliq'].forEach(id=>{
@@ -7339,13 +7348,14 @@ function fFatEhManual(modulo){ return FAT_MANUAL_MODULOS.indexOf(modulo)>-1; }
 function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).value||''; return r.id+'|'+comp; }
 function fFatGuardar(r){
   fatEmissoes[fFatKey(r)]={ status:r.status, modo:r.modo, valor:r.valor, boleto:fFatBoleto(r), paymentId:r.paymentId||null, invoiceId:r.invoiceId||null,
-    boletoUrl:r.boletoUrl||null, erro:r.erro||null, em:r.emitidoEm||new Date().toISOString(), nf:r.nfNumero||null };
+    boletoUrl:r.boletoUrl||null, erro:r.erro||null, em:r.emitidoEm||new Date().toISOString(), nf:r.nfNumero||null,
+    pg:r.statusPagamento||null, pgEm:r.statusPagamentoEm||null };
   try{ scheduleSave(); }catch(e){}
 }
 function fFatAplicarHistorico(){
   fatLinhas.forEach(r=>{
     const h=fatEmissoes[fFatKey(r)];
-    if(h){ Object.assign(r,{ status:h.status, paymentId:h.paymentId, invoiceId:h.invoiceId, boletoUrl:h.boletoUrl, erro:h.erro, emitidoEm:h.em, nfNumero:h.nf }); if(h.modo) r.modo=h.modo; r.selecionado=false; }
+    if(h){ Object.assign(r,{ status:h.status, paymentId:h.paymentId, invoiceId:h.invoiceId, boletoUrl:h.boletoUrl, erro:h.erro, emitidoEm:h.em, nfNumero:h.nf }); if(h.pg){ r.statusPagamento=h.pg; r.statusPagamentoEm=h.pgEm||null; } if(h.modo) r.modo=h.modo; r.selecionado=false; }
     else { Object.assign(r,{ status:'pendente', paymentId:null, invoiceId:null, boletoUrl:null, erro:null, emitidoEm:null, nfNumero:null }); }
   });
   fFatLista();
@@ -7354,6 +7364,39 @@ function fFatAplicarHistorico(){
 }
 // Confere com o Asaas o que realmente foi emitido neste mês (boleto/nota), por cliente — corrige o que a tela perdeu
 // (aba antiga, página recarregada no meio, etc.) e grava na planilha o que ainda faltar. Só lê do Asaas.
+function fFatMapPag(s){ s=String(s||'').toUpperCase(); return (s==='RECEIVED'||s==='CONFIRMED'||s==='RECEIVED_IN_CASH')?'pago':(s==='OVERDUE'?'vencido':(s==='REFUNDED'||s==='DELETED'?'cancelado':'pendente')); }
+function fNormNome(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
+function fSimNome(a,b){ // similaridade 0–1 (Levenshtein) — tolera grafias diferentes entre a planilha e o Financeiro
+  a=fNormNome(a); b=fNormNome(b); if(!a||!b) return 0; if(a===b) return 1;
+  const d=[]; for(let i=0;i<=a.length;i++){ d[i]=[i]; } for(let j=1;j<=b.length;j++) d[0][j]=j;
+  for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return 1-d[a.length][b.length]/Math.max(a.length,b.length);
+}
+// Boleto PAGO no Asaas → marca "recebido" na Visão Receita do mês (só marca, nunca desmarca; só com correspondência clara de módulo + cliente).
+function fFatReceitaAuto(comp){
+  const mm=/^(\d{4})-(\d{2})$/.exec(comp||''); if(!mm) return 0;
+  const ano=+mm[1], mes=+mm[2]-1, key=recPagKey(ano,mes); let n=0;
+  fatLinhas.filter(r=>r.statusPagamento==='pago').forEach(r=>{
+    const mod=MODULES.find(m=>fNormNome(m.label).indexOf(fNormNome(r.modulo))>-1||fNormNome(r.modulo).indexOf(fNormNome(m.label))>-1); if(!mod) return;
+    const itens=Object.keys((rec&&rec[mod.id])||{}); let melhor=null, ms=0;
+    itens.forEach(it=>{ const s=fSimNome(it,r.cliente); if(s>ms){ ms=s; melhor=it; } });
+    if(!melhor || ms<0.85) return;
+    if(!recPagamentos[mod.id]) recPagamentos[mod.id]={}; if(!recPagamentos[mod.id][melhor]) recPagamentos[mod.id][melhor]={};
+    const pg=recPagamentos[mod.id][melhor][key]||{pago:false,obs:''};
+    if(pg.pago) return;
+    recPagamentos[mod.id][melhor][key]={...pg,pago:true,obs:(pg.obs||'')||'Pago no Asaas'}; n++;
+  });
+  if(n){ try{ buildLancRec(); }catch(e){} try{ scheduleSave(); }catch(e){} }
+  return n;
+}
+// Conferência automática com o Asaas: ao abrir o Hub e ao voltar pra aba, no máx. a cada 6 h (≈ 2–4×/dia). Não mexe se o Faturamento estiver na tela.
+async function fFatRotinaAuto(){
+  if(!_cargaSheetsOk) return;
+  try{ if(Date.now()-(+localStorage.getItem('fat_auto_ts')||0) < 6*3600*1000) return; }catch(e){}
+  const vis=document.getElementById('ferr-fat'); if(vis && vis.offsetParent!==null) return;
+  try{ fFatInit(); await fFatCarregar(true); }catch(e){ console.error('fFatRotinaAuto',e); }
+}
+document.addEventListener('visibilitychange',function(){ if(!document.hidden) setTimeout(fFatRotinaAuto,1500); });
 async function fFatSincronizarAsaas(manual){
   const st=document.getElementById('f-fat-status');
   const amb=document.getElementById('f-fat-amb').value||'producao', comp=(document.getElementById('f-fat-comp')||{}).value||'';
@@ -7362,10 +7405,14 @@ async function fFatSincronizarAsaas(manual){
   try{
     const r=await fetch(NOTA_API_URL+'?action=sincronizar&ambiente='+amb); const j=await r.json();
     if(!r.ok) throw new Error(j.error||('Asaas respondeu '+r.status));
-    let n=0;
+    let n=0, npg=0;
     fatLinhas.forEach(row=>{
       const info=(j.refs||{})[row.id+'-'+comp]; if(!info) return;
       const inv=info.invoice, pay=info.payment, hist=fatEmissoes[fFatKey(row)];
+      if(pay){ // status do PAGAMENTO do boleto, direto do Asaas (pago / vencido / aguardando)
+        const sp=fFatMapPag(pay.status);
+        if(row.statusPagamento!==sp){ row.statusPagamento=sp; row.statusPagamentoEm=new Date().toISOString(); if(hist){ hist.pg=sp; hist.pgEm=row.statusPagamentoEm; } npg++; }
+      }
       let novo=null;
       if(inv){ if(inv.status==='AUTHORIZED') novo='emitida'; else if(inv.status==='ERROR') novo='erro'; else if(inv.status!=='CANCELED') novo='aguardando-nota'; }
       else if(pay){ novo=(row.modo==='boleto')?'emitida':'boleto-emitido'; row.modo='boleto'; } // boleto no Asaas e nenhuma nota = foi emitido SÓ BOLETO
@@ -7379,13 +7426,16 @@ async function fFatSincronizarAsaas(manual){
         fetch(FATURAMENTO_API_URL+'?action=marcar-emitido&id='+encodeURIComponent(row.id)+'&mesRef='+encodeURIComponent(comp)+'&nfNumero='+encodeURIComponent(row.nfNumero||'')+(row.modo==='nota'?'':'&valorBoleto='+encodeURIComponent(fFatBoleto(row)))+(row.paymentId?'&paymentId='+encodeURIComponent(row.paymentId):'')).catch(()=>{});
       }
     });
+    if(npg){ try{ scheduleSave(); }catch(e){} }
+    try{ fFatReceitaAuto(comp); }catch(e){ console.error('fFatReceitaAuto',e); }
     fFatLista();
     fatLinhas.filter(r=>r.status==='aguardando-nota'&&r.invoiceId).forEach(r=>fFatAguardarAutorizacao(r.id));
+    try{ localStorage.setItem('fat_auto_ts',String(Date.now())); }catch(e){}
     if(st) st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ Conferido com o Asaas: '+(n?n+' cliente(s) atualizado(s).':'tudo certo, nada a atualizar.')+'</div>';
   }catch(e){ if(st) st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ Não consegui conferir com o Asaas: '+e.message+'</div>'; }
 }
 async function fFatCarregar(){
-  const btn=document.getElementById('f-fat-btn-carregar'); const st=document.getElementById('f-fat-status');
+  const btn=document.getElementById('f-fat-btn-carregar')||{style:{}}; const st=document.getElementById('f-fat-status')||{set innerHTML(v){}};
   btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Lendo a planilha…</div>';
   try{
     const r=await fetch(FATURAMENTO_API_URL+'?action=listar');
@@ -8367,7 +8417,12 @@ function autoFillFinReceita(year, month){
 }
 
 // ── EMPRESA: imposto + despesas gerais ───────────────────────────────────
-const IMPOSTO_ALIQ = 0.0205; // 2,05% sobre receita do mês
+// Imposto da empresa = ISS + Simples Nacional, os MESMOS valores configurados na aba Nota Fiscal (alíquotas do Asaas), somados.
+// Ex.: out/2026 → ISS 2,37% + Simples 7,40% = 9,77% sobre a receita do mês.
+function impostoIss(){ return Number(notaConfig.aliquotaMes)||0; }
+function impostoSimples(){ const s=notaConfig.simplesMes; return (s==null||s==='')?7.40:(Number(s)||0); }
+function impostoAliq(){ return (impostoIss()+impostoSimples())/100; }
+function impostoRotulo(){ const fm=x=>x.toFixed(2).replace('.',','); return fm(impostoAliq()*100)+'% (ISS '+fm(impostoIss())+' + Simples '+fm(impostoSimples())+')'; }
 // empresaDespesas = [{id, nome, valor, inicio:'YYYY-MM', ativo:true}]
 let empresaDespesas = [
   {id:1, nome:'Contador', valor:300, inicio:new Date().toISOString().slice(0,7), ativo:true}
@@ -9468,7 +9523,7 @@ function coletaDespesasMes(selAno,selMes){
   });
   // Empresa: imposto + despesas gerais (módulo virtual)
   const empMod={id:'_empresa',label:'Empresa',icon:'🏢',color:'#D97706'};
-  // Imposto: 2,05% × receita do mês
+  // Imposto: (ISS + Simples) × receita do mês
   const ropsFm=ropsFinMes(selAno,selMes);
   const recMesTotal=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0); // radioops incluso via recOfMes
   if(recMesTotal>0){
@@ -9476,8 +9531,8 @@ function coletaDespesasMes(selAno,selMes){
       m:empMod,
       item:'Empresa',
       idx:'_imposto',
-      r:{d:`Imposto ${(IMPOSTO_ALIQ*100).toFixed(2).replace('.',',')}% sobre receita`,f:'Receita Federal'},
-      vlrMes:recMesTotal*IMPOSTO_ALIQ,
+      r:{d:`Imposto ${impostoRotulo()} sobre receita`,f:'Receita Federal'},
+      vlrMes:recMesTotal*impostoAliq(),
       tipoLbl:'Imposto',
       mes:selMes,ano:selAno
     });
@@ -9666,7 +9721,7 @@ function buildVisaoEmpresa(){
   const selAno=parseInt(aSel.value);
 
   const receitaMes=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0);
-  const imposto=receitaMes*IMPOSTO_ALIQ;
+  const imposto=receitaMes*impostoAliq();
   const despAtivas=empresaDespesas.filter(ed=>ed.ativo&&ed.valor);
   const totalDespEmpresa=despAtivas.reduce((a,ed)=>{
     if(ed.inicio){
@@ -9692,7 +9747,7 @@ function buildVisaoEmpresa(){
   g('ov-emp-kpis').innerHTML=`
     <div class="ov-sum-item"><div class="ov-sum-lbl">Receita ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${receitaMes?f(receitaMes):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Aportes ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${totalAportes?('+'+f(totalAportes)):'—'}</div></div>
-    <div class="ov-sum-item"><div class="ov-sum-lbl">Imposto ${(IMPOSTO_ALIQ*100).toFixed(2).replace('.',',')}%</div><div class="ov-sum-val" style="color:var(--red)">${imposto?f(imposto):'—'}</div></div>
+    <div class="ov-sum-item"><div class="ov-sum-lbl" title="ISS + Simples (alíquotas da aba Nota Fiscal)">Imposto ${impostoRotulo()}</div><div class="ov-sum-val" style="color:var(--red)">${imposto?f(imposto):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Despesas empresa</div><div class="ov-sum-val" style="color:var(--red)">${totalDespEmpresa?f(totalDespEmpresa):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Total empresa (custos)</div><div class="ov-sum-val" style="color:var(--red)">${totalEmpresa?f(totalEmpresa):'—'}</div></div>
     <div class="ov-sum-item" title="Faturamento clientes + Aportes − Imposto − Despesas empresa"><div class="ov-sum-lbl">💰 Caixa ${MESES[selMes]}</div><div class="ov-sum-val" style="color:${caixaMes>=0?'var(--green)':'var(--red)'};font-weight:700">${temMov?((caixaMes>=0?'+':'')+f(caixaMes)):'—'}</div></div>
@@ -12470,6 +12525,18 @@ const ELEV_MIG_20260928=[
   {item:'Itamaraty', ini:'2026-09', telas:1},
   {item:'Liberty',   ini:'2026-10', telas:1}
 ];
+// Custos fixos da empresa definidos em 09/10/2026: Cleiton R$ 1.500, Karen R$ 500, Contador R$ 500 por mês (migração única).
+function empresaMigrarFixas(){
+  if(!_cargaSheetsOk || migracoes.empresaFixas_20261009) return;
+  const fix=(nome,valor,inicio)=>{
+    const ex=empresaDespesas.find(x=>String(x.nome).trim().toLowerCase()===nome.toLowerCase());
+    if(ex){ ex.valor=valor; ex.ativo=true; }
+    else empresaDespesas.push({id:empresaDespId++, nome, valor, inicio, ativo:true});
+  };
+  fix('Contador',500,'2026-06'); fix('Cleiton',1500,'2026-10'); fix('Karen',500,'2026-10');
+  migracoes.empresaFixas_20261009=true;
+  try{ scheduleSave(); }catch(e){}
+}
 function elevMigrarCondos(){
   if(!_cargaSheetsOk || migracoes.elevCustoTV70_20260928) return;
   const m=MODULES.find(x=>x.id==='elev'); if(!m) return;
@@ -13806,7 +13873,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
