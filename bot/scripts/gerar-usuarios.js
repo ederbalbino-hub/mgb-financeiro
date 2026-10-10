@@ -16,12 +16,20 @@ const EQUIPE = [
   { login: "cleiton", nome: "Cleiton", papel: "programacao" },
 ];
 
-const rl = readline.createInterface({ input: stdin, output: stdout });
+// Lê linha a linha (funciona digitando ou com as senhas vindas de um arquivo/pipe).
+const rl = readline.createInterface({ input: stdin, terminal: false });
+const linhas = rl[Symbol.asyncIterator]();
 const usuarios = {};
 for (const p of EQUIPE) {
   let senha = "";
   while (senha.length < 8) {
-    senha = (await rl.question(`Senha de ${p.nome} (mínimo 8 caracteres): `)).trim();
+    stdout.write(`Senha de ${p.nome} (mínimo 8 caracteres): `);
+    const r = await linhas.next();
+    if (r.done) {
+      console.error(`\nFaltou a senha de ${p.nome}.`);
+      process.exit(1);
+    }
+    senha = String(r.value).trim();
   }
   usuarios[p.login] = { nome: p.nome, papel: p.papel, senha: hashSenha(senha) };
 }
