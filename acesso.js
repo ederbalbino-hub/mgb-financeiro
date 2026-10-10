@@ -30,18 +30,19 @@
   //   ropsAlerta aviso de nota a emitir do Rádio Ops na Home
   //   ropsPainel painel completo do Rádio Ops (pipeline, PIs, rádios)
   //   renovacao aviso na Home dos contratos que encerram no mês
+  //   novo       botão "Novo cliente" na Home (novo.js)
   // abas: limita as abas de Ferramentas e do Estúdio (ausente = todas)
   var PERFIS = {
     'admin-geral': {
       rotulo: 'Visão geral',
       paginas: TODAS,
-      extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao']
+      extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao', 'novo']
     },
     'admin-meudia': {
       rotulo: 'Meu dia',
       paginas: ['home', 'leads', 'midiakit', 'apresmgb', 'sindicos', 'propvaapty', 'overview', 'custos',
         'contabilidade', 'radioops', 'planocaixa', 'pessoal'],
-      extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao']
+      extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao', 'novo']
     },
     // Revisão do Eder (10/10): Rádio Ops só o resumo do mês; Ferramentas só o Backup;
     // aviso de contratos que encerram para renovar.
@@ -49,7 +50,7 @@
       rotulo: 'Karen',
       paginas: ['home', 'overview', 'custos', 'contabilidade', 'operacional:contratos', 'relatorios', 'gerador',
         'radioops', 'ferramentas'],
-      extras: ['valores', 'ropsResumo', 'ropsAlerta', 'renovacao'],
+      extras: ['valores', 'ropsResumo', 'ropsAlerta', 'renovacao', 'novo'],
       abas: { ferramentas: ['backup'] }
     },
     // Guina só participa do Rádio Ops.
@@ -199,7 +200,7 @@
   function aplicar() {
     if (!perfilAtual) return;
     var body = doc.body;
-    ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta'].forEach(function (x) {
+    ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'novo'].forEach(function (x) {
       body.classList.toggle('mgb-sem-' + x, !temExtra(perfilAtual, x));
     });
 
