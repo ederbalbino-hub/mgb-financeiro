@@ -104,6 +104,7 @@ test("contrato padrão de rádio interna traz partes, valor, vigência e nota", 
   assert.match(html, /12 \(doze\) meses/);
   assert.match(html, /01\/11\/2026 a 01\/11\/2027/);
   assert.match(html, /nota fiscal de serviço/);
+  assert.match(html, /IPCA\/IBGE[^<]*negativa ou igual a zero[^<]*IGP-M\/FGV/);
   assert.doesNotMatch(html, /torre/i);
   const semNota = N.contratoRadioInterna({ nome: "X", valor: 100, inicio: "2026-11-01", meses: 6, nf: "boleto" });
   assert.doesNotMatch(semNota, /nota fiscal/);
