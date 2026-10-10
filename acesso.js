@@ -28,33 +28,43 @@
   //   pessoal   cartão de saldo pessoal
   //   ropsResumo aba "Resumo financeiro" do Rádio Ops (valores da MGB)
   //   ropsAlerta aviso de nota a emitir do Rádio Ops na Home
+  //   ropsPainel painel completo do Rádio Ops (pipeline, PIs, rádios)
+  //   renovacao aviso na Home dos contratos que encerram no mês
+  //   novo       botão "Novo cliente" na Home (novo.js)
+  // abas: limita as abas de Ferramentas e do Estúdio (ausente = todas)
   var PERFIS = {
     'admin-geral': {
       rotulo: 'Visão geral',
       paginas: TODAS,
-      extras: ['valores', 'pessoal', 'ropsResumo', 'ropsAlerta']
+      extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao', 'novo']
     },
     'admin-meudia': {
       rotulo: 'Meu dia',
       paginas: ['home', 'leads', 'midiakit', 'apresmgb', 'sindicos', 'propvaapty', 'overview', 'custos',
         'contabilidade', 'radioops', 'planocaixa', 'pessoal'],
-      extras: ['valores', 'pessoal', 'ropsResumo', 'ropsAlerta']
+      extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao', 'novo']
     },
+    // Revisão do Eder (10/10): Rádio Ops só o resumo do mês; Ferramentas só o Backup;
+    // aviso de contratos que encerram para renovar.
     financeiro: {
       rotulo: 'Karen',
       paginas: ['home', 'overview', 'custos', 'contabilidade', 'operacional:contratos', 'relatorios', 'gerador',
         'radioops', 'ferramentas'],
-      extras: ['valores', 'ropsResumo', 'ropsAlerta']
+      extras: ['valores', 'ropsResumo', 'ropsAlerta', 'renovacao', 'novo'],
+      abas: { ferramentas: ['backup'] }
     },
+    // Guina só participa do Rádio Ops.
     bureau: {
       rotulo: 'Guina',
-      paginas: ['home', 'radioops', 'ferramentas'],
-      extras: []
+      paginas: ['home', 'radioops'],
+      extras: ['ropsPainel']
     },
+    // Cleiton: Gerador de Spots e Blocos Rádio no Estúdio, e as Ferramentas.
     programacao: {
       rotulo: 'Cleiton',
       paginas: ['home', 'operacional:estudio', 'ferramentas'],
-      extras: []
+      extras: [],
+      abas: { estudio: ['gerador', 'blocos'] }
     }
   };
 
@@ -89,6 +99,19 @@
     return !!p && p.extras.indexOf(extra) !== -1;
   }
 
+  function podeAba(perfil, area, aba) {
+    var p = PERFIS[perfil];
+    if (!p) return false;
+    var lista = p.abas && p.abas[area];
+    return !lista || lista.indexOf(aba) !== -1;
+  }
+
+  function primeiraAba(perfil, area, padrao) {
+    var p = PERFIS[perfil];
+    var lista = p && p.abas && p.abas[area];
+    return lista ? lista[0] : padrao;
+  }
+
   // Descobre para onde um onclick leva: "goPage('leads')" → "leads".
   function alvoDoOnclick(txt) {
     txt = String(txt || '');
@@ -114,6 +137,8 @@
     perfilEfetivo: perfilEfetivo,
     pode: pode,
     temExtra: temExtra,
+    podeAba: podeAba,
+    primeiraAba: primeiraAba,
     alvoDoOnclick: alvoDoOnclick
   };
 
@@ -141,6 +166,9 @@
       'body.mgb-sem-pessoal .home-pessoal-card{display:none!important}' +
       'body.mgb-sem-ropsResumo #rops-tab-resumo,body.mgb-sem-ropsResumo #rops-resumo-wrap,body.mgb-sem-ropsResumo #nav-rops-badge{display:none!important}' +
       'body.mgb-sem-ropsAlerta #home-rops-alert{display:none!important}' +
+      'body.mgb-sem-ropsPainel #rops-tab-painel,body.mgb-sem-ropsPainel #rops-painel-wrap{display:none!important}' +
+      '#mgb-renov{cursor:pointer;margin:0 0 14px;padding:12px 16px;border-radius:14px;background:#fff7ed;border:1.5px solid #f2b880;color:#7a3e00;font:14px "DM Sans",system-ui,sans-serif;text-align:left;max-width:640px;width:100%;box-sizing:border-box}' +
+      '#mgb-renov b{display:block;font-size:14px;margin-bottom:4px}#mgb-renov span{display:block;font-size:13px;color:#5d3a12}' +
       '#mgb-login{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:#f3f1ec;font-family:"DM Sans",system-ui,sans-serif}' +
       '#mgb-login form{width:100%;max-width:360px;background:#fff;border:1px solid #ddd8ce;border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 40px rgba(36,26,56,.08)}' +
       '#mgb-login h1{margin:0;font-size:22px;color:#241a38}#mgb-login p{margin:0;font-size:14px;color:#5d5868}' +
@@ -172,7 +200,7 @@
   function aplicar() {
     if (!perfilAtual) return;
     var body = doc.body;
-    ['valores', 'pessoal', 'ropsResumo', 'ropsAlerta'].forEach(function (x) {
+    ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'novo'].forEach(function (x) {
       body.classList.toggle('mgb-sem-' + x, !temExtra(perfilAtual, x));
     });
 
@@ -204,16 +232,87 @@
       });
     }
 
+    // Abas de Ferramentas e do Estúdio
+    doc.querySelectorAll('.ferr-tab[onclick]').forEach(function (el) {
+      var m = el.getAttribute('onclick').match(/showFerrTab\(\s*['"](\w+)['"]/);
+      if (!m) return;
+      if (podeAba(perfilAtual, 'ferramentas', m[1])) el.removeAttribute('data-mgb-bloq');
+      else el.setAttribute('data-mgb-bloq', '');
+    });
+    doc.querySelectorAll('#page-operacional .hub-tab[data-tab]').forEach(function (el) {
+      var estudio = (global.OP_GROUPS && global.OP_GROUPS.estudio) || [];
+      if (estudio.indexOf(el.dataset.tab) === -1) return;
+      if (podeAba(perfilAtual, 'estudio', el.dataset.tab)) el.removeAttribute('data-mgb-bloq');
+      else el.setAttribute('data-mgb-bloq', '');
+    });
+
+    // Botões do cabeçalho do Rádio Ops que abrem o painel completo
+    doc.querySelectorAll('#page-radioops .rops-tabs button[onclick]').forEach(function (el) {
+      var oc = el.getAttribute('onclick');
+      var soAdmin = /ropsAbrirGuina|portal=/.test(oc);
+      var dePainel = /ropsAbrirPainel|ajuda=/.test(oc);
+      var ok = soAdmin ? perfilAtual.indexOf('admin') === 0 : (dePainel ? temExtra(perfilAtual, 'ropsPainel') : true);
+      if (ok) el.removeAttribute('data-mgb-bloq'); else el.setAttribute('data-mgb-bloq', '');
+    });
+    filtrarResumoRops();
+
     var w = doc.querySelector('.home-welcome');
     if (w && sessao) w.textContent = 'Olá, ' + sessao.usuario.nome + '! 👋';
+    montarAvisoRenovacao();
 
     montarPill();
     montarFaixaVerComo();
   }
 
+  // Quem não vê o painel completo do Rádio Ops (Karen) vê só a campanha do mês no resumo.
+  function mesAtualStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+  function filtrarResumoRops() {
+    var tb = doc.getElementById('rops-tabela');
+    if (!tb) return;
+    var soMes = perfilAtual && !temExtra(perfilAtual, 'ropsPainel');
+    var mes = mesAtualStr();
+    tb.querySelectorAll('tr').forEach(function (tr, i) {
+      if (i === 0) return; // cabeçalho
+      var b = tr.querySelector('[onclick*="ropsAbrirRelatorio"]');
+      var m = b && b.getAttribute('onclick').match(/'(\d{4}-\d{2})'/);
+      var mostrar = !soMes || (m && m[1] === mes);
+      if (mostrar) tr.removeAttribute('data-mgb-bloq'); else tr.setAttribute('data-mgb-bloq', '');
+    });
+    if (!filtrarResumoRops.obs && global.MutationObserver) {
+      filtrarResumoRops.obs = new MutationObserver(function () { filtrarResumoRops(); });
+      filtrarResumoRops.obs.observe(tb, { childList: true, subtree: true });
+    }
+  }
+
+  // Aviso na Home: contratos que encerram neste mês (para renovar).
+  function montarAvisoRenovacao() {
+    var el = doc.getElementById('mgb-renov');
+    var hubs = doc.querySelector('.home-hubs');
+    var lista = [];
+    if (temExtra(perfilAtual, 'renovacao') && typeof global.contratosLista === 'function') {
+      try {
+        var d = new Date(), ref = d.getFullYear() * 12 + d.getMonth();
+        lista = global.contratosLista().filter(function (c) { return c.fimKey === ref; });
+      } catch (e) { lista = []; }
+    }
+    if (!lista.length || !hubs) { if (el) el.remove(); return; }
+    if (!el) {
+      el = doc.createElement('button');
+      el.type = 'button';
+      el.id = 'mgb-renov';
+      el.setAttribute('onclick', "goPage('overview')");
+      hubs.parentNode.insertBefore(el, hubs);
+    }
+    el.innerHTML = '<b>' + lista.length + (lista.length === 1 ? ' contrato encerra' : ' contratos encerram') + ' este mês. Hora de renovar.</b>' +
+      '<span>' + lista.map(function (c) { return esc(c.nome) + ' (' + esc(c.origem) + ')'; }).join(' · ') + '</span>';
+  }
+
   function envolverNavegacao() {
     if (originais.goPage) return;
-    ['goPage', 'goOperacional', 'openGerador', 'drillMod', 'ropsSetTab'].forEach(function (nome) {
+    ['goPage', 'goOperacional', 'openGerador', 'drillMod', 'ropsSetTab', 'showFerrTab'].forEach(function (nome) {
       if (typeof global[nome] === 'function') originais[nome] = global[nome];
     });
     if (originais.goPage) {
@@ -221,6 +320,9 @@
         if (perfilAtual && !pode(perfilAtual, p)) p = 'home';
         var r = originais.goPage.apply(this, [p].concat([].slice.call(arguments, 1)));
         aplicar();
+        if (p === 'ferramentas' && perfilAtual && !podeAba(perfilAtual, 'ferramentas', 'pdf')) {
+          global.showFerrTab(primeiraAba(perfilAtual, 'ferramentas', 'pdf'));
+        }
         return r;
       };
     }
@@ -245,7 +347,18 @@
     if (originais.ropsSetTab) {
       global.ropsSetTab = function (t) {
         if (perfilAtual && t === 'resumo' && !temExtra(perfilAtual, 'ropsResumo')) t = 'painel';
+        if (perfilAtual && t !== 'resumo' && !temExtra(perfilAtual, 'ropsPainel')) t = 'resumo';
         return originais.ropsSetTab.call(this, t);
+      };
+    }
+    if (originais.showFerrTab) {
+      global.showFerrTab = function (t, el) {
+        if (perfilAtual && !podeAba(perfilAtual, 'ferramentas', t)) {
+          t = primeiraAba(perfilAtual, 'ferramentas', 'pdf');
+          el = null;
+        }
+        if (!el) el = doc.querySelector('.ferr-tab[onclick*="showFerrTab(\'' + t + '\'"]');
+        return originais.showFerrTab.call(this, t, el);
       };
     }
   }
