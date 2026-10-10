@@ -60,3 +60,53 @@ test("botão Novo: Eder e Karen veem; Guina e Cleiton não", () => {
   assert.ok(!A.temExtra("bureau", "novo"));
   assert.ok(!A.temExtra("programacao", "novo"));
 });
+
+// ── Rádio interna ──────────────────────────────────────────────────────
+test("rádio interna: custo fixo de R$ 70 e sobra calculada", () => {
+  assert.equal(N.CUSTO_RADIO, 70);
+  assert.equal(N.sobraRadio(250), 180);
+  assert.equal(N.sobraRadio("199,90"), 129.9);
+  assert.equal(N.sobraRadio(50), -20);
+});
+
+test("rádio interna: custo sai no formato recorrente do hub", () => {
+  const d = N.despesaRadio("2026-11-01", "24");
+  assert.equal(d.t, "Recorrente");
+  assert.equal(d.q * d.u, 70);
+  assert.equal(d.mesesRec, 24);
+  assert.equal(d.dataInicio, "2026-11");
+});
+
+test("rádio interna: validação de nome, duplicidade, valor e e-mail", () => {
+  const ok = { nome: "Ótica Visão · Centro", valor: "250", inicio: "2026-11-01", email: "a@b.com" };
+  assert.deepEqual(N.validarRadio(ok, ["Mercadão Prochet"]), []);
+  assert.match(N.validarRadio({ ...ok, nome: "mercadao prochet" }, ["Mercadão Prochet"]).join(), /Já existe/);
+  assert.match(N.validarRadio({ ...ok, valor: "" }, []).join(), /valor mensal/);
+  assert.match(N.validarRadio({ ...ok, inicio: "" }, []).join(), /início/);
+  assert.match(N.validarRadio({ ...ok, email: "a@b" }, []).join(), /e-mail/);
+});
+
+test("datas do contrato sem erro de fuso e virando o ano", () => {
+  assert.equal(N.dataMais("2026-11-01", 0), "01/11/2026");
+  assert.equal(N.dataMais("2026-11-01", 12), "01/11/2027");
+  assert.equal(N.dataMais("2026-12-15", 6), "15/06/2027");
+  assert.equal(N.dataMais("", 12), "");
+});
+
+test("contrato padrão de rádio interna traz partes, valor, vigência e nota", () => {
+  const html = N.contratoRadioInterna(
+    { nome: "Ótica Visão · Centro", razao: "Visão Ótica Ltda", cnpj: "12.345.678/0001-90", valor: "250", inicio: "2026-11-01", meses: "12", nf: "nota", responsavel: "Ana" },
+    { extenso: () => "Duzentos e cinquenta reais", hoje: "10 de outubro de 2026", numero: "MGB-RAD-1" }
+  );
+  assert.match(html, /CONTRATO DE PRESTAÇÃO DE SERVIÇOS/);
+  assert.match(html, /Visão Ótica Ltda/);
+  assert.match(html, /R\$ 250,00 \(Duzentos e cinquenta reais\)/);
+  assert.match(html, /12 \(doze\) meses/);
+  assert.match(html, /01\/11\/2026 a 01\/11\/2027/);
+  assert.match(html, /nota fiscal de serviço/);
+  assert.doesNotMatch(html, /torre/i);
+  const semNota = N.contratoRadioInterna({ nome: "X", valor: 100, inicio: "2026-11-01", meses: 6, nf: "boleto" });
+  assert.doesNotMatch(semNota, /nota fiscal/);
+  const xss = N.contratoRadioInterna({ nome: "<script>x</script>", valor: 1, inicio: "2026-11-01" });
+  assert.doesNotMatch(xss, /<script>/);
+});
