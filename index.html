@@ -6040,6 +6040,7 @@ function copiarSpot() {
     <div id="rops-resumo-wrap" style="display:none;padding:0 22px 22px">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
       <button class="rops-btn" onclick="buildRadioOps(true)">🔄 Atualizar do Rádio Ops</button>
+      <button class="rops-btn ghost" type="button" disabled style="opacity:.55;cursor:not-allowed" title="Em breve: enviar o relatório do mês para o cliente aprovar na plataforma dele. O fluxo ainda está sendo definido.">📤 Enviar ao cliente · em breve</button>
       <span class="rops-status" id="rops-status"></span>
     </div>
     <div class="rops-kpis" id="rops-kpis"></div>
@@ -14023,6 +14024,7 @@ function renderRadioOps(data){
 }
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
+<script src="novo.js"></script>
 <script src="acesso.js"></script>
 </body>
 </html>

@@ -53,3 +53,31 @@ test("lê o destino de cada botão do hub", () => {
   assert.equal(A.alvoDoOnclick("drillMod(MODULES[0].id)"), "custos");
   assert.equal(A.alvoDoOnclick("togglePrivate()"), null);
 });
+
+test("revisão do Eder: Karen só Backup nas Ferramentas e só o resumo do Rádio Ops", () => {
+  assert.ok(A.podeAba("financeiro", "ferramentas", "backup"));
+  assert.ok(!A.podeAba("financeiro", "ferramentas", "etq"));
+  assert.equal(A.primeiraAba("financeiro", "ferramentas", "pdf"), "backup");
+  assert.ok(A.temExtra("financeiro", "ropsResumo"));
+  assert.ok(!A.temExtra("financeiro", "ropsPainel"));
+  assert.ok(A.temExtra("financeiro", "renovacao"));
+});
+
+test("revisão do Eder: Guina só Rádio Ops (painel), sem Ferramentas", () => {
+  assert.ok(!A.pode("bureau", "ferramentas"));
+  assert.ok(A.temExtra("bureau", "ropsPainel"));
+});
+
+test("revisão do Eder: Cleiton só Gerador de Spots e Blocos Rádio no Estúdio", () => {
+  assert.ok(A.podeAba("programacao", "estudio", "gerador"));
+  assert.ok(A.podeAba("programacao", "estudio", "blocos"));
+  assert.ok(!A.podeAba("programacao", "estudio", "linkedin-gerar"));
+  assert.ok(!A.podeAba("programacao", "estudio", "linkedin-plano"));
+  assert.ok(A.podeAba("programacao", "ferramentas", "etq"), "Ferramentas completas para o Cleiton");
+});
+
+test("admin vê tudo nas abas", () => {
+  assert.ok(A.podeAba("admin-geral", "ferramentas", "etq"));
+  assert.ok(A.podeAba("admin-geral", "estudio", "linkedin-plano"));
+  assert.ok(A.temExtra("admin-geral", "ropsPainel"));
+});
