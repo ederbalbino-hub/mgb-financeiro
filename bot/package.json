@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.79.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
   }
 }
