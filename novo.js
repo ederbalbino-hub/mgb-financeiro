@@ -161,7 +161,115 @@
       '</div>';
   }
 
+  // ── Anunciante da Rádio Mercadão (lojas do Mercadão Prochet) ──────────
+  // Padrões da Cobrança Mensal do hub: R$ 100 por cota, repasse de 20% ao Mercadão,
+  // 15 inserções/dia por cota. A grade tem 8 blocos × 3 spots = 24 cotas.
+  var MERCADAO = { valorCota: 100, repasse: 20, insercoesCota: 15, blocos: 8, spots: 3 };
+
+  function contaMercadao(cotas, valorCota, repassePct) {
+    var total = Math.round((parseInt(cotas, 10) || 0) * numero(valorCota) * 100) / 100;
+    var repasse = Math.round(total * numero(repassePct)) / 100;
+    return { total: total, repasse: repasse, mgb: Math.round((total - repasse) * 100) / 100 };
+  }
+
+  // Lê a grade dos Blocos (formato mgb_blocos_v4: b{bloco}s{spot}_nome).
+  function ocupacaoBlocos(grade) {
+    var g = grade || {}, ocupadas = 0, nomes = [];
+    for (var b = 1; b <= MERCADAO.blocos; b++) {
+      for (var s = 1; s <= MERCADAO.spots; s++) {
+        var n = String(g['b' + b + 's' + s + '_nome'] || '').trim();
+        if (n) { ocupadas++; if (!jaExiste(n, nomes)) nomes.push(n); }
+      }
+    }
+    return { total: MERCADAO.blocos * MERCADAO.spots, ocupadas: ocupadas, vagas: MERCADAO.blocos * MERCADAO.spots - ocupadas, nomes: nomes };
+  }
+
+  function validarMercadao(d, existentes, vagas) {
+    var erros = [];
+    var c = parseInt(d.cotas, 10);
+    if (!String(d.nome || '').trim()) erros.push('Informe o nome da loja.');
+    else if (jaExiste(d.nome, existentes)) erros.push('Essa loja já está nos Blocos ou já foi cadastrada como anunciante do Mercadão.');
+    if (!(c > 0)) erros.push('Informe quantas cotas.');
+    else if (vagas != null && c > vagas) erros.push('Só há ' + vagas + (vagas === 1 ? ' cota livre' : ' cotas livres') + ' nos Blocos.');
+    if (!(numero(d.valorCota) > 0)) erros.push('Informe o valor por cota.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.inicio || '')) erros.push('Informe a data de início.');
+    if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) erros.push('O e-mail da loja parece incompleto.');
+    return erros;
+  }
+
+  // Contrato de anúncio na Rádio Mercadão. Mesmas condições do contrato Mercadão que já
+  // existe no hub (spot de 15s, 9h às 22h, 1 roteiro grátis por mês, aviso de 30 dias),
+  // agora com cotas, valor por cota e envio pelo Assinafy.
+  function contratoMercadao(d, opts) {
+    opts = opts || {};
+    var e = function (t) {
+      return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    };
+    var L = function (v, n) { return v ? e(v) : '_'.repeat(n || 26); };
+    var brlC = function (v) { return 'R$ ' + numero(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var cotas = parseInt(d.cotas, 10) || 1;
+    var meses = parseInt(d.meses, 10) || 1;
+    var conta = contaMercadao(cotas, d.valorCota, 0);
+    var ins = cotas * MERCADAO.insercoesCota;
+    var ini = dataMais(d.inicio, 0) || '____/____/______';
+    var fim = dataMais(d.inicio, meses) || '____/____/______';
+    var adiantado = d.pagamento === 'adiantado';
+    var extenso = typeof opts.extenso === 'function' ? ' (' + opts.extenso(conta.total) + ')' : '';
+    var R = function (l, v) {
+      return '<div style="display:flex;margin-bottom:5px;font-size:12.5px;line-height:1.5"><span style="font-weight:600;color:#2A1760;min-width:130px;flex-shrink:0">' + l +
+        '</span><span style="color:#333;border-bottom:1px solid #e0d8f0;flex:1">' + v + '</span></div>';
+    };
+    var T = function (t) { return '<div style="font-family:Syne,sans-serif;font-size:11.5px;font-weight:700;color:#2A1760;margin:14px 0 4px;letter-spacing:.3px">' + t + '</div><div style="height:1px;background:#EAD9FF;margin:4px 0 10px"></div>'; };
+    var C = function (t, corpo) { return '<div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">' + t + '</div><div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">' + corpo + '</div>'; };
+    var pagamento = adiantado
+      ? 'Pagamento único e antecipado de <strong>' + brlC(conta.total * meses) + '</strong>, referente aos ' + meses + (meses === 1 ? ' mês' : ' meses') + ' de veiculação, por boleto bancário, antes do início da veiculação.'
+      : 'Cobrança mensal emitida no dia 5 (cinco) de cada mês, por boleto bancário, com o vencimento indicado no boleto. A primeira cobrança refere-se ao mês de início da veiculação.';
+    var th = function (t) { return '<th style="padding:6px 8px">' + t + '</th>'; };
+    var td = function (t) { return '<td style="padding:5px 8px;text-align:center;color:#333">' + t + '</td>'; };
+    return '' +
+      '<div style="padding:22px 28px 18px;border-bottom:3px solid #E879B0"><div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">' +
+      '<div><div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:#2A1760">MGB <span style="color:#E879B0">Mídia</span></div><div style="font-size:10px;color:#999;font-style:italic;margin-top:2px">Elevando a sua comunicação</div></div>' +
+      '<div style="text-align:right"><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.5px">CONTRATO DE VEICULAÇÃO</div>' +
+      '<div style="font-size:11px;color:#5B2D8E;font-weight:600">Rádio Interna · Mercadão da Prochet</div><div style="font-size:10px;color:#999;margin-top:2px">' + (opts.numero ? 'Nº ' + e(opts.numero) + ' · ' : '') + e(opts.hoje || '') + '</div></div></div></div>' +
+      '<div style="padding:22px 28px">' +
+      T('1. DADOS DAS PARTES') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">' +
+      '<div style="border:1px solid #DDD0F0;border-radius:8px;padding:12px 14px"><div style="font-size:10px;font-weight:700;color:#5B2D8E;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">Contratante (lojista)</div>' +
+      R('Razão social / nome', L(d.razao || d.nome)) + R('Loja', L(d.nome)) + R('CNPJ/CPF', L(d.cnpj, 18)) + R('Endereço', L(d.end)) +
+      R('Responsável', L(d.responsavel)) + R('E-mail', L(d.email)) + R('WhatsApp', L(d.wpp, 18)) + '</div>' +
+      '<div style="border:1px solid #DDD0F0;border-radius:8px;padding:12px 14px"><div style="font-size:10px;font-weight:700;color:#5B2D8E;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">Contratada</div>' +
+      R('Razão social', 'MGB Comunicação e Marketing Ltda.') + R('Nome fantasia', 'MGB Mídia') + R('CNPJ', '23.770.170/0001-50') + R('Endereço', 'Londrina – PR') +
+      R('E-mail', 'comercial@agenciamgb.com.br') + R('WhatsApp', '(43) 99696-0078') + '</div></div>' +
+      T('2. VEICULAÇÃO E INVESTIMENTO') +
+      '<table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:12px"><thead><tr style="background:#2A1760;color:#fff">' +
+      th('Cotas') + th('Inserções/dia') + th('Spot') + th('Horário') + th('Valor mensal') + th('Vigência') + '</tr></thead>' +
+      '<tbody><tr style="background:#F7F4FB">' + td(cotas) + td(ins) + td('15 segundos') + td('9h às 22h, todos os dias') + td(brlC(conta.total)) + td(ini + ' a ' + fim) + '</tr></tbody></table>' +
+      T('3. CLÁUSULAS E CONDIÇÕES') +
+      C('CLÁUSULA 1ª — DO OBJETO', '1.1. Veiculação de spot publicitário de áudio do CONTRATANTE na <strong>rádio interna do Mercadão da Prochet</strong>, Av. Harry Prochet, 305 — Londrina/PR, operada pela CONTRATADA, conforme o quadro acima: ' +
+        cotas + (cotas === 1 ? ' cota' : ' cotas') + ', ' + ins + ' inserções por dia de até 15 segundos, das 9h às 22h, todos os dias.') +
+      C('CLÁUSULA 2ª — DO VALOR E DO PAGAMENTO', '2.1. Valor mensal de <strong>' + brlC(conta.total) + extenso + '</strong> (' + cotas + ' × ' + brlC(d.valorCota) + ' por cota).<br>2.2. ' + pagamento +
+        (adiantado ? '' : '<br>2.3. O atraso superior a 30 (trinta) dias permite à CONTRATADA suspender a veiculação até a regularização.')) +
+      C('CLÁUSULA 3ª — DAS OBRIGAÇÕES DA CONTRATADA', '3.1. Garantir a veiculação nas inserções e nos horários estabelecidos.<br>3.2. Operar e manter a rádio em funcionamento.<br>3.3. Caso o CONTRATANTE não possua spot, produzir 1 (um) texto/roteiro por mês sem custo adicional.') +
+      C('CLÁUSULA 4ª — DAS OBRIGAÇÕES DO CONTRATANTE', '4.1. Fornecer o spot em MP3 ou WAV, com até 15 segundos, com no mínimo 3 (três) dias úteis de antecedência, ou aprovar o texto produzido pela CONTRATADA.<br>4.2. Responsabilizar-se pelo conteúdo e pela veracidade das informações divulgadas.<br>4.3. Efetuar os pagamentos nas datas de vencimento.') +
+      C('CLÁUSULA 5ª — DA POLÍTICA DE CONTEÚDO', '5.1. A CONTRATADA pode recusar material ilícito, ofensivo, político-partidário ou fora dos padrões técnicos, informando o motivo ao CONTRATANTE.') +
+      C('CLÁUSULA 6ª — DA VIGÊNCIA E DA RESCISÃO', '6.1. Este contrato vigora de ' + ini + ' a ' + fim + ' (' + meses + (meses === 1 ? ' mês' : ' meses') + ').<br>6.2. Qualquer das partes pode rescindi-lo com aviso prévio por escrito de 30 (trinta) dias.' +
+        (adiantado ? ' Em caso de rescisão pelo CONTRATANTE, não há devolução dos valores já pagos pelo período contratado.' : '')) +
+      C('CLÁUSULA 7ª — DO FORO', '7.1. Fica eleito o foro da Comarca de <strong>Londrina, Estado do Paraná</strong>, para dirimir quaisquer controvérsias decorrentes deste contrato.') +
+      '<div style="color:#444;line-height:1.55;font-size:11.5px;margin:10px 0 18px">E, por estarem de acordo, as partes assinam eletronicamente o presente instrumento.</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:28px;font-size:11.5px;color:#333;text-align:center">' +
+      '<div style="border-top:1px solid #2A1760;padding-top:6px">' + L(d.razao || d.nome) + '<br><span style="color:#888">CONTRATANTE</span></div>' +
+      '<div style="border-top:1px solid #2A1760;padding-top:6px">MGB Comunicação e Marketing Ltda.<br><span style="color:#888">CONTRATADA</span></div></div>' +
+      '</div>';
+  }
+
   var api = {
+    MERCADAO: MERCADAO,
+    contaMercadao: contaMercadao,
+    ocupacaoBlocos: ocupacaoBlocos,
+    validarMercadao: validarMercadao,
+    contratoMercadao: contratoMercadao,
     CUSTO_POR_TORRE: CUSTO_POR_TORRE,
     CUSTO_RADIO: CUSTO_RADIO,
     custoCondominio: custoCondominio,
@@ -286,7 +394,7 @@
           '<button type="button" class="b" data-acao="anunciante">É anunciante</button>';
       } else if (l.produto === 'radio') {
         acoes = '<button type="button" class="b p" data-lead="' + l.id + '" data-acao="radio">Cadastrar rádio interna</button>' +
-          '<button type="button" class="b" data-acao="mercadao">É anunciante do Mercadão</button>';
+          '<button type="button" class="b" data-lead="' + l.id + '" data-acao="mercadao">É anunciante do Mercadão</button>';
       } else if (l.produto === 'vaapty') {
         acoes = '<button type="button" class="b p" data-acao="vaapty">Abrir contrato Vaapty</button>';
       } else if (m) {
@@ -301,7 +409,7 @@
       ['anunciante', 'Anunciante · telas do elevador', 'Abre o contrato Tela Vertical, que já lança o anunciante nas telas escolhidas.', ''],
       ['vaapty', 'Unidade Vaapty', 'Abre o contrato Vaapty, que já cria a unidade no módulo.', ''],
       ['radio', 'Rádio interna', 'Uma unidade (loja) por vez, com o contrato padrão. Custo de R$ 70 ao mês.', ''],
-      ['mercadao', 'Anunciante · Rádio Mercadão', 'Por enquanto abre o contrato Mercadão que já existe. O cadastro guiado é a próxima entrega.', ''],
+      ['mercadao', 'Anunciante · Rádio Mercadão', 'Loja no Mercadão Prochet. Cotas nos Blocos, cobrança mensal e contrato.', ''],
       ['modulo:tv', 'TV interna', 'Abre o módulo TV Interna.', ''],
       ['modulo:taroba', 'Comissão Tarobá', 'Abre o módulo Tarobá para lançar o valor do mês.', ''],
       ['', 'Portal Londrina · Cascavel', 'Ainda não existe no hub.', 'em breve']
@@ -329,7 +437,10 @@
           var idr = b.getAttribute('data-lead');
           formRadio(idr ? listaLeads().filter(function (l) { return String(l.id) === idr; })[0] : null);
         }
-        if (a === 'mercadao') irPara('contratos', 'mercadao');
+        if (a === 'mercadao') {
+          var idm = b.getAttribute('data-lead');
+          formMercadao(idm ? listaLeads().filter(function (l) { return String(l.id) === idm; })[0] : null);
+        }
         if (a === 'anunciante') irPara('contratos', 'elevador');
         if (a === 'vaapty') irPara('contratos', 'vaapty');
         if (a === 'modulo') { fechar(); try { global.drillMod(b.getAttribute('data-mod')); } catch (e) {} }
@@ -648,6 +759,156 @@
       btn.textContent = 'Rádio interna criada';
       var fim = doc.createElement('button');
       fim.type = 'button'; fim.className = 'b'; fim.textContent = 'Lançar outra unidade';
+      fim.addEventListener('click', function () { abrir(); });
+      btn.parentNode.appendChild(fim);
+    });
+  }
+
+  // ── Novo anunciante · Rádio Mercadão ──────────────────────────────────
+  // Os Blocos Rádio são do Cleiton e só recebem a loja depois do contrato assinado (regra de 10/10).
+  // A Cobrança Mensal do Mercadão lê os Blocos: quando o Cleiton coloca a loja, ela entra na cobrança.
+  function lerGradeBlocos() { try { return JSON.parse(global.localStorage.getItem('mgb_blocos_v4')) || {}; } catch (e) { return {}; } }
+  function padraoCobranca(id, pad) { var el = doc.getElementById(id); var v = el ? numero(el.value) : 0; return v > 0 ? v : pad; }
+  function anunciantesMercadao() {
+    var nomes = ocupacaoBlocos(lerGradeBlocos()).nomes.slice();
+    try { Object.keys(clientesInfo.mercadao || {}).forEach(function (n) { nomes.push(n); }); } catch (e) {}  // eslint-disable-line no-undef
+    return nomes;
+  }
+
+  function formMercadao(lead) {
+    leadAtual = lead || null;
+    var L = lead || {};
+    var crm = !!lead;
+    var occ = ocupacaoBlocos(lerGradeBlocos());
+    var vCota = padraoCobranca('rel-cota', MERCADAO.valorCota);
+    var rep = padraoCobranca('rel-repasse', MERCADAO.repasse);
+    var hoje = new Date();
+    var ini = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1).toISOString().slice(0, 10);
+    var el = moldura('Novo anunciante · Rádio Mercadão',
+      '<div class="duas"><main>' +
+      '<p class="sub">Loja que vai anunciar na rádio interna do Mercadão Prochet.' + (lead ? ' Os campos em verde vieram do CRM.' : ' Campos com * são obrigatórios.') + '</p>' +
+      '<section class="card"><div class="sec">1 · Anunciante</div><div class="campos">' +
+      campoNv('nome', 'Nome da loja *', L.nome, 'text', '', crm) +
+      campoNv('razao', 'Razão social ou nome completo', '', 'text', ' placeholder="Se diferente do nome da loja"') +
+      campoNv('cnpj', 'CNPJ ou CPF', L.cnpj, 'text', '', crm) +
+      campoNv('end', 'Endereço', '', 'text', ' placeholder="Box, rua, número, cidade"') +
+      campoNv('resp', 'Responsável', L.responsavel, 'text', '', crm) +
+      campoNv('email', 'E-mail (recebe o contrato)', '', 'email', ' placeholder="loja@exemplo.com"') +
+      campoNv('wpp', 'WhatsApp (recebe o spot para aprovar)', L.tel, 'text', '', crm) + '</div></section>' +
+      '<section class="card"><div class="sec">2 · Cotas e pagamento</div><div class="campos">' +
+      campoNv('cotas', 'Cotas *', '1', 'number', ' min="1" max="' + Math.max(occ.vagas, 1) + '"') +
+      campoNv('vcota', 'Valor por cota (R$) *', String(vCota).replace('.', ','), 'text', ' inputmode="decimal"') +
+      campoNv('inicio', 'Início *', ini, 'date') +
+      '<label class="f" for="nv-vig">Duração<select id="nv-vig"><option value="6">6 meses</option><option value="12">12 meses</option><option value="3">3 meses</option><option value="1">1 mês</option></select></label>' +
+      '<label class="f" for="nv-pag">Pagamento<select id="nv-pag"><option value="mensal">Mensal, todo dia 5</option><option value="adiantado">Adiantado (todos os meses de uma vez)</option></select></label>' +
+      '</div><p class="sub">Blocos hoje: <b>' + occ.ocupadas + ' de ' + occ.total + '</b> cotas ocupadas, <b>' + occ.vagas + (occ.vagas === 1 ? ' livre' : ' livres') + '</b>. Cada cota = ' + MERCADAO.insercoesCota + ' inserções por dia.</p></section></main>' +
+      '<aside><section class="card"><div class="sec">Conta do mês</div>' +
+      '<div class="conta"><span id="nv-rot-total">Anunciante paga · 1 cota</span><b id="nv-total" style="color:#14583a">—</b></div>' +
+      '<div class="conta"><span>Repasse ao Mercadão (' + rep + '%)</span><b id="nv-repasse" style="color:#a33a1a">—</b></div>' +
+      '<div class="conta" style="border-top:1px solid #ece7f5;padding-top:10px"><span>Fica para a MGB</span><b id="nv-mgb">—</b></div>' +
+      '<p class="sub" id="nv-ins">15 inserções por dia.</p></section>' +
+      '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Guarda o cadastro da loja (dados, cotas, valor e pagamento) e o contrato na Pasta.</span></div>' +
+      '<div class="passo" id="nv-p2"><i>2</i><span>Gera o contrato Mercadão e envia pelo Assinafy.</span></div>' +
+      '<div class="passo" id="nv-p3"><i>3</i><span>' + (lead ? 'Marca o lead do CRM como cadastrado.' : 'Sem lead do CRM: nada a marcar.') + '</span></div>' +
+      '<div class="passo" id="nv-p4"><i>4</i><span>Prepara o aviso ao Cleiton: reservar as cotas nos Blocos e produzir o spot depois da assinatura.</span></div>' +
+      '<div class="passo" id="nv-p5"><i>5</i><span>Com a loja nos Blocos, ela entra sozinha na Cobrança Mensal do Mercadão.</span></div>' +
+      '<div class="erros" id="nv-erros" role="alert"></div>' +
+      '<button type="button" class="b p" id="nv-criar"' + (occ.vagas ? '' : ' disabled') + '>' + (occ.vagas ? 'Criar anunciante e enviar contrato' : 'Blocos lotados: fale com o Cleiton') + '</button>' +
+      '</section></aside></div>', true);
+
+    function atualizarConta() {
+      var c = parseInt(val('cotas'), 10) || 0;
+      var k = contaMercadao(c, val('vcota'), rep);
+      el.querySelector('#nv-rot-total').textContent = 'Anunciante paga · ' + c + (c === 1 ? ' cota' : ' cotas');
+      el.querySelector('#nv-total').textContent = brl(k.total) + '/mês';
+      el.querySelector('#nv-repasse').textContent = brl(k.repasse);
+      el.querySelector('#nv-mgb').textContent = brl(k.mgb) + '/mês';
+      el.querySelector('#nv-ins').textContent = (c * MERCADAO.insercoesCota) + ' inserções por dia, de 15 segundos, das 9h às 22h.';
+    }
+    el.querySelector('#nv-cotas').addEventListener('input', atualizarConta);
+    el.querySelector('#nv-vcota').addEventListener('input', atualizarConta);
+    atualizarConta();
+    el.querySelector('#nv-criar').addEventListener('click', function () { criarMercadao(rep); });
+    el.querySelector('#nv-nome').focus();
+  }
+
+  function criarMercadao(rep) {
+    var d = {
+      nome: val('nome'), razao: val('razao'), cnpj: val('cnpj'), end: val('end'), responsavel: val('resp'),
+      email: val('email'), wpp: val('wpp'), cotas: val('cotas'), valorCota: val('vcota'), inicio: val('inicio'),
+      meses: (doc.getElementById('nv-vig') || {}).value || '6', pagamento: (doc.getElementById('nv-pag') || {}).value || 'mensal'
+    };
+    var occ = ocupacaoBlocos(lerGradeBlocos());
+    var errosEl = doc.getElementById('nv-erros');
+    var erros = validarMercadao(d, anunciantesMercadao(), occ.vagas);
+    if (erros.length) { errosEl.innerHTML = erros.map(esc).join('<br>'); return; }
+    errosEl.textContent = '';
+    var btn = doc.getElementById('nv-criar');
+    btn.disabled = true; btn.textContent = 'Criando…';
+    var cotas = parseInt(d.cotas, 10), meses = parseInt(d.meses, 10);
+    var k = contaMercadao(cotas, d.valorCota, rep);
+    var num = 'MGB-MCD-' + Date.now().toString().slice(-6);
+    var fimBr = dataMais(d.inicio, meses);
+
+    // 1. cadastro da loja + Pasta de contratos
+    try {
+      if (!clientesInfo.mercadao) clientesInfo.mercadao = {};          // eslint-disable-line no-undef
+      clientesInfo.mercadao[d.nome] = {                                 // eslint-disable-line no-undef
+        cnpj: d.cnpj, razao: d.razao || d.nome, fantasia: d.nome, responsavel: d.responsavel, tel: d.wpp, email: d.email, endereco: d.end,
+        cotas: cotas, valorCota: numero(d.valorCota), valorMensal: k.total, inicio: d.inicio.slice(0, 7), meses: meses,
+        pagamento: d.pagamento, contrato: num
+      };
+      try {
+        global.mgbSalvarContrato('mercadao', {
+          tipo_contrato: 'Mercadao Radio', num_contrato: num, data_emissao: new Date().toLocaleDateString('pt-BR'), status: 'Ativo',
+          cnpj_cpf: d.cnpj, razao_social: d.razao || d.nome, nome_fantasia: d.nome, responsavel: d.responsavel, telefone: d.wpp, email: d.email,
+          plano: cotas + (cotas === 1 ? ' cota' : ' cotas') + ' · ' + (d.pagamento === 'adiantado' ? 'adiantado' : 'mensal'), meses: meses,
+          data_inicio: d.inicio, data_fim: fimBr, valor_total: k.total * meses
+        });
+      } catch (e) {}
+      // Valor por cota diferente do padrão da Cobrança: deixa o valor da loja já ajustado lá.
+      var vPad = padraoCobranca('rel-cota', MERCADAO.valorCota);
+      if (numero(d.valorCota) !== vPad) {
+        try { relAjustesInit(); relAjustes.ov[d.nome.toLowerCase()] = k.total; } catch (e) {}  // eslint-disable-line no-undef
+      }
+      marcar(1, 'ok', 'Loja <b>' + esc(d.nome) + '</b> cadastrada: ' + cotas + (cotas === 1 ? ' cota' : ' cotas') + ', ' + brl(k.total) + '/mês por ' + meses + (meses === 1 ? ' mês' : ' meses') +
+        (d.pagamento === 'adiantado' ? ', pagamento adiantado de <b>' + brl(k.total * meses) + '</b> (emita a cobrança única)' : ', cobrança todo dia 5') + '.');
+    } catch (e) {
+      marcar(1, 'erro', 'Não consegui guardar o cadastro: ' + esc(e.message) + '. Nada foi lançado.');
+      btn.disabled = false; btn.textContent = 'Tentar de novo';
+      return;
+    }
+
+    // 3. lead do CRM (antes do envio, para não cadastrar duas vezes se a rede cair)
+    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Lead <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado.'); }
+    else marcar(3, 'ok', 'Sem lead do CRM para marcar.');
+    try { scheduleSave(); } catch (e) {}                               // eslint-disable-line no-undef
+    try { global.buildHome(); } catch (e) {}
+
+    // 2. contrato + Assinafy
+    var corpo = contratoMercadao(d, {
+      extenso: typeof global.fRecExtenso === 'function' ? global.fRecExtenso : null,
+      hoje: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }), numero: num
+    });
+    var ver = linkVerContrato(corpo);
+    var envio = d.email
+      ? enviarAssinafy('mercadao', d.nome, 'Contrato Rádio Mercadão - ' + d.nome, corpo, d.responsavel || d.nome, d.email,
+          'Segue o contrato de anúncio na rádio interna do Mercadão da Prochet para assinatura eletrônica.')
+          .then(function () { return { ok: true, msg: 'Contrato enviado à loja (' + esc(d.email) + ') e a você pelo Assinafy.' + ver }; })
+          .catch(function (e) { return { ok: false, msg: 'Contrato gerado, mas o envio ao Assinafy falhou: ' + esc(e.message) + '.' + ver }; })
+      : Promise.resolve({ ok: false, msg: 'Contrato gerado, mas sem e-mail da loja: nada foi enviado.' + ver });
+
+    envio.then(function (r) { marcar(2, r.ok ? 'ok' : 'erro', r.msg); }).finally(function () {
+      // 4. aviso ao Cleiton (ele reserva nos Blocos depois da assinatura)
+      var txt = 'Novo anunciante na Rádio Mercadão: ' + d.nome + ' · ' + cotas + (cotas === 1 ? ' cota' : ' cotas') +
+        (d.wpp ? ' · WhatsApp ' + d.wpp : '') + '. Início ' + d.inicio.split('-').reverse().join('/') +
+        '. Contrato enviado para assinatura: assim que assinar, reservar nos Blocos com o nome "' + d.nome + '" e produzir o spot (o material vem pela Karen).';
+      marcar(4, 'ok', 'Aviso pronto: <a href="https://wa.me/?text=' + encodeURIComponent(txt) + '" target="_blank" rel="noopener">enviar ao Cleiton no WhatsApp</a>.');
+      marcar(5, 'ok', 'Quando o Cleiton puser <b>' + esc(d.nome) + '</b> nos Blocos, a loja aparece na Cobrança Mensal do Mercadão (' + brl(numero(d.valorCota)) + ' por cota).');
+      btn.textContent = 'Anunciante criado';
+      var fim = doc.createElement('button');
+      fim.type = 'button'; fim.className = 'b'; fim.textContent = 'Lançar outro';
       fim.addEventListener('click', function () { abrir(); });
       btn.parentNode.appendChild(fim);
     });

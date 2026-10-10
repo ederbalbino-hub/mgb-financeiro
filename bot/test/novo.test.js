@@ -111,3 +111,42 @@ test("contrato padrão de rádio interna traz partes, valor, vigência e nota", 
   const xss = N.contratoRadioInterna({ nome: "<script>x</script>", valor: 1, inicio: "2026-11-01" });
   assert.doesNotMatch(xss, /<script>/);
 });
+
+// ── Anunciante da Rádio Mercadão ──────────────────────────────────────
+test("Mercadão: conta com cotas, valor por cota e repasse", () => {
+  assert.deepEqual(N.contaMercadao(1, 100, 20), { total: 100, repasse: 20, mgb: 80 });
+  assert.deepEqual(N.contaMercadao(2, "120,00", 20), { total: 240, repasse: 48, mgb: 192 });
+  assert.deepEqual(N.contaMercadao(0, 100, 20), { total: 0, repasse: 0, mgb: 0 });
+});
+
+test("Mercadão: ocupação dos Blocos (8 × 3) e nomes sem repetir", () => {
+  const g = { b1s1_nome: "Loja A", b1s2_nome: "loja a", b2s1_nome: "Loja B", b3s3_nome: "  ", b9s1_nome: "Fora da grade" };
+  const o = N.ocupacaoBlocos(g);
+  assert.equal(o.total, 24);
+  assert.equal(o.ocupadas, 3);
+  assert.equal(o.vagas, 21);
+  assert.deepEqual(o.nomes, ["Loja A", "Loja B"]);
+  assert.equal(N.ocupacaoBlocos(null).vagas, 24);
+});
+
+test("Mercadão: validação de loja repetida, cotas livres e valor", () => {
+  const ok = { nome: "Açougue Bom Corte", cotas: "2", valorCota: "100", inicio: "2026-11-01" };
+  assert.deepEqual(N.validarMercadao(ok, ["Loja A"], 5), []);
+  assert.match(N.validarMercadao({ ...ok, nome: "acougue bom corte" }, ["Açougue Bom Corte"], 5).join(), /já está nos Blocos/);
+  assert.match(N.validarMercadao({ ...ok, cotas: "3" }, [], 2).join(), /Só há 2 cotas livres/);
+  assert.match(N.validarMercadao({ ...ok, cotas: "1" }, [], 0).join(), /Só há 0 cotas livres/);
+  assert.match(N.validarMercadao({ ...ok, valorCota: "" }, [], 5).join(), /valor por cota/);
+});
+
+test("contrato Mercadão: cotas, inserções, valor, vigência e pagamento", () => {
+  const base = { nome: "Açougue Bom Corte", cnpj: "1", cotas: "2", valorCota: "100", inicio: "2026-11-01", meses: "6" };
+  const mensal = N.contratoMercadao({ ...base, pagamento: "mensal" }, { extenso: () => "Duzentos reais" });
+  assert.match(mensal, /Mercadão da Prochet/);
+  assert.match(mensal, /2 cotas, 30 inserções por dia/);
+  assert.match(mensal, /R\$ 200,00 \(Duzentos reais\)/);
+  assert.match(mensal, /01\/11\/2026 a 01\/05\/2027/);
+  assert.match(mensal, /dia 5/);
+  const adiant = N.contratoMercadao({ ...base, pagamento: "adiantado" });
+  assert.match(adiant, /Pagamento único e antecipado de <strong>R\$ 1\.200,00/);
+  assert.doesNotMatch(N.contratoMercadao({ ...base, nome: "<img src=x>" }), /<img/);
+});
