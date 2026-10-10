@@ -69,3 +69,32 @@ bot/
 - O bot lê o estado completo, modifica em memória, salva tudo de volta — mesma estratégia do `index.html`. Funciona sem mudanças no Apps Script.
 - Se vocês dois (você e esposa) lançarem ao mesmo tempo, último que salvar sobrescreve o outro. Aceitável pra uso pessoal.
 - Prompt caching ativo no system prompt — primeira mensagem do dia paga preço cheio, próximas ~5min são 90% mais baratas.
+
+## Login do Hub (acesso por pessoa)
+
+O hub (`index.html` + `acesso.js`) pede usuário e senha e mostra a cada pessoa só a área dela:
+
+| Usuário | Papel | Vê |
+|---|---|---|
+| eder | admin | Meu dia ou Visão geral (tudo) + "Ver como" |
+| karen | financeiro | Financeiro MGB, Módulos, Contabilidade, Contratos, Cobrança Mensal, Gerar Resultados, Rádio Ops, Ferramentas |
+| guina | bureau | Rádio Ops (sem o Resumo financeiro da MGB), Ferramentas |
+| cleiton | programacao | Estúdio (spots, Blocos Rádio), Ferramentas |
+
+Endpoint: `api/auth.js` (`?action=config|login|me`). Regras de cada papel: `PERFIS` em `acesso.js`.
+
+### Ativar
+
+1. Dentro de `bot/`, rode `node scripts/gerar-usuarios.js` e digite a senha de cada pessoa.
+2. No Vercel, em Settings > Environment Variables, crie `HUB_USERS` e `HUB_AUTH_SECRET` com o que o script imprimiu.
+3. Faça um novo deploy. A partir daí o hub passa a pedir login.
+
+Enquanto essas variáveis não existirem, o hub funciona como antes, sem login.
+
+### Limite desta fase
+
+O login organiza o que cada pessoa vê. Os dados ainda ficam acessíveis pelas URLs do Apps Script para quem souber usá-las. A proteção no servidor (começando pela emissão de NF só depois da aprovação do dia 5) usa `usuarioDaRequisicao()` de `lib/auth.js` e entra nas próximas fases.
+
+### Testes
+
+`npm test` dentro de `bot/` (senhas, tokens e as regras de cada papel).
