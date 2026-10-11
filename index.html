@@ -839,6 +839,7 @@ body{-webkit-font-smoothing:antialiased}
 .home-date-txt{margin-bottom:14px}
 
 </style>
+<script src="financas.js"></script>
 </head>
 <body>
 <!-- MOBILE TOPBAR -->
@@ -1240,6 +1241,7 @@ body{-webkit-font-smoothing:antialiased}
 
       <!-- KPIs imposto + total empresa -->
       <div class="ov-summary" id="ov-emp-kpis"></div>
+      <div id="ov-emp-retirada"></div>
 
       <!-- Aportes / Receitas da empresa -->
       <div style="padding:0 22px 14px">
@@ -6523,7 +6525,7 @@ function copiarSpot() {
           <div><label class="ferr-lbl">Simples Nacional vigente (%)</label><input id="f-nota-simples-mes" class="ferr-in" style="max-width:140px" inputmode="decimal" placeholder="ex.: 7,40" oninput="fSimplesSalvar(this.value)"></div>
           <div id="f-nota-aliq-info" class="ferr-info"></div>
         </div>
-        <div class="ferr-d" style="margin-top:6px">O imposto da aba Empresa soma as duas: ISS + Simples.</div>
+        <div class="ferr-d" style="margin-top:6px">O imposto da aba Empresa usa só o Simples: o ISS já está dentro dele (o ISS separado serve para a nota e o ISS retido).</div>
       </div>
       <div class="ferr-grid" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
         <div class="ferr-card">
@@ -8384,10 +8386,42 @@ function finYear(y){if(!fin[y]){fin[y]={};for(let m=0;m<12;m++)fin[y][m]={receit
 function finGet(y,m,k){return finYear(y)[m][k]||0;}
 
 // Receita do mês = soma on-the-fly de todos os módulos respeitando inicio/meses + manual avulsa
-function finGetRec(y,m){
+function finGetRecPrevista(y,m){
   const manual=finYear(y)[m].receita||0;
   const auto=MODULES.reduce((a,mod)=>a+recModMes(mod.id,y,m),0);
   return manual+auto; // Rádio Moinho já entra no reduce acima (módulo 'radioops' → ropsFinMes)
+}
+// Receita oficial (decisão de 11/10/2026, regime de competência): mês FECHADO usa a soma das notas emitidas;
+// mês aberto usa a receita prevista pelos contratos. Fechamentos ficam em notaConfig.fechamentos['AAAA-MM'].
+function receitaOficialMes(y,m){
+  const comp=y+'-'+String(m+1).padStart(2,'0');
+  const prev=finGetRecPrevista(y,m);
+  if(typeof MGBFinancas==='undefined') return {valor:prev, fonte:'prevista', comp};
+  return Object.assign(MGBFinancas.receitaOficial(notaConfig.fechamentos, comp, prev), {comp, prevista:prev});
+}
+function finGetRec(y,m){ return receitaOficialMes(y,m).valor; }
+function mesFechamentoNotas(comp){
+  return MGBFinancas.somaNotasCompetencia({ comp, fatEmissoes, notas,
+    leo:(typeof leoUnidades!=='undefined'&&((document.getElementById('f-leo-comp')||{}).value||'').length&&comp===new Date().toISOString().slice(0,7))?leoUnidades:[] });
+}
+function fecharMesNotas(y,m){
+  const comp=y+'-'+String(m+1).padStart(2,'0');
+  const soma=mesFechamentoNotas(comp);
+  const txt=prompt('Fechar '+MESES[m]+'/'+y+' pelas notas emitidas.\n\nFaturamento: '+f(soma.faturamento)+'\nNotas avulsas: '+f(soma.avulsas)+'\nLéo: '+f(soma.leo)+(soma.soBoleto?'\nSó boleto, sem nota: '+f(soma.soBoleto)+' (incluído — confirmar com o contador)':'')+'\n\nConfira e ajuste o total se precisar (ex.: notas emitidas fora do hub):', String(soma.total.toFixed(2)).replace('.',','));
+  if(txt==null) return;
+  const total=fRecParseValor(txt);
+  notaConfig={...notaConfig, fechamentos:{...(notaConfig.fechamentos||{}), [comp]:{receitaNotas:total, calculado:soma.total, soBoleto:soma.soBoleto, em:new Date().toISOString().slice(0,10)}}};
+  try{ scheduleSave(); }catch(e){}
+  try{ buildSidebar(); }catch(e){}
+  buildVisaoEmpresa();
+}
+function reabrirMes(comp){
+  if(!confirm('Reabrir '+comp+'? A receita volta a ser a prevista até fechar de novo.')) return;
+  const fe={...(notaConfig.fechamentos||{})}; delete fe[comp];
+  notaConfig={...notaConfig, fechamentos:fe};
+  try{ scheduleSave(); }catch(e){}
+  try{ buildSidebar(); }catch(e){}
+  buildVisaoEmpresa();
 }
 // ── Rádio Moinho (bureau): números vêm do cache sincronizado do MGB Rádio Ops ──
 // Desde set/2026 o Rádio Ops já manda a VISÃO CAIXA por mês (fee do próprio mês +
@@ -8421,12 +8455,13 @@ function autoFillFinReceita(year, month){
 }
 
 // ── EMPRESA: imposto + despesas gerais ───────────────────────────────────
-// Imposto da empresa = ISS + Simples Nacional, os MESMOS valores configurados na aba Nota Fiscal (alíquotas do Asaas), somados.
-// Ex.: out/2026 → ISS 2,37% + Simples 7,40% = 9,77% sobre a receita do mês.
+// Imposto da empresa = alíquota efetiva do Simples Nacional (DAS). Confirmado com o Eder em 11/10/2026:
+// o ISS (ex.: 2,37%) JÁ ESTÁ DENTRO dos 7,40% do Simples — antes o hub somava os dois e contava o ISS duas vezes.
+// O ISS separado continua servindo para a nota fiscal e para o ISS retido (Londrina).
 function impostoIss(){ return Number(notaConfig.aliquotaMes)||0; }
 function impostoSimples(){ const s=notaConfig.simplesMes; return (s==null||s==='')?7.40:(Number(s)||0); }
-function impostoAliq(){ return (impostoIss()+impostoSimples())/100; }
-function impostoRotulo(){ const fm=x=>x.toFixed(2).replace('.',','); return fm(impostoAliq()*100)+'% (ISS '+fm(impostoIss())+' + Simples '+fm(impostoSimples())+')'; }
+function impostoAliq(){ return impostoSimples()/100; }
+function impostoRotulo(){ const fm=x=>x.toFixed(2).replace('.',','); return 'Simples '+fm(impostoSimples())+'%'+(impostoIss()?' (ISS '+fm(impostoIss())+' já incluso)':''); }
 // empresaDespesas = [{id, nome, valor, inicio:'YYYY-MM', ativo:true}]
 let empresaDespesas = [
   {id:1, nome:'Contador', valor:300, inicio:new Date().toISOString().slice(0,7), ativo:true}
@@ -9529,7 +9564,7 @@ function coletaDespesasMes(selAno,selMes){
   const empMod={id:'_empresa',label:'Empresa',icon:'🏢',color:'#D97706'};
   // Imposto: (ISS + Simples) × receita do mês
   const ropsFm=ropsFinMes(selAno,selMes);
-  const recMesTotal=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0); // radioops incluso via recOfMes
+  const recMesTotal=receitaOficialMes(selAno,selMes).valor; // notas emitidas (mês fechado) ou prevista (mês aberto)
   if(recMesTotal>0){
     out.push({
       m:empMod,
@@ -9584,6 +9619,12 @@ function coletaDespesasMes(selAno,selMes){
       mes:selMes,ano:selAno
     });
   });
+
+  // Pró-labore do Eder (regra de 11/10/2026: fixo, pago todo dia 21) — financas.js
+  try{
+    const pl=(typeof MGBFinancas!=='undefined')?MGBFinancas.proLaboreNoMes(notaConfig,selAno,selMes):0;
+    if(pl>0) out.push({ m:empMod, item:'Empresa', idx:'_prolabore', r:{d:'Pró-labore Eder (dia 21)',f:'Eder'}, vlrMes:pl, tipoLbl:'Pró-labore', mes:selMes, ano:selAno });
+  }catch(e){}
 
   // Despesas compartilhadas (Elevadores): rateio entre condomínios
   const elevMod=MODULES.find(m=>m.id==='elev');
@@ -9712,6 +9753,32 @@ function buildVisaoDespesas(){
 }
 
 // ── VISÃO EMPRESA (sub-aba) ─────────────────────────────────────────────
+// Antecipação de lucros (orientação do contador, 11/10/2026): registra e gera a memória de cálculo
+function retAbrirMemoria(i){
+  const a=(notaConfig.antecipacoes||[])[i]; if(!a||typeof MGBFinancas==='undefined') return;
+  let logo=''; try{ logo=new URL('marca/mgb-logo-roxo.png',location.href).href; }catch(e){}
+  const url=URL.createObjectURL(new Blob([MGBFinancas.memoriaAntecipacao({...a, logo})],{type:'text/html'}));
+  window.open(url,'_blank');
+}
+function retRegistrarAntecipacao(aAnt,mAnt){
+  if(typeof MGBFinancas==='undefined') return;
+  const recAntOf=receitaOficialMes(aAnt,mAnt);
+  if(recAntOf.fonte!=='notas'){ g('ant-erro').textContent='Feche '+MESES[mAnt]+'/'+aAnt+' pelas notas emitidas antes de antecipar lucros (selecione '+MESES[mAnt]+' acima e clique em "Fechar o mês pelas notas").'; return; }
+  const recAnt=recAntOf.valor;
+  const despAnt=despesaTotalMes(aAnt,mAnt);
+  const plano=MGBFinancas.planoRetirada({resultadoAnterior:recAnt-despAnt, despesaMensal:despAnt}, notaConfig);
+  const cfg=MGBFinancas.config(notaConfig);
+  const saldoTxt=String(g('ant-saldo').value||'').trim();
+  const a={ mesRef:MESES[mAnt]+'/'+aAnt, data:new Date().toLocaleDateString('pt-BR'), receita:Math.round(recAnt*100)/100, despesas:Math.round(despAnt*100)/100,
+    resultado:Math.round((recAnt-despAnt)*100)/100, pct:cfg.pctDistribuicao, sugerido:plano.lucros,
+    valor:fRecParseValor(g('ant-valor').value), saldoConta:saldoTxt===''?'':fRecParseValor(saldoTxt) };
+  const erros=MGBFinancas.validarAntecipacao(a);
+  if(erros.length){ g('ant-erro').textContent=erros.join(' '); return; }
+  notaConfig={...notaConfig, antecipacoes:[...(notaConfig.antecipacoes||[]), a]};
+  try{ scheduleSave(); }catch(e){}
+  buildVisaoEmpresa();
+  retAbrirMemoria(notaConfig.antecipacoes.length-1);
+}
 function buildVisaoEmpresa(){
   const now=new Date();
   const mSel=g('ov-emp-mes-sel'), aSel=g('ov-emp-ano-sel');
@@ -9724,7 +9791,8 @@ function buildVisaoEmpresa(){
   const selMes=parseInt(mSel.value);
   const selAno=parseInt(aSel.value);
 
-  const receitaMes=MODULES.reduce((a,m)=>a+recModMes(m.id,selAno,selMes),0);
+  const recOf=receitaOficialMes(selAno,selMes);
+  const receitaMes=recOf.valor;
   const imposto=receitaMes*impostoAliq();
   const despAtivas=empresaDespesas.filter(ed=>ed.ativo&&ed.valor);
   const totalDespEmpresa=despAtivas.reduce((a,ed)=>{
@@ -9744,18 +9812,74 @@ function buildVisaoEmpresa(){
   },0);
   const aportesMesQtd=aportesAtivos.filter(er=>{ if(!er.inicio) return false; const [aA,mA]=er.inicio.split('-').map(Number); return selAno===aA&&selMes===mA-1; }).length;
 
-  // Caixa do mês = faturamento clientes + aportes − imposto − despesas empresa
-  const caixaMes=receitaMes+totalAportes-imposto-totalDespEmpresa;
+  // Revisão do especialista em finanças (11/10/2026): o antigo "Caixa" descontava só imposto e despesas da empresa
+  // e deixava de fora os custos dos módulos (4YouSee, ListenX, Connectmix, Guina…). Agora:
+  //   Resultado do mês = receita − TODAS as despesas do mês (mesma lista da Visão Despesas, com imposto)
+  //   Caixa realizado  = recebido dos clientes + aportes − despesas marcadas como pagas
+  const despMes=coletaDespesasMes(selAno,selMes);
+  const despTotalMes=despMes.reduce((a,d)=>a+d.vlrMes,0);
+  const dKeyMes=despPagKey(selAno,selMes);
+  const despPagas=despMes.filter(d=>{ try{ const pg=((despPagamentos[d.m.id]||{})[d.item]||{})[d.idx]; return !!(pg&&pg[dKeyMes]&&pg[dKeyMes].pago); }catch(e){ return false; } }).reduce((a,d)=>a+d.vlrMes,0);
+  const linhasMes=coletaClientesMes(selAno,selMes);
+  const recebidoMes=linhasMes.filter(l=>l.pago).reduce((a,l)=>a+l.valor,0);
+  const resultadoMes=receitaMes-despTotalMes;
+  const caixaMes=recebidoMes+totalAportes-despPagas;
+  // Notas emitidas no Faturamento para esta competência (o resultado oficial fecha pelas notas — decisão de 11/10)
+  const compKey=selAno+'-'+String(selMes+1).padStart(2,'0');
+  const notasMes=(typeof MGBFinancas!=='undefined')?mesFechamentoNotas(compKey).total:0;
+  const fechado=recOf.fonte==='notas';
   const temMov=receitaMes||totalAportes||imposto||totalDespEmpresa;
 
   g('ov-emp-kpis').innerHTML=`
-    <div class="ov-sum-item"><div class="ov-sum-lbl">Receita ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${receitaMes?f(receitaMes):'—'}</div></div>
+    <div class="ov-sum-item" title="${fechado?'Mês fechado pelas notas emitidas':'Mês aberto: receita prevista pelos contratos até fechar pelas notas'}"><div class="ov-sum-lbl">Receita ${MESES[selMes]} ${fechado?'· notas':'· prevista'}</div><div class="ov-sum-val" style="color:var(--green)">${receitaMes?f(receitaMes):'—'}</div><div style="font-size:10px;margin-top:2px">${fechado?('✓ fechado em '+notaConfig.fechamentos[compKey].em.split('-').reverse().join('/')+' · <a href="#" onclick="event.preventDefault();reabrirMes(\''+compKey+'\')">reabrir</a>'):('<a href="#" onclick="event.preventDefault();fecharMesNotas('+selAno+','+selMes+')">Fechar o mês pelas notas</a>')}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Aportes ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${totalAportes?('+'+f(totalAportes)):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl" title="ISS + Simples (alíquotas da aba Nota Fiscal)">Imposto ${impostoRotulo()}</div><div class="ov-sum-val" style="color:var(--red)">${imposto?f(imposto):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Despesas empresa</div><div class="ov-sum-val" style="color:var(--red)">${totalDespEmpresa?f(totalDespEmpresa):'—'}</div></div>
-    <div class="ov-sum-item"><div class="ov-sum-lbl">Total empresa (custos)</div><div class="ov-sum-val" style="color:var(--red)">${totalEmpresa?f(totalEmpresa):'—'}</div></div>
-    <div class="ov-sum-item" title="Faturamento clientes + Aportes − Imposto − Despesas empresa"><div class="ov-sum-lbl">💰 Caixa ${MESES[selMes]}</div><div class="ov-sum-val" style="color:${caixaMes>=0?'var(--green)':'var(--red)'};font-weight:700">${temMov?((caixaMes>=0?'+':'')+f(caixaMes)):'—'}</div></div>
+    <div class="ov-sum-item" title="Soma das notas emitidas no Faturamento com competência deste mês (quando todas saem, fica igual à receita)"><div class="ov-sum-lbl">Notas emitidas ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${notasMes?f(notasMes):'—'}</div></div>
+    <div class="ov-sum-item" title="Receita do mês − todas as despesas do mês (módulos, empresa e imposto), igual à Visão Despesas"><div class="ov-sum-lbl">📊 Resultado ${MESES[selMes]}</div><div class="ov-sum-val" style="color:${resultadoMes>=0?'var(--green)':'var(--red)'};font-weight:700">${temMov?((resultadoMes>=0?'+':'')+f(resultadoMes)):'—'}</div></div>
+    <div class="ov-sum-item" title="Recebido dos clientes (marcados como recebidos) + aportes − despesas marcadas como pagas"><div class="ov-sum-lbl">💰 Caixa realizado ${MESES[selMes]}</div><div class="ov-sum-val" style="color:${caixaMes>=0?'var(--green)':'var(--red)'};font-weight:700">${(recebidoMes||totalAportes||despPagas)?((caixaMes>=0?'+':'')+f(caixaMes)):'—'}</div><div style="font-size:10px;color:var(--hint);margin-top:2px">recebido ${f(recebidoMes)} · pago ${f(despPagas)}</div></div>
   `;
+
+  // Retirada do dono no dia 21 (financas.js): pró-labore + lucros do mês anterior já fechado
+  try{
+    const ret=g('ov-emp-retirada');
+    if(ret && typeof MGBFinancas!=='undefined'){
+      const mAnt=selMes===0?11:selMes-1, aAnt=selMes===0?selAno-1:selAno;
+      const recAntOf=receitaOficialMes(aAnt,mAnt), recAnt=recAntOf.valor;
+      const despAnt=despesaTotalMes(aAnt,mAnt);
+      const plano=MGBFinancas.planoRetirada({resultadoAnterior:recAnt-despAnt, despesaMensal:despAnt}, notaConfig);
+      const cfg=MGBFinancas.config(notaConfig);
+      const antFechado=recAntOf.fonte==='notas';
+      ret.innerHTML=`<div class="card" style="margin:14px 0;padding:16px 18px;border:1px solid var(--border);border-radius:12px;background:var(--surface)">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+          <div style="font-weight:700;font-size:14px">🗓️ Retirada do dia ${plano.dia}/${MESES[selMes]} <span style="font-weight:400;color:var(--hint);font-size:12px">· depois de receber dos clientes (boletos dia 15, Léo dia 20)</span></div>
+          <div style="font-size:11px;color:var(--hint)">Sugestão do comitê · confirmar com o contador</div>
+        </div>
+        <div class="ov-summary" style="margin-top:10px">
+          <div class="ov-sum-item" title="Valor fixo mensal. Já entra nas despesas do mês como 'Pró-labore Eder (dia 21)'."><div class="ov-sum-lbl">Pró-labore</div><div class="ov-sum-val">${f(plano.proLabore)}</div><div style="font-size:10px;color:var(--hint);margin-top:2px">${plano.inss?('INSS '+cfg.inssPct+'% '+f(plano.inss)+' · líquido '+f(plano.proLaboreLiquido)):'INSS recolhido na Câmara (múltiplos vínculos)'}</div></div>
+          <div class="ov-sum-item" title="${cfg.pctDistribuicao}% do resultado de ${MESES[mAnt]}/${aAnt} (receita − todas as despesas, já com o pró-labore)"><div class="ov-sum-lbl">Lucros a distribuir</div><div class="ov-sum-val" style="color:var(--green)">${plano.semLucro?'—':f(plano.lucros)}</div><div style="font-size:10px;color:${antFechado?'var(--hint)':'#B45309'};margin-top:2px">${cfg.pctDistribuicao}% do resultado de ${MESES[mAnt]}${antFechado?' (fechado pelas notas)':' · prévia: feche '+MESES[mAnt]+' pelas notas para liberar'}</div></div>
+          <div class="ov-sum-item" title="Fica na conta da MGB até a reserva chegar a ${cfg.mesesReserva} meses de despesas"><div class="ov-sum-lbl">Fica de reserva</div><div class="ov-sum-val">${plano.semLucro?'—':f(plano.reserva)}</div><div style="font-size:10px;color:var(--hint);margin-top:2px">meta: ${f(plano.metaReserva)} (${cfg.mesesReserva} meses de despesas)</div></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;font-size:12px">
+          <label style="display:flex;flex-direction:column;gap:4px">Pró-labore (R$/mês)<input id="ret-pl" class="anunc-form-inp" style="width:130px" inputmode="decimal" value="${String(cfg.proLabore).replace('.',',')}"></label>
+          <label style="display:flex;flex-direction:column;gap:4px">% do resultado distribuído<input id="ret-pct" class="anunc-form-inp" style="width:110px" inputmode="decimal" value="${cfg.pctDistribuicao}"></label>
+          <label style="display:flex;flex-direction:column;gap:4px">INSS na MGB (%)<input id="ret-inss" class="anunc-form-inp" style="width:90px" inputmode="decimal" value="${cfg.inssPct}" title="0 = recolhido na Câmara (declaração de múltiplos vínculos)"></label>
+          <button class="anunc-btn" onclick="(function(){ const v=fRecParseValor(g('ret-pl').value); const p=parseFloat(String(g('ret-pct').value).replace(',','.')); const i=parseFloat(String(g('ret-inss').value).replace(',','.')); notaConfig={...notaConfig, proLabore:v, pctDistribuicao:isNaN(p)?70:Math.max(0,Math.min(100,p)), inssPct:isNaN(i)?0:Math.max(0,Math.min(20,i))}; try{scheduleSave();}catch(e){} buildVisaoEmpresa(); })()">Salvar regra</button>
+          ${plano.semLucro?'<span style="color:var(--red)">'+MESES[mAnt]+' fechou sem lucro: só o pró-labore.</span>':''}
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+          <div style="font-weight:700;font-size:13px">Registrar antecipação de lucros <span style="font-weight:400;color:var(--hint);font-size:12px">· orientação do contador: valor exato (sem arredondar), saldo livre na C6 e memória de cálculo anexada ao comprovante</span></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;font-size:12px">
+            <label style="display:flex;flex-direction:column;gap:4px">Valor a transferir (R$)<input id="ant-valor" class="anunc-form-inp" style="width:140px" inputmode="decimal" value="${plano.semLucro?'':String(plano.lucros.toFixed(2)).replace('.',',')}"></label>
+            <label style="display:flex;flex-direction:column;gap:4px">Saldo da C6 hoje (R$)<input id="ant-saldo" class="anunc-form-inp" style="width:140px" inputmode="decimal" placeholder="ex.: 25.000,00"></label>
+            <button class="anunc-btn" style="color:var(--green);border-color:rgba(24,154,102,.4)" onclick="retRegistrarAntecipacao(${aAnt},${mAnt})">Registrar e abrir memória de cálculo</button>
+            <span id="ant-erro" style="color:var(--red)"></span>
+          </div>
+          ${(notaConfig.antecipacoes||[]).length?'<div style="margin-top:10px;font-size:12px">'+(notaConfig.antecipacoes||[]).slice(-6).reverse().map((x,i)=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px dotted var(--border)"><span>'+x.data+' · ref. '+x.mesRef+'</span><span><b>'+f(x.valor)+'</b> · <a href="#" onclick="event.preventDefault();retAbrirMemoria('+((notaConfig.antecipacoes.length-1)-i)+')">memória</a></span></div>').join('')+'</div>':''}
+        </div>
+      </div>`;
+    }
+  }catch(e){ console.warn('retirada',e); }
 
   // Tabela de aportes/receitas
   g('ov-empr-sum').textContent=`${aportesMesQtd} entrada(s) em ${MESES[selMes]}/${selAno} · ${f(totalAportes)}`;
