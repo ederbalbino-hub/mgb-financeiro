@@ -657,6 +657,6 @@
       .catch(function () { mostrarLogin('Sem conexão com o servidor de login. Tente de novo em instantes.'); });
   }
 
-  global.MGBAcesso = Object.assign(api, { sair: sair });
+  global.MGBAcesso = Object.assign(api, { sair: sair, usuario: function () { return sessao && sessao.usuario ? sessao.usuario : null; } });
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })(typeof window !== 'undefined' ? window : globalThis);
