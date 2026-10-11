@@ -8409,7 +8409,8 @@ function finGet(y,m,k){return finYear(y)[m][k]||0;}
 function finGetRecPrevista(y,m){
   const manual=finYear(y)[m].receita||0;
   const auto=MODULES.reduce((a,mod)=>a+recModMes(mod.id,y,m),0);
-  return manual+auto; // Rádio Moinho já entra no reduce acima (módulo 'radioops' → ropsFinMes)
+  const avulsas=(typeof MGBLancar!=='undefined')?MGBLancar.receitasDoMes(receitasAvulsas,y,m).reduce((a,x)=>a+x.valor,0):0; // locuções etc.
+  return manual+auto+avulsas; // Rádio Moinho já entra no reduce acima (módulo 'radioops' → ropsFinMes)
 }
 // Receita oficial (decisão de 11/10/2026, regime de competência): mês FECHADO usa a soma das notas emitidas;
 // mês aberto usa a receita prevista pelos contratos. Fechamentos ficam em notaConfig.fechamentos['AAAA-MM'].
@@ -8499,6 +8500,9 @@ let empresaDespId = 2;
 // empresaReceitas = aportes/entradas de caixa na MGB (ex: repasse do pessoal). NÃO entram no imposto.
 // [{id, nome, valor, inicio:'YYYY-MM', ativo:true}]
 let empresaReceitas = [];
+// Lançar (11/10): despesas avulsas da MGB (dia a dia) e receitas avulsas (locuções) — lancar.js
+let empresaAvulsas = [];  let empresaAvulsaId = 1;   // [{id,data,mes:'AAAA-MM',desc,forn,cat,valor,reembolso,lancadoPor,criadoEm}]
+let receitasAvulsas = []; let receitaAvulsaId = 1;   // [{id,cliente,servico,desc,valor,mes:'AAAA-MM',lancadoPor,criadoEm}]
 let empresaRecId = 1;
 // Movimentos reais importados do banco (C6) — despesas e receitas datadas (separado da projeção)
 // [{id, desc, valor, lado:'desp'|'rec', data:'YYYY-MM-DD', mes:'YYYY-MM', _imp:'c6-<docto>', conta}]
@@ -9445,6 +9449,14 @@ function coletaClientesMes(selAno,selMes){
       linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,obs:def.obs,nota:def.nota,key:_key});
     });
   });
+  // Receitas avulsas (Nova receita: locuções e serviços pontuais)
+  if(typeof MGBLancar!=='undefined') MGBLancar.receitasDoMes(receitasAvulsas,selAno,selMes).forEach(x=>{
+    const item=MGBLancar.itemReceita(x);
+    if(!recPagamentos['_avulsa']) recPagamentos['_avulsa']={};
+    if(!recPagamentos['_avulsa'][item]) recPagamentos['_avulsa'][item]={};
+    const pg=recPagamentos['_avulsa'][item][_key]||{pago:false};
+    linhas.push({modId:'_avulsa',modLabel:'Avulsa',modIcon:'🎙️',item,valor:x.valor,pago:pg.pago,obs:x.desc,nota:true,key:_key,sub:x.desc+(x.lancadoPor?' · lançado por '+x.lancadoPor:'')});
+  });
   // Receita manual avulsa do mês (não vinculada a módulo)
   const manualRec=(fin[selAno]||{})[selMes]?.receita||0;
   if(manualRec>0){
@@ -9660,6 +9672,14 @@ function coletaDespesasMes(selAno,selMes){
       tipoLbl:'Empresa',
       mes:selMes,ano:selAno
     });
+  });
+
+  // Despesas avulsas da MGB (dia a dia), lançadas pelo botão Nova despesa
+  (typeof MGBLancar!=='undefined'?MGBLancar.avulsasDoMes(empresaAvulsas,selAno,selMes):[]).forEach(av=>{
+    const cat=(MGBLancar.CATEGORIAS.find(c=>c.id===av.cat)||{}).rotulo||'';
+    out.push({ m:empMod, item:'Empresa', idx:`_av_${av.id}`,
+      r:{d:av.desc+(av.reembolso?' · Eder pagou (reembolso)':''), f:av.forn||'—', t:'À vista', data:av.data, cat:av.cat},
+      vlrMes:av.valor, tipoLbl:cat.replace(/^\S+\s/,'')||'Dia a dia', mes:selMes, ano:selAno });
   });
 
   // Pró-labore do Eder (regra de 11/10/2026: fixo, pago todo dia 21) — financas.js
@@ -12680,7 +12700,7 @@ function serializeState(){
   return {
     migracoes,
     db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, elevInvestimentos, recPagamentos,
-    empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos,
+    empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos, empresaAvulsas, receitasAvulsas,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
     pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas, notaConfig, fatEmissoes, leoUnidades,
     moduleItems: Object.fromEntries(MODULES.map(m=>[m.id, m.items]))
@@ -12761,6 +12781,14 @@ function deserializeState(obj){
   if(obj.empresaReceitas && Array.isArray(obj.empresaReceitas)){
     empresaReceitas=obj.empresaReceitas;
     empresaRecId=empresaReceitas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.empresaAvulsas && Array.isArray(obj.empresaAvulsas)){
+    empresaAvulsas=obj.empresaAvulsas;
+    empresaAvulsaId=empresaAvulsas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.receitasAvulsas && Array.isArray(obj.receitasAvulsas)){
+    receitasAvulsas=obj.receitasAvulsas;
+    receitaAvulsaId=receitasAvulsas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
   }
   if(obj.empresaMovimentos && Array.isArray(obj.empresaMovimentos)){
     empresaMovimentos=obj.empresaMovimentos;
@@ -14528,6 +14556,7 @@ function renderRadioOps(data){
 }
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
+<script src="lancar.js"></script>
 <script src="novo.js"></script>
 <script src="acesso.js"></script>
 </body>
