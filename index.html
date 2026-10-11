@@ -8449,20 +8449,34 @@ function reabrirMes(comp){
 // sem deslocar de novo aqui (deslocar duas vezes errava out em diante).
 // Receita = nota MGB cheia (inclui o Connectmix cobrado do cliente); o repasse
 // à Connectmix entra como DESPESA própria na Cobrança Mensal — líquido = fee+comissões.
-// Comissões de agência que a MGB recebe FORA do Rádio Ops e que entram na base do Guina (acertado com o Eder em 07/10/2026):
-// Evangelizar R$ 2.500 + Alvorada R$ 500, por mês, a partir de out/2026. Somam-se às comissões do Rádio Ops antes dos 25%.
-const GUINA_BASE_EXTRA=[ {nome:'Evangelizar',valor:2500}, {nome:'Alvorada',valor:500} ];
+// ── Comissão do Guina (11/10, Eder) ──
+// O Guina ganha 25% da comissão de agência (20%) que a MGB recebe da Rádio Alvorada e da Rádio Evangelizar (Curitiba).
+// A fonte é o Rádio Ops (painel "Suas comissões"): se o cache trouxer o valor do mês, o hub usa ele.
+// Sem cache, usa a mesma agenda do painel: out/26 R$ 3.000 de comissão (Evangelizar 2.500 + Alvorada 500) → R$ 750;
+// nov/26 a jan/27 só Alvorada R$ 500 → R$ 125.
+const GUINA_BASE_EXTRA=[
+  {nome:'Rádio Evangelizar',valor:2500,de:'2026-10',ate:'2026-10'},
+  {nome:'Rádio Alvorada',valor:500,de:'2026-10',ate:'2027-01'}
+];
 const GUINA_INICIO='2026-10';
+function guinaDoCache(d){
+  if(!d) return null;
+  const v=[d.guina,d.comissaoGuina,d.guinaComissao,d.guinaValor].find(x=>typeof x==='number'&&x>=0);
+  if(v==null) return null;
+  const base=[d.guinaBase,d.baseGuina].find(x=>typeof x==='number'&&x>0);
+  return {valor:v, base:base||null};
+}
 function ropsFinMes(ano,mes){
   const key=ano+'-'+String(mes+1).padStart(2,'0');
   let cache=null; try{ cache=JSON.parse(localStorage.getItem('rops_cache')||'null'); }catch(e){}
   const d=(cache&&cache.meses)?cache.meses.find(x=>x.mes===key):null;
-  const pct=(cache&&cache.cfg&&cache.cfg.guinaComissaoPct)||25; // % do Guina sobre a comissão de agência que a MGB recebe (acordado: 25% dos 20%)
-  // Base do Guina: comissões do Rádio Ops (já em visão de caixa) + comissões avulsas acima; só a partir de out/2026.
-  const baseExtra=(key>=GUINA_INICIO)?GUINA_BASE_EXTRA.reduce((a,x)=>a+x.valor,0):0;
-  const baseRops=(key>=GUINA_INICIO&&d)?(d.comissoes||0):0;
-  const guina=Math.round((baseRops+baseExtra)*pct)/100;
-  return {receita:d?(d.notaMGB||0):0, despesaCmx:d?(d.connectmix||0):0, radios:d?(d.radios||0):0, guina:guina, guinaPct:pct, guinaBase:baseRops+baseExtra, guinaBaseRops:baseRops};
+  const pct=(cache&&cache.cfg&&cache.cfg.guinaComissaoPct)||25;
+  const fontes=GUINA_BASE_EXTRA.filter(x=>key>=GUINA_INICIO&&key>=x.de&&key<=x.ate);
+  let base=fontes.reduce((a,x)=>a+x.valor,0), guina=Math.round(base*pct)/100, origem='agenda';
+  const c=guinaDoCache(d);
+  if(c){ guina=c.valor; base=c.base||(pct?Math.round(c.valor*10000/pct)/100:base); origem='Rádio Ops'; }
+  return {receita:d?(d.notaMGB||0):0, despesaCmx:d?(d.connectmix||0):0, radios:d?(d.radios||0):0,
+    guina:guina, guinaPct:pct, guinaBase:base, guinaBaseRops:0, guinaFontes:fontes.map(x=>x.nome), guinaOrigem:origem};
 }
 // Despesa do mês = mesma fonte que Visão Despesas (db + despesas compartilhadas)
 function finGetDesp(y,m){ return despesaTotalMes(y,m); }
@@ -9584,7 +9598,7 @@ function coletaDespesasMes(selAno,selMes){
           if(aV===selAno&&(mV-1)===selMes){
             out.push({m,item,idx,r,vlrMes:r.q*r.u,tipoLbl:'À vista',mes:selMes,ano:selAno});
           }
-        } else {
+        } else if(!r.pago){                       // já paga e sem data: não fica voltando todo mês
           const nowD=new Date();
           if(selAno===nowD.getFullYear()&&selMes===nowD.getMonth()){
             out.push({m,item,idx,r,vlrMes:r.q*r.u,tipoLbl:'À vista (sem data)',mes:selMes,ano:selAno});
@@ -9627,7 +9641,7 @@ function coletaDespesasMes(selAno,selMes){
       m:MODULES.find(x=>x.id==='radioops'),
       item:'Moinho Globo',
       idx:'_guina',
-      r:{d:'Comissão do Guina ('+ropsFm.guinaPct+'% de R$ '+Number(ropsFm.guinaBase).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' de comissões)',f:'Guina'},
+      r:{d:'Comissão do Guina · '+ropsFm.guinaPct+'% de '+f(ropsFm.guinaBase)+' de comissão'+(ropsFm.guinaFontes.length?' ('+ropsFm.guinaFontes.join(' + ')+')':'')+' · Rádio Ops',f:'Guina'},
       vlrMes:ropsFm.guina,
       tipoLbl:'Comissão',
       mes:selMes,ano:selAno
@@ -12921,6 +12935,16 @@ function recorrenteNovoValor(rows,r,novoU){
   const novo=Object.assign({},r,{u:novoU,dataInicio:CUSTO_NOTA.desde,mesesRec:Math.max(12,tot-antes),pago:false,dataPago:''});
   applyToFin(novo,+1); rows.push(novo); return true;
 }
+// 11/10 (Eder): canaletas e cabos HDMI da instalação do Móveis Brasília já foram pagos — saem das despesas do mês.
+function mbInstalacaoPaga(){
+  if(!_cargaSheetsOk || migracoes.mbInstalacaoPaga_202610) return;
+  const rx=/canaleta|cabo\s*hdmi|eletrocondu/i, hoje=new Date().toISOString().slice(0,10); let n=0;
+  Object.values((db&&db.mb)||{}).forEach(rows=>(rows||[]).forEach(r=>{
+    if(r && r.t!=='Recorrente' && r.t!=='Parcelado' && !r.venc && !r.pago && (rx.test(r.d||'')||rx.test(r.f||''))){ r.pago=true; r.dataPago=r.dataPago||hoje; n++; }
+  }));
+  migracoes.mbInstalacaoPaga_202610=true;
+  if(n){ try{ scheduleSave(); }catch(e){} console.log('mbInstalacaoPaga: '+n+' linha(s) marcadas como pagas'); }
+}
 function custosPelaNota(){
   if(!_cargaSheetsOk || migracoes.custosNota_202610) return;
   const log=[];
@@ -14359,7 +14383,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
