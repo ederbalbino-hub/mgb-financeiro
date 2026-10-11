@@ -239,14 +239,17 @@
       '#mgb-novo .rec{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #ece7f5;font-size:13px}' +
       '#mgb-novo .rec small{color:#6b6380;display:block}' +
       '#mgb-novo .hint{font-size:12px;color:#6b6380;font-weight:500}' +
-      '#mgb-novo .cp-lista{display:flex;flex-direction:column;border:1px solid #e4def2;border-radius:10px;overflow:hidden;margin-top:6px}' +
-      '#mgb-novo .cp-op{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;padding:9px 12px;border:0;border-top:1px solid #ece7f5;background:#fff;font:inherit;color:inherit;cursor:pointer}' +
-      '#mgb-novo .cp-op:first-child{border-top:0}#mgb-novo .cp-op:hover,#mgb-novo .cp-op:focus-visible{background:#f3effd;outline:none}' +
-      '#mgb-novo .cp-op small{display:block;color:#6b6380;font-size:12px}' +
-      '#mgb-novo .cp-tag{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}' +
-      '#mgb-novo .cp-tag.hub{background:#e6f4ec;color:#14583a}#mgb-novo .cp-tag.crm{background:#efeaf8;color:#4E38B2}#mgb-novo .cp-tag.fora{background:#fde3dc;color:#a33a1a}' +
-      '#mgb-novo .cp-card{border:1px solid #a7dccf;background:#f1faf7;border-radius:12px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px}' +
-      '#mgb-novo .cp-card.aviso{border-color:#f3c0b0;background:#fff5f1}' +
+      '.mgb-cp label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:#3a3446}' +
+      '.mgb-cp label.f input{height:42px;border:1px solid #cfc6e0;border-radius:9px;padding:0 11px;font-size:14px;font-family:inherit;background:#fff;color:#241a38}' +
+      '.mgb-cp .hint{font-size:12px;color:#6b6380;font-weight:500}.mgb-cp [hidden]{display:none!important}.mgb-cp .sub{margin:0;font-size:13px;color:#6b6380}' +
+      '.mgb-cp .cp-lista{display:flex;flex-direction:column;border:1px solid #e4def2;border-radius:10px;overflow:hidden;margin-top:6px}' +
+      '.mgb-cp .cp-op{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;padding:9px 12px;border:0;border-top:1px solid #ece7f5;background:#fff;font:inherit;color:inherit;cursor:pointer}' +
+      '.mgb-cp .cp-op:first-child{border-top:0}#mgb-novo .cp-op:hover,.mgb-cp .cp-op:focus-visible{background:#f3effd;outline:none}' +
+      '.mgb-cp .cp-op small{display:block;color:#6b6380;font-size:12px}' +
+      '.mgb-cp .cp-tag{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}' +
+      '.mgb-cp .cp-tag.hub{background:#e6f4ec;color:#14583a}#mgb-novo .cp-tag.crm{background:#efeaf8;color:#4E38B2}#mgb-novo .cp-tag.fora{background:#fde3dc;color:#a33a1a}' +
+      '.mgb-cp .cp-card{border:1px solid #a7dccf;background:#f1faf7;border-radius:12px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px}' +
+      '.mgb-cp .cp-card.aviso{border-color:#f3c0b0;background:#fff5f1}' +
       '#mgb-novo .origem{font-size:13px;color:#3a3446;background:#f6f4fb;border-radius:9px;padding:8px 10px}';
     doc.head.appendChild(st);
   }
@@ -263,6 +266,7 @@
   }
   function seletorCliente(caixa, opts) {
     opts = opts || {};
+    injetarEstilos(); caixa.classList.add('mgb-cp');
     var todos = clientesDoHub(), escolhido = null, id = 'cp' + Math.random().toString(36).slice(2, 7);
     caixa.innerHTML = '<label class="f" for="' + id + '">' + esc(opts.rotulo || 'Cliente') +
       ' <span class="hint">· busca no CRM e nos clientes já cadastrados (nome ou CNPJ)</span>' +
@@ -294,14 +298,23 @@
       if (opts.aoEscolher) opts.aoEscolher(c);
     }
     inp.addEventListener('input', function () { escolhido = null; sel.innerHTML = ''; if (opts.aoEscolher) opts.aoEscolher(null); mostrar(); });
-    inp.addEventListener('focus', mostrar);
+    inp.addEventListener('focus', function () { todos = clientesDoHub(); mostrar(); });
+    doc.addEventListener('click', function (e) { if (!caixa.contains(e.target)) { lista.hidden = true; inp.setAttribute('aria-expanded', 'false'); } });
     inp.addEventListener('keydown', function (e) { if (e.key === 'ArrowDown') { var p = lista.querySelector('.cp-op'); if (p) { e.preventDefault(); p.focus(); } } if (e.key === 'Escape') { lista.hidden = true; } });
     lista.addEventListener('keydown', function (e) {
       var ops = [].slice.call(lista.querySelectorAll('.cp-op')), i = ops.indexOf(doc.activeElement);
       if (e.key === 'ArrowDown' && i < ops.length - 1) { e.preventDefault(); ops[i + 1].focus(); }
       if (e.key === 'ArrowUp') { e.preventDefault(); if (i > 0) ops[i - 1].focus(); else inp.focus(); }
     });
-    return { valor: function () { return escolhido; }, foco: function () { inp.focus(); } };
+    return {
+      valor: function () { return escolhido; }, foco: function () { inp.focus(); },
+      limpar: function () { escolhido = null; inp.value = ''; sel.innerHTML = ''; lista.hidden = true; },
+      definir: function (nome) {           // mostra um cliente já salvo (ex.: editar recibo) sem disparar aoEscolher
+        todos = clientesDoHub();
+        var c = todos.filter(function (x) { return normaliza(x.nome) === normaliza(nome); })[0];
+        escolhido = c || (nome ? { nome: nome, origem: 'fora', cnpj: '' } : null); inp.value = nome || ''; sel.innerHTML = ''; lista.hidden = true;
+      }
+    };
   }
 
   // ── Nova despesa ───────────────────────────────────────────────────────
