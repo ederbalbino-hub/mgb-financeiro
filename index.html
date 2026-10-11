@@ -3858,24 +3858,24 @@ vCalc();
 <div id="panel-parceria" class="hub-panel">
 <style>
 .parc-wrap{max-width:820px;margin:0 auto;padding:24px 20px}
-.parc-hdr{margin-bottom:18px;padding-bottom:14px;border-bottom:.5px solid rgba(155,29,204,.15)}
-.parc-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#241A38}
-.parc-sub{font-size:12px;color:rgba(58,38,94,0.83);margin-top:2px}
+.parc-hdr{margin-bottom:18px;padding:16px 20px;border-radius:12px;background:linear-gradient(90deg,#16294F 0%,#16294F 65%,#C0A062 100%)}
+.parc-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#fff}
+.parc-sub{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px}
 .parc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .parc-fs{margin-bottom:0}
 .parc-fs.span2{grid-column:span 2}
 .parc-label{display:block;font-size:10px;font-weight:600;letter-spacing:1.3px;text-transform:uppercase;color:rgba(58,38,94,0.76);margin-bottom:6px}
-.parc-input,.parc-select{width:100%;background:rgba(58,38,94,0.2);border:.5px solid rgba(155,29,204,.18);border-radius:8px;padding:10px 12px;font-size:13px;color:#f0e8f8;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
-.parc-input:focus,.parc-select:focus{border-color:#e8197d;background:rgba(232,25,125,.06)}
+.parc-input,.parc-select{width:100%;background:#fff;border:1px solid #E3D8BF;border-radius:8px;padding:10px 12px;font-size:13px;color:#16294F;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+.parc-input:focus,.parc-select:focus{border-color:#C0A062;background:#FFFDF7}
 .parc-select option{background:#FFFFFF}
-.parc-section{background:rgba(58,38,94,0.17);border:.5px solid rgba(155,29,204,.15);border-radius:12px;padding:18px;margin-bottom:14px}
-.parc-section h3{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#D6367F;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.parc-btn{width:100%;background:linear-gradient(135deg,#e8197d,#9b1dcc);border:none;border-radius:9px;padding:13px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#241A38;cursor:pointer;transition:all .2s}
+.parc-section{background:#F7F3EA;border:1px solid #E3D8BF;border-radius:12px;padding:18px;margin-bottom:14px}
+.parc-section h3{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#16294F;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.parc-btn{width:100%;background:linear-gradient(135deg,#16294F,#C0A062);border:none;border-radius:9px;padding:13px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s}
 .parc-btn:hover{opacity:.88;transform:translateY(-1px)}
 .parc-actions{display:flex;gap:8px;margin-bottom:16px}
 .parc-back{padding:9px 18px;background:rgba(58,38,94,0.2);border:.5px solid rgba(155,29,204,.2);border-radius:8px;color:rgba(58,38,94,0.95);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .parc-back:hover{color:#D6367F;border-color:rgba(232,25,125,.3)}
-.parc-print{padding:9px 18px;background:linear-gradient(135deg,#e8197d,#9b1dcc);border:none;border-radius:8px;color:#241A38;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
+.parc-print{padding:9px 18px;background:linear-gradient(135deg,#16294F,#C0A062);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
 @media(max-width:600px){.parc-grid{grid-template-columns:1fr}.parc-fs.span2{grid-column:span 1}}
 @media print{
   .hub-header,.hub-nav,.parc-actions,.parc-section,.parc-hdr{display:none!important}
@@ -3887,7 +3887,7 @@ vCalc();
 </style>
 <div class="parc-wrap">
   <div class="parc-hdr">
-    <div class="parc-title">🤝 Contrato de Parceria — Condomínio</div>
+    <div class="parc-title">Tela Vertical — Contrato de Parceria · Condomínio</div>
     <div class="parc-sub">Preencha os dados e gere o contrato para imprimir ou salvar em PDF</div>
   </div>
 
@@ -4093,95 +4093,95 @@ vCalc();
       fimFmt=fim.toLocaleDateString('pt-BR');
     }
     const hoje=new Date().toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
-    const nCont='MGB-PARC-'+Date.now().toString().slice(-6);
+    const nCont='TV-PARC-'+Date.now().toString().slice(-6);
     const vigExt=vigencia==='36'?'trinta e seis':vigencia==='24'?'vinte e quatro':'doze';
-    const R=(l,v)=>`<div style="display:flex;margin-bottom:5px;font-size:12.5px;line-height:1.5"><span style="font-weight:600;color:#2A1760;min-width:130px;flex-shrink:0">${l}</span><span style="color:#333;border-bottom:1px solid #e0d8f0;flex:1">${v}</span></div>`;
+    const R=(l,v)=>`<div style="display:flex;margin-bottom:5px;font-size:12.5px;line-height:1.5"><span style="font-weight:600;color:#16294F;min-width:130px;flex-shrink:0">${l}</span><span style="color:#333;border-bottom:1px solid #E3D8BF;flex:1">${v}</span></div>`;
     document.getElementById('parc-output').innerHTML=`
-    <div style="padding:22px 28px 18px;border-bottom:3px solid #E879B0">
+    <div style="padding:22px 28px 18px;border-bottom:3px solid #C0A062">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
         <div>
-          <img src="https://ederbalbino-hub.github.io/mgb-financeiro/marca/mgb-logo-roxo.png" alt="MGB Mídia" style="height:44px;width:auto;display:block">
-          <div style="font-size:10px;color:#999;font-style:italic;margin-top:2px">Elevando a sua comunicação</div>
+          <div style="height:58px;width:163px;margin:-6px 0 0 -10px">${TV_LOGO_NAVY.replace('<svg ','<svg style="height:58px;width:auto;display:block" ')}</div>
+          <div style="font-size:10px;color:#999;font-style:italic;margin-top:0">Mídia em elevadores · uma empresa MGB</div>
         </div>
         <div style="text-align:right">
-          <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.5px">CONTRATO DE PARCERIA</div>
-          <div style="font-size:11px;color:#5B2D8E;font-weight:600">Telas Digitais em Elevadores</div>
+          <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#16294F;letter-spacing:.5px">CONTRATO DE PARCERIA</div>
+          <div style="font-size:11px;color:#16294F;font-weight:600">Telas Digitais em Elevadores</div>
           <div style="font-size:10px;color:#999;margin-top:2px">Nº ${nCont} · ${hoje}</div>
         </div>
       </div>
     </div>
     <div style="padding:22px 28px">
-      <div style="font-family:Syne,sans-serif;font-size:11.5px;font-weight:700;color:#2A1760;margin:0 0 4px;letter-spacing:.3px">1. DADOS DAS PARTES</div>
-      <div style="height:1px;background:#EAD9FF;margin:4px 0 12px"></div>
+      <div style="font-family:Syne,sans-serif;font-size:11.5px;font-weight:700;color:#16294F;margin:0 0 4px;letter-spacing:.3px">1. DADOS DAS PARTES</div>
+      <div style="height:1px;background:#EFE6D2;margin:4px 0 12px"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
-        <div style="border:1px solid #DDD0F0;border-radius:8px;padding:12px 14px">
-          <div style="font-size:10px;font-weight:700;color:#5B2D8E;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">Contratante</div>
+        <div style="border:1px solid #E3D8BF;border-radius:8px;padding:12px 14px">
+          <div style="font-size:10px;font-weight:700;color:#16294F;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">Contratante</div>
           ${R('Condomínio',razao)}${R('CNPJ',cnpj)}${R('Endereço',end)}${R('Síndico(a)',sindico)}${R('CPF',cpf)}${R('E-mail',email)}${R('WhatsApp',wpp)}
         </div>
-        <div style="border:1px solid #DDD0F0;border-radius:8px;padding:12px 14px">
-          <div style="font-size:10px;font-weight:700;color:#5B2D8E;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">Contratada</div>
-          ${R('Razão Social','MGB Comunicação e Marketing Ltda.')}${R('CNPJ','23.770.170/0001-50')}${R('Endereço','Londrina – PR')}${R('Representante','Eder Balbino')}${R('E-mail','comercial@agenciamgb.com.br')}${R('WhatsApp','(43) 99696-0078')}
+        <div style="border:1px solid #E3D8BF;border-radius:8px;padding:12px 14px">
+          <div style="font-size:10px;font-weight:700;color:#16294F;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">Contratada</div>
+          ${R('Razão Social','MGB Comunicação e Marketing Ltda.')}${R('Nome fantasia','Tela Vertical')}${R('CNPJ','23.770.170/0001-50')}${R('Endereço','Londrina – PR')}${R('Representante','Eder Balbino')}${R('E-mail','comercial@agenciamgb.com.br')}${R('WhatsApp','(43) 99696-0078')}
         </div>
       </div>
-      <div style="font-family:Syne,sans-serif;font-size:11.5px;font-weight:700;color:#2A1760;margin:14px 0 4px;letter-spacing:.3px">2. OBJETO</div>
-      <div style="height:1px;background:#EAD9FF;margin:4px 0 10px"></div>
+      <div style="font-family:Syne,sans-serif;font-size:11.5px;font-weight:700;color:#16294F;margin:14px 0 4px;letter-spacing:.3px">2. OBJETO</div>
+      <div style="height:1px;background:#EFE6D2;margin:4px 0 10px"></div>
       <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:12px">
-        <thead><tr style="background:#2A1760;color:#fff"><th style="padding:6px 8px;text-align:left">Local</th><th style="padding:6px 8px">Bairro</th><th style="padding:6px 8px">Torres</th><th style="padding:6px 8px">Aptos</th><th style="padding:6px 8px">Telas</th><th style="padding:6px 8px">Funcionamento</th></tr></thead>
-        <tbody><tr style="background:#F7F4FB"><td style="padding:5px 8px;color:#333;font-weight:500">${razao}</td><td style="padding:5px 8px;text-align:center;color:#333">${bairro}</td><td style="padding:5px 8px;text-align:center;color:#333">${torres}</td><td style="padding:5px 8px;text-align:center;color:#333">${apts}</td><td style="padding:5px 8px;text-align:center;color:#333">${telas}</td><td style="padding:5px 8px;text-align:center;color:#333">24h / 7 dias</td></tr></tbody>
+        <thead><tr style="background:#16294F;color:#fff"><th style="padding:6px 8px;text-align:left">Local</th><th style="padding:6px 8px">Bairro</th><th style="padding:6px 8px">Torres</th><th style="padding:6px 8px">Aptos</th><th style="padding:6px 8px">Telas</th><th style="padding:6px 8px">Funcionamento</th></tr></thead>
+        <tbody><tr style="background:#FBF7EE"><td style="padding:5px 8px;color:#333;font-weight:500">${razao}</td><td style="padding:5px 8px;text-align:center;color:#333">${bairro}</td><td style="padding:5px 8px;text-align:center;color:#333">${torres}</td><td style="padding:5px 8px;text-align:center;color:#333">${apts}</td><td style="padding:5px 8px;text-align:center;color:#333">${telas}</td><td style="padding:5px 8px;text-align:center;color:#333">24h / 7 dias</td></tr></tbody>
       </table>
       <div style="color:#444;line-height:1.65;font-size:11.5px;margin-bottom:10px;font-style:italic">Localização das telas: elevadores sociais. Prazo de vigência: <strong>${vigencia} (${vigExt}) meses</strong> a contar da ativação. Vigência: <strong>${inicioFmt}</strong> a <strong>${fimFmt}</strong>.</div>
 
-      <div style="font-family:Syne,sans-serif;font-size:11.5px;font-weight:700;color:#2A1760;margin:14px 0 4px;letter-spacing:.3px">3. CLÁUSULAS E CONDIÇÕES</div>
-      <div style="height:1px;background:#EAD9FF;margin:4px 0 10px"></div>
+      <div style="font-family:Syne,sans-serif;font-size:11.5px;font-weight:700;color:#16294F;margin:14px 0 4px;letter-spacing:.3px">3. CLÁUSULAS E CONDIÇÕES</div>
+      <div style="height:1px;background:#EFE6D2;margin:4px 0 10px"></div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 1ª — DO OBJETO</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 1ª — DO OBJETO</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">1.1. O presente contrato tem por objeto a cessão gratuita de espaço físico pelo CONTRATANTE à CONTRATADA, para instalação, operação e gestão de monitores digitais nos elevadores do condomínio identificado no Quadro acima, destinados à veiculação de conteúdo publicitário, informativo e institucional.<br>1.2. Os equipamentos (monitores, suportes, cabeamentos e demais componentes) serão cedidos pela CONTRATADA ao CONTRATANTE em regime de COMODATO, permanecendo de propriedade exclusiva da MGB Mídia durante toda a vigência contratual.<br>1.3. A exploração comercial dos espaços publicitários exibidos nas telas é de responsabilidade exclusiva da CONTRATADA, sendo vedado ao CONTRATANTE comercializar ou ceder tais espaços a terceiros.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 2ª — DA EXCLUSIVIDADE</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 2ª — DA EXCLUSIVIDADE</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">2.1. A presente parceria é firmada em caráter de <strong>EXCLUSIVIDADE</strong>. Durante a vigência deste instrumento, é vedado ao CONTRATANTE instalar, permitir ou contratar qualquer outro sistema de mídia digital em tela, sinalização digital, totem interativo ou solução similar nas áreas comuns do condomínio.<br>2.2. O descumprimento desta cláusula facultará à CONTRATADA a rescisão imediata do contrato, sem prejuízo das perdas e danos cabíveis.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 3ª — DAS OBRIGAÇÕES DA CONTRATADA (MGB MÍDIA)</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 3ª — DAS OBRIGAÇÕES DA CONTRATADA (MGB MÍDIA)</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">3.1. Realizar a instalação dos equipamentos no prazo de até 60 (sessenta) dias corridos após a assinatura deste contrato, sem custo de instalação ao CONTRATANTE.<br>3.2. Garantir o funcionamento contínuo dos equipamentos 24 horas por dia, 7 dias por semana, realizando manutenção preventiva periódica e manutenção corretiva em até 48 (quarenta e oito) horas úteis após o registro do chamado técnico.<br>3.3. Reservar na parte inferior das telas uma faixa fixa de avisos institucionais do condomínio, destinada à exibição permanente de comunicados, informes, atas e demais informações internas, gerenciada diretamente pelo síndico ou administradora sem necessidade de solicitação prévia à CONTRATADA e sem custo adicional.<br>3.4. Responsabilizar-se integralmente por seus colaboradores durante a instalação e manutenção, bem como por eventuais danos estruturais, estéticos ou elétricos causados ao condomínio exclusivamente em decorrência das atividades técnicas da CONTRATADA.<br>3.5. Zelar pela qualidade do conteúdo veiculado, assegurando que as peças publicitárias estejam em conformidade com as normas do CONAR e a legislação vigente.<br>3.6. Manter sigilo sobre dados e informações internas do condomínio a que tiver acesso em decorrência deste contrato.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 4ª — DAS OBRIGAÇÕES DO CONTRATANTE</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 4ª — DAS OBRIGAÇÕES DO CONTRATANTE</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">4.1. Disponibilizar o local indicado para instalação em condições adequadas, limpo, desimpedido e com ponto de energia elétrica ativo e estabilizado, bem como conexão de internet ativa e funcional (proveniente do sistema de câmeras do condomínio) necessária à atualização remota dos conteúdos publicitários e institucionais do condomínio exibidos nas telas.<br>4.2. Permitir o acesso dos técnicos da CONTRATADA para instalação, manutenção e remoção dos equipamentos, mediante agendamento prévio.<br>4.3. Não interferir, modificar, remover, cobrir ou danificar os equipamentos instalados, sob pena de responsabilização pelos danos causados.<br>4.4. Comunicar imediatamente à CONTRATADA qualquer falha, dano ou irregularidade verificada nos equipamentos, por meio dos canais: (43) 99696-0078 | comercial@agenciamgb.com.br.<br>4.5. Garantir que os conteúdos institucionais enviados pelo condomínio para veiculação não contenham material ilegal, ofensivo, difamatório ou que viole direitos de terceiros, sendo de sua exclusiva responsabilidade o conteúdo por ele produzido.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 5ª — DA GRATUIDADE E DA CONTRAPRESTAÇÃO</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 5ª — DA GRATUIDADE E DA CONTRAPRESTAÇÃO</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">5.1. A cessão do espaço pelo CONTRATANTE à CONTRATADA é feita a título <strong>GRATUITO</strong>, configurando contrapartida suficiente a própria instalação dos equipamentos em comodato e a prestação dos serviços descritos neste contrato, sem qualquer ônus financeiro ao condomínio.<br>5.2. O CONTRATANTE não fará jus a qualquer participação nos resultados comerciais obtidos pela CONTRATADA com a exploração publicitária das telas.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 6ª — DO PRAZO E DA VIGÊNCIA</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 6ª — DO PRAZO E DA VIGÊNCIA</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">6.1. O presente contrato terá vigência de <strong>${vigencia} (${vigExt}) meses</strong>, contados da data de ativação definitiva dos equipamentos, devidamente confirmada por escrito pela CONTRATADA.<br>6.2. Findo o prazo inicial, o contrato será renovado automaticamente por períodos iguais e sucessivos de ${vigencia} (${vigExt}) meses, salvo manifestação contrária de qualquer das partes, com antecedência mínima de 90 (noventa) dias do término do prazo vigente, por meio de notificação escrita.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 7ª — DA RESCISÃO</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 7ª — DA RESCISÃO</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">7.1. O presente contrato poderá ser rescindido por qualquer das partes, a qualquer tempo, mediante notificação escrita com antecedência mínima de 90 (noventa) dias, em razão dos compromissos comerciais assumidos pela CONTRATADA junto a anunciantes vinculados ao espaço.<br>7.2. A rescisão antecipada por iniciativa do CONTRATANTE, sem justa causa, antes de completados 12 (doze) meses de vigência, sujeitará o CONTRATANTE ao pagamento de multa compensatória no valor equivalente a 03 (três) meses de valoração média do espaço publicitário comercializado nas telas do condomínio no período imediatamente anterior à rescisão.<br>7.3. Constituem justa causa para rescisão imediata, sem ônus: (a) inadimplemento de obrigação essencial não sanado em 15 dias após notificação; (b) descumprimento da cláusula de exclusividade; (c) dano doloso aos equipamentos.<br>7.4. Na hipótese de rescisão, a CONTRATADA terá prazo de até 30 (trinta) dias para retirar os equipamentos, comprometendo-se a envidar os melhores esforços para restaurar o local afetado pela instalação.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 8ª — DOS EQUIPAMENTOS E DO COMODATO</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 8ª — DOS EQUIPAMENTOS E DO COMODATO</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">8.1. Os equipamentos instalados são e permanecerão sendo de propriedade exclusiva da CONTRATADA, não podendo ser penhorados, alienados ou dados em garantia pelo CONTRATANTE.<br>8.2. O CONTRATANTE é depositário fiel dos equipamentos enquanto instalados em suas dependências, devendo zelar por sua integridade e segurança.<br>8.3. Em caso de sinistro (furto, roubo, incêndio, vandalismo) não imputável à CONTRATADA, o CONTRATANTE deverá: (a) comunicar imediatamente a CONTRATADA; (b) disponibilizar as imagens das câmeras de segurança do condomínio para identificação do responsável, colaborando ativamente para que a CONTRATADA possa notificar e responsabilizar o causador do dano; (c) acionar o seguro predial do condomínio, se houver, para cobertura dos equipamentos. A recusa em fornecer as imagens das câmeras configura descumprimento contratual, podendo a CONTRATADA responsabilizar subsidiariamente o CONTRATANTE pelos prejuízos sofridos.<br>8.4. Toda e qualquer manutenção nos equipamentos que exija abertura, paralisação ou acesso à casa de máquinas do elevador será realizada, sempre que possível, durante a hora técnica já contratada pelo CONTRATANTE junto à empresa de manutenção do elevador, evitando-se a contratação de deslocamento técnico avulso e custos adicionais para ambas as partes.<br>8.5. O CONTRATANTE compromete-se a informar à CONTRATADA, com antecedência mínima de 2 (dois) dias úteis, a data e o horário da próxima hora técnica agendada, sempre que houver necessidade de manutenção nos equipamentos que dependa de acesso ao elevador.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 9ª — DA PROTEÇÃO DE DADOS (LGPD)</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 9ª — DA PROTEÇÃO DE DADOS (LGPD)</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">9.1. As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em razão deste contrato em conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados — LGPD), adotando medidas técnicas e organizacionais adequadas para proteção dos dados.<br>9.2. Nenhuma das partes poderá compartilhar, vender ou utilizar dados pessoais de condôminos ou colaboradores para finalidades diversas das estritamente necessárias à execução deste contrato.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 10ª — DAS DISPOSIÇÕES GERAIS</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 10ª — DAS DISPOSIÇÕES GERAIS</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">10.1. Este contrato vincula as partes e seus sucessores a qualquer título.<br>10.2. A tolerância de qualquer das partes quanto ao descumprimento de obrigação pela outra não importará novação, renúncia ou alteração das disposições contratuais.<br>10.3. Qualquer alteração deste instrumento somente será válida se realizada por escrito e assinada por ambas as partes.<br>10.4. Os casos omissos serão resolvidos com base nos princípios gerais de direito e na legislação aplicável, em especial o Código Civil Brasileiro.</div>
 
-      <div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">CLÁUSULA 11ª — DO FORO</div>
+      <div style="font-weight:700;color:#16294F;font-size:12px;margin-bottom:3px">CLÁUSULA 11ª — DO FORO</div>
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:10px">11.1. As partes elegem o foro da Comarca de <strong>Londrina, Estado do Paraná</strong>, para dirimir quaisquer controvérsias decorrentes deste instrumento, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</div>
 
       <div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:6px;text-align:justify">Por estarem assim justas e contratadas, as partes assinam o presente instrumento em 02 (duas) vias de igual teor e forma, na presença de 02 (duas) testemunhas.</div>
       <div style="text-align:center;color:#555;font-size:12px;margin:16px 0">Londrina – PR, ${hoje}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:16px;padding-top:14px;border-top:1px solid #DDD0F0">
-        <div style="text-align:center"><div style="border-top:1px solid #5B2D8E;margin-bottom:6px"></div><div style="font-weight:700;font-size:11.5px;color:#2A1760">${sindico||'Síndico(a) / Representante Legal'}</div><div style="font-size:10px;color:#666;margin-top:2px">CONTRATANTE — ${razao}</div><div style="font-size:10px;color:#666">CPF: ${cpf}</div></div>
-        <div style="text-align:center"><div style="border-top:1px solid #5B2D8E;margin-bottom:6px"></div><div style="font-weight:700;font-size:11.5px;color:#2A1760">Eder Balbino</div><div style="font-size:10px;color:#666;margin-top:2px">CONTRATADA — MGB Mídia · Comunicação e Marketing Ltda.</div><div style="font-size:10px;color:#666">CNPJ: 23.770.170/0001-50</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:16px;padding-top:14px;border-top:1px solid #E3D8BF">
+        <div style="text-align:center"><div style="border-top:1px solid #16294F;margin-bottom:6px"></div><div style="font-weight:700;font-size:11.5px;color:#16294F">${sindico||'Síndico(a) / Representante Legal'}</div><div style="font-size:10px;color:#666;margin-top:2px">CONTRATANTE — ${razao}</div><div style="font-size:10px;color:#666">CPF: ${cpf}</div></div>
+        <div style="text-align:center"><div style="border-top:1px solid #16294F;margin-bottom:6px"></div><div style="font-weight:700;font-size:11.5px;color:#16294F">Eder Balbino</div><div style="font-size:10px;color:#666;margin-top:2px">CONTRATADA — Tela Vertical · MGB Comunicação e Marketing Ltda.</div><div style="font-size:10px;color:#666">CNPJ: 23.770.170/0001-50</div></div>
       </div>
-      <div style="font-weight:700;color:#2A1760;font-size:11px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.5px">Testemunhas</div>
+      <div style="font-weight:700;color:#16294F;font-size:11px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.5px">Testemunhas</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
-        <div style="text-align:center"><div style="border-top:1px solid #5B2D8E;margin-bottom:6px"></div><div style="font-weight:600;font-size:11px;color:#444">1ª Testemunha</div><div style="font-size:10px;color:#666">Nome: _________________________________</div><div style="font-size:10px;color:#666">CPF: ___________________________</div></div>
-        <div style="text-align:center"><div style="border-top:1px solid #5B2D8E;margin-bottom:6px"></div><div style="font-weight:600;font-size:11px;color:#444">2ª Testemunha</div><div style="font-size:10px;color:#666">Nome: _________________________________</div><div style="font-size:10px;color:#666">CPF: ___________________________</div></div>
+        <div style="text-align:center"><div style="border-top:1px solid #16294F;margin-bottom:6px"></div><div style="font-weight:600;font-size:11px;color:#444">1ª Testemunha</div><div style="font-size:10px;color:#666">Nome: _________________________________</div><div style="font-size:10px;color:#666">CPF: ___________________________</div></div>
+        <div style="text-align:center"><div style="border-top:1px solid #16294F;margin-bottom:6px"></div><div style="font-weight:600;font-size:11px;color:#444">2ª Testemunha</div><div style="font-size:10px;color:#666">Nome: _________________________________</div><div style="font-size:10px;color:#666">CPF: ___________________________</div></div>
       </div>
     </div>
-    <div style="background:#2A1760;color:#EAD9FF;padding:12px 28px;font-size:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
+    <div style="background:#16294F;color:#EFE6D2;padding:12px 28px;font-size:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
       <span>MGB Comunicação e Marketing Ltda. · CNPJ: 23.770.170/0001-50 · Londrina – PR</span>
-      <span style="color:#E879B0">comercial@agenciamgb.com.br · (43) 99696-0078</span>
+      <span style="color:#C0A062">comercial@agenciamgb.com.br · (43) 99696-0078</span>
     </div>`;
     document.getElementById('parc-form').style.display='none';
     document.getElementById('parc-preview').style.display='block';

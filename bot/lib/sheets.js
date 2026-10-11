@@ -68,7 +68,7 @@ export async function marcarReceitaPaga({ modId, item, ano, mes }) {
 export function modulosResumo(state) {
   const MODULES = [
     { id: "mb", label: "MB — Móveis Brasília", default_items: ["Benjamin", "Saul Elkind", "Santa Catarina", "Calçadão", "Rolândia", "Cornélio Procópio"] },
-    { id: "elev", label: "Elevadores", default_items: ["Lagoa Dourada", "Lake Portinari", "Spazio Louvre", "Terra Parque", "Residencial Málaga"] },
+    { id: "elev", label: "Tela Vertical (elevadores)", default_items: ["Lagoa Dourada", "Lake Portinari", "Spazio Louvre", "Terra Parque", "Residencial Málaga"] },
     { id: "vaapty", label: "Vaapty", default_items: ["Franqueado Piloto", "Expansão"] },
     { id: "radio", label: "Rádio Interna", default_items: ["Mercadão Prochet", "Leo Cosméticos", "Supermercado Santarém", "Outros"] },
     { id: "tv", label: "TV Interna", default_items: ["Cliente Piloto", "Expansão"] },

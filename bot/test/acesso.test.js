@@ -110,3 +110,16 @@ test("Karen não vê o Rádio Ops duplicado (o módulo Moinho abre a mesma tela)
   assert.deepEqual(A.PERFIS.financeiro.ocultar, ["#nav-radioops", "#home-rops-card"]);
   assert.ok(A.pode("financeiro", "radioops"));
 });
+
+test("renovação: anunciante da Tela Vertical mantém a chave antiga (Elevadores)", () => {
+  const novo = { origem: "Tela Vertical", nome: "Loja X", fimKey: 24321 };
+  const antigo = { origem: "Elevadores", nome: "Loja X", fimKey: 24321 };
+  assert.equal(A.chaveRenov(novo), A.chaveRenov(antigo));
+  const renov = { [A.chaveRenov(antigo)]: { s: "eder" } };
+  assert.equal(A.contratosParaRenovar([novo], 24321, renov, false).length, 0, "encaminhado antes da troca de nome não volta para a Karen");
+});
+
+test("Karen: tudo da Tela Vertical que é dela (módulo, Cobrança Mensal, contratos); propostas ficam com o Eder", () => {
+  for (const p of ["relatorios", "custos", "operacional:contratos"]) assert.ok(A.pode("financeiro", p), p);
+  for (const p of ["midiakit", "sindicos"]) assert.ok(!A.pode("financeiro", p), p);
+});

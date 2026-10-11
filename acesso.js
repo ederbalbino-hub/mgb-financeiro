@@ -131,7 +131,10 @@
   // A Karen vê os contratos que vencem neste mês e no próximo e encaminha ao Eder.
   // O Eder liga, marca "Renovado com o cliente" e o contrato ganha o mesmo prazo de novo
   // (sem Assinafy). Cada contrato some da lista assim que é encaminhado ou resolvido.
-  function chaveRenov(c) { return [c.origem, c.nome, c.fimKey].join('|'); }
+  // Anunciantes da Tela Vertical (antes "Elevadores"). A chave guardada em _renovacoes continua
+  // com "Elevadores" para os encaminhamentos já feitos não voltarem à lista da Karen após a troca de nome.
+  function ehTelaVertical(origem) { return origem === 'Elevadores' || origem === 'Tela Vertical'; }
+  function chaveRenov(c) { return [ehTelaVertical(c.origem) ? 'Elevadores' : c.origem, c.nome, c.fimKey].join('|'); }
 
   function contratosParaRenovar(lista, ref, renov, modoEder) {
     renov = renov || {};
@@ -346,13 +349,13 @@
       var mods = global.MODULES || MODULES;                         // eslint-disable-line no-undef
       var m = mods.filter(function (x) { return x.label === c.origem; })[0];
       var ci = global.clientesInfo || clientesInfo;                 // eslint-disable-line no-undef
-      info = (m && ci[m.id] && ci[m.id][c.nome]) || (c.origem === 'Elevadores' && ci.elev && ci.elev[c.nome]) || null;
+      info = (m && ci[m.id] && ci[m.id][c.nome]) || (ehTelaVertical(c.origem) && ci.elev && ci.elev[c.nome]) || null;
     } catch (e) {}
     return info || {};
   }
   function objetoDoContrato(c) {
     try {
-      if (c.origem === 'Elevadores') {
+      if (ehTelaVertical(c.origem)) {
         var an = (global.anunciantes || anunciantes);               // eslint-disable-line no-undef
         return an.filter(function (a) { return a.nome === c.nome && (a.inicio || '') === c.inicio; })[0] || null;
       }
@@ -366,7 +369,7 @@
   // Custos recorrentes da unidade que acabavam junto com o contrato (licença) acompanham a renovação.
   function estenderCustos(c) {
     try {
-      if (c.origem === 'Elevadores') return;
+      if (ehTelaVertical(c.origem)) return;
       var mods = global.MODULES || MODULES;                         // eslint-disable-line no-undef
       var m = mods.filter(function (x) { return x.label === c.origem; })[0];
       var base = global.db || db;                                   // eslint-disable-line no-undef
@@ -438,7 +441,7 @@
         var novo = estenderContrato(obj, c.meses);
         if (!novo) { b.textContent = 'Não achei o contrato no hub'; return; }
         estenderCustos(c);
-        try { if (c.origem === 'Elevadores') global.syncAnuncReceita(); } catch (e) {}
+        try { if (ehTelaVertical(c.origem)) global.syncAnuncReceita(); } catch (e) {}
         try { global.buildAll(); } catch (e) {}
         marcarR(i, 'renovado', { meses: c.meses || 12 });
       });

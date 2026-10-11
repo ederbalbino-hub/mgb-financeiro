@@ -6,7 +6,7 @@
  *    os demais levam ao fluxo que já existe no hub ou aparecem como "em breve".
  *
  * Novo condomínio (parceria): condomínio paga R$ 0; custo de R$ 70 por torre ao mês.
- * Ao criar: tela no módulo Elevadores + despesa recorrente + lead marcado como cadastrado
+ * Ao criar: tela no módulo Tela Vertical + despesa recorrente + lead marcado como cadastrado
  * + contrato de parceria enviado pelo Assinafy + aviso ao Cleiton pelo WhatsApp.
  *
  * Reaproveita o que o hub já tem (index.html): mgbCriarUnidadeModulo, applyToFin, db,
@@ -40,7 +40,7 @@
   function validarCondominio(d, existentes) {
     var erros = [];
     if (!String(d.nome || '').trim()) erros.push('Informe o nome do condomínio.');
-    else if (jaExiste(d.nome, existentes)) erros.push('Já existe um condomínio com esse nome no módulo Elevadores.');
+    else if (jaExiste(d.nome, existentes)) erros.push('Já existe um condomínio com esse nome no módulo Tela Vertical.');
     if (!(parseInt(d.torres, 10) > 0)) erros.push('Informe o número de torres.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(d.inicio || '')) erros.push('Informe a data de início.');
     if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) erros.push('O e-mail do síndico parece incompleto.');
@@ -444,7 +444,7 @@
 
   // ── Início: CRM + produtos ─────────────────────────────────────────────
   var ROTULO_ACAO = {
-    condominio: 'Condomínio', anunciante: 'Anunciante elevador', vaapty: 'Unidade Vaapty',
+    condominio: 'Condomínio', anunciante: 'Anunciante Tela Vertical', vaapty: 'Unidade Vaapty',
     radio: 'Rádio interna', mercadao: 'Anunciante Mercadão', tv: 'TV interna'
   };
   var ACOES_DO_LEAD = { elev: ['condominio', 'anunciante'], radio: ['radio', 'mercadao'], vaapty: ['vaapty'], tv: ['tv'] };
@@ -491,8 +491,8 @@
     }).join('') : '<p class="sub">Nenhum cliente fechado esperando cadastro. Quando o Eder marcar um lead como Fechado no CRM, ele aparece aqui.</p>';
 
     var produtos = [
-      ['condominio', 'Condomínio', 'Tela no elevador. Parceria: condomínio paga R$ 0, custo de R$ 70 por torre ao mês.'],
-      ['anunciante', 'Anunciante · telas do elevador', 'Escolhe os condomínios, gera o contrato Tela Vertical e envia pelo Assinafy.'],
+      ['condominio', 'Condomínio · Tela Vertical', 'Tela no elevador. Parceria: condomínio paga R$ 0, custo de R$ 70 por torre ao mês.'],
+      ['anunciante', 'Anunciante · Tela Vertical', 'Escolhe os condomínios, gera o contrato Tela Vertical e envia pelo Assinafy.'],
       ['vaapty', 'Unidade Vaapty', 'Franqueado com box em comodato. Contrato Vaapty pelo Assinafy.'],
       ['radio', 'Rádio interna', 'Uma unidade (loja) por vez, com o contrato padrão. Custo de R$ 70 ao mês.'],
       ['mercadao', 'Anunciante · Rádio Mercadão', 'Loja no Mercadão Prochet. Cotas nos Blocos, cobrança mensal e contrato.'],
@@ -597,7 +597,7 @@
       '<div class="conta"><span id="nv-custo-rot">Custo · 1 torre × R$ 70</span><b id="nv-custo" style="color:#a33a1a">R$ 70/mês</b></div>' +
       '<p class="sub">A receita vem dos anunciantes que você colocar nestas telas.</p></section>' +
       '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
-      '<div class="passo" id="nv-p1"><i>1</i><span>Cria a tela do condomínio no módulo Elevadores.</span></div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Cria a tela do condomínio no módulo Tela Vertical.</span></div>' +
       '<div class="passo" id="nv-p2"><i>2</i><span>Lança a despesa recorrente da licença das telas.</span></div>' +
       '<div class="passo" id="nv-p3"><i>3</i><span>' + (lead ? 'Marca o lead do CRM como cadastrado.' : 'Sem lead do CRM: nada a marcar.') + '</span></div>' +
       '<div class="passo" id="nv-p4"><i>4</i><span>Gera o contrato de parceria e envia ao síndico pelo Assinafy.</span></div>' +
@@ -640,13 +640,13 @@
     var btn = doc.getElementById('nv-criar');
     btn.disabled = true; btn.textContent = 'Criando…';
 
-    // 1. tela no módulo Elevadores
+    // 1. tela no módulo Tela Vertical
     try {
       var cliente = { cnpj: d.cnpj, fantasia: d.nome, responsavel: d.sindico, cargo: 'Síndico(a)', tel: d.wpp, email: d.email,
         endereco: d.end, bairro: d.bairro, torres: parseInt(d.torres, 10), telas: parseInt(d.telas, 10) || '', apartamentos: parseInt(d.apts, 10) || '' };
       var criado = global.mgbCriarUnidadeModulo('elev', d.nome, { valor: 0, inicio: d.inicio.slice(0, 7), meses: parseInt(d.vig, 10), cliente: cliente });
-      if (!criado) throw new Error('o módulo Elevadores não foi encontrado');
-      marcar(1, 'ok', 'Tela <b>' + esc(d.nome) + '</b> criada no módulo Elevadores.');
+      if (!criado) throw new Error('o módulo Tela Vertical não foi encontrado');
+      marcar(1, 'ok', 'Tela <b>' + esc(d.nome) + '</b> criada no módulo Tela Vertical.');
     } catch (e) {
       marcar(1, 'erro', 'Não consegui criar a tela: ' + esc(e.message) + '. Nada foi lançado.');
       btn.disabled = false; btn.textContent = 'Tentar de novo';
@@ -661,7 +661,7 @@
       db.elev[d.nome].push(desp);                             // eslint-disable-line no-undef
       marcar(2, 'ok', 'Despesa de <b>' + brl(custoCondominio(d.torres)) + '/mês</b> lançada por ' + desp.mesesRec + ' meses a partir de ' + desp.dataInicio.split('-').reverse().join('/') + '.');
     } catch (e) {
-      marcar(2, 'erro', 'A tela foi criada, mas a despesa não: ' + esc(e.message) + '. Lance a licença à mão no módulo Elevadores.');
+      marcar(2, 'erro', 'A tela foi criada, mas a despesa não: ' + esc(e.message) + '. Lance a licença à mão no módulo Tela Vertical.');
     }
 
     // 3. lead do CRM
@@ -706,7 +706,7 @@
     if (!out || !out.innerHTML.trim()) return Promise.resolve({ ok: false, msg: 'Contrato não gerado. Gere pela aba Contratos › Parceria Cond.' });
     if (!d.email) return Promise.resolve({ ok: false, msg: 'Contrato gerado, mas sem e-mail do síndico. Envie pela aba Contratos › Parceria Cond. quando tiver o e-mail.' });
     return enviarAssinafy('elev', d.nome, 'Contrato de Parceria - ' + d.nome, out.innerHTML, d.sindico || d.nome, d.email,
-      'Segue o contrato de parceria das telas digitais nos elevadores para assinatura eletrônica.')
+      'Segue o contrato de parceria da Tela Vertical (telas digitais nos elevadores) para assinatura eletrônica.')
       .then(function () { return { ok: true, msg: 'Contrato enviado ao síndico (' + esc(d.email) + ') e a você pelo Assinafy.' }; })
       .catch(function (e) { return { ok: false, msg: 'Contrato gerado, mas o envio ao Assinafy falhou: ' + esc(e.message) + '. Envie pela aba Contratos › Parceria Cond.' }; });
   }
@@ -1101,7 +1101,7 @@
         '<input type="checkbox" class="nv-condo" value="' + esc(c.id) + '" data-telas="' + (c.telas || 1) + '" style="margin-top:3px">' +
         '<span><b>' + esc(c.nome) + '</b><br><span style="color:#6b6380">' + esc(c.bairro) + ' · ' + (c.telas || 1) + ' tela(s)</span></span></label>';
     }).join('') : '<p class="sub">Não consegui ler a lista de condomínios do contrato Tela Vertical. Recarregue a página.</p>';
-    var el = moldura('Novo anunciante · telas do elevador',
+    var el = moldura('Novo anunciante · Tela Vertical',
       '<div class="duas"><main>' +
       '<p class="sub">Cliente do CRM. Os campos em verde vieram do CRM e do CNPJ. O contrato gerado é o mesmo Tela Vertical de sempre.</p>' +
       '<section class="card"><div class="sec">1 · Anunciante</div><div class="campos">' +
@@ -1126,7 +1126,7 @@
       '<div class="conta" style="border-top:1px solid #ece7f5;padding-top:10px"><span>Anunciante paga</span><b id="nv-mensal" style="color:#14583a">—</b></div>' +
       '<p class="sub" id="nv-total"></p></section>' +
       '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
-      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato Tela Vertical e lança o anunciante nas telas escolhidas (receita no módulo Elevadores).</span></div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato Tela Vertical e lança o anunciante nas telas escolhidas (receita no módulo Tela Vertical).</span></div>' +
       '<div class="passo" id="nv-p2"><i>2</i><span>Envia o contrato pelo Assinafy.</span></div>' +
       '<div class="passo" id="nv-p3"><i>3</i><span>Marca o cliente do CRM como cadastrado.</span></div>' +
       '<div class="passo" id="nv-p4"><i>4</i><span>Prepara o aviso ao Cleiton para programar as telas depois da assinatura.</span></div>' +
