@@ -6988,6 +6988,53 @@ function mgbNotaAvulsasChips(){
   w.innerHTML=l.length?'<span style="color:var(--muted);align-self:center">Receitas avulsas lançadas:</span>'+l.map(x=>{ const it=MGBLancar.itemReceita(x); return '<button type="button" class="anunc-btn" data-it="'+it.replace(/"/g,'&quot;')+'">'+it.replace(/ #\d+$/,'')+' · '+x.mes.split('-').reverse().join('/')+'</button>'; }).join(''):'';
   w.querySelectorAll('[data-it]').forEach(b=>b.addEventListener('click',()=>{ const sel=document.getElementById('f-nota-cli'); sel.value='_avulsa|'+b.dataset.it; fNotaCliente(); const x=receitasAvulsas.find(r=>MGBLancar.itemReceita(r)===b.dataset.it); if(x&&_cpForm.nota) _cpForm.nota.definir(x.cliente); }));
 }
+// ── Cliente padrão nos contratos (Anunciante Tela Vertical, Mercadão, Vaapty, Condomínio) — 11/10 ──
+// Mesmo seletor do hub (CRM + cadastrados). Preenche razão, fantasia, CNPJ, contato e dispara a busca do CNPJ do próprio contrato.
+const CP_CONTRATOS={
+  mercadao:{frame:'frame-mercadao', antes:'#sec-cliente .card', tipo:'setTipo',
+    campos:{razao:'razao_social',fantasia:'nome_fantasia',cnpj:'cnpj',resp:'contato_nome',email:'contato_email',tel:'contato_tel',cargo:'contato_cargo'}, cnpjFn:'buscarCNPJ'},
+  elevador:{frame:'frame-elevador', card:'e-card-crm', tipo:'eSetTipo',
+    campos:{razao:'e-razao',fantasia:'e-fantasia',cnpj:'e-cnpj',resp:'e-resp',email:'e-email',tel:'e-tel',cargo:'e-cargo'}, cnpjFn:'eBuscarCNPJ'},
+  vaapty:{frame:'frame-vaapty', card:'v-card-crm', tipo:'vSetTipo',
+    campos:{razao:'v-razao',fantasia:'v-fantasia',cnpj:'v-cnpj',resp:'v-resp',email:'v-email',tel:'v-tel',cargo:'v-cargo'}, cnpjFn:'vBuscarCNPJ'},
+  parceria:{antes:'#parc-form .parc-section',
+    campos:{razao:'p-razao',cnpj:'p-cnpj',resp:'p-sindico',email:'p-email',tel:'p-wpp'}, cnpjFn:'parcCNPJAuto'}
+};
+function mgbSeletorContrato(nome){
+  if(typeof MGBLancar==='undefined'||!MGBLancar.seletorCliente) return;
+  const cfg=CP_CONTRATOS[nome]; if(!cfg) return;
+  let w=window, d=document;
+  if(cfg.frame){ const fr=document.getElementById(cfg.frame); if(!fr||!fr.contentDocument||!fr.contentDocument.body) return; w=fr.contentWindow; d=fr.contentDocument; }
+  if(d.getElementById('cp-contrato-'+nome)){ if(cfg.card){ const cd=d.getElementById(cfg.card); if(cd) cd.style.display='block'; } return; } // já montado: o carregador antigo esconde o card quando não há cadastrados
+  const caixa=d.createElement('div'); caixa.id='cp-contrato-'+nome;
+  if(cfg.card){                                                   // troca o select antigo "Cliente já fechado no CRM?" pelo seletor
+    const card=d.getElementById(cfg.card); if(!card) return;
+    card.style.display='block';
+    const tit=card.querySelector('.card-title'); if(tit) tit.innerHTML='<div class="icon">🔎</div> Cliente (CRM ou já cadastrado)';
+    const grid=card.querySelector('.form-grid'); if(grid) grid.style.display='none';
+    card.appendChild(caixa);
+  } else {
+    const ref=d.querySelector(cfg.antes); if(!ref) return;
+    const card=d.createElement('div'); card.className=nome==='parceria'?'parc-section':'card';
+    card.innerHTML=nome==='parceria'?'<h3>🔎 Condomínio (CRM ou já cadastrado)</h3>':'<div class="card-title"><div class="icon">🔎</div> Cliente (CRM ou já cadastrado)</div>';
+    card.appendChild(caixa); ref.parentNode.insertBefore(card,ref);
+  }
+  const set=(k,v)=>{ const id=cfg.campos[k]; const el=id&&d.getElementById(id); if(el&&v!=null&&v!==''){ el.value=v; } };
+  MGBLancar.seletorCliente(caixa,{rotulo:nome==='parceria'?'Condomínio':'Cliente', aoEscolher:c=>{
+    if(!c) return;
+    const dig=String(c.cnpj||'').replace(/\D/g,'');
+    try{ if(cfg.tipo&&typeof w[cfg.tipo]==='function') w[cfg.tipo](dig.length===11?'pf':'pj'); }catch(e){}
+    set('fantasia',c.nome); set('razao',c.razao||(cfg.campos.fantasia?'':c.nome)); set('cnpj',c.cnpj); set('resp',c.responsavel); set('email',c.email); set('tel',c.tel); set('cargo',c.cargo);
+    // A busca do CNPJ traz razão social e endereço oficiais; nome fantasia e contato do CRM/cadastro prevalecem.
+    const contato=()=>{ set('fantasia',c.nome); set('resp',c.responsavel); set('email',c.email); set('tel',c.tel); set('cargo',c.cargo); };
+    if(dig.length===14&&cfg.cnpjFn&&typeof w[cfg.cnpjFn]==='function'){
+      try{ Promise.resolve(nome==='parceria'?w[cfg.cnpjFn](d.getElementById(cfg.campos.cnpj)):w[cfg.cnpjFn](dig)).then(contato,contato); setTimeout(contato,1500); }catch(e){ console.warn('CNPJ',e); }
+    }
+  }});
+}
+function mgbSeletoresContratos(){ Object.keys(CP_CONTRATOS).forEach(n=>{ try{ mgbSeletorContrato(n); }catch(e){ console.error('seletor contrato '+n,e); } }); }
+['frame-mercadao','frame-elevador','frame-vaapty'].forEach(id=>{ const fr=document.getElementById(id); if(fr) fr.addEventListener('load',()=>setTimeout(mgbSeletoresContratos,50)); });
+document.addEventListener('DOMContentLoaded',()=>setTimeout(mgbSeletoresContratos,300));
 function fRecCliente(){
   const v=document.getElementById('f-rec-cli').value; if(!v){ fRecPreview(); return; }
   const [mod,item]=v.split('|'); const m=MODULES.find(x=>x.id===mod)||{};
@@ -8319,6 +8366,7 @@ function showOpPanel(name, btn){
   if(name==='vaapty'){
     try{ const fv=document.getElementById('frame-vaapty'); if(fv&&fv.contentWindow&&fv.contentWindow.vCarregarClientesCRM) fv.contentWindow.vCarregarClientesCRM(); }catch(e){}
   }
+  try{ mgbSeletoresContratos(); }catch(e){}           // seletor de cliente padrão nos contratos (depois dos carregadores antigos)
   window.scrollTo(0,0);
 }
 

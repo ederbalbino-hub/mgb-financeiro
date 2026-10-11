@@ -140,7 +140,7 @@
     function juntar(c) {
       var k = chave(c), ja = porChave[k] || porChave['n' + normaliza(c.nome)];
       if (!ja) { porChave[k] = c; if (k[0] === 'd') porChave['n' + normaliza(c.nome)] = c; lista.push(c); return; }
-      ['cnpj', 'razao', 'email', 'tel', 'responsavel', 'endereco'].forEach(function (f) { if (!ja[f] && c[f]) ja[f] = c[f]; });
+      ['cnpj', 'razao', 'email', 'tel', 'responsavel', 'cargo', 'endereco'].forEach(function (f) { if (!ja[f] && c[f]) ja[f] = c[f]; });
       if (c.origem === 'crm') { ja.crm = true; ja.leadId = ja.leadId || c.leadId; ja.estagio = ja.estagio || c.estagio; }
       if (!porChave[chave(ja)]) porChave[chave(ja)] = ja;
     }
@@ -150,13 +150,13 @@
       itens.forEach(function (item) {
         if (!item || /^(Outros|Expansão|Cliente Piloto|Franqueado Piloto)$/.test(item)) return;
         var i = (info[m.id] || {})[item] || {};
-        juntar({ nome: item, razao: i.razao || i.fantasia || '', cnpj: i.cnpj || '', email: i.email || '', tel: i.tel || '', responsavel: i.responsavel || '',
+        juntar({ nome: item, razao: i.razao || i.fantasia || '', cnpj: i.cnpj || '', email: i.email || '', tel: i.tel || '', responsavel: i.responsavel || '', cargo: i.cargo || '',
           endereco: i.endereco || '', origem: 'hub', mod: m.id, modRot: String(m.label || m.id).split('—').pop().trim(), item: item });
       });
     });
     (fontes.leads || []).forEach(function (l) {
       if (!l || !l.nome || l.estagio === 'perdido') return;
-      juntar({ nome: l.nome, razao: l.razao || '', cnpj: l.cnpj || '', email: l.email || '', tel: l.tel || '', responsavel: l.responsavel || '',
+      juntar({ nome: l.nome, razao: l.razao || '', cnpj: l.cnpj || '', email: l.email || '', tel: l.tel || '', responsavel: l.responsavel || '', cargo: l.funcao || l.cargo || '',
         endereco: l.endereco || '', origem: 'crm', crm: true, leadId: l.id, estagio: l.estagio || '' });
     });
     return lista;
@@ -224,9 +224,10 @@
   function fechar() { var el = doc.getElementById('mgb-novo'); if (el) el.remove(); doc.removeEventListener('keydown', escFecha); }
   function escFecha(e) { if (e.key === 'Escape') fechar(); }
 
-  function injetarEstilos() {
-    if (doc.getElementById('mgb-lancar-css')) return;
-    var st = doc.createElement('style'); st.id = 'mgb-lancar-css';
+  function injetarEstilos(d) {
+    d = d || doc;                                  // também injeta dentro dos contratos (iframes)
+    if (d.getElementById('mgb-lancar-css')) return;
+    var st = d.createElement('style'); st.id = 'mgb-lancar-css';
     st.textContent =
       '#mgb-novo [hidden]{display:none!important}' +
       '#mgb-novo .chips{display:flex;flex-wrap:wrap;gap:8px}' +
@@ -251,7 +252,7 @@
       '.mgb-cp .cp-card{border:1px solid #a7dccf;background:#f1faf7;border-radius:12px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px}' +
       '.mgb-cp .cp-card.aviso{border-color:#f3c0b0;background:#fff5f1}' +
       '#mgb-novo .origem{font-size:13px;color:#3a3446;background:#f6f4fb;border-radius:9px;padding:8px 10px}';
-    doc.head.appendChild(st);
+    d.head.appendChild(st);
   }
 
   // ── Seletor de cliente padrão (CRM + cadastrados) ──────────────────────
@@ -266,7 +267,8 @@
   }
   function seletorCliente(caixa, opts) {
     opts = opts || {};
-    injetarEstilos(); caixa.classList.add('mgb-cp');
+    var D = caixa.ownerDocument || doc;
+    injetarEstilos(D); caixa.classList.add('mgb-cp');
     var todos = clientesDoHub(), escolhido = null, id = 'cp' + Math.random().toString(36).slice(2, 7);
     caixa.innerHTML = '<label class="f" for="' + id + '">' + esc(opts.rotulo || 'Cliente') +
       ' <span class="hint">· busca no CRM e nos clientes já cadastrados (nome ou CNPJ)</span>' +
@@ -299,10 +301,10 @@
     }
     inp.addEventListener('input', function () { escolhido = null; sel.innerHTML = ''; if (opts.aoEscolher) opts.aoEscolher(null); mostrar(); });
     inp.addEventListener('focus', function () { todos = clientesDoHub(); mostrar(); });
-    doc.addEventListener('click', function (e) { if (!caixa.contains(e.target)) { lista.hidden = true; inp.setAttribute('aria-expanded', 'false'); } });
+    D.addEventListener('click', function (e) { if (!caixa.contains(e.target)) { lista.hidden = true; inp.setAttribute('aria-expanded', 'false'); } });
     inp.addEventListener('keydown', function (e) { if (e.key === 'ArrowDown') { var p = lista.querySelector('.cp-op'); if (p) { e.preventDefault(); p.focus(); } } if (e.key === 'Escape') { lista.hidden = true; } });
     lista.addEventListener('keydown', function (e) {
-      var ops = [].slice.call(lista.querySelectorAll('.cp-op')), i = ops.indexOf(doc.activeElement);
+      var ops = [].slice.call(lista.querySelectorAll('.cp-op')), i = ops.indexOf(D.activeElement);
       if (e.key === 'ArrowDown' && i < ops.length - 1) { e.preventDefault(); ops[i + 1].focus(); }
       if (e.key === 'ArrowUp') { e.preventDefault(); if (i > 0) ops[i - 1].focus(); else inp.focus(); }
     });
