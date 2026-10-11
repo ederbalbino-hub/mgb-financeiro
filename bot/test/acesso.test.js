@@ -26,7 +26,7 @@ test("admin pode ver como outra pessoa; outros papéis não", () => {
 
 test("Karen: financeiro e contratos, sem CRM, propostas, Plano de Caixa e Pessoal", () => {
   for (const p of ["overview", "contabilidade", "relatorios", "radioops", "operacional:contratos", "operacional"]) assert.ok(A.pode("financeiro", p), p);
-  for (const p of ["leads", "planocaixa", "pessoal", "midiakit", "sindicos", "propvaapty", "apresmgb", "operacional:estudio"]) assert.ok(!A.pode("financeiro", p), p);
+  for (const p of ["leads", "planocaixa", "pessoal", "propvaapty", "apresmgb", "operacional:estudio"]) assert.ok(!A.pode("financeiro", p), p);
   assert.ok(A.temExtra("financeiro", "valores"));
   assert.ok(!A.temExtra("financeiro", "pessoal"));
 });
@@ -119,7 +119,8 @@ test("renovação: anunciante da Tela Vertical mantém a chave antiga (Elevadore
   assert.equal(A.contratosParaRenovar([novo], 24321, renov, false).length, 0, "encaminhado antes da troca de nome não volta para a Karen");
 });
 
-test("Karen: tudo da Tela Vertical que é dela (módulo, Cobrança Mensal, contratos); propostas ficam com o Eder", () => {
-  for (const p of ["relatorios", "custos", "operacional:contratos"]) assert.ok(A.pode("financeiro", p), p);
-  for (const p of ["midiakit", "sindicos"]) assert.ok(!A.pode("financeiro", p), p);
+test("Karen: módulo Tela Vertical inteiro (operação, propostas, síndicos, Cobrança Mensal)", () => {
+  for (const p of ["operacional:telavertical", "midiakit", "sindicos", "relatorios", "custos"]) assert.ok(A.pode("financeiro", p), p);
+  for (const p of ["admin-geral", "admin-meudia"]) assert.ok(A.pode(p, "operacional:telavertical"), p);
+  for (const p of ["bureau", "programacao"]) assert.ok(!A.pode(p, "operacional:telavertical"), p);
 });
