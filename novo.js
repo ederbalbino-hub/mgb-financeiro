@@ -711,7 +711,14 @@
       .catch(function (e) { return { ok: false, msg: 'Contrato gerado, mas o envio ao Assinafy falhou: ' + esc(e.message) + '. Envie pela aba Contratos › Parceria Cond.' }; });
   }
 
+  // O Apps Script converte HTML em PDF sem buscar imagens de fora: troca a logo por data URI.
+  function logosEmbutidas(html) {
+    return String(html).replace(/(?:https?:\/\/[^"']*\/)?marca\/mgb-logo-(roxo|branco)\.(?:png|svg)/g, function (m, cor) {
+      return (cor === 'branco' ? LOGOS.branco : LOGOS.roxo) || m;
+    });
+  }
   function documentoContrato(corpo) {
+    corpo = logosEmbutidas(corpo);
     if (/^<!DOCTYPE/i.test(corpo)) return corpo;
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>body{padding:24px;background:#fff;font-family:Arial,sans-serif}</style></head><body>' + corpo + '</body></html>';
   }
@@ -1349,14 +1356,18 @@
   }
 
   var LOGO = '';
+  var LOGOS = { roxo: '', branco: '' };
   function carregarLogo() {
-    if (LOGO || typeof fetch !== 'function' || typeof FileReader === 'undefined') return;
-    fetch('marca/mgb-logo-roxo.png').then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) {
-      if (!b) return;
-      var fr = new FileReader();
-      fr.onload = function () { LOGO = String(fr.result || ''); };
-      fr.readAsDataURL(b);
-    }).catch(function () {});
+    if (typeof fetch !== 'function' || typeof FileReader === 'undefined') return;
+    ['roxo', 'branco'].forEach(function (cor) {
+      if (LOGOS[cor]) return;
+      fetch('marca/mgb-logo-' + cor + '.png').then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) {
+        if (!b) return;
+        var fr = new FileReader();
+        fr.onload = function () { LOGOS[cor] = String(fr.result || ''); if (cor === 'roxo') LOGO = LOGOS.roxo; };
+        fr.readAsDataURL(b);
+      }).catch(function () {});
+    });
   }
 
   global.MGBNovo = Object.assign(api, { abrir: abrir });

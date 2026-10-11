@@ -3666,7 +3666,7 @@ function vGerar(){
     '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
       '<div style=&quot;width:5px;height:44px;background:#D6367F;border-radius:3px;flex-shrink:0&quot;></div>'+
       '<div>'+
-        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.5px&quot;>MGB Mídia</div>'+
+        '<img src=&quot;https://ederbalbino-hub.github.io/mgb-financeiro/marca/mgb-logo-branco.png&quot; alt=&quot;MGB Mídia&quot; style=&quot;height:34px;width:auto;display:block&quot;>'+
         '<div style=&quot;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px&quot;>Rede TV Vaapty</div>'+
       '</div>'+
     '</div>'+
@@ -4092,7 +4092,7 @@ vCalc();
     <div style="padding:22px 28px 18px;border-bottom:3px solid #E879B0">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
         <div>
-          <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:#2A1760">MGB <span style="color:#E879B0">Mídia</span></div>
+          <img src="https://ederbalbino-hub.github.io/mgb-financeiro/marca/mgb-logo-roxo.png" alt="MGB Mídia" style="height:44px;width:auto;display:block">
           <div style="font-size:10px;color:#999;font-style:italic;margin-top:2px">Elevando a sua comunicação</div>
         </div>
         <div style="text-align:right">
@@ -7691,7 +7691,7 @@ function fEtqTemplate(pat, franq, player, qrUrl){
   const franqSafe = franq && String(franq).trim() ? escH(franq.trim()) : '—';
   const playerBlock = player && String(player).trim() ? '<div class="me-fval">'+escH(player.trim())+'</div>' : '<div class="me-fline"></div>';
   return '<div class="me-left">'
-    +'<div class="me-logo">MGB <span>Mídia</span></div>'
+    +'<div class="me-logo"><img src="marca/mgb-logo-roxo.png" alt="MGB Mídia" style="height:11mm;width:auto;display:block"></div>'
     +'<div class="me-inst">📶 Quando solicitado no momento da instalação, digite:<br><b>'+ETQ_SITE+'</b></div>'
     +'<div class="me-fields">'
       +'<div><div class="me-flabel">Franqueado</div><div class="me-fval">'+franqSafe+'</div></div>'
@@ -7789,7 +7789,7 @@ function fCorTemplate(rem, dest, patCode){
   const remCid=[l(rem.cidadeUf), l(rem.cep)].filter(Boolean).join(' · ');
   const destComp=l(dest.complemento) ? ' — '+l(dest.complemento) : '';
   const destCid=[l(dest.bairro), l(dest.cidadeUf)].filter(Boolean).join(' · ')+(l(dest.cep)?' · CEP '+l(dest.cep):'');
-  return '<div class="mc-logo">MGB <span>Mídia</span> · Envio</div>'
+  return '<div class="mc-logo" style="display:flex;align-items:center;gap:3mm"><img src="marca/mgb-logo-roxo.png" alt="MGB Mídia" style="height:9mm;width:auto">· Envio</div>'
     +'<div class="mc-block">'
       +'<div class="mc-label">Remetente</div>'
       +'<div class="mc-remet">'+(l(rem.nome)||'—')+(l(rem.endereco)?'<br>'+l(rem.endereco):'')+(remCid?'<br>'+remCid:'')+'</div>'
@@ -9440,7 +9440,7 @@ function gerarRelContador(){
       <div style="display:flex;align-items:center;gap:14px">
         <div style="width:6px;height:54px;background:#E879B0;border-radius:3px"></div>
         <div>
-          <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px">MGB Mídia</div>
+          <img src="marca/mgb-logo-branco.png" alt="MGB Mídia" style="height:40px;width:auto;display:block;margin-bottom:2px">
           <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Comunicação e Marketing Ltda. · CNPJ 23.770.170/0001-50</div>
         </div>
       </div>
@@ -13454,7 +13454,7 @@ function relGerar(){
       <div style="display:flex;align-items:center;gap:14px">
         <div style="width:6px;height:54px;background:#E879B0;border-radius:3px"></div>
         <div>
-          <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px">MGB Mídia</div>
+          <img src="marca/mgb-logo-branco.png" alt="MGB Mídia" style="height:40px;width:auto;display:block;margin-bottom:2px">
           <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Elevando a sua comunicação · Rádio · TV · Elevadores</div>
         </div>
       </div>
@@ -13707,7 +13707,7 @@ function relvGerar(){
       <div style="display:flex;align-items:center;gap:14px">
         <div style="width:6px;height:54px;background:#E879B0;border-radius:3px"></div>
         <div>
-          <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px">MGB Mídia</div>
+          <img src="marca/mgb-logo-branco.png" alt="MGB Mídia" style="height:40px;width:auto;display:block;margin-bottom:2px">
           <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Elevando a sua comunicação · Rádio · TV · Elevadores</div>
         </div>
       </div>
@@ -13796,7 +13796,7 @@ function releGerar(){
       <div style="display:flex;align-items:center;gap:14px">
         <div style="width:6px;height:54px;background:#189A66;border-radius:3px"></div>
         <div>
-          <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px">MGB Mídia</div>
+          <img src="marca/mgb-logo-branco.png" alt="MGB Mídia" style="height:40px;width:auto;display:block;margin-bottom:2px">
           <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Mídia em telas de elevador · Londrina/PR</div>
         </div>
       </div>
