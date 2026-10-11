@@ -6,7 +6,7 @@
  *    os demais levam ao fluxo que já existe no hub ou aparecem como "em breve".
  *
  * Novo condomínio (parceria): condomínio paga R$ 0; custo da licença 4YouSee por tela (nota F6/4YouSee).
- * Ao criar: tela no módulo Tela Vertical + despesa recorrente + lead marcado como cadastrado
+ * Ao criar: tela na Tela Vertical + despesa recorrente + lead marcado como cadastrado
  * + contrato de parceria enviado pelo Assinafy + aviso ao Cleiton pelo WhatsApp.
  *
  * Reaproveita o que o hub já tem (index.html): mgbCriarUnidadeModulo, applyToFin, db,
@@ -44,7 +44,7 @@
   function validarCondominio(d, existentes) {
     var erros = [];
     if (!String(d.nome || '').trim()) erros.push('Informe o nome do condomínio.');
-    else if (jaExiste(d.nome, existentes)) erros.push('Já existe um condomínio com esse nome no módulo Tela Vertical.');
+    else if (jaExiste(d.nome, existentes)) erros.push('Já existe um condomínio com esse nome na Tela Vertical.');
     if (!(parseInt(d.torres, 10) > 0)) erros.push('Informe o número de torres.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(d.inicio || '')) erros.push('Informe a data de início.');
     if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) erros.push('O e-mail do síndico parece incompleto.');
@@ -596,13 +596,18 @@
       campo('torres', 'Número de torres *', '1', 'number', ' min="1"') + campo('telas', 'Número de telas', '1', 'number', ' min="1"') +
       campo('apts', 'Número de apartamentos', '', 'number', ' min="0"') + campo('inicio', 'Início *', ini, 'date') +
       '<label class="f" for="nv-vig">Vigência<select id="nv-vig"><option value="36">36 meses (renovação automática)</option><option value="24">24 meses (renovação automática)</option><option value="12">12 meses (renovação automática)</option></select></label>' +
-      '</div></section></main>' +
+      '</div></section>' +
+      '<section class="card"><div class="sec">4 · Instalação (opcional)</div><div class="campos">' +
+      campo('instval', 'Custo da instalação (R$)', '', 'number', ' min="0" step="0.01"') +
+      '<label class="f" for="nv-instpor">Pago por<select id="nv-instpor"><option value="eder">Eder</option><option value="jadson">Jadson</option></select></label>' +
+      campo('instdesc', 'Descrição', '', 'text', ' placeholder="ex: telas, cabos e kits"') + '</div>' +
+      '<p class="sub">Entra no investimento dos sócios da Tela Vertical. Outras despesas deste condomínio você lança depois em Tela Vertical › Condomínios.</p></section></main>' +
       '<aside><section class="card"><div class="sec">Conta do mês</div>' +
       '<div class="conta"><span>Condomínio paga</span><b>R$ 0</b></div>' +
       '<div class="conta"><span id="nv-custo-rot">Custo · 1 tela × ' + brl(CUSTO_POR_TORRE) + '</span><b id="nv-custo" style="color:#a33a1a">' + brl(CUSTO_POR_TORRE) + '/mês</b></div>' +
       '<p class="sub">A receita vem dos anunciantes que você colocar nestas telas.</p></section>' +
       '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
-      '<div class="passo" id="nv-p1"><i>1</i><span>Cria a tela do condomínio no módulo Tela Vertical.</span></div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Cria a tela do condomínio na Tela Vertical.</span></div>' +
       '<div class="passo" id="nv-p2"><i>2</i><span>Lança a despesa recorrente da licença das telas.</span></div>' +
       '<div class="passo" id="nv-p3"><i>3</i><span>' + (lead ? 'Marca o lead do CRM como cadastrado.' : 'Sem lead do CRM: nada a marcar.') + '</span></div>' +
       '<div class="passo" id="nv-p4"><i>4</i><span>Gera o contrato de parceria e envia ao síndico pelo Assinafy.</span></div>' +
@@ -611,13 +616,16 @@
       '<button type="button" class="b p" id="nv-criar">Criar condomínio e enviar contrato</button>' +
       '</section></aside></div>', true);
 
-    var torres = el.querySelector('#nv-torres');
+    var torres = el.querySelector('#nv-telas');           // licença é por tela (uma por elevador)
     function atualizarConta() {
       var t = parseInt(torres.value, 10) || 0;
       el.querySelector('#nv-custo-rot').textContent = 'Custo · ' + t + (t === 1 ? ' tela' : ' telas') + ' × ' + brl(CUSTO_POR_TORRE);
       el.querySelector('#nv-custo').textContent = brl(custoCondominio(t)) + '/mês';
     }
     torres.addEventListener('input', atualizarConta);
+    var nTorres = el.querySelector('#nv-torres'), mexeuTelas = false;  // telas acompanham as torres até a Karen mudar
+    torres.addEventListener('input', function () { mexeuTelas = true; });
+    nTorres.addEventListener('input', function () { if (!mexeuTelas) { torres.value = nTorres.value; atualizarConta(); } });
     el.querySelector('#nv-criar').addEventListener('click', criarCondominio);
     completarPorCNPJ(L.cnpj, { end: 'endereco', bairro: 'bairro', email: 'email', wpp: 'tel' });
     var foco = el.querySelector('#nv-torres'); if (foco) foco.focus();
@@ -636,7 +644,8 @@
     var d = {
       nome: val('nome'), cnpj: val('cnpj'), end: val('end'), bairro: val('bairro'), sindico: val('sindico'),
       cpf: val('cpf'), email: val('email'), wpp: val('wpp'), torres: val('torres'), telas: val('telas'),
-      apts: val('apts'), inicio: val('inicio'), vig: (doc.getElementById('nv-vig') || {}).value || '36'
+      apts: val('apts'), inicio: val('inicio'), vig: (doc.getElementById('nv-vig') || {}).value || '36',
+      instval: val('instval'), instpor: (doc.getElementById('nv-instpor') || {}).value || 'eder', instdesc: val('instdesc')
     };
     var errosEl = doc.getElementById('nv-erros');
     var erros = validarCondominio(d, condominiosExistentes());
@@ -645,13 +654,13 @@
     var btn = doc.getElementById('nv-criar');
     btn.disabled = true; btn.textContent = 'Criando…';
 
-    // 1. tela no módulo Tela Vertical
+    // 1. tela na Tela Vertical
     try {
       var cliente = { cnpj: d.cnpj, fantasia: d.nome, responsavel: d.sindico, cargo: 'Síndico(a)', tel: d.wpp, email: d.email,
         endereco: d.end, bairro: d.bairro, torres: parseInt(d.torres, 10), telas: parseInt(d.telas, 10) || '', apartamentos: parseInt(d.apts, 10) || '' };
       var criado = global.mgbCriarUnidadeModulo('elev', d.nome, { valor: 0, inicio: d.inicio.slice(0, 7), meses: parseInt(d.vig, 10), cliente: cliente });
       if (!criado) throw new Error('o módulo Tela Vertical não foi encontrado');
-      marcar(1, 'ok', 'Tela <b>' + esc(d.nome) + '</b> criada no módulo Tela Vertical.');
+      marcar(1, 'ok', 'Tela <b>' + esc(d.nome) + '</b> criada na Tela Vertical.');
     } catch (e) {
       marcar(1, 'erro', 'Não consegui criar a tela: ' + esc(e.message) + '. Nada foi lançado.');
       btn.disabled = false; btn.textContent = 'Tentar de novo';
@@ -660,13 +669,20 @@
 
     // 2. despesa recorrente da licença
     try {
-      var desp = despesaLicenca(d.torres, d.inicio, d.vig);
+      var desp = despesaLicenca(d.telas || d.torres, d.inicio, d.vig);
       applyToFin(desp, +1);                                   // eslint-disable-line no-undef
       if (!db.elev[d.nome]) db.elev[d.nome] = [];             // eslint-disable-line no-undef
       db.elev[d.nome].push(desp);                             // eslint-disable-line no-undef
-      marcar(2, 'ok', 'Despesa de <b>' + brl(custoCondominio(d.torres)) + '/mês</b> lançada por ' + desp.mesesRec + ' meses a partir de ' + desp.dataInicio.split('-').reverse().join('/') + '.');
+      marcar(2, 'ok', 'Despesa de <b>' + brl(custoCondominio(d.telas || d.torres)) + '/mês</b> lançada por ' + desp.mesesRec + ' meses a partir de ' + desp.dataInicio.split('-').reverse().join('/') + '.');
+      var inst = numero(d.instval);
+      if (inst > 0 && typeof elevInvestimentos !== 'undefined') {                       // eslint-disable-line no-undef
+        elevInvestimentos.push({ id: elevInvestId++, item: d.nome, descricao: d.instdesc || ('Instalação ' + d.nome), valor: inst, // eslint-disable-line no-undef
+          pagoPor: d.instpor, data: new Date().toISOString().slice(0, 10), criadoEm: new Date().toISOString() });
+        var p2 = doc.querySelector('#nv-p2 span');
+        if (p2) p2.innerHTML += ' Instalação de <b>' + brl(inst) + '</b> lançada no investimento dos sócios.';
+      }
     } catch (e) {
-      marcar(2, 'erro', 'A tela foi criada, mas a despesa não: ' + esc(e.message) + '. Lance a licença à mão no módulo Tela Vertical.');
+      marcar(2, 'erro', 'A tela foi criada, mas a despesa não: ' + esc(e.message) + '. Lance a licença à mão na Tela Vertical.');
     }
 
     // 3. lead do CRM
@@ -694,6 +710,12 @@
       fim.type = 'button'; fim.className = 'b'; fim.textContent = 'Lançar outro';
       fim.addEventListener('click', function () { abrir(); });
       btn.parentNode.appendChild(fim);
+      if (global.tvAbrirCondominio) {
+        var abre = doc.createElement('button');
+        abre.type = 'button'; abre.className = 'b p'; abre.textContent = 'Lançar as despesas deste condomínio';
+        abre.addEventListener('click', function () { fechar(); global.tvAbrirCondominio(d.nome); });
+        btn.parentNode.appendChild(abre);
+      }
     });
   }
 
@@ -1131,7 +1153,7 @@
       '<div class="conta" style="border-top:1px solid #ece7f5;padding-top:10px"><span>Anunciante paga</span><b id="nv-mensal" style="color:#14583a">—</b></div>' +
       '<p class="sub" id="nv-total"></p></section>' +
       '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
-      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato Tela Vertical e lança o anunciante nas telas escolhidas (receita no módulo Tela Vertical).</span></div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato Tela Vertical e lança o anunciante nas telas escolhidas (receita na Tela Vertical).</span></div>' +
       '<div class="passo" id="nv-p2"><i>2</i><span>Envia o contrato pelo Assinafy.</span></div>' +
       '<div class="passo" id="nv-p3"><i>3</i><span>Marca o cliente do CRM como cadastrado.</span></div>' +
       '<div class="passo" id="nv-p4"><i>4</i><span>Prepara o aviso ao Cleiton para programar as telas depois da assinatura.</span></div>' +
