@@ -5,7 +5,7 @@
  *  - abaixo, os produtos. Esta primeira entrega faz o "Novo condomínio" de ponta a ponta;
  *    os demais levam ao fluxo que já existe no hub ou aparecem como "em breve".
  *
- * Novo condomínio (parceria): condomínio paga R$ 0; custo de R$ 70 por torre ao mês.
+ * Novo condomínio (parceria): condomínio paga R$ 0; custo da licença 4YouSee por tela (nota F6/4YouSee).
  * Ao criar: tela no módulo Tela Vertical + despesa recorrente + lead marcado como cadastrado
  * + contrato de parceria enviado pelo Assinafy + aviso ao Cleiton pelo WhatsApp.
  *
@@ -15,13 +15,17 @@
 (function (global) {
   'use strict';
 
-  var CUSTO_POR_TORRE = 70;
+  // Custos unitários pela nota dos fornecedores (11/10/2026):
+  //   4YouSee Enterprise (F6 Sistemas, NFS-e 7523): R$ 39,56 por tela/player ao mês
+  //   ListenX (NFS-e 724406): R$ 64,87 por unidade de rádio ao mês (3.567,85 ÷ 55)
+  var CUSTO_TELA = 39.56;
+  var CUSTO_POR_TORRE = CUSTO_TELA; // uma tela por torre
   var ASSINAFY_API_URL = 'https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec';
 
   // ── Regras puras (testadas em bot/test/novo.test.js) ───────────────────
   function custoCondominio(torres) {
     var t = parseInt(torres, 10);
-    return t > 0 ? t * CUSTO_POR_TORRE : 0;
+    return t > 0 ? Math.round(t * CUSTO_POR_TORRE * 100) / 100 : 0;
   }
 
   function leadsPendentes(lista) {
@@ -52,14 +56,14 @@
     var t = parseInt(torres, 10) || 0;
     return {
       t: 'Recorrente', tipo: 'Licença',
-      d: 'Licença das telas · ' + t + (t === 1 ? ' torre' : ' torres') + ' × R$ ' + CUSTO_POR_TORRE,
+      d: 'Sistema TV',
       f: '4YouSee', q: t, u: CUSTO_POR_TORRE, cc: '', venc: '', pago: false, dataPago: '',
       mesesRec: parseInt(meses, 10) || 36, dataInicio: String(inicio || '').slice(0, 7)
     };
   }
 
-  // ── Rádio interna (decisão de 10/10: uma unidade por vez, custo R$ 70/mês) ──
-  var CUSTO_RADIO = 70;
+  // ── Rádio interna: uma unidade por vez, custo da unidade ListenX ──
+  var CUSTO_RADIO = 64.87;
 
   function numero(v) {
     if (typeof v === 'number') return v;
@@ -334,6 +338,7 @@
     contratoMercadao: contratoMercadao,
     CUSTO_POR_TORRE: CUSTO_POR_TORRE,
     CUSTO_RADIO: CUSTO_RADIO,
+    CUSTO_TELA: CUSTO_TELA,
     custoCondominio: custoCondominio,
     leadsPendentes: leadsPendentes,
     jaExiste: jaExiste,
@@ -491,10 +496,10 @@
     }).join('') : '<p class="sub">Nenhum cliente fechado esperando cadastro. Quando o Eder marcar um lead como Fechado no CRM, ele aparece aqui.</p>';
 
     var produtos = [
-      ['condominio', 'Condomínio · Tela Vertical', 'Tela no elevador. Parceria: condomínio paga R$ 0, custo de R$ 70 por torre ao mês.'],
+      ['condominio', 'Condomínio · Tela Vertical', 'Tela no elevador. Parceria: condomínio paga R$ 0; licença 4YouSee de R$ 39,56 por tela ao mês.'],
       ['anunciante', 'Anunciante · Tela Vertical', 'Escolhe os condomínios, gera o contrato Tela Vertical e envia pelo Assinafy.'],
       ['vaapty', 'Unidade Vaapty', 'Franqueado com box em comodato. Contrato Vaapty pelo Assinafy.'],
-      ['radio', 'Rádio interna', 'Uma unidade (loja) por vez, com o contrato padrão. Custo de R$ 70 ao mês.'],
+      ['radio', 'Rádio interna', 'Uma unidade (loja) por vez, com o contrato padrão. Licença ListenX de R$ 64,87 ao mês.'],
       ['mercadao', 'Anunciante · Rádio Mercadão', 'Loja no Mercadão Prochet. Cotas nos Blocos, cobrança mensal e contrato.'],
       ['tv', 'TV interna', 'TV corporativa em empresa ou loja, uma unidade por vez, com contrato padrão.'],
       ['taroba', 'Comissão Tarobá', 'Rádio ou TV Tarobá, Londrina ou Cascavel. Lança o valor do mês.']
@@ -594,7 +599,7 @@
       '</div></section></main>' +
       '<aside><section class="card"><div class="sec">Conta do mês</div>' +
       '<div class="conta"><span>Condomínio paga</span><b>R$ 0</b></div>' +
-      '<div class="conta"><span id="nv-custo-rot">Custo · 1 torre × R$ 70</span><b id="nv-custo" style="color:#a33a1a">R$ 70/mês</b></div>' +
+      '<div class="conta"><span id="nv-custo-rot">Custo · 1 tela × ' + brl(CUSTO_POR_TORRE) + '</span><b id="nv-custo" style="color:#a33a1a">' + brl(CUSTO_POR_TORRE) + '/mês</b></div>' +
       '<p class="sub">A receita vem dos anunciantes que você colocar nestas telas.</p></section>' +
       '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
       '<div class="passo" id="nv-p1"><i>1</i><span>Cria a tela do condomínio no módulo Tela Vertical.</span></div>' +
@@ -609,7 +614,7 @@
     var torres = el.querySelector('#nv-torres');
     function atualizarConta() {
       var t = parseInt(torres.value, 10) || 0;
-      el.querySelector('#nv-custo-rot').textContent = 'Custo · ' + t + (t === 1 ? ' torre' : ' torres') + ' × R$ ' + CUSTO_POR_TORRE;
+      el.querySelector('#nv-custo-rot').textContent = 'Custo · ' + t + (t === 1 ? ' tela' : ' telas') + ' × ' + brl(CUSTO_POR_TORRE);
       el.querySelector('#nv-custo').textContent = brl(custoCondominio(t)) + '/mês';
     }
     torres.addEventListener('input', atualizarConta);
@@ -787,7 +792,7 @@
       campoNv('wpp', 'WhatsApp', L.tel, 'text', '', true) + '</div>' + avisoCNPJ() + '</section>' +
       '<section class="card"><div class="sec">2 · Plano</div><div class="campos">' +
       campoNv('valor', 'Valor mensal do contrato (R$) *', L.valor ? String(L.valor).replace('.', ',') : '', 'text', ' inputmode="decimal" placeholder="0,00"', true) +
-      campoNv('custo', C.custoRot + ' (R$/mês)', String(CUSTO_RADIO), 'text', ' inputmode="decimal"' + (C.custoFixo ? ' readonly' : '')) +
+      campoNv('custo', C.custoRot + ' (R$/mês)', String(tipo === 'tv' ? CUSTO_TELA : CUSTO_RADIO).replace('.', ','), 'text', ' inputmode="decimal"' + (C.custoFixo ? ' readonly' : '')) +
       campoNv('inicio', 'Início *', ini, 'date') +
       '<label class="f" for="nv-vig">Duração<select id="nv-vig"><option value="12">12 meses</option><option value="24">24 meses</option><option value="6">6 meses</option></select></label>' +
       '<label class="f" for="nv-nf">Nota fiscal<select id="nv-nf"><option value="nota">Nota + boleto todo dia 5</option><option value="boleto">Só boleto, sem nota</option></select></label>' +
