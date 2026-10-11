@@ -9721,6 +9721,30 @@ function buildVisaoDespesas(){
 }
 
 // ── VISÃO EMPRESA (sub-aba) ─────────────────────────────────────────────
+// Antecipação de lucros (orientação do contador, 11/10/2026): registra e gera a memória de cálculo
+function retAbrirMemoria(i){
+  const a=(notaConfig.antecipacoes||[])[i]; if(!a||typeof MGBFinancas==='undefined') return;
+  let logo=''; try{ logo=new URL('marca/mgb-logo-roxo.png',location.href).href; }catch(e){}
+  const url=URL.createObjectURL(new Blob([MGBFinancas.memoriaAntecipacao({...a, logo})],{type:'text/html'}));
+  window.open(url,'_blank');
+}
+function retRegistrarAntecipacao(aAnt,mAnt){
+  if(typeof MGBFinancas==='undefined') return;
+  const recAnt=MODULES.reduce((a,m)=>a+recModMes(m.id,aAnt,mAnt),0);
+  const despAnt=despesaTotalMes(aAnt,mAnt);
+  const plano=MGBFinancas.planoRetirada({resultadoAnterior:recAnt-despAnt, despesaMensal:despAnt}, notaConfig);
+  const cfg=MGBFinancas.config(notaConfig);
+  const saldoTxt=String(g('ant-saldo').value||'').trim();
+  const a={ mesRef:MESES[mAnt]+'/'+aAnt, data:new Date().toLocaleDateString('pt-BR'), receita:Math.round(recAnt*100)/100, despesas:Math.round(despAnt*100)/100,
+    resultado:Math.round((recAnt-despAnt)*100)/100, pct:cfg.pctDistribuicao, sugerido:plano.lucros,
+    valor:fRecParseValor(g('ant-valor').value), saldoConta:saldoTxt===''?'':fRecParseValor(saldoTxt) };
+  const erros=MGBFinancas.validarAntecipacao(a);
+  if(erros.length){ g('ant-erro').textContent=erros.join(' '); return; }
+  notaConfig={...notaConfig, antecipacoes:[...(notaConfig.antecipacoes||[]), a]};
+  try{ scheduleSave(); }catch(e){}
+  buildVisaoEmpresa();
+  retAbrirMemoria(notaConfig.antecipacoes.length-1);
+}
 function buildVisaoEmpresa(){
   const now=new Date();
   const mSel=g('ov-emp-mes-sel'), aSel=g('ov-emp-ano-sel');
@@ -9796,15 +9820,26 @@ function buildVisaoEmpresa(){
           <div style="font-size:11px;color:var(--hint)">Sugestão do comitê · confirmar com o contador</div>
         </div>
         <div class="ov-summary" style="margin-top:10px">
-          <div class="ov-sum-item" title="Valor fixo mensal. Já entra nas despesas do mês como 'Pró-labore Eder (dia 21)'."><div class="ov-sum-lbl">Pró-labore</div><div class="ov-sum-val">${f(plano.proLabore)}</div><div style="font-size:10px;color:var(--hint);margin-top:2px">INSS 11% ${f(plano.inss)} · líquido ${f(plano.proLaboreLiquido)}</div></div>
+          <div class="ov-sum-item" title="Valor fixo mensal. Já entra nas despesas do mês como 'Pró-labore Eder (dia 21)'."><div class="ov-sum-lbl">Pró-labore</div><div class="ov-sum-val">${f(plano.proLabore)}</div><div style="font-size:10px;color:var(--hint);margin-top:2px">${plano.inss?('INSS '+cfg.inssPct+'% '+f(plano.inss)+' · líquido '+f(plano.proLaboreLiquido)):'INSS recolhido na Câmara (múltiplos vínculos)'}</div></div>
           <div class="ov-sum-item" title="${cfg.pctDistribuicao}% do resultado de ${MESES[mAnt]}/${aAnt} (receita − todas as despesas, já com o pró-labore)"><div class="ov-sum-lbl">Lucros a distribuir</div><div class="ov-sum-val" style="color:var(--green)">${plano.semLucro?'—':f(plano.lucros)}</div><div style="font-size:10px;color:var(--hint);margin-top:2px">${cfg.pctDistribuicao}% do resultado de ${MESES[mAnt]}</div></div>
           <div class="ov-sum-item" title="Fica na conta da MGB até a reserva chegar a ${cfg.mesesReserva} meses de despesas"><div class="ov-sum-lbl">Fica de reserva</div><div class="ov-sum-val">${plano.semLucro?'—':f(plano.reserva)}</div><div style="font-size:10px;color:var(--hint);margin-top:2px">meta: ${f(plano.metaReserva)} (${cfg.mesesReserva} meses de despesas)</div></div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;font-size:12px">
           <label style="display:flex;flex-direction:column;gap:4px">Pró-labore (R$/mês)<input id="ret-pl" class="anunc-form-inp" style="width:130px" inputmode="decimal" value="${String(cfg.proLabore).replace('.',',')}"></label>
           <label style="display:flex;flex-direction:column;gap:4px">% do resultado distribuído<input id="ret-pct" class="anunc-form-inp" style="width:110px" inputmode="decimal" value="${cfg.pctDistribuicao}"></label>
-          <button class="anunc-btn" onclick="(function(){ const v=fRecParseValor(g('ret-pl').value); const p=parseFloat(String(g('ret-pct').value).replace(',','.')); notaConfig={...notaConfig, proLabore:v, pctDistribuicao:isNaN(p)?70:Math.max(0,Math.min(100,p))}; try{scheduleSave();}catch(e){} buildVisaoEmpresa(); })()">Salvar regra</button>
+          <label style="display:flex;flex-direction:column;gap:4px">INSS na MGB (%)<input id="ret-inss" class="anunc-form-inp" style="width:90px" inputmode="decimal" value="${cfg.inssPct}" title="0 = recolhido na Câmara (declaração de múltiplos vínculos)"></label>
+          <button class="anunc-btn" onclick="(function(){ const v=fRecParseValor(g('ret-pl').value); const p=parseFloat(String(g('ret-pct').value).replace(',','.')); const i=parseFloat(String(g('ret-inss').value).replace(',','.')); notaConfig={...notaConfig, proLabore:v, pctDistribuicao:isNaN(p)?70:Math.max(0,Math.min(100,p)), inssPct:isNaN(i)?0:Math.max(0,Math.min(20,i))}; try{scheduleSave();}catch(e){} buildVisaoEmpresa(); })()">Salvar regra</button>
           ${plano.semLucro?'<span style="color:var(--red)">'+MESES[mAnt]+' fechou sem lucro: só o pró-labore.</span>':''}
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+          <div style="font-weight:700;font-size:13px">Registrar antecipação de lucros <span style="font-weight:400;color:var(--hint);font-size:12px">· orientação do contador: valor exato (sem arredondar), saldo livre na C6 e memória de cálculo anexada ao comprovante</span></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;font-size:12px">
+            <label style="display:flex;flex-direction:column;gap:4px">Valor a transferir (R$)<input id="ant-valor" class="anunc-form-inp" style="width:140px" inputmode="decimal" value="${plano.semLucro?'':String(plano.lucros.toFixed(2)).replace('.',',')}"></label>
+            <label style="display:flex;flex-direction:column;gap:4px">Saldo da C6 hoje (R$)<input id="ant-saldo" class="anunc-form-inp" style="width:140px" inputmode="decimal" placeholder="ex.: 25.000,00"></label>
+            <button class="anunc-btn" style="color:var(--green);border-color:rgba(24,154,102,.4)" onclick="retRegistrarAntecipacao(${aAnt},${mAnt})">Registrar e abrir memória de cálculo</button>
+            <span id="ant-erro" style="color:var(--red)"></span>
+          </div>
+          ${(notaConfig.antecipacoes||[]).length?'<div style="margin-top:10px;font-size:12px">'+(notaConfig.antecipacoes||[]).slice(-6).reverse().map((x,i)=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px dotted var(--border)"><span>'+x.data+' · ref. '+x.mesRef+'</span><span><b>'+f(x.valor)+'</b> · <a href="#" onclick="event.preventDefault();retAbrirMemoria('+((notaConfig.antecipacoes.length-1)-i)+')">memória</a></span></div>').join('')+'</div>':''}
         </div>
       </div>`;
     }
