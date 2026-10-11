@@ -7,10 +7,10 @@ const require = createRequire(import.meta.url);
 const N = require("../../novo.js");
 const A = require("../../acesso.js");
 
-test("custo do condomínio: R$ 70 por torre", () => {
-  assert.equal(N.custoCondominio(1), 70);
-  assert.equal(N.custoCondominio(2), 140);
-  assert.equal(N.custoCondominio("3"), 210);
+test("custo do condomínio: licença 4YouSee de R$ 39,56 por tela (nota F6)", () => {
+  assert.equal(N.custoCondominio(1), 39.56);
+  assert.equal(N.custoCondominio(2), 79.12);
+  assert.equal(N.custoCondominio("3"), 118.68);
   assert.equal(N.custoCondominio(0), 0);
   assert.equal(N.custoCondominio(""), 0);
 });
@@ -18,7 +18,7 @@ test("custo do condomínio: R$ 70 por torre", () => {
 test("despesa da licença sai no formato recorrente do hub", () => {
   const d = N.despesaLicenca(2, "2026-11-01", "36");
   assert.equal(d.t, "Recorrente");
-  assert.equal(d.q * d.u, 140);
+  assert.equal(Math.round(d.q * d.u * 100) / 100, 79.12);
   assert.equal(d.mesesRec, 36);
   assert.equal(d.dataInicio, "2026-11");
   assert.equal(d.pago, false);
@@ -62,17 +62,18 @@ test("botão Novo: Eder e Karen veem; Guina e Cleiton não", () => {
 });
 
 // ── Rádio interna ──────────────────────────────────────────────────────
-test("rádio interna: custo fixo de R$ 70 e sobra calculada", () => {
-  assert.equal(N.CUSTO_RADIO, 70);
-  assert.equal(N.sobraRadio(250), 180);
-  assert.equal(N.sobraRadio("199,90"), 129.9);
-  assert.equal(N.sobraRadio(50), -20);
+test("rádio interna: custo da unidade ListenX (R$ 64,87) e sobra calculada", () => {
+  assert.equal(N.CUSTO_RADIO, 64.87);
+  assert.equal(N.CUSTO_TELA, 39.56);
+  assert.equal(N.sobraRadio(250), 185.13);
+  assert.equal(N.sobraRadio("199,90"), 135.03);
+  assert.equal(N.sobraRadio(50), -14.87);
 });
 
 test("rádio interna: custo sai no formato recorrente do hub", () => {
   const d = N.despesaRadio("2026-11-01", "24");
   assert.equal(d.t, "Recorrente");
-  assert.equal(d.q * d.u, 70);
+  assert.equal(d.q * d.u, 64.87);
   assert.equal(d.mesesRec, 24);
   assert.equal(d.dataInicio, "2026-11");
 });
@@ -188,7 +189,7 @@ test("TV interna: contrato padrão próprio, custo informado", () => {
   const d = N.despesaRadio("2026-11-01", 12, "90", "Licença da TV interna");
   assert.equal(d.u, 90);
   assert.equal(d.d, "Licença da TV interna");
-  assert.equal(N.despesaRadio("2026-11-01", 12).u, 70);
+  assert.equal(N.despesaRadio("2026-11-01", 12).u, 64.87);
 });
 
 test("contratos usam a logo oficial quando ela é passada", () => {

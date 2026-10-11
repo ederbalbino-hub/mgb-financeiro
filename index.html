@@ -841,6 +841,7 @@ body{-webkit-font-smoothing:antialiased}
 
 </style>
 <script src="financas.js"></script>
+<script src="telavertical/rede-tela-vertical.js"></script>
 </head>
 <body>
 <!-- MOBILE TOPBAR -->
@@ -2673,7 +2674,7 @@ textarea { resize:vertical; min-height:70px; }
   <div id=&quot;e-sec-midia&quot; class=&quot;section&quot;>
     <div class=&quot;card&quot;>
       <div class=&quot;card-title&quot;><div class=&quot;icon&quot;>🏢</div> Selecione os Condomínios</div>
-      <p style=&quot;font-size:12px;color:#6B7280;margin-bottom:14px&quot;>Exibição mínima: <strong>300 inserções/dia por tela</strong> (~9.000/mês).</p>
+      <p style=&quot;font-size:12px;color:#6B7280;margin-bottom:14px&quot;>Entrega mínima: <strong>150 inserções/dia por tela</strong> (~4.500/mês).</p>
       <div class=&quot;condo-grid&quot; id=&quot;e-condo-grid&quot;></div>
       <div class=&quot;summary-box&quot; id=&quot;e-condo-summary&quot; style=&quot;display:none&quot;>
         <div class=&quot;sum-item&quot;><div class=&quot;sum-num&quot; id=&quot;e-sum-condos&quot;>0</div><div class=&quot;sum-lbl&quot;>Condomínios</div></div>
@@ -2758,30 +2759,19 @@ textarea { resize:vertical; min-height:70px; }
 
 </div>
 <script>
-const eCondominios = [
-  // Residenciais
-  { id:'lagoa-dourada',     nome:'Lagoa Dourada',         bairro:'Aquaville, Zona Leste',     torres:5, telas:5, moradores:1344, publico:1344, status:'ativo' },
-  { id:'lake-portinari',    nome:'Lake Portinari',         bairro:'Pioneiros, Zona Leste',     torres:2, telas:2, moradores:865,  publico:865,  status:'ativo' },
-  { id:'spazio-louvre',     nome:'Spazio Louvre',          bairro:'Gleba Palhano, Zona Sul',   torres:5, telas:5, moradores:1650, publico:1650, status:'ativo' },
-  { id:'terra-parque',      nome:'Terra Parque',           bairro:'Champagnat, Zona Oeste',    torres:2, telas:2, moradores:450,  publico:450,  status:'ativo' },
-  { id:'res-malaga',        nome:'Residencial Málaga',     bairro:'Aquaville, Zona Leste',     torres:3, telas:3, moradores:1290, publico:1290, status:'ativo' },
-  { id:'spot',              nome:'Spot',                   bairro:'Centro, Londrina',          torres:2, telas:2, moradores:500,  publico:1200, status:'ativo' },
-  { id:'bella-fiori',       nome:'Resid. Bella Fiori',     bairro:'Vale dos Tucanos, Zona Sul',torres:2, telas:2, moradores:500,  publico:1200, status:'ativo' },
-  { id:'tay',               nome:'Tay',                    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:600,  publico:600,  status:'ativo' },
-  { id:'uptown',            nome:'Uptown',                 bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:600,  publico:600,  status:'ativo' },
-  // Liberty Residence (Nossa Sra. de Lourdes, Centro · 78 moradores · 1 tela) entra aqui na instalação — Out/2026: { id:'liberty', nome:'Liberty Residence', bairro:'Nossa Sra. de Lourdes, Centro', torres:1, telas:1, moradores:78, publico:78, status:'ativo' },
-  { id:'villa-solare', nome:'Villa Solare', bairro:'Gleba Palhano, Zona Sul', torres:2, telas:2, moradores:234, publico:234, status:'ativo' },
-  // Comerciais
-  { id:'ed-ayrton-senna-1', nome:'Ed. Ayrton Senna 1',    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:null, publico:35000, status:'ativo', tipo:'Comercial' },
-  { id:'ed-ayrton-senna-2', nome:'Ed. Ayrton Senna 2',    bairro:'Gleba Palhano, Zona Sul',   torres:2, telas:2, moradores:null, publico:35000, status:'ativo', tipo:'Comercial' },
-];
+// Condomínios: vêm do hub (módulo Tela Vertical, telas lançadas lá) + dados de público da rede
+// (telavertical/rede-tela-vertical.js, os mesmos da Proposta Elevadores). Atualiza ao abrir a aba.
+let eCondominios = eRedeCarregar();
+function eRedeMap(c){ return { id:c.id, hub:c.hub||c.nome, nome:c.nome, bairro:c.bairro+(c.zona&&c.zona!==c.bairro&&c.zona!=='Centro'?', Zona '+c.zona:''), torres:c.torres||c.telas, telas:c.telas, moradores:c.tipo==='comercial'?null:c.pessoas, publico:c.pessoas, status:'ativo', tipo:c.tipo==='comercial'?'Comercial':'' }; }
+function eRedeCarregar(){ try{ const P=window.parent; if(P&&P.tvRedeHub){ const l=P.tvRedeHub(); if(l&&l.length) return l.map(eRedeMap); } if(P&&P.TV_REDE) return P.TV_REDE.lista().map(eRedeMap); }catch(err){} return []; }
+function eRedeAtualizar(){ const sel=new Set(eCondos); eCondominios=eRedeCarregar(); eCondos=new Set([...sel].filter(id=>eCondominios.some(c=>c.id===id))); eRenderCondos(); eCalc(); }
 const ePlanos = [
   { id:'mensal',     nome:'Mensal',     meses:1,  desc:'Ideal para campanhas pontuais, lançamentos ou datas comemorativas.' },
   { id:'trimestral', nome:'Trimestral', meses:3,  desc:'Indicado para campanhas sazonais e ações promocionais.' },
   { id:'semestral',  nome:'Semestral',  meses:6,  desc:'Ótimo para construção de marca. Frequência gera lembrança.' },
   { id:'anual',      nome:'Anual',      meses:12, desc:'Máxima visibilidade. Sua marca referência nos condomínios.' },
 ];
-const INS_DIA=100, INS_MES=30;
+const INS_DIA=(function(){ try{ return (window.parent.TV_REDE&&window.parent.TV_REDE.REDE.insercoesDia)||150; }catch(err){ return 150; } })(), INS_MES=30;
 // Fator de frequência DOOH: cada pessoa é impactada ~3x/mês (padrão indústria)
 const FREQ_IMPACTO=3;
 let eTipo='pj', eCondos=new Set(), ePlano=null;
@@ -3055,7 +3045,7 @@ function eGerar(){
   salvarSheets(num, meses, total, inicio, fimDate);
   try{
     if(window.parent &amp;&amp; window.parent.mgbCriarAnunciante &amp;&amp; nome &amp;&amp; sel.length){
-      window.parent.mgbCriarAnunciante(nome, mensal, meses, inicio ? inicio.slice(0,7) : undefined, sel.map(c=>c.nome),
+      window.parent.mgbCriarAnunciante(nome, mensal, meses, inicio ? inicio.slice(0,7) : undefined, sel.map(c=>c.hub||c.nome),
         { cnpj: doc, fantasia: nome, responsavel: egv('e-resp'), cargo: egv('e-cargo'), tel: egv('e-tel') }
       );
     }
@@ -8234,6 +8224,7 @@ function showOpPanel(name, btn){
   if(name==='elevador'){
     // Refaz a lista de clientes do CRM sempre que abre a aba (o iframe pode ter carregado antes dos dados chegarem do Sheets)
     try{ const fe=document.getElementById('frame-elevador'); if(fe&&fe.contentWindow&&fe.contentWindow.eCarregarClientesCRM) fe.contentWindow.eCarregarClientesCRM(); }catch(e){}
+    try{ const fe=document.getElementById('frame-elevador'); if(fe&&fe.contentWindow&&fe.contentWindow.eRedeAtualizar) fe.contentWindow.eRedeAtualizar(); }catch(e){}
   }
   if(name==='tvproposta'){ const f=document.getElementById('tvproposta-frame'); if(f&&!f.src) f.src='telavertical/02-comercial/midia-kit-tela-vertical.html?t='+Date.now(); }
   if(name==='tvsindicos'){ const f=document.getElementById('tvsindicos-frame'); if(f&&!f.src) f.src='telavertical/05-operacao/apresentacao-sindicos-tela-vertical.html?t='+Date.now(); }
@@ -11020,6 +11011,19 @@ function buildDespComp(){
 }
 
 
+// ── REDE TELA VERTICAL AO VIVO (11/10) ─────────────────────────────────────────
+// Telas = a linha "Sistema TV" (licença 4YouSee) de cada condomínio do módulo; público = telavertical/rede-tela-vertical.js.
+// Usado pelo Contrato Anunciante, painel do mês e relatórios — lançou/instalou no hub, aparece em todos.
+function tvTelasDoItem(item){
+  const rs=((db.elev||{})[item]||[]).filter(x=>x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||'')));
+  return rs.length?Math.max.apply(null,rs.map(r=>r.q||0)):0;
+}
+function tvRedeHub(){
+  const m=MODULES.find(x=>x.id==='elev');
+  if(!window.TV_REDE) return [];
+  return TV_REDE.lista({itens:m?m.items:[], telas:tvTelasDoItem, info:i=>((clientesInfo||{}).elev||{})[i]});
+}
+function tvTelasAtivas(){ return tvRedeHub().reduce((a,c)=>a+(c.telas||0),0); }
 // ── OPERAÇÃO TELA VERTICAL · painel do mês e do sócio (11/10) ───────────────
 // Junta num lugar o que o Eder manda ao sócio no fim do mês e o que a Karen lança.
 let tvpMes=null;
@@ -11042,7 +11046,7 @@ function tvPainelRender(){
   const temNovo=!document.body.classList.contains('mgb-sem-novo')&&window.MGBNovo&&MGBNovo.escolher;
   root.innerHTML=
     '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px">'+
-      '<div><div style="font:800 18px Syne,sans-serif;color:#16294F">Mês da Tela Vertical</div><div style="font-size:12px;color:#6b6380">'+condos+' condomínios · '+ELEV_TELAS_QTD+' telas · '+anuncs.length+' anunciante(s) ativo(s) no mês</div></div>'+
+      '<div><div style="font:800 18px Syne,sans-serif;color:#16294F">Mês da Tela Vertical</div><div style="font-size:12px;color:#6b6380">'+tvRedeHub().length+' condomínios · '+tvTelasAtivas()+' telas · '+anuncs.length+' anunciante(s) ativo(s) no mês</div></div>'+
       '<div style="display:flex;gap:8px;align-items:center"><button type="button" onclick="togglePrivate();tvPainelRender()" style="font:600 12px \'DM Sans\',sans-serif;padding:7px 10px;border-radius:8px;border:1px solid #E3D8BF;background:#fff;color:#16294F;cursor:pointer">'+(vis?'🙈 Ocultar valores':'👁️ Mostrar valores')+'</button>'+
       '<label style="font-size:12px;color:#6b6380">Mês <input type="month" value="'+tvpMes+'" onchange="tvpMes=this.value;tvPainelRender()" style="margin-left:6px;padding:6px 8px;border:1px solid #E3D8BF;border-radius:8px;font:inherit"></label></div>'+
     '</div>'+
@@ -11100,7 +11104,7 @@ function elevRelatorioMensal(anoArg,mesArg){
     '.sub{color:#666;font-size:12px;margin-top:4px}table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:6px 8px;border-bottom:1px solid #e3e3e3;text-align:left}.n{text-align:right;white-space:nowrap}'+
     '.k{display:flex;gap:12px;margin:10px 0}.k div{flex:1;border:1px solid #d8d2c0;border-radius:8px;padding:10px 12px}.k b{display:block;font-size:17px;margin-top:3px}.neg{color:#B42318}.pos{color:#118A5D}.dest{background:#FBF6E8}'+
     '@media print{body{padding:12px}}</style></head><body>'+
-    '<div style="height:70px;margin:-10px 0 4px -14px">'+TV_LOGO_NAVY.replace('<svg ','<svg style="height:70px;width:auto;display:block" ')+'</div><h1>Relatório mensal</h1><div class="sub">Relatório mensal aos sócios · '+NOMES[mes]+' de '+ano+' · '+ELEV_TELAS_QTD+' telas</div>'+
+    '<div style="height:70px;margin:-10px 0 4px -14px">'+TV_LOGO_NAVY.replace('<svg ','<svg style="height:70px;width:auto;display:block" ')+'</div><h1>Relatório mensal</h1><div class="sub">Relatório mensal aos sócios · '+NOMES[mes]+' de '+ano+' · '+tvTelasAtivas()+' telas</div>'+
     '<h2>Investimento dos sócios (valores)</h2><div class="k"><div>Eder<b>'+f(t.eder)+'</b></div><div>Jadson<b>'+f(t.jadson)+'</b></div><div>Total investido<b>'+f(t.total)+'</b></div></div>'+
     '<div class="sub">Meta: '+ELEV_TELAS_QTD+' telas × '+f(ELEV_INVEST_POR_TELA)+' = '+f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)+'</div>'+
     '<h2>Resultado de '+NOMES[mes]+'</h2><div class="k"><div>Receita<b>'+f(r.rec)+'</b></div><div>Despesas<b>'+f(r.desp)+'</b></div><div>Resultado<b class="'+(r.resultado>=0?'pos':'neg')+'">'+(r.resultado>=0?'':'−')+f(Math.abs(r.resultado))+'</b></div></div>'+
@@ -12708,7 +12712,7 @@ async function loadFromSheets(){
 // 2) em TODAS as unidades a linha recorrente "Sistema TV/4Yousee" passa pra telas × R$ 70 (ajusta fin[][] pelo delta — mesmo método do addItem);
 //    unidade sem a linha ganha uma nova (12 meses).
 // One-shot (flag em migracoes) e idempotente. Só roda com estado REAL vindo do Sheets (_cargaSheetsOk).
-const ELEV_CUSTO_TV = 70; // R$ por TELA/mês
+const ELEV_CUSTO_TV = 39.56; // R$ por TELA/mês — licença 4YouSee pela NFS-e 7523 (out/2026; antes R$ 70)
 // nº de telas das unidades que já existiam (bate com o q original das linhas; as novas trazem 'telas' na própria entrada)
 const ELEV_TELAS={'Lagoa Dourada':7,'Lake Portinari':3,'Spazio Louvre':5,'Terra Parque':2,'Residencial Málaga':3,'Spot':2,'Ayrton Senna 1':2,'Ayrton Senna 2':2,'Bella Fiori':2,'Tay':2,'Uptown':2};
 function elevTelasDe(item){
@@ -12732,6 +12736,77 @@ function empresaMigrarFixas(){
   };
   fix('Contador',500,'2026-06'); fix('Cleiton',1500,'2026-10'); fix('Karen',500,'2026-10');
   migracoes.empresaFixas_20261009=true;
+  try{ scheduleSave(); }catch(e){}
+}
+// ── CUSTOS PELA NOTA DOS FORNECEDORES (Eder, 11/10/2026) ──────────────────────
+// 4YouSee Enterprise (F6 Sistemas, NFS-e 7523, ref. set/26): 57,20 × R$ 39,56 por tela/player + R$ 35,00 adicionais.
+// 4YouSee Analytics (NFS-e 7468): R$ 409,94 fixo. ListenX (NFS-e 724406): 55 × R$ 64,87 por rádio + R$ 295,75 plano Avançado.
+// Regra: custo UNITÁRIO em cada tela/rádio (cresce com a rede) e os fixos numa despesa única cada, sem rateio por tela.
+// Vale da competência out/2026 em diante; os meses anteriores ficam como foram lançados.
+const CUSTO_NOTA={ desde:'2026-10', tela:39.56, radio:64.87, gestao4ys:444.94, listenBase:295.75 };
+const RX_4YS=/sistema tv|4 ?you ?see/i, RX_LISTEN=/listen/i;
+function recorrenteNovoValor(rows,r,novoU){
+  const [aN,mN]=CUSTO_NOTA.desde.split('-').map(Number);
+  const [aI,mI]=(r.dataInicio||CUSTO_NOTA.desde).split('-').map(Number);
+  const antes=(aN-aI)*12+(mN-mI), tot=r.mesesRec||12;
+  if(r.u===novoU) return false;
+  if(antes<=0){ applyToFin(r,-1); r.u=novoU; applyToFin(r,+1); return true; }
+  if(antes>=tot) return false;                              // já tinha acabado antes de out/2026
+  applyToFin(r,-1); r.mesesRec=antes; applyToFin(r,+1);     // histórico fica com o valor antigo
+  const novo=Object.assign({},r,{u:novoU,dataInicio:CUSTO_NOTA.desde,mesesRec:Math.max(12,tot-antes),pago:false,dataPago:''});
+  applyToFin(novo,+1); rows.push(novo); return true;
+}
+function custosPelaNota(){
+  if(!_cargaSheetsOk || migracoes.custosNota_202610) return;
+  const log=[];
+  // 1) licença 4YouSee por tela/player: Tela Vertical, TV Interna, Vaapty e Móveis Brasília
+  ['elev','tv','vaapty','mb'].forEach(mid=>{
+    const m=MODULES.find(x=>x.id===mid); if(!m) return;
+    if(!db[mid]) db[mid]={};
+    m.items.forEach(item=>{
+      const rows=db[mid][item]||(db[mid][item]=[]);
+      const r=rows.find(x=>x.t==='Recorrente' && (RX_4YS.test(x.d||'')||RX_4YS.test(x.f||'')));
+      if(r){ if(recorrenteNovoValor(rows,r,CUSTO_NOTA.tela)) log.push(mid+':'+item); }
+      else if(mid==='mb'){                                   // MB não tinha a licença lançada: 1 player por loja
+        const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:CUSTO_NOTA.tela,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:CUSTO_NOTA.desde};
+        applyToFin(e,+1); rows.push(e); log.push('mb+:'+item);
+      }
+    });
+  });
+  // 2) ListenX por unidade de rádio
+  const rm=MODULES.find(x=>x.id==='radio');
+  if(rm) rm.items.forEach(item=>{
+    const rows=(db.radio||{})[item]||[];
+    rows.filter(x=>x.t==='Recorrente' && (RX_LISTEN.test(x.d||'')||RX_LISTEN.test(x.f||''))).forEach(r=>{ if(recorrenteNovoValor(rows,r,CUSTO_NOTA.radio)) log.push('radio:'+item); });
+  });
+  // 2b) Rádios ListenX que não estavam lançadas (Eder, 11/10): as lojas Móveis Brasília têm rádio
+  //     (1 por loja, mesma quantidade das telas) e as duas Emagrecentro 1 cada.
+  const addListen=(mid,item)=>{
+    const rows=(db[mid]||(db[mid]={}))[item]||(db[mid][item]=[]);
+    if(rows.some(x=>x.t==='Recorrente' && (RX_LISTEN.test(x.d||'')||RX_LISTEN.test(x.f||'')))) return;
+    const e={t:'Recorrente',tipo:'Licença',d:'Rádio',f:'Listen',q:1,u:CUSTO_NOTA.radio,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:CUSTO_NOTA.desde};
+    applyToFin(e,+1); rows.push(e); log.push('listen+:'+mid+':'+item);
+  };
+  ((MODULES.find(x=>x.id==='mb')||{}).items||[]).forEach(i=>addListen('mb',i));
+  ((MODULES.find(x=>x.id==='tv')||{}).items||[]).filter(i=>/emagrecentro/i.test(i)).forEach(i=>addListen('tv',i));
+  // 3) Plataforma de Gestão 4YouSee (Analytics + adicionais): despesa única, sem rateio por tela
+  despesasComp.filter(d=>/gest[aã]o/i.test(d.nome||'') && /4 ?you ?see/i.test((d.forn||'')+' '+(d.nome||''))).forEach(d=>{
+    if(d.valor===CUSTO_NOTA.gestao4ys||!d.inicio) return;
+    const [aN,mN]=CUSTO_NOTA.desde.split('-').map(Number), [aI,mI]=d.inicio.split('-').map(Number);
+    const antes=(aN-aI)*12+(mN-mI), tot=d.meses||1, resto=Math.max(12,tot-Math.max(0,antes));
+    if(antes<=0){ despCompFin(d,-1); d.valor=CUSTO_NOTA.gestao4ys; d.meses=resto; despCompFin(d,+1); }
+    else if(antes<tot){ despCompFin(d,-1,antes); d.meses=antes;
+      const n={id:despCompId++,nome:'Plataforma de Gestão (Analytics + adicionais)',forn:d.forn||'4Yousee',valor:CUSTO_NOTA.gestao4ys,meses:resto,inicio:CUSTO_NOTA.desde,telas:(d.telas||[]).slice()};
+      despesasComp.push(n); despCompFin(n,+1); }
+    log.push('gestao');
+  });
+  // 4) ListenX plano Avançado: despesa única da empresa
+  if(!empresaDespesas.some(x=>/listenx/i.test(x.nome||''))){
+    empresaDespesas.push({id:empresaDespId++, nome:'ListenX · plano Avançado (rádios)', valor:CUSTO_NOTA.listenBase, inicio:CUSTO_NOTA.desde, ativo:true});
+    log.push('listenBase');
+  }
+  migracoes.custosNota_202610=true;
+  console.info('custosPelaNota',log);
   try{ scheduleSave(); }catch(e){}
 }
 // Reajuste do Eder (11/10/2026): "Operador do Sistema" (Cleiton, rateado na Tela Vertical com o sócio)
@@ -14119,7 +14194,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
