@@ -98,8 +98,44 @@
       '<p style="margin-top:40px">______________________________<br>Eder Balbino — sócio administrador</p></body></html>';
   }
 
+  // ── Receita oficial do mês = notas fiscais emitidas na competência (decisão de 11/10/2026) ──
+  // fatEmissoes: {'<id>|AAAA-MM': {status, modo, valor}} (Faturamento) — conta as 'emitida' (com nota e, à parte, só boleto)
+  // notas: notas avulsas [{data:'AAAA-MM-DD', valor, status, semNota}] — conta as autorizadas, com nota
+  // leo: unidades da Léo [{status, valor}] já emitidas na competência que está sendo fechada
+  function somaNotasCompetencia(d) {
+    var comp = String(d.comp || '');
+    var fat = 0, avulsas = 0, leo = 0, qtd = 0, soBoleto = 0;
+    var fe = d.fatEmissoes || {};
+    Object.keys(fe).forEach(function (k) {
+      if (k.split('|')[1] !== comp) return;
+      var e = fe[k] || {};
+      if (e.status !== 'emitida') return;
+      if (e.modo === 'boleto') { soBoleto += Number(e.valor) || 0; return; }
+      fat += Number(e.valor) || 0; qtd++;
+    });
+    (d.notas || []).forEach(function (n) {
+      if (!n || n.semNota || String(n.data || '').slice(0, 7) !== comp) return;
+      if (['AUTHORIZED', 'emitida'].indexOf(n.status) === -1) return;
+      avulsas += Number(n.valor) || 0; qtd++;
+    });
+    (d.leo || []).forEach(function (u) {
+      if (u && u.status === 'emitida') { leo += Number(u.valor) || 0; qtd++; }
+    });
+    // Só boleto (sem nota) também é receita da MGB: entra no total, mas aparece separado para o contador conferir.
+    return { faturamento: arred(fat), avulsas: arred(avulsas), leo: arred(leo), notas: arred(fat + avulsas + leo), soBoleto: arred(soBoleto),
+      total: arred(fat + avulsas + leo + soBoleto), qtd: qtd };
+  }
+
+  // Receita usada no resultado: a do fechamento (notas) se o mês foi fechado; senão, a prevista.
+  function receitaOficial(fechamentos, comp, prevista) {
+    var f = (fechamentos || {})[comp];
+    if (f && f.receitaNotas != null) return { valor: Number(f.receitaNotas) || 0, fonte: 'notas' };
+    return { valor: Number(prevista) || 0, fonte: 'prevista' };
+  }
+
   var api = { PADRAO: PADRAO, config: config, proLaboreNoMes: proLaboreNoMes, planoRetirada: planoRetirada,
-    validarAntecipacao: validarAntecipacao, memoriaAntecipacao: memoriaAntecipacao };
+    validarAntecipacao: validarAntecipacao, memoriaAntecipacao: memoriaAntecipacao,
+    somaNotasCompetencia: somaNotasCompetencia, receitaOficial: receitaOficial };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   global.MGBFinancas = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -46,3 +46,29 @@ test("memória de cálculo traz os números e o termo Antecipação de Lucros", 
   assert.match(h, /R\$ 10\.714,92/);
   assert.match(h, /23\.770\.170\/0001-50/);
 });
+
+test("receita oficial: soma as notas emitidas da competência e mostra o só-boleto à parte", () => {
+  const r = F.somaNotasCompetencia({
+    comp: "2026-10",
+    fatEmissoes: {
+      "a|2026-10": { status: "emitida", modo: "nota+boleto", valor: 600 },
+      "b|2026-10": { status: "emitida", modo: "nota", valor: 7800 },
+      "c|2026-10": { status: "emitida", modo: "boleto", valor: 300 },
+      "d|2026-10": { status: "erro", modo: "nota", valor: 999 },
+      "a|2026-09": { status: "emitida", modo: "nota", valor: 600 }
+    },
+    notas: [
+      { data: "2026-10-12", valor: 250, status: "AUTHORIZED" },
+      { data: "2026-10-13", valor: 100, status: "AUTHORIZED", semNota: true },
+      { data: "2026-09-30", valor: 400, status: "AUTHORIZED" }
+    ],
+    leo: [{ status: "emitida", valor: 264 }, { status: "pendente", valor: 264 }]
+  });
+  assert.deepEqual(r, { faturamento: 8400, avulsas: 250, leo: 264, notas: 8914, soBoleto: 300, total: 9214, qtd: 4 });
+});
+
+test("receita oficial: usa o fechamento pelas notas; sem fechamento, a prevista", () => {
+  const fech = { "2026-10": { receitaNotas: 36500.1 } };
+  assert.deepEqual(F.receitaOficial(fech, "2026-10", 37062.04), { valor: 36500.1, fonte: "notas" });
+  assert.deepEqual(F.receitaOficial(fech, "2026-11", 37062.04), { valor: 37062.04, fonte: "prevista" });
+});
