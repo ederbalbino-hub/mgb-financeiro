@@ -14,6 +14,8 @@ test("admin: Meu dia por padrão, Visão geral mostra tudo", () => {
   }
   assert.ok(A.pode("admin-meudia", "planocaixa"));
   assert.ok(!A.pode("admin-meudia", "operacional:estudio"), "Estúdio é do Cleiton");
+  assert.ok(A.pode("admin-meudia", "relatorios"), "relatório da Tela Vertical ao sócio fica na Cobrança Mensal");
+  assert.ok(A.pode("admin-meudia", "custos"), "módulo Tela Vertical");
 });
 
 test("admin pode ver como outra pessoa; outros papéis não", () => {
@@ -24,7 +26,7 @@ test("admin pode ver como outra pessoa; outros papéis não", () => {
 
 test("Karen: financeiro e contratos, sem CRM, propostas, Plano de Caixa e Pessoal", () => {
   for (const p of ["overview", "contabilidade", "relatorios", "radioops", "operacional:contratos", "operacional"]) assert.ok(A.pode("financeiro", p), p);
-  for (const p of ["leads", "planocaixa", "pessoal", "midiakit", "sindicos", "propvaapty", "apresmgb", "operacional:estudio"]) assert.ok(!A.pode("financeiro", p), p);
+  for (const p of ["leads", "planocaixa", "pessoal", "propvaapty", "apresmgb", "operacional:estudio"]) assert.ok(!A.pode("financeiro", p), p);
   assert.ok(A.temExtra("financeiro", "valores"));
   assert.ok(!A.temExtra("financeiro", "pessoal"));
 });
@@ -107,4 +109,18 @@ test("renovação: estende pelo mesmo prazo", () => {
 test("Karen não vê o Rádio Ops duplicado (o módulo Moinho abre a mesma tela)", () => {
   assert.deepEqual(A.PERFIS.financeiro.ocultar, ["#nav-radioops", "#home-rops-card"]);
   assert.ok(A.pode("financeiro", "radioops"));
+});
+
+test("renovação: anunciante da Tela Vertical mantém a chave antiga (Elevadores)", () => {
+  const novo = { origem: "Tela Vertical", nome: "Loja X", fimKey: 24321 };
+  const antigo = { origem: "Elevadores", nome: "Loja X", fimKey: 24321 };
+  assert.equal(A.chaveRenov(novo), A.chaveRenov(antigo));
+  const renov = { [A.chaveRenov(antigo)]: { s: "eder" } };
+  assert.equal(A.contratosParaRenovar([novo], 24321, renov, false).length, 0, "encaminhado antes da troca de nome não volta para a Karen");
+});
+
+test("Karen: módulo Tela Vertical inteiro (operação, propostas, síndicos, Cobrança Mensal)", () => {
+  for (const p of ["operacional:telavertical", "midiakit", "sindicos", "relatorios", "custos"]) assert.ok(A.pode("financeiro", p), p);
+  for (const p of ["admin-geral", "admin-meudia"]) assert.ok(A.pode(p, "operacional:telavertical"), p);
+  for (const p of ["bureau", "programacao"]) assert.ok(!A.pode(p, "operacional:telavertical"), p);
 });
