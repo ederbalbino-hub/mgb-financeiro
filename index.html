@@ -6523,7 +6523,7 @@ function copiarSpot() {
           <div><label class="ferr-lbl">Simples Nacional vigente (%)</label><input id="f-nota-simples-mes" class="ferr-in" style="max-width:140px" inputmode="decimal" placeholder="ex.: 7,40" oninput="fSimplesSalvar(this.value)"></div>
           <div id="f-nota-aliq-info" class="ferr-info"></div>
         </div>
-        <div class="ferr-d" style="margin-top:6px">O imposto da aba Empresa soma as duas: ISS + Simples.</div>
+        <div class="ferr-d" style="margin-top:6px">O imposto da aba Empresa usa só o Simples: o ISS já está dentro dele (o ISS separado serve para a nota e o ISS retido).</div>
       </div>
       <div class="ferr-grid" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
         <div class="ferr-card">
@@ -8421,12 +8421,13 @@ function autoFillFinReceita(year, month){
 }
 
 // ── EMPRESA: imposto + despesas gerais ───────────────────────────────────
-// Imposto da empresa = ISS + Simples Nacional, os MESMOS valores configurados na aba Nota Fiscal (alíquotas do Asaas), somados.
-// Ex.: out/2026 → ISS 2,37% + Simples 7,40% = 9,77% sobre a receita do mês.
+// Imposto da empresa = alíquota efetiva do Simples Nacional (DAS). Confirmado com o Eder em 11/10/2026:
+// o ISS (ex.: 2,37%) JÁ ESTÁ DENTRO dos 7,40% do Simples — antes o hub somava os dois e contava o ISS duas vezes.
+// O ISS separado continua servindo para a nota fiscal e para o ISS retido (Londrina).
 function impostoIss(){ return Number(notaConfig.aliquotaMes)||0; }
 function impostoSimples(){ const s=notaConfig.simplesMes; return (s==null||s==='')?7.40:(Number(s)||0); }
-function impostoAliq(){ return (impostoIss()+impostoSimples())/100; }
-function impostoRotulo(){ const fm=x=>x.toFixed(2).replace('.',','); return fm(impostoAliq()*100)+'% (ISS '+fm(impostoIss())+' + Simples '+fm(impostoSimples())+')'; }
+function impostoAliq(){ return impostoSimples()/100; }
+function impostoRotulo(){ const fm=x=>x.toFixed(2).replace('.',','); return 'Simples '+fm(impostoSimples())+'%'+(impostoIss()?' (ISS '+fm(impostoIss())+' já incluso)':''); }
 // empresaDespesas = [{id, nome, valor, inicio:'YYYY-MM', ativo:true}]
 let empresaDespesas = [
   {id:1, nome:'Contador', valor:300, inicio:new Date().toISOString().slice(0,7), ativo:true}
@@ -9744,8 +9745,22 @@ function buildVisaoEmpresa(){
   },0);
   const aportesMesQtd=aportesAtivos.filter(er=>{ if(!er.inicio) return false; const [aA,mA]=er.inicio.split('-').map(Number); return selAno===aA&&selMes===mA-1; }).length;
 
-  // Caixa do mês = faturamento clientes + aportes − imposto − despesas empresa
-  const caixaMes=receitaMes+totalAportes-imposto-totalDespEmpresa;
+  // Revisão do especialista em finanças (11/10/2026): o antigo "Caixa" descontava só imposto e despesas da empresa
+  // e deixava de fora os custos dos módulos (4YouSee, ListenX, Connectmix, Guina…). Agora:
+  //   Resultado do mês = receita − TODAS as despesas do mês (mesma lista da Visão Despesas, com imposto)
+  //   Caixa realizado  = recebido dos clientes + aportes − despesas marcadas como pagas
+  const despMes=coletaDespesasMes(selAno,selMes);
+  const despTotalMes=despMes.reduce((a,d)=>a+d.vlrMes,0);
+  const dKeyMes=despPagKey(selAno,selMes);
+  const despPagas=despMes.filter(d=>{ try{ const pg=((despPagamentos[d.m.id]||{})[d.item]||{})[d.idx]; return !!(pg&&pg[dKeyMes]&&pg[dKeyMes].pago); }catch(e){ return false; } }).reduce((a,d)=>a+d.vlrMes,0);
+  const linhasMes=coletaClientesMes(selAno,selMes);
+  const recebidoMes=linhasMes.filter(l=>l.pago).reduce((a,l)=>a+l.valor,0);
+  const resultadoMes=receitaMes-despTotalMes;
+  const caixaMes=recebidoMes+totalAportes-despPagas;
+  // Notas emitidas no Faturamento para esta competência (o resultado oficial fecha pelas notas — decisão de 11/10)
+  const compKey=selAno+'-'+String(selMes+1).padStart(2,'0');
+  const notasMes=Object.keys(fatEmissoes||{}).filter(k=>k.split('|')[1]===compKey).map(k=>fatEmissoes[k])
+    .filter(e=>e&&e.status==='emitida'&&e.modo!=='boleto').reduce((a,e)=>a+(Number(e.valor)||0),0);
   const temMov=receitaMes||totalAportes||imposto||totalDespEmpresa;
 
   g('ov-emp-kpis').innerHTML=`
@@ -9753,8 +9768,9 @@ function buildVisaoEmpresa(){
     <div class="ov-sum-item"><div class="ov-sum-lbl">Aportes ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${totalAportes?('+'+f(totalAportes)):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl" title="ISS + Simples (alíquotas da aba Nota Fiscal)">Imposto ${impostoRotulo()}</div><div class="ov-sum-val" style="color:var(--red)">${imposto?f(imposto):'—'}</div></div>
     <div class="ov-sum-item"><div class="ov-sum-lbl">Despesas empresa</div><div class="ov-sum-val" style="color:var(--red)">${totalDespEmpresa?f(totalDespEmpresa):'—'}</div></div>
-    <div class="ov-sum-item"><div class="ov-sum-lbl">Total empresa (custos)</div><div class="ov-sum-val" style="color:var(--red)">${totalEmpresa?f(totalEmpresa):'—'}</div></div>
-    <div class="ov-sum-item" title="Faturamento clientes + Aportes − Imposto − Despesas empresa"><div class="ov-sum-lbl">💰 Caixa ${MESES[selMes]}</div><div class="ov-sum-val" style="color:${caixaMes>=0?'var(--green)':'var(--red)'};font-weight:700">${temMov?((caixaMes>=0?'+':'')+f(caixaMes)):'—'}</div></div>
+    <div class="ov-sum-item" title="Soma das notas emitidas no Faturamento com competência deste mês (quando todas saem, fica igual à receita)"><div class="ov-sum-lbl">Notas emitidas ${MESES[selMes]}</div><div class="ov-sum-val" style="color:var(--green)">${notasMes?f(notasMes):'—'}</div></div>
+    <div class="ov-sum-item" title="Receita do mês − todas as despesas do mês (módulos, empresa e imposto), igual à Visão Despesas"><div class="ov-sum-lbl">📊 Resultado ${MESES[selMes]}</div><div class="ov-sum-val" style="color:${resultadoMes>=0?'var(--green)':'var(--red)'};font-weight:700">${temMov?((resultadoMes>=0?'+':'')+f(resultadoMes)):'—'}</div></div>
+    <div class="ov-sum-item" title="Recebido dos clientes (marcados como recebidos) + aportes − despesas marcadas como pagas"><div class="ov-sum-lbl">💰 Caixa realizado ${MESES[selMes]}</div><div class="ov-sum-val" style="color:${caixaMes>=0?'var(--green)':'var(--red)'};font-weight:700">${(recebidoMes||totalAportes||despPagas)?((caixaMes>=0?'+':'')+f(caixaMes)):'—'}</div><div style="font-size:10px;color:var(--hint);margin-top:2px">recebido ${f(recebidoMes)} · pago ${f(despPagas)}</div></div>
   `;
 
   // Tabela de aportes/receitas
