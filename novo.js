@@ -68,7 +68,7 @@
     return parseFloat(s) || 0;
   }
 
-  function sobraRadio(valor) { return Math.round((numero(valor) - CUSTO_RADIO) * 100) / 100; }
+  function sobraRadio(valor, custo) { return Math.round((numero(valor) - (custo == null ? CUSTO_RADIO : numero(custo))) * 100) / 100; }
 
   function validarRadio(d, existentes) {
     var erros = [];
@@ -80,9 +80,9 @@
     return erros;
   }
 
-  function despesaRadio(inicio, meses) {
+  function despesaRadio(inicio, meses, custo, descricao) {
     return {
-      t: 'Recorrente', tipo: 'Licença', d: 'Licença da rádio interna', f: '', q: 1, u: CUSTO_RADIO,
+      t: 'Recorrente', tipo: 'Licença', d: descricao || 'Licença da rádio interna', f: '', q: 1, u: custo == null ? CUSTO_RADIO : numero(custo),
       cc: '', venc: '', pago: false, dataPago: '',
       mesesRec: parseInt(meses, 10) || 12, dataInicio: String(inicio || '').slice(0, 7)
     };
@@ -124,11 +124,29 @@
     var T = function (t) { return '<div style="font-family:Syne,sans-serif;font-size:11.5px;font-weight:700;color:#2A1760;margin:14px 0 4px;letter-spacing:.3px">' + t + '</div><div style="height:1px;background:#EAD9FF;margin:4px 0 10px"></div>'; };
     var C = function (t, corpo) { return '<div style="font-weight:700;color:#2A1760;font-size:12px;margin-bottom:3px">' + t + '</div><div style="color:#444;line-height:1.55;font-size:11.5px;margin-bottom:8px">' + corpo + '</div>'; };
     var mesesTxt = meses + ' (' + (EXT_MESES[meses] || meses) + ') meses';
+    var tv = d.servico === 'tv';
+    var S = tv ? {
+      nome: 'TV Interna',
+      objeto: '1.1. Prestação, pela CONTRATADA, do serviço de TV interna (TV corporativa) na unidade do CONTRATANTE identificada acima: exibição de conteúdo institucional, ofertas, informativos e programação do CONTRATANTE em tela(s) na unidade, operada e atualizada remotamente pela CONTRATADA.',
+      c31: '3.1. Manter a programação da TV em funcionamento durante o horário de atendimento da unidade, com conteúdo adequado ao perfil do estabelecimento.',
+      c32: '3.2. Produzir e exibir as peças do CONTRATANTE a partir do material ou das informações enviadas por ele, no prazo de até 3 (três) dias úteis após a aprovação.',
+      c41: '4.1. Manter na unidade a energia elétrica e a conexão de internet necessárias à exibição, zelando pelos equipamentos instalados.',
+      c43: 'qualquer falha na exibição',
+      c5: '5.1. As peças, vinhetas e conteúdos produzidos pela CONTRATADA são licenciados ao CONTRATANTE exclusivamente para exibição na TV interna da unidade contratada durante a vigência deste contrato.'
+    } : {
+      nome: 'Rádio Interna',
+      objeto: '1.1. Prestação, pela CONTRATADA, do serviço de rádio interna na unidade do CONTRATANTE identificada acima: programação musical ambiente, vinhetas e veiculação de spots institucionais e de ofertas do CONTRATANTE, operada e atualizada remotamente pela CONTRATADA.',
+      c31: '3.1. Manter a rádio em funcionamento durante o horário de atendimento da unidade, com programação adequada ao perfil do estabelecimento.',
+      c32: '3.2. Produzir e veicular os spots do CONTRATANTE a partir do material ou das informações enviadas por ele, no prazo de até 3 (três) dias úteis após a aprovação do texto.',
+      c41: '4.1. Manter na unidade o sistema de som (caixas, amplificador) e a conexão de internet necessários à reprodução da rádio.',
+      c43: 'qualquer falha na reprodução',
+      c5: '5.1. Os spots, vinhetas e locuções produzidos pela CONTRATADA são licenciados ao CONTRATANTE exclusivamente para veiculação na rádio interna da unidade contratada durante a vigência deste contrato.<br>5.2. Eventuais obrigações de recolhimento de direitos autorais de execução pública musical (ECAD) relativas ao estabelecimento seguem a legislação aplicável.'
+    };
     return '' +
       '<div style="padding:22px 28px 18px;border-bottom:3px solid #E879B0"><div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">' +
-      '<div><div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:#2A1760">MGB <span style="color:#E879B0">Mídia</span></div><div style="font-size:10px;color:#999;font-style:italic;margin-top:2px">Elevando a sua comunicação</div></div>' +
+      marcaContrato(opts) +
       '<div style="text-align:right"><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.5px">CONTRATO DE PRESTAÇÃO DE SERVIÇOS</div>' +
-      '<div style="font-size:11px;color:#5B2D8E;font-weight:600">Rádio Interna</div><div style="font-size:10px;color:#999;margin-top:2px">' + (num ? 'Nº ' + e(num) + ' · ' : '') + e(hoje) + '</div></div></div></div>' +
+      '<div style="font-size:11px;color:#5B2D8E;font-weight:600">' + S.nome + '</div><div style="font-size:10px;color:#999;margin-top:2px">' + (num ? 'Nº ' + e(num) + ' · ' : '') + e(hoje) + '</div></div></div></div>' +
       '<div style="padding:22px 28px">' +
       T('1. DADOS DAS PARTES') +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">' +
@@ -145,11 +163,11 @@
       '</td><td style="padding:5px 8px;text-align:center;color:#333">' + meses + ' meses</td><td style="padding:5px 8px;text-align:center;color:#333">' + ini +
       '</td><td style="padding:5px 8px;text-align:center;color:#333">' + fim + '</td></tr></tbody></table>' +
       T('3. CLÁUSULAS E CONDIÇÕES') +
-      C('CLÁUSULA 1ª — DO OBJETO', '1.1. Prestação, pela CONTRATADA, do serviço de rádio interna na unidade do CONTRATANTE identificada acima: programação musical ambiente, vinhetas e veiculação de spots institucionais e de ofertas do CONTRATANTE, operada e atualizada remotamente pela CONTRATADA.<br>1.2. O contrato vale para uma única unidade. Cada nova unidade do CONTRATANTE será objeto de contrato próprio.') +
+      C('CLÁUSULA 1ª — DO OBJETO', S.objeto + '<br>1.2. O contrato vale para uma única unidade. Cada nova unidade do CONTRATANTE será objeto de contrato próprio.') +
       C('CLÁUSULA 2ª — DO VALOR E DO PAGAMENTO', '2.1. Pelo serviço, o CONTRATANTE pagará à CONTRATADA o valor mensal de <strong>' + valorFmt + extenso + '</strong>.<br>2.2. A cobrança é emitida no dia 5 (cinco) de cada mês, por boleto bancário' + (comNota ? ', acompanhada da nota fiscal de serviço' : '') + ', com o vencimento indicado no boleto. A primeira cobrança refere-se ao mês de início do serviço.<br>2.3. O atraso no pagamento sujeita o CONTRATANTE a multa de 2% (dois por cento) e juros de 1% (um por cento) ao mês sobre o valor devido. Atraso superior a 30 (trinta) dias permite à CONTRATADA suspender o serviço até a regularização.<br>2.4. O valor será reajustado a cada 12 (doze) meses pela variação acumulada do IPCA/IBGE no período. Caso essa variação seja negativa ou igual a zero, será aplicada a variação acumulada do IGP-M/FGV no mesmo período.') +
-      C('CLÁUSULA 3ª — DAS OBRIGAÇÕES DA CONTRATADA', '3.1. Manter a rádio em funcionamento durante o horário de atendimento da unidade, com programação adequada ao perfil do estabelecimento.<br>3.2. Produzir e veicular os spots do CONTRATANTE a partir do material ou das informações enviadas por ele, no prazo de até 3 (três) dias úteis após a aprovação do texto.<br>3.3. Corrigir falhas na programação em até 48 (quarenta e oito) horas úteis após o aviso do CONTRATANTE.<br>3.4. Recusar conteúdo ilícito, ofensivo, político-partidário ou fora dos padrões técnicos, informando o motivo ao CONTRATANTE.') +
-      C('CLÁUSULA 4ª — DAS OBRIGAÇÕES DO CONTRATANTE', '4.1. Manter na unidade o sistema de som (caixas, amplificador) e a conexão de internet necessários à reprodução da rádio.<br>4.2. Enviar com antecedência o material das campanhas e ofertas, sendo responsável pelo conteúdo e pela veracidade das informações divulgadas.<br>4.3. Comunicar à CONTRATADA qualquer falha na reprodução pelos canais (43) 99696-0078 | comercial@agenciamgb.com.br.<br>4.4. Efetuar os pagamentos nas datas de vencimento.') +
-      C('CLÁUSULA 5ª — DOS DIREITOS AUTORAIS', '5.1. Os spots, vinhetas e locuções produzidos pela CONTRATADA são licenciados ao CONTRATANTE exclusivamente para veiculação na rádio interna da unidade contratada durante a vigência deste contrato.<br>5.2. Eventuais obrigações de recolhimento de direitos autorais de execução pública musical (ECAD) relativas ao estabelecimento seguem a legislação aplicável.') +
+      C('CLÁUSULA 3ª — DAS OBRIGAÇÕES DA CONTRATADA', S.c31 + '<br>' + S.c32 + '<br>3.3. Corrigir falhas na programação em até 48 (quarenta e oito) horas úteis após o aviso do CONTRATANTE.<br>3.4. Recusar conteúdo ilícito, ofensivo, político-partidário ou fora dos padrões técnicos, informando o motivo ao CONTRATANTE.') +
+      C('CLÁUSULA 4ª — DAS OBRIGAÇÕES DO CONTRATANTE', S.c41 + '<br>4.2. Enviar com antecedência o material das campanhas e ofertas, sendo responsável pelo conteúdo e pela veracidade das informações divulgadas.<br>4.3. Comunicar à CONTRATADA ' + S.c43 + ' pelos canais (43) 99696-0078 | comercial@agenciamgb.com.br.<br>4.4. Efetuar os pagamentos nas datas de vencimento.') +
+      C('CLÁUSULA 5ª — DOS DIREITOS AUTORAIS', S.c5) +
       C('CLÁUSULA 6ª — DO PRAZO E DA VIGÊNCIA', '6.1. Este contrato vigora por <strong>' + mesesTxt + '</strong>, de ' + ini + ' a ' + fim + '.<br>6.2. Findo o prazo, renova-se automaticamente por períodos iguais e sucessivos, salvo manifestação contrária de qualquer das partes, por escrito, com antecedência mínima de 30 (trinta) dias do término.') +
       C('CLÁUSULA 7ª — DA RESCISÃO', '7.1. Qualquer das partes pode rescindir este contrato mediante aviso prévio por escrito de 30 (trinta) dias, ficando devidos os valores do período de aviso.<br>7.2. O descumprimento de obrigação essencial, não sanado em 15 (quinze) dias após notificação, permite a rescisão imediata pela parte prejudicada.') +
       C('CLÁUSULA 8ª — DA PROTEÇÃO DE DADOS (LGPD)', '8.1. As partes tratarão os dados pessoais a que tiverem acesso em razão deste contrato conforme a Lei nº 13.709/2018, somente para a execução deste instrumento.') +
@@ -197,6 +215,13 @@
     return erros;
   }
 
+  // Logo oficial (pasta Marca da MGB). O PNG em data URI é carregado na tela e passado em opts.logo,
+  // porque o conversor de HTML→PDF do Apps Script não busca imagens de fora.
+  function marcaContrato(opts) {
+    if (opts && opts.logo) return '<div><img src="' + opts.logo + '" alt="MGB Mídia" style="height:52px;width:auto;display:block"></div>';
+    return '<div><div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:#2A1760">MGB<span style="color:#E879B0">.</span></div><div style="font-size:10px;color:#2A1760;letter-spacing:.3em;margin-top:2px">MÍDIA</div></div>';
+  }
+
   // Contrato de anúncio na Rádio Mercadão. Mesmas condições do contrato Mercadão que já
   // existe no hub (spot de 15s, 9h às 22h, 1 roteiro grátis por mês, aviso de 30 dias),
   // agora com cotas, valor por cota e envio pelo Assinafy.
@@ -230,7 +255,7 @@
     var td = function (t) { return '<td style="padding:5px 8px;text-align:center;color:#333">' + t + '</td>'; };
     return '' +
       '<div style="padding:22px 28px 18px;border-bottom:3px solid #E879B0"><div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">' +
-      '<div><div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:#2A1760">MGB <span style="color:#E879B0">Mídia</span></div><div style="font-size:10px;color:#999;font-style:italic;margin-top:2px">Elevando a sua comunicação</div></div>' +
+      marcaContrato(opts) +
       '<div style="text-align:right"><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#2A1760;letter-spacing:.5px">CONTRATO DE VEICULAÇÃO</div>' +
       '<div style="font-size:11px;color:#5B2D8E;font-weight:600">Rádio Interna · Mercadão da Prochet</div><div style="font-size:10px;color:#999;margin-top:2px">' + (opts.numero ? 'Nº ' + e(opts.numero) + ' · ' : '') + e(opts.hoje || '') + '</div></div></div></div>' +
       '<div style="padding:22px 28px">' +
@@ -264,7 +289,44 @@
       '</div>';
   }
 
+  // ── CRM como base: a Karen só cadastra cliente que está fechado no CRM ──
+  // Produto do formulário → produto do lead no CRM (módulo).
+  var PRODUTO_LEAD = { condominio: 'elev', anunciante: 'elev', vaapty: 'vaapty', radio: 'radio', mercadao: 'radio', tv: 'tv' };
+
+  // Leads fechados e não cadastrados, com os do produto certo primeiro.
+  function leadsParaProduto(lista, produto) {
+    var alvo = PRODUTO_LEAD[produto];
+    var pend = leadsPendentes(lista);
+    var certos = pend.filter(function (l) { return l.produto === alvo; });
+    var outros = pend.filter(function (l) { return l.produto !== alvo; });
+    return { certos: certos, outros: outros };
+  }
+
+  // Resposta das APIs públicas de CNPJ → campos do formulário.
+  function normalizarCNPJ(fonte, d) {
+    d = d || {};
+    var r;
+    if (fonte === 'cnpjws') {
+      var est = d.estabelecimento || {};
+      r = { razao: d.razao_social, fantasia: est.nome_fantasia, logradouro: [est.tipo_logradouro, est.logradouro].filter(Boolean).join(' '),
+        numero: est.numero, complemento: est.complemento, bairro: est.bairro, cidade: est.cidade && est.cidade.nome, uf: est.estado && est.estado.sigla,
+        cep: est.cep, tel: est.ddd1 && est.telefone1 ? est.ddd1 + est.telefone1 : '', email: est.email };
+    } else {
+      r = { razao: d.razao_social, fantasia: d.nome_fantasia, logradouro: d.logradouro, numero: d.numero, complemento: d.complemento,
+        bairro: d.bairro, cidade: d.municipio, uf: d.uf, cep: d.cep, tel: d.ddd_telefone_1, email: d.email };
+    }
+    Object.keys(r).forEach(function (k) { r[k] = r[k] == null ? '' : String(r[k]).trim(); });
+    r.cep = r.cep.replace(/\D/g, '');
+    r.email = r.email.toLowerCase();
+    r.endereco = [r.logradouro, r.numero ? 'nº ' + r.numero : '', r.complemento, r.bairro, r.cidade ? r.cidade + (r.uf ? '/' + r.uf : '') : '',
+      r.cep ? 'CEP ' + r.cep.replace(/^(\d{5})(\d{3})$/, '$1-$2') : ''].filter(Boolean).join(', ');
+    return r;
+  }
+
   var api = {
+    PRODUTO_LEAD: PRODUTO_LEAD,
+    leadsParaProduto: leadsParaProduto,
+    normalizarCNPJ: normalizarCNPJ,
     MERCADAO: MERCADAO,
     contaMercadao: contaMercadao,
     ocupacaoBlocos: ocupacaoBlocos,
@@ -381,85 +443,133 @@
   }
 
   // ── Início: CRM + produtos ─────────────────────────────────────────────
+  var ROTULO_ACAO = {
+    condominio: 'Condomínio', anunciante: 'Anunciante elevador', vaapty: 'Unidade Vaapty',
+    radio: 'Rádio interna', mercadao: 'Anunciante Mercadão', tv: 'TV interna'
+  };
+  var ACOES_DO_LEAD = { elev: ['condominio', 'anunciante'], radio: ['radio', 'mercadao'], vaapty: ['vaapty'], tv: ['tv'] };
+
+  function leadPorId(id) { return listaLeads().filter(function (l) { return String(l.id) === String(id); })[0] || null; }
+
+  function abrirForm(acao, lead) {
+    if (acao === 'taroba') return formTaroba();
+    if (!lead) return escolherLead(acao);
+    if (acao === 'condominio') return formCondominio(lead);
+    if (acao === 'radio') return formUnidade('radio', lead);
+    if (acao === 'tv') return formUnidade('tv', lead);
+    if (acao === 'mercadao') return formMercadao(lead);
+    if (acao === 'anunciante') return formAnuncianteElev(lead);
+    if (acao === 'vaapty') return formVaapty(lead);
+  }
+
+  function linhaLead(l, acoes) {
+    var m = modulo(l.produto);
+    var rot = m ? m.label.split('—')[0].trim() : 'Sem produto';
+    var bts = acoes.map(function (a, i) {
+      return '<button type="button" class="b' + (i === 0 ? ' p' : '') + '" data-lead="' + esc(l.id) + '" data-acao="' + a + '">' + esc(ROTULO_ACAO[a]) + '</button>';
+    }).join('');
+    return '<div class="lin"><div><div style="font-weight:700">' + esc(l.nome) + '</div><div style="font-size:13px;color:#6b6380">' +
+      esc(rot) + (l.valor ? ' · ' + brl(l.valor) + '/mês' : '') + (l.cnpj ? ' · CNPJ ' + esc(l.cnpj) : '') + '</div></div><div class="acoes">' + bts + '</div></div>';
+  }
+
+  function ligarAcoes(el) {
+    el.querySelectorAll('[data-acao]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-lead');
+        abrirForm(b.getAttribute('data-acao'), id ? leadPorId(id) : null);
+      });
+    });
+  }
+
   function abrir() {
     injetarEstilos();
     leadAtual = null;
     var pend = leadsPendentes(listaLeads());
     var crm = pend.length ? pend.map(function (l) {
-      var m = modulo(l.produto);
-      var rot = m ? m.label.split('—')[0].trim() : 'Sem produto';
-      var acoes = '';
-      if (l.produto === 'elev') {
-        acoes = '<button type="button" class="b p" data-lead="' + l.id + '" data-acao="condominio">Cadastrar condomínio</button>' +
-          '<button type="button" class="b" data-acao="anunciante">É anunciante</button>';
-      } else if (l.produto === 'radio') {
-        acoes = '<button type="button" class="b p" data-lead="' + l.id + '" data-acao="radio">Cadastrar rádio interna</button>' +
-          '<button type="button" class="b" data-lead="' + l.id + '" data-acao="mercadao">É anunciante do Mercadão</button>';
-      } else if (l.produto === 'vaapty') {
-        acoes = '<button type="button" class="b p" data-acao="vaapty">Abrir contrato Vaapty</button>';
-      } else if (m) {
-        acoes = '<button type="button" class="b" data-acao="modulo" data-mod="' + esc(l.produto) + '">Abrir ' + esc(rot) + '</button>';
-      }
-      return '<div class="lin"><div><div style="font-weight:700">' + esc(l.nome) + '</div><div style="font-size:13px;color:#6b6380">' +
-        esc(rot) + (l.valor ? ' · ' + brl(l.valor) + '/mês' : '') + (l.cnpj ? ' · CNPJ ' + esc(l.cnpj) : '') + '</div></div><div class="acoes">' + acoes + '</div></div>';
+      var acoes = ACOES_DO_LEAD[l.produto] || ['condominio', 'anunciante', 'radio', 'mercadao', 'vaapty', 'tv'];
+      return linhaLead(l, acoes);
     }).join('') : '<p class="sub">Nenhum cliente fechado esperando cadastro. Quando o Eder marcar um lead como Fechado no CRM, ele aparece aqui.</p>';
 
     var produtos = [
-      ['condominio', 'Condomínio', 'Tela no elevador. Parceria: condomínio paga R$ 0, custo de R$ 70 por torre ao mês.', ''],
-      ['anunciante', 'Anunciante · telas do elevador', 'Abre o contrato Tela Vertical, que já lança o anunciante nas telas escolhidas.', ''],
-      ['vaapty', 'Unidade Vaapty', 'Abre o contrato Vaapty, que já cria a unidade no módulo.', ''],
-      ['radio', 'Rádio interna', 'Uma unidade (loja) por vez, com o contrato padrão. Custo de R$ 70 ao mês.', ''],
-      ['mercadao', 'Anunciante · Rádio Mercadão', 'Loja no Mercadão Prochet. Cotas nos Blocos, cobrança mensal e contrato.', ''],
-      ['modulo:tv', 'TV interna', 'Abre o módulo TV Interna.', ''],
-      ['modulo:taroba', 'Comissão Tarobá', 'Abre o módulo Tarobá para lançar o valor do mês.', ''],
-      ['', 'Portal Londrina · Cascavel', 'Ainda não existe no hub.', 'em breve']
+      ['condominio', 'Condomínio', 'Tela no elevador. Parceria: condomínio paga R$ 0, custo de R$ 70 por torre ao mês.'],
+      ['anunciante', 'Anunciante · telas do elevador', 'Escolhe os condomínios, gera o contrato Tela Vertical e envia pelo Assinafy.'],
+      ['vaapty', 'Unidade Vaapty', 'Franqueado com box em comodato. Contrato Vaapty pelo Assinafy.'],
+      ['radio', 'Rádio interna', 'Uma unidade (loja) por vez, com o contrato padrão. Custo de R$ 70 ao mês.'],
+      ['mercadao', 'Anunciante · Rádio Mercadão', 'Loja no Mercadão Prochet. Cotas nos Blocos, cobrança mensal e contrato.'],
+      ['tv', 'TV interna', 'TV corporativa em empresa ou loja, uma unidade por vez, com contrato padrão.'],
+      ['taroba', 'Comissão Tarobá', 'Rádio ou TV Tarobá, Londrina ou Cascavel. Lança o valor do mês.']
     ].map(function (p) {
-      var dis = p[3] ? ' disabled' : '';
-      var acao = p[0].indexOf('modulo:') === 0 ? ' data-acao="modulo" data-mod="' + p[0].split(':')[1] + '"' : (p[0] ? ' data-acao="' + p[0] + '"' : '');
-      return '<button type="button" class="prod"' + acao + dis + '>' + (p[3] ? '<span class="tag">' + p[3] + '</span>' : '') +
-        '<b>' + p[1] + '</b><span>' + p[2] + '</span></button>';
+      return '<button type="button" class="prod" data-acao="' + p[0] + '"><b>' + p[1] + '</b><span>' + p[2] + '</span></button>';
     }).join('');
 
     var el = moldura('Novo cliente',
       '<section class="card crm"><h3>Fechados no CRM, esperando cadastro' + (pend.length ? ' · ' + pend.length : '') + '</h3>' +
-      '<p class="sub">Os dados do lead vêm preenchidos. Você só confere e completa.</p>' + crm + '</section>' +
-      '<section class="card"><h3>Ou escolha o que vai lançar</h3><div class="grade">' + produtos + '</div></section>', false);
+      '<p class="sub">Todo cadastro começa por um cliente fechado no CRM: os dados dele vêm preenchidos e o CNPJ completa o resto.</p>' + crm + '</section>' +
+      '<section class="card"><h3>Ou escolha o produto</h3><p class="sub">Você escolhe o cliente do CRM na próxima tela.</p><div class="grade">' + produtos + '</div></section>', false);
+    ligarAcoes(el);
+  }
 
-    el.querySelectorAll('[data-acao]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var a = b.getAttribute('data-acao');
-        if (a === 'condominio') {
-          var id = b.getAttribute('data-lead');
-          var lead = id ? listaLeads().filter(function (l) { return String(l.id) === id; })[0] : null;
-          formCondominio(lead);
-        }
-        if (a === 'radio') {
-          var idr = b.getAttribute('data-lead');
-          formRadio(idr ? listaLeads().filter(function (l) { return String(l.id) === idr; })[0] : null);
-        }
-        if (a === 'mercadao') {
-          var idm = b.getAttribute('data-lead');
-          formMercadao(idm ? listaLeads().filter(function (l) { return String(l.id) === idm; })[0] : null);
-        }
-        if (a === 'anunciante') irPara('contratos', 'elevador');
-        if (a === 'vaapty') irPara('contratos', 'vaapty');
-        if (a === 'modulo') { fechar(); try { global.drillMod(b.getAttribute('data-mod')); } catch (e) {} }
+  // Produto escolhido sem cliente: lista os clientes fechados no CRM.
+  function escolherLead(acao) {
+    injetarEstilos();
+    var g = leadsParaProduto(listaLeads(), acao);
+    var corpo;
+    if (!g.certos.length && !g.outros.length) {
+      corpo = '<section class="card crm"><h3>Nenhum cliente fechado no CRM</h3><p class="sub">Para cadastrar ' + esc(ROTULO_ACAO[acao].toLowerCase()) +
+        ', o cliente precisa estar no CRM como <b>Fechado</b>. Peça ao Eder para fechar o lead e ele aparece aqui com os dados preenchidos.</p></section>';
+    } else {
+      corpo = '<section class="card crm"><h3>Qual cliente do CRM?</h3><p class="sub">Só aparecem clientes fechados que ainda não foram cadastrados.</p>' +
+        (g.certos.length ? g.certos.map(function (l) { return linhaLead(l, [acao]); }).join('') : '<p class="sub">Nenhum cliente deste produto. Abaixo, os fechados de outros produtos.</p>') +
+        '</section>' +
+        (g.outros.length ? '<section class="card"><h3>Fechados em outros produtos</h3>' + g.outros.map(function (l) { return linhaLead(l, [acao]); }).join('') + '</section>' : '');
+    }
+    var el = moldura(ROTULO_ACAO[acao] + ' · escolher cliente', corpo, true);
+    ligarAcoes(el);
+  }
+
+  // Busca o CNPJ (mesmas fontes que os contratos do hub usam) e completa os campos vazios.
+  function buscarCNPJ(cnpj) {
+    var dig = String(cnpj || '').replace(/\D/g, '');
+    if (dig.length !== 14 || typeof fetch !== 'function') return Promise.resolve(null);
+    var fontes = [
+      ['cnpjws', 'https://publica.cnpj.ws/cnpj/' + dig],
+      ['brasilapi', 'https://brasilapi.com.br/api/cnpj/v1/' + dig]
+    ];
+    var i = 0;
+    function tenta() {
+      if (i >= fontes.length) return null;
+      var f = fontes[i++];
+      return fetch(f[1]).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (j) { var n = normalizarCNPJ(f[0], j); if (!n.razao) throw new Error('vazio'); return n; })
+        .catch(tenta);
+    }
+    return Promise.resolve().then(tenta);
+  }
+
+  // mapa: campo do formulário (nv-<id>) → campo do CNPJ
+  function completarPorCNPJ(cnpj, mapa) {
+    var st = doc.getElementById('nv-cnpj-st');
+    if (!String(cnpj || '').replace(/\D/g, '')) { if (st) st.textContent = 'Sem CNPJ no CRM: preencha os dados que faltam.'; return Promise.resolve(null); }
+    if (st) st.textContent = 'Buscando os dados do CNPJ…';
+    return buscarCNPJ(cnpj).then(function (r) {
+      if (!r) { if (st) st.textContent = 'Não achei o CNPJ nas bases públicas: complete os campos à mão.'; return null; }
+      var n = 0;
+      Object.keys(mapa).forEach(function (id) {
+        var el = doc.getElementById('nv-' + id);
+        var v = r[mapa[id]];
+        if (el && v && !String(el.value).trim()) { el.value = v; el.classList.add('crm'); n++; el.dispatchEvent(new Event('input')); }
       });
+      if (st) st.textContent = n ? 'Dados do CNPJ preenchidos (' + n + ' campos). Confira.' : 'CNPJ conferido.';
+      return r;
     });
   }
 
-  function irPara(grupo, aba) {
-    fechar();
-    try {
-      global.goOperacional(grupo);
-      var t = doc.querySelector('#page-operacional .hub-tab[data-tab="' + aba + '"]');
-      if (t && typeof global.showOpPanel === 'function') global.showOpPanel(aba, t);
-    } catch (e) {}
-  }
+  function avisoCNPJ() { return '<p class="sub" id="nv-cnpj-st" aria-live="polite"></p>'; }
 
   // ── Novo condomínio ────────────────────────────────────────────────────
   function formCondominio(lead) {
-    leadAtual = lead || null;
+    if (!lead) return escolherLead('condominio');
+    leadAtual = lead;
     var L = lead || {};
     var hoje = new Date();
     var proxMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
@@ -470,13 +580,13 @@
     }
     var el = moldura('Novo condomínio',
       '<div class="duas"><main>' +
-      '<p class="sub">' + (lead ? 'Campos em verde vieram do CRM. Confira e complete o resto.' : 'Preencha os dados do condomínio. Campos com * são obrigatórios.') + '</p>' +
+      '<p class="sub">Cliente do CRM. Os campos em verde vieram do CRM e do CNPJ. Confira e complete o resto.</p>' +
       '<section class="card"><div class="sec">1 · Condomínio</div><div class="campos">' +
-      campo('nome', 'Nome do condomínio *', L.nome) + campo('cnpj', 'CNPJ', L.cnpj) +
-      campo('end', 'Endereço completo', '') + campo('bairro', 'Bairro ou região', '') + '</div></section>' +
+      campo('nome', 'Nome do condomínio (do CRM)', L.nome, 'text', ' readonly') + campo('cnpj', 'CNPJ', L.cnpj) +
+      campo('end', 'Endereço completo', '') + campo('bairro', 'Bairro ou região', '') + '</div>' + avisoCNPJ() + '</section>' +
       '<section class="card"><div class="sec">2 · Síndico</div><div class="campos">' +
       campo('sindico', 'Nome', L.responsavel) + campo('cpf', 'CPF', '') +
-      campo('email', 'E-mail (recebe o contrato no Assinafy)', '', 'email') + campo('wpp', 'WhatsApp', L.tel) + '</div></section>' +
+      campo('email', 'E-mail (recebe o contrato no Assinafy)', L.email, 'email') + campo('wpp', 'WhatsApp', L.tel) + '</div></section>' +
       '<section class="card"><div class="sec">3 · Estrutura e contrato</div><div class="campos">' +
       campo('torres', 'Número de torres *', '1', 'number', ' min="1"') + campo('telas', 'Número de telas', '1', 'number', ' min="1"') +
       campo('apts', 'Número de apartamentos', '', 'number', ' min="0"') + campo('inicio', 'Início *', ini, 'date') +
@@ -504,7 +614,8 @@
     }
     torres.addEventListener('input', atualizarConta);
     el.querySelector('#nv-criar').addEventListener('click', criarCondominio);
-    el.querySelector('#nv-nome').focus();
+    completarPorCNPJ(L.cnpj, { end: 'endereco', bairro: 'bairro', email: 'email', wpp: 'tel' });
+    var foco = el.querySelector('#nv-torres'); if (foco) foco.focus();
   }
 
   function val(id) { var e = doc.getElementById('nv-' + id); return e ? String(e.value).trim() : ''; }
@@ -601,6 +712,7 @@
   }
 
   function documentoContrato(corpo) {
+    if (/^<!DOCTYPE/i.test(corpo)) return corpo;
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>body{padding:24px;background:#fff;font-family:Arial,sans-serif}</style></head><body>' + corpo + '</body></html>';
   }
 
@@ -631,86 +743,100 @@
     } catch (e) { return ''; }
   }
 
-  // ── Nova rádio interna ─────────────────────────────────────────────────
+  // ── Nova rádio interna / TV interna (uma unidade por vez) ──────────────
   function campoNv(id, rotulo, valor, tipo, extra, doCrm) {
     return '<label class="f" for="nv-' + id + '">' + rotulo + '<input id="nv-' + id + '"' + (valor && doCrm ? ' class="crm"' : '') +
       ' type="' + (tipo || 'text') + '" value="' + esc(valor == null ? '' : valor) + '"' + (extra || '') + '></label>';
   }
 
-  function unidadesRadio() { var m = modulo('radio'); return m ? m.items : []; }
+  var UNIDADE = {
+    radio: { mod: 'radio', titulo: 'Nova rádio interna', modulo: 'Rádio Interna', custoRot: 'Custo da rádio', despesa: 'Licença da rádio interna',
+      contrato: 'Contrato Rádio Interna', prefixo: 'MGB-RAD-', criar: 'Criar rádio interna e enviar contrato', feito: 'Rádio interna criada',
+      aviso: 'Nova rádio interna fechada', cleiton: 'montar a programação', custoFixo: true },
+    tv: { mod: 'tv', titulo: 'Nova TV interna', modulo: 'TV Interna', custoRot: 'Custo da TV (licença)', despesa: 'Licença da TV interna',
+      contrato: 'Contrato TV Interna', prefixo: 'MGB-TVI-', criar: 'Criar TV interna e enviar contrato', feito: 'TV interna criada',
+      aviso: 'Nova TV interna fechada', cleiton: 'montar a programação da TV', custoFixo: false }
+  };
 
-  function formRadio(lead) {
-    leadAtual = lead || null;
-    var L = lead || {};
+  function itensModulo(id) { var m = modulo(id); return m ? m.items : []; }
+
+  function formUnidade(tipo, lead) {
+    if (!lead) return escolherLead(tipo);
+    var C = UNIDADE[tipo];
+    leadAtual = lead;
+    var L = lead;
     var hoje = new Date();
     var ini = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1).toISOString().slice(0, 10);
-    var crm = !!lead;
-    var el = moldura('Nova rádio interna',
+    var el = moldura(C.titulo,
       '<div class="duas"><main>' +
-      '<p class="sub">Uma unidade por vez: cada loja é um lead no CRM e é faturada separada.' + (lead ? ' Os campos em verde vieram do CRM.' : ' Campos com * são obrigatórios.') + '</p>' +
+      '<p class="sub">Uma unidade por vez: cada loja é um cliente no CRM e é faturada separada. Os campos em verde vieram do CRM e do CNPJ.</p>' +
       '<section class="card"><div class="sec">1 · Cliente</div><div class="campos">' +
-      campoNv('nome', 'Nome da unidade (loja) *', L.nome, 'text', ' placeholder="Ex.: Ótica Visão · Centro"', crm) +
-      campoNv('razao', 'Razão social', '', 'text', ' placeholder="Se diferente do nome"') +
-      campoNv('cnpj', 'CNPJ ou CPF', L.cnpj, 'text', '', crm) +
+      campoNv('nome', 'Unidade (do CRM)', L.nome, 'text', ' readonly', true) +
+      campoNv('razao', 'Razão social', '', 'text', ' placeholder="Vem do CNPJ"') +
+      campoNv('cnpj', 'CNPJ ou CPF', L.cnpj, 'text', '', true) +
       campoNv('end', 'Endereço da unidade', '', 'text', ' placeholder="Rua, número, bairro, cidade"') +
-      campoNv('resp', 'Responsável', L.responsavel, 'text', '', crm) +
-      campoNv('email', 'E-mail (recebe o contrato e a nota)', '', 'email', ' placeholder="financeiro@cliente.com"') +
-      campoNv('wpp', 'WhatsApp', L.tel, 'text', '', crm) + '</div></section>' +
+      campoNv('resp', 'Responsável', L.responsavel, 'text', '', true) +
+      campoNv('email', 'E-mail (recebe o contrato e a nota)', L.email, 'email', ' placeholder="financeiro@cliente.com"', true) +
+      campoNv('wpp', 'WhatsApp', L.tel, 'text', '', true) + '</div>' + avisoCNPJ() + '</section>' +
       '<section class="card"><div class="sec">2 · Plano</div><div class="campos">' +
-      campoNv('valor', 'Valor mensal do contrato (R$) *', L.valor ? String(L.valor).replace('.', ',') : '', 'text', ' inputmode="decimal" placeholder="0,00"', crm) +
+      campoNv('valor', 'Valor mensal do contrato (R$) *', L.valor ? String(L.valor).replace('.', ',') : '', 'text', ' inputmode="decimal" placeholder="0,00"', true) +
+      campoNv('custo', C.custoRot + ' (R$/mês)', String(CUSTO_RADIO), 'text', ' inputmode="decimal"' + (C.custoFixo ? ' readonly' : '')) +
       campoNv('inicio', 'Início *', ini, 'date') +
       '<label class="f" for="nv-vig">Duração<select id="nv-vig"><option value="12">12 meses</option><option value="24">24 meses</option><option value="6">6 meses</option></select></label>' +
       '<label class="f" for="nv-nf">Nota fiscal<select id="nv-nf"><option value="nota">Nota + boleto todo dia 5</option><option value="boleto">Só boleto, sem nota</option></select></label>' +
       '</div></section></main>' +
       '<aside><section class="card"><div class="sec">Conta do mês</div>' +
       '<div class="conta"><span>Receita</span><b id="nv-rec" style="color:#14583a">R$ 0/mês</b></div>' +
-      '<div class="conta"><span>Custo da rádio</span><b style="color:#a33a1a">' + brl(CUSTO_RADIO) + '/mês</b></div>' +
+      '<div class="conta"><span>' + esc(C.custoRot) + '</span><b id="nv-custo-v" style="color:#a33a1a">—</b></div>' +
       '<div class="conta" style="border-top:1px solid #ece7f5;padding-top:10px"><span>Sobra para a MGB</span><b id="nv-sobra">—</b></div></section>' +
       '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
-      '<div class="passo" id="nv-p1"><i>1</i><span>Cria a unidade no módulo Rádio Interna, com a receita mensal.</span></div>' +
-      '<div class="passo" id="nv-p2"><i>2</i><span>Lança o custo recorrente de ' + brl(CUSTO_RADIO) + '/mês.</span></div>' +
-      '<div class="passo" id="nv-p3"><i>3</i><span>' + (lead ? 'Marca o lead do CRM como cadastrado.' : 'Sem lead do CRM: nada a marcar.') + '</span></div>' +
-      '<div class="passo" id="nv-p4"><i>4</i><span>Gera o contrato padrão de rádio interna e envia pelo Assinafy.</span></div>' +
-      '<div class="passo" id="nv-p5"><i>5</i><span>Prepara o aviso ao Cleiton para montar a programação.</span></div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Cria a unidade no módulo ' + esc(C.modulo) + ', com a receita mensal.</span></div>' +
+      '<div class="passo" id="nv-p2"><i>2</i><span>Lança o custo recorrente mensal.</span></div>' +
+      '<div class="passo" id="nv-p3"><i>3</i><span>Marca o cliente do CRM como cadastrado.</span></div>' +
+      '<div class="passo" id="nv-p4"><i>4</i><span>Gera o contrato padrão e envia pelo Assinafy.</span></div>' +
+      '<div class="passo" id="nv-p5"><i>5</i><span>Prepara o aviso ao Cleiton para ' + esc(C.cleiton) + '.</span></div>' +
       '<div class="erros" id="nv-erros" role="alert"></div>' +
-      '<button type="button" class="b p" id="nv-criar">Criar rádio interna e enviar contrato</button>' +
+      '<button type="button" class="b p" id="nv-criar">' + esc(C.criar) + '</button>' +
       '</section></aside></div>', true);
 
-    var valor = el.querySelector('#nv-valor');
     function atualizarConta() {
-      var v = numero(valor.value);
+      var v = numero(val('valor')), c = numero(val('custo'));
       el.querySelector('#nv-rec').textContent = brl(v) + '/mês';
-      var s = sobraRadio(v);
+      el.querySelector('#nv-custo-v').textContent = brl(c) + '/mês';
+      var s = sobraRadio(v, c);
       var b = el.querySelector('#nv-sobra');
       b.textContent = v ? brl(s) + '/mês' : '—';
       b.style.color = v && s < 0 ? '#a33a1a' : '';
     }
-    valor.addEventListener('input', atualizarConta);
+    el.querySelector('#nv-valor').addEventListener('input', atualizarConta);
+    el.querySelector('#nv-custo').addEventListener('input', atualizarConta);
     atualizarConta();
-    el.querySelector('#nv-criar').addEventListener('click', criarRadio);
-    el.querySelector('#nv-nome').focus();
+    el.querySelector('#nv-criar').addEventListener('click', function () { criarUnidade(tipo); });
+    completarPorCNPJ(L.cnpj, { razao: 'razao', end: 'endereco', email: 'email', wpp: 'tel' });
+    el.querySelector('#nv-valor').focus();
   }
 
-  function criarRadio() {
+  function criarUnidade(tipo) {
+    var C = UNIDADE[tipo];
     var d = {
       nome: val('nome'), razao: val('razao'), cnpj: val('cnpj'), end: val('end'), responsavel: val('resp'),
-      email: val('email'), wpp: val('wpp'), valor: val('valor'), inicio: val('inicio'),
+      email: val('email'), wpp: val('wpp'), valor: val('valor'), custo: val('custo'), inicio: val('inicio'), servico: tipo,
       meses: (doc.getElementById('nv-vig') || {}).value || '12', nf: (doc.getElementById('nv-nf') || {}).value || 'nota'
     };
     var errosEl = doc.getElementById('nv-erros');
-    var erros = validarRadio(d, unidadesRadio());
+    var erros = validarRadio(d, itensModulo(C.mod)).map(function (x) { return x.replace('Rádio Interna', C.modulo); });
     if (erros.length) { errosEl.innerHTML = erros.map(esc).join('<br>'); return; }
     errosEl.textContent = '';
     var btn = doc.getElementById('nv-criar');
     btn.disabled = true; btn.textContent = 'Criando…';
-    var valor = numero(d.valor), meses = parseInt(d.meses, 10);
+    var valor = numero(d.valor), custo = numero(d.custo), meses = parseInt(d.meses, 10);
 
-    // 1. unidade + receita no módulo Rádio Interna
+    // 1. unidade + receita
     try {
       var cliente = { cnpj: d.cnpj, razao: d.razao || d.nome, fantasia: d.nome, responsavel: d.responsavel, tel: d.wpp, email: d.email,
         endereco: d.end, notaFiscal: d.nf === 'nota' };
-      var criado = global.mgbCriarUnidadeModulo('radio', d.nome, { valor: valor, inicio: d.inicio.slice(0, 7), meses: meses, cliente: cliente });
-      if (!criado) throw new Error('o módulo Rádio Interna não foi encontrado');
+      var criado = global.mgbCriarUnidadeModulo(C.mod, d.nome, { valor: valor, inicio: d.inicio.slice(0, 7), meses: meses, cliente: cliente });
+      if (!criado) throw new Error('o módulo ' + C.modulo + ' não foi encontrado');
       marcar(1, 'ok', 'Unidade <b>' + esc(d.nome) + '</b> criada com receita de ' + brl(valor) + '/mês por ' + meses + ' meses.');
     } catch (e) {
       marcar(1, 'erro', 'Não consegui criar a unidade: ' + esc(e.message) + '. Nada foi lançado.');
@@ -720,48 +846,56 @@
     try { global.buildAll(); } catch (e) {}
 
     // 2. custo recorrente
-    try {
-      var desp = despesaRadio(d.inicio, meses);
-      applyToFin(desp, +1);                                     // eslint-disable-line no-undef
-      if (!db.radio[d.nome]) db.radio[d.nome] = [];             // eslint-disable-line no-undef
-      db.radio[d.nome].push(desp);                              // eslint-disable-line no-undef
-      marcar(2, 'ok', 'Custo de <b>' + brl(CUSTO_RADIO) + '/mês</b> lançado a partir de ' + desp.dataInicio.split('-').reverse().join('/') + '.');
-    } catch (e) {
-      marcar(2, 'erro', 'A unidade foi criada, mas o custo não: ' + esc(e.message) + '. Lance a licença à mão no módulo Rádio Interna.');
-    }
+    if (custo > 0) {
+      try {
+        var desp = despesaRadio(d.inicio, meses, custo, C.despesa);
+        applyToFin(desp, +1);                                     // eslint-disable-line no-undef
+        if (!db[C.mod][d.nome]) db[C.mod][d.nome] = [];           // eslint-disable-line no-undef
+        db[C.mod][d.nome].push(desp);                             // eslint-disable-line no-undef
+        marcar(2, 'ok', 'Custo de <b>' + brl(custo) + '/mês</b> lançado a partir de ' + desp.dataInicio.split('-').reverse().join('/') + '.');
+      } catch (e) {
+        marcar(2, 'erro', 'A unidade foi criada, mas o custo não: ' + esc(e.message) + '. Lance a licença à mão no módulo ' + esc(C.modulo) + '.');
+      }
+    } else marcar(2, 'ok', 'Sem custo mensal para lançar.');
 
     // 3. lead do CRM
-    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Lead <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado.'); }
-    else marcar(3, 'ok', 'Sem lead do CRM para marcar.');
-    try { scheduleSave(); } catch (e) {}                       // eslint-disable-line no-undef
+    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
+    try { scheduleSave(); } catch (e) {}                         // eslint-disable-line no-undef
     try { global.buildSidebar(); } catch (e) {}
     try { global.buildHome(); } catch (e) {}
 
     // 4. contrato padrão + Assinafy
     var corpo = contratoRadioInterna(d, {
       extenso: typeof global.fRecExtenso === 'function' ? global.fRecExtenso : null,
-      hoje: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }),
-      numero: 'MGB-RAD-' + Date.now().toString().slice(-6)
+      hoje: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }), logo: LOGO,
+      numero: C.prefixo + Date.now().toString().slice(-6)
     });
+    enviarComStatus(C.mod, d.nome, C.contrato + ' - ' + d.nome, corpo, d.responsavel || d.nome, d.email,
+      'Segue o contrato para assinatura eletrônica.', 4).finally(function () {
+      var txt = C.aviso + ': ' + d.nome + '. Início ' + d.inicio.split('-').reverse().join('/') +
+        '. Contrato enviado para assinatura: ' + C.cleiton + ' assim que for assinado (o material vem pela Karen).';
+      marcar(5, 'ok', 'Aviso pronto: <a href="https://wa.me/?text=' + encodeURIComponent(txt) + '" target="_blank" rel="noopener">enviar ao Cleiton no WhatsApp</a>.');
+      concluir(btn, C.feito);
+    });
+  }
+
+  // Envia ao Assinafy e marca o passo n com o resultado.
+  function enviarComStatus(modId, nome, nomeDoc, corpo, signatario, email, mensagem, n) {
     var ver = linkVerContrato(corpo);
-    var envio = d.email
-      ? enviarAssinafy('radio', d.nome, 'Contrato Rádio Interna - ' + d.nome, corpo, d.responsavel || d.nome, d.email,
-          'Segue o contrato da rádio interna para assinatura eletrônica.')
-          .then(function () { return { ok: true, msg: 'Contrato enviado ao cliente (' + esc(d.email) + ') e a você pelo Assinafy.' + ver }; })
+    var p = email
+      ? enviarAssinafy(modId, nome, nomeDoc, corpo, signatario, email, mensagem)
+          .then(function () { return { ok: true, msg: 'Contrato enviado ao cliente (' + esc(email) + ') e a você pelo Assinafy. Quando todos assinarem, o PDF vai por e-mail e fica salvo no Drive.' + ver }; })
           .catch(function (e) { return { ok: false, msg: 'Contrato gerado, mas o envio ao Assinafy falhou: ' + esc(e.message) + '.' + ver }; })
       : Promise.resolve({ ok: false, msg: 'Contrato gerado, mas sem e-mail do cliente: nada foi enviado.' + ver });
+    return p.then(function (r) { marcar(n, r.ok ? 'ok' : 'erro', r.msg); return r; });
+  }
 
-    envio.then(function (r) { marcar(4, r.ok ? 'ok' : 'erro', r.msg); }).finally(function () {
-      // 5. aviso ao Cleiton
-      var txt = 'Nova rádio interna fechada: ' + d.nome + '. Início ' + d.inicio.split('-').reverse().join('/') +
-        '. Contrato enviado para assinatura: montar a programação assim que for assinado (o material vem pela Karen).';
-      marcar(5, 'ok', 'Aviso pronto: <a href="https://wa.me/?text=' + encodeURIComponent(txt) + '" target="_blank" rel="noopener">enviar ao Cleiton no WhatsApp</a>.');
-      btn.textContent = 'Rádio interna criada';
-      var fim = doc.createElement('button');
-      fim.type = 'button'; fim.className = 'b'; fim.textContent = 'Lançar outra unidade';
-      fim.addEventListener('click', function () { abrir(); });
-      btn.parentNode.appendChild(fim);
-    });
+  function concluir(btn, texto) {
+    btn.textContent = texto;
+    var fim = doc.createElement('button');
+    fim.type = 'button'; fim.className = 'b'; fim.textContent = 'Lançar outro';
+    fim.addEventListener('click', function () { abrir(); });
+    btn.parentNode.appendChild(fim);
   }
 
   // ── Novo anunciante · Rádio Mercadão ──────────────────────────────────
@@ -776,9 +910,10 @@
   }
 
   function formMercadao(lead) {
-    leadAtual = lead || null;
-    var L = lead || {};
-    var crm = !!lead;
+    if (!lead) return escolherLead('mercadao');
+    leadAtual = lead;
+    var L = lead;
+    var crm = true;
     var occ = ocupacaoBlocos(lerGradeBlocos());
     var vCota = padraoCobranca('rel-cota', MERCADAO.valorCota);
     var rep = padraoCobranca('rel-repasse', MERCADAO.repasse);
@@ -786,15 +921,15 @@
     var ini = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1).toISOString().slice(0, 10);
     var el = moldura('Novo anunciante · Rádio Mercadão',
       '<div class="duas"><main>' +
-      '<p class="sub">Loja que vai anunciar na rádio interna do Mercadão Prochet.' + (lead ? ' Os campos em verde vieram do CRM.' : ' Campos com * são obrigatórios.') + '</p>' +
+      '<p class="sub">Loja que vai anunciar na rádio interna do Mercadão Prochet. Os campos em verde vieram do CRM e do CNPJ.</p>' +
       '<section class="card"><div class="sec">1 · Anunciante</div><div class="campos">' +
-      campoNv('nome', 'Nome da loja *', L.nome, 'text', '', crm) +
+      campoNv('nome', 'Loja (do CRM)', L.nome, 'text', ' readonly', crm) +
       campoNv('razao', 'Razão social ou nome completo', '', 'text', ' placeholder="Se diferente do nome da loja"') +
       campoNv('cnpj', 'CNPJ ou CPF', L.cnpj, 'text', '', crm) +
       campoNv('end', 'Endereço', '', 'text', ' placeholder="Box, rua, número, cidade"') +
       campoNv('resp', 'Responsável', L.responsavel, 'text', '', crm) +
-      campoNv('email', 'E-mail (recebe o contrato)', '', 'email', ' placeholder="loja@exemplo.com"') +
-      campoNv('wpp', 'WhatsApp (recebe o spot para aprovar)', L.tel, 'text', '', crm) + '</div></section>' +
+      campoNv('email', 'E-mail (recebe o contrato)', L.email, 'email', ' placeholder="loja@exemplo.com"', crm) +
+      campoNv('wpp', 'WhatsApp (recebe o spot para aprovar)', L.tel, 'text', '', crm) + '</div>' + avisoCNPJ() + '</section>' +
       '<section class="card"><div class="sec">2 · Cotas e pagamento</div><div class="campos">' +
       campoNv('cotas', 'Cotas *', '1', 'number', ' min="1" max="' + Math.max(occ.vagas, 1) + '"') +
       campoNv('vcota', 'Valor por cota (R$) *', String(vCota).replace('.', ','), 'text', ' inputmode="decimal"') +
@@ -830,7 +965,8 @@
     el.querySelector('#nv-vcota').addEventListener('input', atualizarConta);
     atualizarConta();
     el.querySelector('#nv-criar').addEventListener('click', function () { criarMercadao(rep); });
-    el.querySelector('#nv-nome').focus();
+    completarPorCNPJ(L.cnpj, { razao: 'razao', end: 'endereco', email: 'email', wpp: 'tel' });
+    el.querySelector('#nv-cotas').focus();
   }
 
   function criarMercadao(rep) {
@@ -889,7 +1025,7 @@
     // 2. contrato + Assinafy
     var corpo = contratoMercadao(d, {
       extenso: typeof global.fRecExtenso === 'function' ? global.fRecExtenso : null,
-      hoje: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }), numero: num
+      hoje: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }), logo: LOGO, numero: num
     });
     var ver = linkVerContrato(corpo);
     var envio = d.email
@@ -914,7 +1050,316 @@
     });
   }
 
+  // ── Contratos que já existem no hub (Tela Vertical e Vaapty) ──────────
+  // O formulário novo preenche o gerador oficial (iframe) e usa o contrato que ele gera,
+  // assim o texto do contrato continua sendo o mesmo de sempre.
+  function janela(id) {
+    var f = doc.getElementById(id);
+    try { return f && f.contentWindow && f.contentWindow.document && f.contentWindow.document.body ? f.contentWindow : null; } catch (e) { return null; }
+  }
+  function preencher(w, id, v) { var e = w.document.getElementById(id); if (e && v != null && v !== '') e.value = v; }
+  function documentoDoFrame(w, outId) {
+    var css = Array.prototype.map.call(w.document.querySelectorAll('style'), function (st) { return st.textContent; }).join('\n');
+    var out = w.document.getElementById(outId);
+    if (!out || !out.innerHTML.trim()) return '';
+    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>' + css + 'body{padding:24px;background:#fff}</style></head><body><div class="contract-preview">' + out.innerHTML + '</div></body></html>';
+  }
+  function campoSel(id, rotulo, opcoes, sel) {
+    return '<label class="f" for="nv-' + id + '">' + rotulo + '<select id="nv-' + id + '">' + opcoes.map(function (o) {
+      var v = Array.isArray(o) ? o[0] : o, t = Array.isArray(o) ? o[1] : o;
+      return '<option value="' + esc(v) + '"' + (String(v) === String(sel) ? ' selected' : '') + '>' + esc(t) + '</option>';
+    }).join('') + '</select></label>';
+  }
+  function camposEndereco() {
+    return '<section class="card"><div class="sec">Endereço (vem do CNPJ)</div><div class="campos">' +
+      campoNv('cep', 'CEP', '') + campoNv('logradouro', 'Logradouro', '') + campoNv('numero', 'Número', '') +
+      campoNv('complemento', 'Complemento', '') + campoNv('bairro', 'Bairro', '') + campoNv('cidade', 'Cidade', '') + campoNv('uf', 'UF', '', 'text', ' maxlength="2"') +
+      '</div></section>';
+  }
+  var MAPA_END = { razao: 'razao', cep: 'cep', logradouro: 'logradouro', numero: 'numero', complemento: 'complemento', bairro: 'bairro', cidade: 'cidade', uf: 'uf', email: 'email', tel: 'tel' };
+  function ehCPF(doc_) { return String(doc_ || '').replace(/\D/g, '').length === 11; }
+  function inicioPadrao() { var h = new Date(); return new Date(h.getFullYear(), h.getMonth() + 1, 1).toISOString().slice(0, 10); }
+
+  // ── Novo anunciante · telas do elevador (contrato Tela Vertical) ──────
+  function formAnuncianteElev(lead) {
+    if (!lead) return escolherLead('anunciante');
+    var w = janela('frame-elevador');
+    var condos = [], pgtos = ['Boleto Bancário', 'PIX', 'Transferência Bancária'];
+    try { condos = w.eval('eCondominios').filter(function (c) { return c.status === 'ativo'; }); } catch (e) {}
+    try { pgtos = Array.prototype.map.call(w.document.getElementById('e-pgto').options, function (o) { return o.text; }); } catch (e) {}
+    leadAtual = lead;
+    var L = lead;
+    var listaCondos = condos.length ? condos.map(function (c) {
+      return '<label style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid #e4def2;border-radius:10px;font-size:13px;cursor:pointer">' +
+        '<input type="checkbox" class="nv-condo" value="' + esc(c.id) + '" data-telas="' + (c.telas || 1) + '" style="margin-top:3px">' +
+        '<span><b>' + esc(c.nome) + '</b><br><span style="color:#6b6380">' + esc(c.bairro) + ' · ' + (c.telas || 1) + ' tela(s)</span></span></label>';
+    }).join('') : '<p class="sub">Não consegui ler a lista de condomínios do contrato Tela Vertical. Recarregue a página.</p>';
+    var el = moldura('Novo anunciante · telas do elevador',
+      '<div class="duas"><main>' +
+      '<p class="sub">Cliente do CRM. Os campos em verde vieram do CRM e do CNPJ. O contrato gerado é o mesmo Tela Vertical de sempre.</p>' +
+      '<section class="card"><div class="sec">1 · Anunciante</div><div class="campos">' +
+      campoNv('nome', 'Anunciante (do CRM)', L.nome, 'text', ' readonly', true) +
+      campoNv('cnpj', 'CNPJ ou CPF', L.cnpj, 'text', '', true) +
+      campoNv('razao', 'Razão social / nome completo', '', 'text', ' placeholder="Vem do CNPJ"') +
+      campoNv('resp', 'Responsável', L.responsavel, 'text', '', true) + campoNv('cargo', 'Cargo', L.funcao, 'text', '', true) +
+      campoNv('tel', 'Telefone / WhatsApp', L.tel, 'text', '', true) + campoNv('email', 'E-mail (recebe o contrato)', L.email, 'email', '', true) +
+      '</div>' + avisoCNPJ() + '</section>' + camposEndereco() +
+      '<section class="card"><div class="sec">2 · Condomínios</div><div class="grade" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">' + listaCondos + '</div></section>' +
+      '<section class="card"><div class="sec">3 · Plano e valores</div><div class="campos">' +
+      campoSel('dur', 'Duração do spot', [['10', '10 s (padrão)'], ['20', '20 s (2×)'], ['30', '30 s (3×)']], '10') +
+      campoSel('formato', 'Formato', [['video', 'Vídeo (MP4)'], ['imagem', 'Imagem (JPG/PNG)']], 'video') +
+      campoNv('vtela', 'Valor por tela/mês (R$, base 10 s) *', '', 'text', ' inputmode="decimal" placeholder="Ex.: 290,00"') +
+      campoNv('vfinal', 'Valor mensal final (R$, se negociado)', L.valor ? String(L.valor).replace('.', ',') : '', 'text', ' inputmode="decimal"', true) +
+      campoSel('plano', 'Plano', [['mensal', 'Mensal (1 mês)'], ['trimestral', 'Trimestral (3 meses)'], ['semestral', 'Semestral (6 meses)'], ['anual', 'Anual (12 meses)']], 'semestral') +
+      campoSel('pgto', 'Pagamento', pgtos, pgtos[0]) + campoNv('inicio', 'Início *', inicioPadrao(), 'date') +
+      campoNv('obs', 'Observação sobre o material', '', 'text', ' placeholder="Ex.: cliente entrega o vídeo pronto"') +
+      '</div></section></main>' +
+      '<aside><section class="card"><div class="sec">Conta do mês</div>' +
+      '<div class="conta"><span id="nv-rot-telas">0 telas</span><b id="nv-cheio">—</b></div>' +
+      '<div class="conta" style="border-top:1px solid #ece7f5;padding-top:10px"><span>Anunciante paga</span><b id="nv-mensal" style="color:#14583a">—</b></div>' +
+      '<p class="sub" id="nv-total"></p></section>' +
+      '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato Tela Vertical e lança o anunciante nas telas escolhidas (receita no módulo Elevadores).</span></div>' +
+      '<div class="passo" id="nv-p2"><i>2</i><span>Envia o contrato pelo Assinafy.</span></div>' +
+      '<div class="passo" id="nv-p3"><i>3</i><span>Marca o cliente do CRM como cadastrado.</span></div>' +
+      '<div class="passo" id="nv-p4"><i>4</i><span>Prepara o aviso ao Cleiton para programar as telas depois da assinatura.</span></div>' +
+      '<div class="erros" id="nv-erros" role="alert"></div>' +
+      '<button type="button" class="b p" id="nv-criar"' + (w ? '' : ' disabled') + '>Criar anunciante e enviar contrato</button>' +
+      '</section></aside></div>', true);
+
+    function conta() {
+      var telas = 0;
+      el.querySelectorAll('.nv-condo:checked').forEach(function (c) { telas += parseInt(c.getAttribute('data-telas'), 10) || 1; });
+      var mult = { '10': 1, '20': 2, '30': 3 }[val('dur')] || 1;
+      var cheio = telas * numero(val('vtela')) * mult;
+      var fin = numero(val('vfinal')) || cheio;
+      var meses = { mensal: 1, trimestral: 3, semestral: 6, anual: 12 }[val('plano')] || 1;
+      el.querySelector('#nv-rot-telas').textContent = telas + (telas === 1 ? ' tela' : ' telas') + (mult > 1 ? ' · ' + mult + '×' : '') + ' · valor cheio';
+      el.querySelector('#nv-cheio').textContent = cheio ? brl(cheio) : '—';
+      el.querySelector('#nv-mensal').textContent = fin ? brl(fin) + '/mês' : '—';
+      el.querySelector('#nv-total').textContent = fin ? 'Total do contrato: ' + brl(fin * meses) + ' em ' + meses + (meses === 1 ? ' mês' : ' meses') + '.' : '';
+      return { telas: telas, mensal: fin, meses: meses };
+    }
+    var box = el.querySelector('.box'); box.addEventListener('input', conta); box.addEventListener('change', conta); conta();
+    el.querySelector('#nv-criar').addEventListener('click', function () { criarAnuncianteElev(conta()); });
+    completarPorCNPJ(L.cnpj, MAPA_END);
+  }
+
+  function criarAnuncianteElev(k) {
+    var w = janela('frame-elevador');
+    var ids = Array.prototype.map.call(doc.querySelectorAll('.nv-condo:checked'), function (c) { return c.value; });
+    var d = { nome: val('nome'), cnpj: val('cnpj'), email: val('email'), inicio: val('inicio') };
+    var erros = [];
+    var existentes = []; try { existentes = (anunciantes || []).map(function (a) { return a.nome; }); } catch (e) {}  // eslint-disable-line no-undef
+    if (jaExiste(d.nome, existentes)) erros.push('Este cliente já é anunciante nas telas. Para renovar, use o aviso de renovação.');
+    if (!ids.length) erros.push('Escolha pelo menos um condomínio.');
+    if (!(k.mensal > 0)) erros.push('Informe o valor por tela ou o valor mensal final.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.inicio)) erros.push('Informe a data de início.');
+    if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) erros.push('O e-mail parece incompleto.');
+    if (!w) erros.push('O gerador do contrato Tela Vertical não carregou. Recarregue a página.');
+    var errosEl = doc.getElementById('nv-erros');
+    if (erros.length) { errosEl.innerHTML = erros.map(esc).join('<br>'); return; }
+    errosEl.textContent = '';
+    var btn = doc.getElementById('nv-criar');
+    btn.disabled = true; btn.textContent = 'Criando…';
+
+    // 1. preenche o gerador oficial e gera (ele mesmo lança o anunciante e registra na Pasta)
+    var html = '';
+    try {
+      var pf = ehCPF(d.cnpj);
+      w.eSetTipo(pf ? 'pf' : 'pj');
+      if (pf) { preencher(w, 'e-cpf', val('cnpj')); preencher(w, 'e-nomepf', val('razao') || d.nome); }
+      else { preencher(w, 'e-cnpj', val('cnpj')); preencher(w, 'e-razao', val('razao')); preencher(w, 'e-fantasia', d.nome); }
+      ['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade'].forEach(function (c) { preencher(w, 'e-' + c, val(c)); });
+      preencher(w, 'e-estado', val('uf').toUpperCase());
+      preencher(w, 'e-resp', val('resp')); preencher(w, 'e-cargo', val('cargo')); preencher(w, 'e-tel', val('tel')); preencher(w, 'e-email', d.email);
+      preencher(w, 'e-durspot', val('dur')); preencher(w, 'e-formato', val('formato')); preencher(w, 'e-obs', val('obs'));
+      preencher(w, 'e-valor', val('vtela')); w.document.getElementById('e-desc').value = val('vfinal');
+      var pg = w.document.getElementById('e-pgto'); Array.prototype.forEach.call(pg.options, function (o, i) { if (o.text === val('pgto')) pg.selectedIndex = i; });
+      preencher(w, 'e-inicio', d.inicio);
+      w.eval('eCondos.clear()');
+      ids.forEach(function (id) { w.eToggle(id); });
+      w.eSelPlano(val('plano'));
+      w.eGerar();
+      html = documentoDoFrame(w, 'e-contract-out');
+      if (!html) throw new Error('o contrato não foi gerado');
+      marcar(1, 'ok', 'Contrato Tela Vertical gerado e anunciante <b>' + esc(d.nome) + '</b> lançado em ' + ids.length + (ids.length === 1 ? ' condomínio' : ' condomínios') + ' (' + brl(k.mensal) + '/mês por ' + k.meses + (k.meses === 1 ? ' mês' : ' meses') + ').');
+    } catch (e) {
+      marcar(1, 'erro', 'Não consegui gerar o contrato: ' + esc(e.message) + '.');
+      btn.disabled = false; btn.textContent = 'Tentar de novo';
+      return;
+    }
+
+    // 3. lead
+    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
+    try { scheduleSave(); } catch (e) {}                         // eslint-disable-line no-undef
+    try { global.buildHome(); } catch (e) {}
+
+    // 2. Assinafy
+    enviarComStatus('elev', d.nome, 'Contrato Tela Vertical - ' + d.nome, html, val('resp') || d.nome, d.email,
+      'Segue o contrato de mídia em elevadores da Tela Vertical para assinatura eletrônica.', 2).finally(function () {
+      var nomes = []; try { nomes = w.eval('eCondominios').filter(function (c) { return ids.indexOf(c.id) > -1; }).map(function (c) { return c.nome; }); } catch (e) {}
+      var txt = 'Novo anunciante nas telas: ' + d.nome + ' · ' + nomes.join(', ') + '. Início ' + d.inicio.split('-').reverse().join('/') +
+        '. Contrato enviado para assinatura: programar assim que for assinado (o material vem pela Karen).';
+      marcar(4, 'ok', 'Aviso pronto: <a href="https://wa.me/?text=' + encodeURIComponent(txt) + '" target="_blank" rel="noopener">enviar ao Cleiton no WhatsApp</a>.');
+      concluir(btn, 'Anunciante criado');
+    });
+  }
+
+  // ── Nova unidade Vaapty (contrato de franquia Vaapty) ─────────────────
+  function formVaapty(lead) {
+    if (!lead) return escolherLead('vaapty');
+    var w = janela('frame-vaapty');
+    var pgtos = ['Boleto mensal', 'PIX mensal', 'Cartão de crédito recorrente', 'Transferência bancária'];
+    try { pgtos = Array.prototype.map.call(w.document.getElementById('v-pgto').options, function (o) { return o.text; }); } catch (e) {}
+    var tabela = 339; try { tabela = numero(w.document.getElementById('v-tabela').value) || 339; } catch (e) {}
+    leadAtual = lead;
+    var L = lead;
+    var el = moldura('Nova unidade Vaapty',
+      '<div class="duas"><main>' +
+      '<p class="sub">Cliente do CRM. Os campos em verde vieram do CRM e do CNPJ. O contrato gerado é o mesmo contrato de franquia Vaapty de sempre.</p>' +
+      '<section class="card"><div class="sec">1 · Franqueado</div><div class="campos">' +
+      campoNv('nome', 'Unidade (do CRM)', L.nome, 'text', ' readonly', true) +
+      campoNv('cnpj', 'CNPJ ou CPF', L.cnpj, 'text', '', true) +
+      campoNv('razao', 'Razão social / nome completo', '', 'text', ' placeholder="Vem do CNPJ"') +
+      campoNv('resp', 'Responsável', L.responsavel, 'text', '', true) + campoNv('cargo', 'Cargo', L.funcao, 'text', '', true) +
+      campoNv('tel', 'Telefone / WhatsApp', L.tel, 'text', '', true) + campoNv('email', 'E-mail (recebe o contrato)', L.email, 'email', '', true) +
+      '</div>' + avisoCNPJ() + '</section>' + camposEndereco() +
+      '<section class="card"><div class="sec">2 · Equipamento e valores</div><div class="campos">' +
+      campoNv('serie', 'Nº de série do box', '', 'text', ' placeholder="Ex.: VPT-0042"') +
+      campoNv('qtd', 'Quantidade de boxes', '1', 'number', ' min="1"') +
+      campoNv('valor', 'Valor negociado (R$/mês) *', L.valor ? String(L.valor).replace('.', ',') : String(tabela).replace('.', ','), 'text', ' inputmode="decimal"', !!L.valor) +
+      campoNv('inicio', 'Início *', inicioPadrao(), 'date') + campoSel('pgto', 'Pagamento', pgtos, pgtos[0]) +
+      '</div><p class="sub">Valor de tabela: ' + brl(tabela) + '/mês · prazo de 12 meses com renovação automática.</p></section></main>' +
+      '<aside><section class="card"><div class="sec">Conta do mês</div>' +
+      '<div class="conta"><span>Franqueado paga</span><b id="nv-mensal" style="color:#14583a">—</b></div>' +
+      '<p class="sub" id="nv-desc"></p></section>' +
+      '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato Vaapty e cria a unidade no módulo Vaapty com a receita.</span></div>' +
+      '<div class="passo" id="nv-p2"><i>2</i><span>Envia o contrato pelo Assinafy.</span></div>' +
+      '<div class="passo" id="nv-p3"><i>3</i><span>Marca o cliente do CRM como cadastrado.</span></div>' +
+      '<div class="passo" id="nv-p4"><i>4</i><span>Prepara o aviso ao Cleiton para instalar o box depois da assinatura.</span></div>' +
+      '<div class="erros" id="nv-erros" role="alert"></div>' +
+      '<button type="button" class="b p" id="nv-criar"' + (w ? '' : ' disabled') + '>Criar unidade e enviar contrato</button>' +
+      '</section></aside></div>', true);
+    function conta() {
+      var v = numero(val('valor'));
+      el.querySelector('#nv-mensal').textContent = v ? brl(v) + '/mês' : '—';
+      var dsc = v && tabela ? Math.round((1 - v / tabela) * 1000) / 10 : 0;
+      el.querySelector('#nv-desc').textContent = v ? (dsc > 0 ? 'Desconto de ' + String(dsc).replace('.', ',') + '% sobre a tabela. ' : '') + 'Total de 12 meses: ' + brl(v * 12) + '.' : '';
+    }
+    el.querySelector('.box').addEventListener('input', conta); conta();
+    el.querySelector('#nv-criar').addEventListener('click', criarVaapty);
+    completarPorCNPJ(L.cnpj, MAPA_END);
+  }
+
+  function criarVaapty() {
+    var w = janela('frame-vaapty');
+    var d = { nome: val('nome'), cnpj: val('cnpj'), email: val('email'), inicio: val('inicio'), valor: numero(val('valor')) };
+    var erros = [];
+    if (jaExiste(d.nome, itensModulo('vaapty'))) erros.push('Já existe uma unidade com esse nome no módulo Vaapty.');
+    if (!(d.valor > 0)) erros.push('Informe o valor negociado.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.inicio)) erros.push('Informe a data de início.');
+    if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) erros.push('O e-mail parece incompleto.');
+    if (!w) erros.push('O gerador do contrato Vaapty não carregou. Recarregue a página.');
+    var errosEl = doc.getElementById('nv-erros');
+    if (erros.length) { errosEl.innerHTML = erros.map(esc).join('<br>'); return; }
+    errosEl.textContent = '';
+    var btn = doc.getElementById('nv-criar');
+    btn.disabled = true; btn.textContent = 'Criando…';
+
+    var html = '';
+    try {
+      var pf = ehCPF(d.cnpj);
+      w.vSetTipo(pf ? 'pf' : 'pj');
+      if (pf) { preencher(w, 'v-cpf', d.cnpj); preencher(w, 'v-nomepf', val('razao') || d.nome); }
+      else { preencher(w, 'v-cnpj', d.cnpj); preencher(w, 'v-razao', val('razao')); preencher(w, 'v-fantasia', d.nome); }
+      ['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade'].forEach(function (c) { preencher(w, 'v-' + c, val(c)); });
+      preencher(w, 'v-estado', val('uf').toUpperCase());
+      preencher(w, 'v-resp', val('resp')); preencher(w, 'v-cargo', val('cargo')); preencher(w, 'v-tel', val('tel')); preencher(w, 'v-email', d.email);
+      preencher(w, 'v-serie', val('serie')); preencher(w, 'v-qtd-box', val('qtd'));
+      w.document.getElementById('v-negociado').value = String(d.valor).replace('.', ',');
+      preencher(w, 'v-inicio', d.inicio);
+      var pg = w.document.getElementById('v-pgto'); Array.prototype.forEach.call(pg.options, function (o, i) { if (o.text === val('pgto')) pg.selectedIndex = i; });
+      w.vGerar();
+      html = documentoDoFrame(w, 'v-contract-out');
+      if (!html) throw new Error('o contrato não foi gerado');
+      marcar(1, 'ok', 'Contrato Vaapty gerado e unidade <b>' + esc(d.nome) + '</b> criada com ' + brl(d.valor) + '/mês por 12 meses.');
+    } catch (e) {
+      marcar(1, 'erro', 'Não consegui gerar o contrato: ' + esc(e.message) + '.');
+      btn.disabled = false; btn.textContent = 'Tentar de novo';
+      return;
+    }
+    try {   // guarda o e-mail e o endereço no cadastro (o gerador antigo não guarda)
+      var info = clientesInfo.vaapty && clientesInfo.vaapty[d.nome];   // eslint-disable-line no-undef
+      if (info) { info.email = d.email; info.razao = val('razao'); }
+    } catch (e) {}
+    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
+    try { scheduleSave(); } catch (e) {}                         // eslint-disable-line no-undef
+    try { global.buildSidebar(); } catch (e) {}
+    try { global.buildHome(); } catch (e) {}
+
+    enviarComStatus('vaapty', d.nome, 'Contrato Vaapty - ' + d.nome, html, val('resp') || d.nome, d.email,
+      'Segue o contrato de franquia Vaapty para assinatura eletrônica.', 2).finally(function () {
+      var txt = 'Nova unidade Vaapty: ' + d.nome + (val('cidade') ? ' (' + val('cidade') + ')' : '') + ' · ' + (val('qtd') || '1') + ' box. Início ' + d.inicio.split('-').reverse().join('/') +
+        '. Contrato enviado para assinatura: preparar a instalação assim que for assinado.';
+      marcar(4, 'ok', 'Aviso pronto: <a href="https://wa.me/?text=' + encodeURIComponent(txt) + '" target="_blank" rel="noopener">enviar ao Cleiton no WhatsApp</a>.');
+      concluir(btn, 'Unidade criada');
+    });
+  }
+
+  // ── Comissão Tarobá (lançamento do mês, sem contrato) ─────────────────
+  function formTaroba() {
+    injetarEstilos();
+    leadAtual = null;
+    var veic = itensModulo('taroba');
+    var hoje = new Date();
+    var mesAtual = hoje.toISOString().slice(0, 7);
+    var el = moldura('Comissão Tarobá',
+      '<div class="duas"><main>' +
+      '<p class="sub">A comissão da Tarobá é lançada mês a mês, pelo valor do extrato. Não tem contrato nem cadastro de cliente.</p>' +
+      '<section class="card"><div class="sec">Lançamento</div><div class="campos">' +
+      campoSel('veic', 'Veículo', veic, veic[0]) + campoNv('mes', 'Mês', mesAtual, 'month') +
+      campoNv('valor', 'Valor da comissão (R$) *', '', 'text', ' inputmode="decimal" placeholder="0,00"') +
+      '</div><p class="sub" id="nv-atual"></p></section></main>' +
+      '<aside><section class="card"><div class="sec">Ao lançar, o hub faz</div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Grava a receita do mês no módulo Tarobá, no veículo escolhido.</span></div>' +
+      '<div class="erros" id="nv-erros" role="alert"></div>' +
+      '<button type="button" class="b p" id="nv-criar">Lançar comissão</button></section></aside></div>', true);
+    function atual() {
+      var m = val('mes').split('-').map(Number);
+      var v = 0; try { v = global.recTarobaGetMes(val('veic'), m[0], m[1] - 1); } catch (e) {}
+      el.querySelector('#nv-atual').textContent = v ? 'Já lançado neste mês: ' + brl(v) + '. Lançar de novo substitui o valor.' : 'Nada lançado ainda neste mês.';
+    }
+    el.querySelector('.box').addEventListener('change', atual); atual();
+    el.querySelector('#nv-criar').addEventListener('click', function () {
+      var v = numero(val('valor')), m = val('mes').split('-').map(Number);
+      var errosEl = doc.getElementById('nv-erros');
+      if (!(v > 0) || !m[0]) { errosEl.textContent = 'Informe o mês e o valor.'; return; }
+      errosEl.textContent = '';
+      try {
+        global.recTarobaSetMes(val('veic'), m[0], m[1] - 1, v);
+        try { scheduleSave(); } catch (e) {}                     // eslint-disable-line no-undef
+        try { global.buildAll(); } catch (e) {}
+        try { global.buildHome(); } catch (e) {}
+        marcar(1, 'ok', 'Comissão de <b>' + brl(v) + '</b> lançada em ' + esc(val('veic')) + ', ' + val('mes').split('-').reverse().join('/') + '.');
+        atual();
+      } catch (e) { marcar(1, 'erro', 'Não consegui lançar: ' + esc(e.message) + '.'); }
+    });
+  }
+
+  var LOGO = '';
+  function carregarLogo() {
+    if (LOGO || typeof fetch !== 'function' || typeof FileReader === 'undefined') return;
+    fetch('marca/mgb-logo-roxo.png').then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) {
+      if (!b) return;
+      var fr = new FileReader();
+      fr.onload = function () { LOGO = String(fr.result || ''); };
+      fr.readAsDataURL(b);
+    }).catch(function () {});
+  }
+
   global.MGBNovo = Object.assign(api, { abrir: abrir });
-  function iniciar() { injetarEstilos(); inserirBotaoHome(); }
+  function iniciar() { injetarEstilos(); inserirBotaoHome(); carregarLogo(); }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })(typeof window !== 'undefined' ? window : globalThis);

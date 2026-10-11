@@ -81,3 +81,30 @@ test("admin vê tudo nas abas", () => {
   assert.ok(A.podeAba("admin-geral", "estudio", "linkedin-plano"));
   assert.ok(A.temExtra("admin-geral", "ropsPainel"));
 });
+
+// ── Renovação por telefone (11/10) ───────────────────────────────────
+test("renovação: Karen vê o que vence neste mês e no próximo; encaminhado sai da lista dela", () => {
+  const ref = 2026 * 12 + 9; // out/26
+  const lista = [
+    { origem: "Rádio Interna", nome: "Loja A", fimKey: ref, meses: 12 },
+    { origem: "Rádio Interna", nome: "Loja B", fimKey: ref + 1, meses: 12 },
+    { origem: "Vaapty", nome: "Loja C", fimKey: ref + 2, meses: 12 },
+    { origem: "Elevadores", nome: "Loja D", fimKey: ref - 1, meses: 6 }
+  ];
+  assert.deepEqual(A.contratosParaRenovar(lista, ref, {}, false).map((c) => c.nome), ["Loja A", "Loja B"]);
+  const renov = { [A.chaveRenov(lista[0])]: { s: "eder" }, [A.chaveRenov(lista[1])]: { s: "renovado" } };
+  assert.deepEqual(A.contratosParaRenovar(lista, ref, renov, false).map((c) => c.nome), []);
+  assert.deepEqual(A.contratosParaRenovar(lista, ref, renov, true).map((c) => c.nome), ["Loja A"]);
+});
+
+test("renovação: estende pelo mesmo prazo", () => {
+  const r = { valor: 300, inicio: "2025-11", meses: 12 };
+  assert.equal(A.estenderContrato(r), 24);
+  assert.equal(A.estenderContrato(r, 6), 30);
+  assert.equal(A.estenderContrato(null), null);
+});
+
+test("Karen não vê o Rádio Ops duplicado (o módulo Moinho abre a mesma tela)", () => {
+  assert.deepEqual(A.PERFIS.financeiro.ocultar, ["#nav-radioops", "#home-rops-card"]);
+  assert.ok(A.pode("financeiro", "radioops"));
+});
