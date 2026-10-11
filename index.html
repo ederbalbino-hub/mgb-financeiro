@@ -2296,7 +2296,7 @@ function gerarContrato() {
 
       '<div>' +
         '<div class=&quot;contract-section&quot;><h3>2. Dados da Contratada</h3>' +
-        row('Razão Social', 'MGB Elevadores Mídia LTDA') +
+        row('Razão Social', 'MGB Comunicação e Marketing Ltda.') +
         row('Nome Fantasia', 'MGB Mídia') +
         row('CNPJ', '23.770.170/0001-50') +
         row('Endereço', 'Londrina / PR') +
@@ -3016,7 +3016,7 @@ function eGerar(){
       erow('Responsável',egv('e-resp')+(egv('e-cargo')?' ('+egv('e-cargo')+')':''))+erow('Telefone',egv('e-tel'))+erow('E-mail',egv('e-email'))+'</div>'+
 
       '<div>'+
-        '<div class=&quot;contract-section&quot;><h3>2. Dados da Contratada</h3>'+erow('Razão Social','MGB Elevadores Mídia LTDA')+erow('Nome Fantasia','Tela Vertical')+erow('CNPJ','23.770.170/0001-50')+erow('Endereço','Londrina / PR')+erow('Contato','contato@telavertical.com.br · (43) 99696-0078')+'</div>'+
+        '<div class=&quot;contract-section&quot;><h3>2. Dados da Contratada</h3>'+erow('Razão Social','MGB Comunicação e Marketing Ltda.')+erow('Nome Fantasia','Tela Vertical')+erow('CNPJ','23.770.170/0001-50')+erow('Endereço','Londrina / PR')+erow('Contato','contato@telavertical.com.br · (43) 99696-0078')+'</div>'+
         '<div class=&quot;contract-section&quot; style=&quot;margin-top:10px&quot;><h3>4. Plano e Investimento</h3>'+erow('Plano',plano.nome+' ('+meses+(meses===1?' mês':' meses')+')')+erow('Vigência',(inicio?new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR'):'___/___/______')+' a '+(fimDate||'___/___/______'))+erow('Valor/Tela/Mês','R$ '+vtM.toLocaleString('pt-BR',{minimumFractionDigits:2})+(mult>1?' ('+mult+'x)':''))+(desc>0?erow('Desconto',desc.toFixed(2).replace('.',',')+'%'):'')+erow('Pagamento',pgtoTxt)+'</div>'+
         '<div style=&quot;display:flex;gap:20px;margin-top:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(232,121,176,.08),rgba(155,114,207,.1));border-radius:8px;border:1px solid rgba(232,121,176,.2)&quot;>'+
           '<div><div style=&quot;font-size:9px;color:#6B7280;text-transform:uppercase;font-weight:600&quot;>Mensal</div><div style=&quot;font-size:18px;font-weight:800;color:#C0A062&quot;>R$ '+mensal.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'+
