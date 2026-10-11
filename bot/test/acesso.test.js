@@ -14,6 +14,8 @@ test("admin: Meu dia por padrão, Visão geral mostra tudo", () => {
   }
   assert.ok(A.pode("admin-meudia", "planocaixa"));
   assert.ok(!A.pode("admin-meudia", "operacional:estudio"), "Estúdio é do Cleiton");
+  assert.ok(A.pode("admin-meudia", "relatorios"), "relatório da Tela Vertical ao sócio fica na Cobrança Mensal");
+  assert.ok(A.pode("admin-meudia", "custos"), "módulo Tela Vertical");
 });
 
 test("admin pode ver como outra pessoa; outros papéis não", () => {

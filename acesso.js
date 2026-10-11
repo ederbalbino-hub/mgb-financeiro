@@ -40,8 +40,9 @@
     },
     'admin-meudia': {
       rotulo: 'Meu dia',
+      // 11/10: Cobrança Mensal (aba Tela Vertical = relatório ao sócio) e Contratos voltam ao Meu dia.
       paginas: ['home', 'leads', 'midiakit', 'apresmgb', 'sindicos', 'propvaapty', 'overview', 'custos',
-        'contabilidade', 'radioops', 'planocaixa', 'pessoal'],
+        'contabilidade', 'operacional:contratos', 'relatorios', 'radioops', 'planocaixa', 'pessoal'],
       extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao', 'novo']
     },
     // Revisão do Eder (10/10): Rádio Ops só o resumo do mês; Ferramentas só o Backup;
