@@ -8450,33 +8450,28 @@ function reabrirMes(comp){
 // Receita = nota MGB cheia (inclui o Connectmix cobrado do cliente); o repasse
 // à Connectmix entra como DESPESA própria na Cobrança Mensal — líquido = fee+comissões.
 // ── Comissão do Guina (11/10, Eder) ──
-// O Guina ganha 25% da comissão de agência (20%) que a MGB recebe da Rádio Alvorada e da Rádio Evangelizar (Curitiba).
-// A fonte é o Rádio Ops (painel "Suas comissões"): se o cache trouxer o valor do mês, o hub usa ele.
-// Sem cache, usa a mesma agenda do painel: out/26 R$ 3.000 de comissão (Evangelizar 2.500 + Alvorada 500) → R$ 750;
-// nov/26 a jan/27 só Alvorada R$ 500 → R$ 125.
-const GUINA_BASE_EXTRA=[
+// O Guina ganha 25% (cfg.guinaComissaoPct do Rádio Ops) da comissão de agência que a MGB recebe das rádios.
+// Fonte única: o campo "comissoes" de cada mês do Rádio Ops (out/26 = R$ 3.000 — Evangelizar 2.500 + Alvorada 500;
+// nov/26 em diante = R$ 500 — Alvorada). Essas comissões JÁ estão dentro da Nota MGB, então não se somam de novo.
+// A agenda abaixo só vale se o hub ainda não tiver sincronizado o Rádio Ops (sem cache).
+const GUINA_AGENDA_SEM_CACHE=[
   {nome:'Rádio Evangelizar',valor:2500,de:'2026-10',ate:'2026-10'},
   {nome:'Rádio Alvorada',valor:500,de:'2026-10',ate:'2027-01'}
 ];
 const GUINA_INICIO='2026-10';
-function guinaDoCache(d){
-  if(!d) return null;
-  const v=[d.guina,d.comissaoGuina,d.guinaComissao,d.guinaValor].find(x=>typeof x==='number'&&x>=0);
-  if(v==null) return null;
-  const base=[d.guinaBase,d.baseGuina].find(x=>typeof x==='number'&&x>0);
-  return {valor:v, base:base||null};
-}
 function ropsFinMes(ano,mes){
   const key=ano+'-'+String(mes+1).padStart(2,'0');
   let cache=null; try{ cache=JSON.parse(localStorage.getItem('rops_cache')||'null'); }catch(e){}
   const d=(cache&&cache.meses)?cache.meses.find(x=>x.mes===key):null;
   const pct=(cache&&cache.cfg&&cache.cfg.guinaComissaoPct)||25;
-  const fontes=GUINA_BASE_EXTRA.filter(x=>key>=GUINA_INICIO&&key>=x.de&&key<=x.ate);
-  let base=fontes.reduce((a,x)=>a+x.valor,0), guina=Math.round(base*pct)/100, origem='agenda';
-  const c=guinaDoCache(d);
-  if(c){ guina=c.valor; base=c.base||(pct?Math.round(c.valor*10000/pct)/100:base); origem='Rádio Ops'; }
+  let base=0, origem='Rádio Ops', fontes=[];
+  if(key>=GUINA_INICIO){
+    if(d){ base=d.comissoes||0; }
+    else if(!cache){ fontes=GUINA_AGENDA_SEM_CACHE.filter(x=>key>=x.de&&key<=x.ate); base=fontes.reduce((a,x)=>a+x.valor,0); origem='agenda (Rádio Ops não sincronizado)'; }
+  }
+  const guina=Math.round(base*pct)/100;
   return {receita:d?(d.notaMGB||0):0, despesaCmx:d?(d.connectmix||0):0, radios:d?(d.radios||0):0,
-    guina:guina, guinaPct:pct, guinaBase:base, guinaBaseRops:0, guinaFontes:fontes.map(x=>x.nome), guinaOrigem:origem};
+    guina:guina, guinaPct:pct, guinaBase:base, guinaBaseRops:d?(d.comissoes||0):0, guinaFontes:fontes.map(x=>x.nome), guinaOrigem:origem};
 }
 // Despesa do mês = mesma fonte que Visão Despesas (db + despesas compartilhadas)
 function finGetDesp(y,m){ return despesaTotalMes(y,m); }
@@ -9641,7 +9636,7 @@ function coletaDespesasMes(selAno,selMes){
       m:MODULES.find(x=>x.id==='radioops'),
       item:'Moinho Globo',
       idx:'_guina',
-      r:{d:'Comissão do Guina · '+ropsFm.guinaPct+'% de '+f(ropsFm.guinaBase)+' de comissão'+(ropsFm.guinaFontes.length?' ('+ropsFm.guinaFontes.join(' + ')+')':'')+' · Rádio Ops',f:'Guina'},
+      r:{d:'Comissão do Guina · '+ropsFm.guinaPct+'% de '+f(ropsFm.guinaBase)+' de comissão das rádios'+(ropsFm.guinaFontes.length?' ('+ropsFm.guinaFontes.join(' + ')+')':'')+' · '+ropsFm.guinaOrigem,f:'Guina'},
       vlrMes:ropsFm.guina,
       tipoLbl:'Comissão',
       mes:selMes,ano:selAno
