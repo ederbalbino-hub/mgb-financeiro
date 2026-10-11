@@ -839,6 +839,8 @@ body{-webkit-font-smoothing:antialiased}
 .home-welcome{font-size:22px;margin:14px 0 2px}
 .home-date-txt{margin-bottom:14px}
 
+.tv-gestao .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.tv-gestao .kpis .kpi{margin:0}
 </style>
 <script src="financas.js"></script>
 <script src="telavertical/rede-tela-vertical.js"></script>
@@ -992,8 +994,10 @@ body{-webkit-font-smoothing:antialiased}
             <div class="home-hub-desc">Tudo dos elevadores num lugar só</div>
             <div class="home-tv-atalhos">
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvpainel')">📊 Mês e sócio</button>
+              <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvcondos')">🏢 Condomínios e despesas</button>
+              <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvanunc')">📣 Anunciantes</button>
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','elevador')">📄 Contrato anunciante</button>
-              <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','parceria')">🏢 Contrato condomínio</button>
+              <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','parceria')">✍️ Contrato condomínio</button>
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvproposta')">🛗 Proposta elevadores</button>
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvsindicos')">🤝 Proposta síndicos</button>
             </div>
@@ -1026,7 +1030,7 @@ body{-webkit-font-smoothing:antialiased}
           <div class="home-hub-card" style="--accent:#2A1760" onclick="drillMod(MODULES[0].id)">
             <div class="home-hub-ico">🗂️</div>
             <div class="home-hub-title">Módulos</div>
-            <div class="home-hub-desc">Móveis Brasília · Tela Vertical · Vaapty · Rádio · TV · Tarobá</div>
+            <div class="home-hub-desc">Móveis Brasília · Vaapty · Rádio · TV · Tarobá</div>
             <div class="home-hub-cta">Abrir →</div>
           </div>
         </div>
@@ -1341,159 +1345,6 @@ body{-webkit-font-smoothing:antialiased}
     </div>
     <div class="kpi-row" id="kpi-row"></div>
 
-    <!-- ANUNCIANTES — só aparece no módulo Elevadores -->
-    <div id="anunc-section" style="display:none">
-      <div class="acc-hdr open" id="acc-hdr-anunc" onclick="toggleAcc('anunc')">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="sec-title">📣 Anunciantes</div>
-          <span style="font-size:10px;color:var(--hint)" id="anunc-sum"></span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
-          <button class="anunc-btn" onclick="toggleAnuncForm()" id="anunc-add-btn" style="color:var(--purple);border-color:rgba(108,85,219,.4)">＋ Novo anunciante</button>
-          <span class="acc-toggle">›</span>
-        </div>
-      </div>
-      <div class="acc-body" id="acc-body-anunc" style="max-height:3000px">
-        <div class="anunc-section">
-        <!-- Formulário de novo/editar anunciante -->
-        <div class="anunc-form" id="anunc-form">
-          <div class="anunc-form-row">
-            <div class="anunc-form-field" style="flex:1;min-width:160px">
-              <label class="anunc-form-lbl">Nome do anunciante</label>
-              <input class="anunc-form-inp" id="an-nome" placeholder="ex: Leo Cosméticos" style="width:100%">
-            </div>
-            <div class="anunc-form-field" style="width:120px">
-              <label class="anunc-form-lbl">Valor mensal (R$)</label>
-              <input class="anunc-form-inp" id="an-valor" type="number" step="0.01" min="0" placeholder="0,00" oninput="anuncPreview()">
-            </div>
-            <div class="anunc-form-field" style="width:130px">
-              <label class="anunc-form-lbl">📅 Início</label>
-              <input class="anunc-form-inp" id="an-inicio" type="month" style="color-scheme:dark" onchange="anuncPreview()">
-            </div>
-            <div class="anunc-form-field" style="width:80px">
-              <label class="anunc-form-lbl">Duração (meses)</label>
-              <input class="anunc-form-inp" id="an-meses" type="number" min="1" max="120" value="6" placeholder="6" oninput="anuncPreview()">
-            </div>
-          </div>
-          <div>
-            <div class="anunc-form-lbl" style="margin-bottom:6px">Telas selecionadas (clique para marcar)</div>
-            <div class="anunc-tela-check" id="an-telas"></div>
-          </div>
-          <div class="anunc-resumo" id="an-resumo"></div>
-          <div style="display:flex;gap:8px;margin-top:14px">
-            <button onclick="saveAnunc()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
-            <button onclick="cancelAnunc()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
-          </div>
-        </div>
-        <!-- Grid de anunciantes -->
-        <div class="anunc-grid" id="anunc-grid"></div>
-      </div>
-      </div><!-- /acc-body-anunc -->
-    </div>
-
-    <!-- DESPESAS COMPARTILHADAS — só aparece no módulo Elevadores -->
-    <div id="desp-comp-section" style="display:none">
-      <div class="acc-hdr open" id="acc-hdr-dcomp" onclick="toggleAcc('dcomp')">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="sec-title">🔀 Despesas Compartilhadas</div>
-          <span style="font-size:10px;color:var(--hint)" id="desp-comp-sum"></span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
-          <button class="anunc-btn" onclick="toggleDespCompForm()" style="color:var(--red);border-color:rgba(248,113,113,.4)">＋ Nova despesa compartilhada</button>
-          <span class="acc-toggle">›</span>
-        </div>
-      </div>
-      <div class="acc-body" id="acc-body-dcomp" style="max-height:3000px">
-        <div class="anunc-section">
-        <div class="anunc-form" id="desp-comp-form">
-          <div class="anunc-form-row">
-            <div class="anunc-form-field" style="flex:1;min-width:160px">
-              <label class="anunc-form-lbl">Descrição</label>
-              <input class="anunc-form-inp" id="dc-nome" placeholder="ex: Listen, 4YOUSee..." style="width:100%">
-            </div>
-            <div class="anunc-form-field" style="width:120px">
-              <label class="anunc-form-lbl">Fornecedor</label>
-              <input class="anunc-form-inp" id="dc-forn" placeholder="ex: Listen" style="width:100%">
-            </div>
-            <div class="anunc-form-field" style="width:120px">
-              <label class="anunc-form-lbl">Valor total (R$)</label>
-              <input class="anunc-form-inp" id="dc-valor" type="number" step="0.01" min="0" placeholder="0,00" oninput="despCompPreview()">
-            </div>
-            <div class="anunc-form-field" style="width:130px">
-              <label class="anunc-form-lbl">📅 Início</label>
-              <input class="anunc-form-inp" id="dc-inicio" type="month" style="color-scheme:dark" onchange="despCompPreview()">
-            </div>
-            <div class="anunc-form-field" style="width:80px">
-              <label class="anunc-form-lbl">Duração (meses)</label>
-              <input class="anunc-form-inp" id="dc-meses" type="number" min="1" max="120" value="12" placeholder="12" oninput="despCompPreview()">
-            </div>
-          </div>
-          <div>
-            <div class="anunc-form-lbl" style="margin-bottom:6px">Condomínios que participam do rateio (clique para marcar)</div>
-            <div class="anunc-tela-check" id="dc-telas"></div>
-          </div>
-          <div class="anunc-resumo" id="dc-resumo"></div>
-          <div style="display:flex;gap:8px;margin-top:14px">
-            <button onclick="saveDespComp()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--red);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
-            <button onclick="cancelDespComp()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
-          </div>
-        </div>
-        <div class="anunc-grid" id="desp-comp-grid"></div>
-      </div><!-- /anunc-section -->
-      </div><!-- /acc-body-dcomp -->
-    </div><!-- /desp-comp-section -->
-
-    <div id="elev-invest-section" style="display:none">
-      <div class="acc-hdr open" id="acc-hdr-einvest" onclick="toggleAcc('einvest')">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="sec-title">💰 Investimento — Instalação (sócios)</div>
-          <span style="font-size:10px;color:var(--hint)" id="einvest-sum"></span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
-          <button class="anunc-btn" onclick="elevRelatorioMensal()" style="color:var(--sky,#6FC7E8);border-color:rgba(111,199,232,.4)">📄 Relatório mensal</button>
-          <button class="anunc-btn" onclick="toggleElevInvestForm()" style="color:var(--gold,#C0A062);border-color:rgba(192,160,98,.4)">＋ Novo investimento</button>
-          <span class="acc-toggle">›</span>
-        </div>
-      </div>
-      <div class="acc-body" id="acc-body-einvest" style="max-height:3000px">
-        <div class="anunc-section">
-        <div class="anunc-form" id="einvest-form">
-          <div class="anunc-form-row">
-            <div class="anunc-form-field" style="width:170px">
-              <label class="anunc-form-lbl">Condomínio</label>
-              <select class="anunc-form-inp" id="ei-item" style="width:100%"></select>
-            </div>
-            <div class="anunc-form-field" style="flex:1;min-width:160px">
-              <label class="anunc-form-lbl">Descrição</label>
-              <input class="anunc-form-inp" id="ei-desc" placeholder="ex: Instalação (telas, cabos, kits)" style="width:100%">
-            </div>
-            <div class="anunc-form-field" style="width:120px">
-              <label class="anunc-form-lbl">Valor (R$)</label>
-              <input class="anunc-form-inp" id="ei-valor" type="number" step="0.01" min="0" placeholder="0,00">
-            </div>
-            <div class="anunc-form-field" style="width:110px">
-              <label class="anunc-form-lbl">Pago por</label>
-              <select class="anunc-form-inp" id="ei-pagopor" style="width:100%">
-                <option value="jadson">Jadson</option>
-                <option value="eder">Eder</option>
-              </select>
-            </div>
-            <div class="anunc-form-field" style="width:130px">
-              <label class="anunc-form-lbl">📅 Data</label>
-              <input class="anunc-form-inp" id="ei-data" type="date" style="color-scheme:dark">
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:14px">
-            <button onclick="saveElevInvest()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--gold,#C0A062);color:#1B2337;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
-            <button onclick="cancelElevInvest()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
-          </div>
-        </div>
-        <div class="kpis" id="einvest-totais" style="margin:14px 0"></div>
-        <div id="einvest-exc" style="margin:0 0 14px"></div>
-        <div class="anunc-grid" id="einvest-grid"></div>
-      </div><!-- /anunc-section -->
-      </div><!-- /acc-body-einvest -->
-    </div><!-- /elev-invest-section -->
 
     <div class="rec-section">
       <div class="rec-card">
@@ -1657,9 +1508,12 @@ body{-webkit-font-smoothing:antialiased}
     <div class="hub-nav">
       <div class="hub-tab active" data-tab="mercadao" onclick="showOpPanel('mercadao',this)">Contrato Mercadão</div>
       <div class="hub-tab" data-tab="tvpainel" onclick="showOpPanel('tvpainel',this)">📊 Mês e sócio</div>
+      <div class="hub-tab" data-tab="tvcondos" onclick="showOpPanel('tvcondos',this)">🏢 Condomínios</div>
+      <div class="hub-tab" data-tab="tvanunc" onclick="showOpPanel('tvanunc',this)">📣 Anunciantes</div>
+      <div class="hub-tab" data-tab="tvdespesas" onclick="showOpPanel('tvdespesas',this)">💸 Despesas gerais e investimento</div>
       <div class="hub-tab" data-tab="elevador" onclick="showOpPanel('elevador',this)">📄 Contrato Anunciante</div>
       <div class="hub-tab" data-tab="vaapty" onclick="showOpPanel('vaapty',this)">Contrato Vaapty</div>
-      <div class="hub-tab" data-tab="parceria" onclick="showOpPanel('parceria',this)">🏢 Contrato Condomínio</div>
+      <div class="hub-tab" data-tab="parceria" onclick="showOpPanel('parceria',this)">✍️ Contrato Condomínio</div>
       <div class="hub-tab" data-tab="tvproposta" onclick="showOpPanel('tvproposta',this)">🛗 Proposta Elevadores</div>
       <div class="hub-tab" data-tab="tvsindicos" onclick="showOpPanel('tvsindicos',this)">🤝 Proposta Síndicos</div>
       <div class="hub-tab" data-tab="pasta" onclick="showOpPanel('pasta',this)">Contratos Salvos</div>
@@ -3845,6 +3699,167 @@ vCalc();
 <!-- ══════════════════════ BLOCOS RÁDIO ══════════════════════ -->
 <!-- TELA VERTICAL · painel do mês e do sócio (operação Tela Vertical) -->
 <div id="panel-tvpainel" class="hub-panel"><div id="tvp-root" style="padding:20px 22px 40px;max-width:1100px"></div></div>
+<!-- TELA VERTICAL · condomínios e as despesas de cada um (11/10) -->
+<div id="panel-tvcondos" class="hub-panel"><div id="tvc-root" style="padding:20px 22px 40px;max-width:1100px"></div></div>
+<!-- TELA VERTICAL · anunciantes (seção que ficava no módulo, agora aqui) -->
+<div id="panel-tvanunc" class="hub-panel"><div class="tv-gestao" style="padding:16px 0 40px;max-width:1100px">
+    <!-- ANUNCIANTES — operação Tela Vertical › Anunciantes -->
+    <div id="anunc-section" style="display:none">
+      <div class="acc-hdr open" id="acc-hdr-anunc" onclick="toggleAcc('anunc')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="sec-title">📣 Anunciantes</div>
+          <span style="font-size:10px;color:var(--hint)" id="anunc-sum"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
+          <button class="anunc-btn" onclick="toggleAnuncForm()" id="anunc-add-btn" style="color:var(--purple);border-color:rgba(108,85,219,.4)">＋ Novo anunciante</button>
+          <span class="acc-toggle">›</span>
+        </div>
+      </div>
+      <div class="acc-body" id="acc-body-anunc" style="max-height:3000px">
+        <div class="anunc-section">
+        <!-- Formulário de novo/editar anunciante -->
+        <div class="anunc-form" id="anunc-form">
+          <div class="anunc-form-row">
+            <div class="anunc-form-field" style="flex:1;min-width:160px">
+              <label class="anunc-form-lbl">Nome do anunciante</label>
+              <input class="anunc-form-inp" id="an-nome" placeholder="ex: Leo Cosméticos" style="width:100%">
+            </div>
+            <div class="anunc-form-field" style="width:120px">
+              <label class="anunc-form-lbl">Valor mensal (R$)</label>
+              <input class="anunc-form-inp" id="an-valor" type="number" step="0.01" min="0" placeholder="0,00" oninput="anuncPreview()">
+            </div>
+            <div class="anunc-form-field" style="width:130px">
+              <label class="anunc-form-lbl">📅 Início</label>
+              <input class="anunc-form-inp" id="an-inicio" type="month" style="color-scheme:dark" onchange="anuncPreview()">
+            </div>
+            <div class="anunc-form-field" style="width:80px">
+              <label class="anunc-form-lbl">Duração (meses)</label>
+              <input class="anunc-form-inp" id="an-meses" type="number" min="1" max="120" value="6" placeholder="6" oninput="anuncPreview()">
+            </div>
+          </div>
+          <div>
+            <div class="anunc-form-lbl" style="margin-bottom:6px">Telas selecionadas (clique para marcar)</div>
+            <div class="anunc-tela-check" id="an-telas"></div>
+          </div>
+          <div class="anunc-resumo" id="an-resumo"></div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button onclick="saveAnunc()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--purple);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
+            <button onclick="cancelAnunc()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+        <!-- Grid de anunciantes -->
+        <div class="anunc-grid" id="anunc-grid"></div>
+      </div>
+      </div><!-- /acc-body-anunc -->
+    </div>
+
+</div></div>
+<!-- TELA VERTICAL · despesas gerais e investimento dos sócios -->
+<div id="panel-tvdespesas" class="hub-panel"><div class="tv-gestao" style="padding:16px 0 40px;max-width:1100px">
+    <!-- DESPESAS GERAIS (rateadas) e INVESTIMENTO — operação Tela Vertical -->
+    <div id="desp-comp-section" style="display:none">
+      <div class="acc-hdr open" id="acc-hdr-dcomp" onclick="toggleAcc('dcomp')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="sec-title">🔀 Despesas Compartilhadas</div>
+          <span style="font-size:10px;color:var(--hint)" id="desp-comp-sum"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
+          <button class="anunc-btn" onclick="toggleDespCompForm()" style="color:var(--red);border-color:rgba(248,113,113,.4)">＋ Nova despesa compartilhada</button>
+          <span class="acc-toggle">›</span>
+        </div>
+      </div>
+      <div class="acc-body" id="acc-body-dcomp" style="max-height:3000px">
+        <div class="anunc-section">
+        <div class="anunc-form" id="desp-comp-form">
+          <div class="anunc-form-row">
+            <div class="anunc-form-field" style="flex:1;min-width:160px">
+              <label class="anunc-form-lbl">Descrição</label>
+              <input class="anunc-form-inp" id="dc-nome" placeholder="ex: Listen, 4YOUSee..." style="width:100%">
+            </div>
+            <div class="anunc-form-field" style="width:120px">
+              <label class="anunc-form-lbl">Fornecedor</label>
+              <input class="anunc-form-inp" id="dc-forn" placeholder="ex: Listen" style="width:100%">
+            </div>
+            <div class="anunc-form-field" style="width:120px">
+              <label class="anunc-form-lbl">Valor total (R$)</label>
+              <input class="anunc-form-inp" id="dc-valor" type="number" step="0.01" min="0" placeholder="0,00" oninput="despCompPreview()">
+            </div>
+            <div class="anunc-form-field" style="width:130px">
+              <label class="anunc-form-lbl">📅 Início</label>
+              <input class="anunc-form-inp" id="dc-inicio" type="month" style="color-scheme:dark" onchange="despCompPreview()">
+            </div>
+            <div class="anunc-form-field" style="width:80px">
+              <label class="anunc-form-lbl">Duração (meses)</label>
+              <input class="anunc-form-inp" id="dc-meses" type="number" min="1" max="120" value="12" placeholder="12" oninput="despCompPreview()">
+            </div>
+          </div>
+          <div>
+            <div class="anunc-form-lbl" style="margin-bottom:6px">Condomínios que participam do rateio (clique para marcar)</div>
+            <div class="anunc-tela-check" id="dc-telas"></div>
+          </div>
+          <div class="anunc-resumo" id="dc-resumo"></div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button onclick="saveDespComp()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--red);color:#fff;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
+            <button onclick="cancelDespComp()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+        <div class="anunc-grid" id="desp-comp-grid"></div>
+      </div><!-- /anunc-section -->
+      </div><!-- /acc-body-dcomp -->
+    </div><!-- /desp-comp-section -->
+
+    <div id="elev-invest-section" style="display:none">
+      <div class="acc-hdr open" id="acc-hdr-einvest" onclick="toggleAcc('einvest')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="sec-title">💰 Investimento — Instalação (sócios)</div>
+          <span style="font-size:10px;color:var(--hint)" id="einvest-sum"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
+          <button class="anunc-btn" onclick="elevRelatorioMensal()" style="color:var(--sky,#6FC7E8);border-color:rgba(111,199,232,.4)">📄 Relatório mensal</button>
+          <button class="anunc-btn" onclick="toggleElevInvestForm()" style="color:var(--gold,#C0A062);border-color:rgba(192,160,98,.4)">＋ Novo investimento</button>
+          <span class="acc-toggle">›</span>
+        </div>
+      </div>
+      <div class="acc-body" id="acc-body-einvest" style="max-height:3000px">
+        <div class="anunc-section">
+        <div class="anunc-form" id="einvest-form">
+          <div class="anunc-form-row">
+            <div class="anunc-form-field" style="width:170px">
+              <label class="anunc-form-lbl">Condomínio</label>
+              <select class="anunc-form-inp" id="ei-item" style="width:100%"></select>
+            </div>
+            <div class="anunc-form-field" style="flex:1;min-width:160px">
+              <label class="anunc-form-lbl">Descrição</label>
+              <input class="anunc-form-inp" id="ei-desc" placeholder="ex: Instalação (telas, cabos, kits)" style="width:100%">
+            </div>
+            <div class="anunc-form-field" style="width:120px">
+              <label class="anunc-form-lbl">Valor (R$)</label>
+              <input class="anunc-form-inp" id="ei-valor" type="number" step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="anunc-form-field" style="width:110px">
+              <label class="anunc-form-lbl">Pago por</label>
+              <select class="anunc-form-inp" id="ei-pagopor" style="width:100%">
+                <option value="jadson">Jadson</option>
+                <option value="eder">Eder</option>
+              </select>
+            </div>
+            <div class="anunc-form-field" style="width:130px">
+              <label class="anunc-form-lbl">📅 Data</label>
+              <input class="anunc-form-inp" id="ei-data" type="date" style="color-scheme:dark">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button onclick="saveElevInvest()" style="font-size:12px;padding:8px 20px;border-radius:8px;background:var(--gold,#C0A062);color:#1B2337;border:none;cursor:pointer;font-weight:700">✓ Salvar</button>
+            <button onclick="cancelElevInvest()" style="font-size:12px;padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer">Cancelar</button>
+          </div>
+        </div>
+        <div class="kpis" id="einvest-totais" style="margin:14px 0"></div>
+        <div id="einvest-exc" style="margin:0 0 14px"></div>
+        <div class="anunc-grid" id="einvest-grid"></div>
+      </div><!-- /anunc-section -->
+      </div><!-- /acc-body-einvest -->
+    </div><!-- /elev-invest-section -->
+</div></div>
 <!-- TELA VERTICAL · propostas (mesmas páginas de telavertical/, carregadas ao abrir a pasta) -->
 <div id="panel-tvproposta" class="hub-panel"><iframe id="tvproposta-frame" style="width:100%;height:calc(100vh - 150px);border:none;display:block;background:#fff"></iframe></div>
 <div id="panel-tvsindicos" class="hub-panel"><iframe id="tvsindicos-frame" style="width:100%;height:calc(100vh - 150px);border:none;display:block;background:#fff"></iframe></div>
@@ -8229,6 +8244,8 @@ function showOpPanel(name, btn){
   if(name==='tvproposta'){ const f=document.getElementById('tvproposta-frame'); if(f&&!f.src) f.src='telavertical/02-comercial/midia-kit-tela-vertical.html?t='+Date.now(); }
   if(name==='tvsindicos'){ const f=document.getElementById('tvsindicos-frame'); if(f&&!f.src) f.src='telavertical/05-operacao/apresentacao-sindicos-tela-vertical.html?t='+Date.now(); }
   if(name==='tvpainel'){ try{ tvPainelRender(); }catch(e){ console.error('tvPainelRender',e); } }
+  if(name==='tvcondos'){ try{ tvCondosRender(); }catch(e){ console.error('tvCondosRender',e); } }
+  if(name==='tvanunc'||name==='tvdespesas'){ try{ tvGestaoSync(); }catch(e){ console.error('tvGestaoSync',e); } }
   if(name==='vaapty'){
     try{ const fv=document.getElementById('frame-vaapty'); if(fv&&fv.contentWindow&&fv.contentWindow.vCarregarClientesCRM) fv.contentWindow.vCarregarClientesCRM(); }catch(e){}
   }
@@ -9033,14 +9050,16 @@ function toggleSidebarCollapse(){
 
 // ── PAGES ─────────────────────────────────────────────────────────────────
 // Grupos do hub operacional: contratos × estúdio de conteúdo
-var OP_GROUPS={contratos:['mercadao','vaapty','pasta'],telavertical:['tvpainel','elevador','parceria','tvproposta','tvsindicos'],estudio:['gerador','blocos','linkedin-gerar','linkedin-plano']};
+var OP_GROUPS={contratos:['mercadao','vaapty','pasta'],telavertical:['tvpainel','tvcondos','tvanunc','tvdespesas','elevador','parceria','tvproposta','tvsindicos'],estudio:['gerador','blocos','linkedin-gerar','linkedin-plano']};
 var curOpGroup='contratos';
 function applyOpGroup(){
   var grp=OP_GROUPS[curOpGroup]||OP_GROUPS.contratos;
   document.querySelectorAll('#page-operacional .hub-tab').forEach(function(t){
     t.style.display = grp.indexOf(t.dataset.tab)>=0 ? '' : 'none';
   });
-  var t0=(curOpTab&&grp.indexOf(curOpTab)>=0)?curOpTab:grp[0]; curOpTab=null;
+  // Recarga da página (ex.: fim do carregamento do Sheets chama goPage de novo) mantém a aba aberta
+  var aberta=(document.querySelector('#page-operacional .hub-tab.active')||{dataset:{}}).dataset.tab;
+  var t0=(curOpTab&&grp.indexOf(curOpTab)>=0)?curOpTab:(aberta&&grp.indexOf(aberta)>=0?aberta:grp[0]); curOpTab=null;
   try{ showOpPanel(t0, document.querySelector('#page-operacional .hub-tab[data-tab="'+t0+'"]')); }catch(e){}
   var hdr=document.querySelector('#page-operacional .page-hdr');
   if(hdr) hdr.style.background=curOpGroup==='telavertical'?'linear-gradient(90deg,#16294F 0%,#16294F 70%,#C0A062 100%)':'';
@@ -9048,7 +9067,7 @@ function applyOpGroup(){
   if(ttl) ttl.style.color=''; if(sub) sub.style.color='';
   if(curOpGroup==='telavertical'){
     if(ttl){ ttl.innerHTML='<span style="display:inline-block;height:44px;width:124px;vertical-align:middle">'+TV_LOGO_BRANCO.replace('<svg ','<svg style="height:44px;width:auto;display:block" ')+'</span>'; }
-    if(sub){ sub.textContent='Mês e sócio · Contrato anunciante · Contrato condomínio · Proposta elevadores · Proposta síndicos'; sub.style.color='rgba(255,255,255,.75)'; }
+    if(sub){ sub.textContent='Mês e sócio · Condomínios e despesas · Anunciantes · Despesas gerais · Contratos · Propostas'; sub.style.color='rgba(255,255,255,.75)'; }
   } else if(curOpGroup==='estudio'){
     if(ico) ico.textContent='🎙️';
     if(ttl) ttl.textContent='Estúdio';
@@ -9064,7 +9083,7 @@ function applyOpGroup(){
   var ntv=document.getElementById('nav-telavertical'); if(ntv) ntv.classList.toggle('on',curOpGroup==='telavertical');
 }
 var curOpTab=null;
-function goOperacional(g,tab){ curOpGroup=g||'contratos'; curOpTab=tab||null; goPage('operacional'); }
+function goOperacional(g,tab){ curOpGroup=g||'contratos'; curOpTab=tab||(OP_GROUPS[curOpGroup]||OP_GROUPS.contratos)[0]; goPage('operacional'); }
 function updateMbn(p){
   var map={home:'mbn-home',overview:'mbn-fin',custos:'mbn-fin',pessoal:'mbn-pes',operacional:'mbn-op'};
   document.querySelectorAll('.mbn-btn').forEach(function(b){b.classList.remove('on')});
@@ -9083,6 +9102,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 });
 function goPage(p){
+  if(p==='custos'&&typeof curMod!=='undefined'&&curMod==='elev'){ goOperacional('telavertical','tvcondos'); return; } // Tela Vertical mora na operação
   curPage=p;
   ['home','overview','custos','pessoal','contabilidade','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads','propvaapty','radioops','planocaixa'].forEach(id=>{
     var el=document.getElementById('page-'+id);
@@ -9153,6 +9173,7 @@ function goPage(p){
 function buildSidebar(){
   let html='';
   MODULES.forEach(m=>{
+    if(m.id==='elev') return; // fica na operação Tela Vertical
     const on=m.id===curMod&&curPage==='custos';
     html+=`<div class="mod-item${on?' on':''}" title="${m.label}" onclick="switchMod('${m.id}')">
       <span class="mod-dot" style="background:${m.color}"></span><span style="flex:1;font-size:11px">${m.label}</span>
@@ -10607,11 +10628,12 @@ function relAnualExportCSV(){
 
 function drillMod(modId){
   if(modId==='radioops'){ goPage('radioops'); return; } // Rádio Moinho tem painel próprio (dados vêm do Rádio Ops)
+  if(modId==='elev'){ goOperacional('telavertical','tvcondos'); return; } // 11/10: tudo de elevador fica na operação Tela Vertical
   curMod=modId; curItem=MODULES.find(m=>m.id===modId).items[0];
   goPage('custos'); buildAll();
 }
 function buildModTabs(){
-  g('mod-tabs').innerHTML=MODULES.map(m=>`<div class="mtab${m.id===curMod?' on':''}" onclick="switchMod('${m.id}')">${m.icon} ${m.label}</div>`).join('');
+  g('mod-tabs').innerHTML=MODULES.filter(m=>m.id!=='elev').map(m=>`<div class="mtab${m.id===curMod?' on':''}" onclick="switchMod('${m.id}')">${m.icon} ${m.label}</div>`).join('');
 }
 
 // ── ITEM TABS ─────────────────────────────────────────────────────────────
@@ -11016,7 +11038,9 @@ function buildDespComp(){
 // Usado pelo Contrato Anunciante, painel do mês e relatórios — lançou/instalou no hub, aparece em todos.
 function tvTelasDoItem(item){
   const rs=((db.elev||{})[item]||[]).filter(x=>x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||'')));
-  return rs.length?Math.max.apply(null,rs.map(r=>r.q||0)):0;
+  if(!rs.length) return 0;
+  rs.sort((a,b)=>String(b.dataInicio||'').localeCompare(String(a.dataInicio||'')));  // a linha mais recente vale
+  return rs[0].q||0;
 }
 function tvRedeHub(){
   const m=MODULES.find(x=>x.id==='elev');
@@ -11024,6 +11048,146 @@ function tvRedeHub(){
   return TV_REDE.lista({itens:m?m.items:[], telas:tvTelasDoItem, info:i=>((clientesInfo||{}).elev||{})[i]});
 }
 function tvTelasAtivas(){ return tvRedeHub().reduce((a,c)=>a+(c.telas||0),0); }
+// ── OPERAÇÃO TELA VERTICAL · Condomínios, Anunciantes, Despesas gerais (11/10, pedido do Eder) ──
+// Tudo de elevador fica na operação: a Karen lança o condomínio e as despesas DELE no mesmo lugar.
+let tvCondoSel=null;
+function tvEsc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function tvMesAtual(){ if(!tvpMes){ const h=new Date(); tvpMes=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0'); } const [a,m]=tvpMes.split('-').map(Number); return {ano:a,mes:m-1}; }
+// Anunciantes e Despesas gerais usam as funções do módulo (curMod='elev') com o mês do painel.
+function tvGestaoSync(){
+  const m=MODULES.find(x=>x.id==='elev'); if(!m) return;
+  curMod='elev'; if(!m.items.includes(curItem)) curItem=m.items[0];
+  try{ buildKPIs(); }catch(e){}                     // garante os seletores de mês do módulo
+  const {ano,mes}=tvMesAtual(), ms=g('mod-mes-sel'), as=g('mod-ano-sel');
+  if(ms) ms.value=String(mes); if(as) as.value=String(ano);
+  buildAnunciantes(); buildDespComp(); buildElevInvest();
+}
+function tvLinhaLabel(r){
+  if(r.t==='Recorrente') return 'Mensal · '+(r.mesesRec||12)+' meses desde '+(r.dataInicio?fmtMes(r.dataInicio):'—');
+  if(r.t==='Parcelado') return 'Parcelado · '+(r.nparc||1)+'x desde '+(r.dataInicio?fmtMes(r.dataInicio):'—');
+  return 'À vista · '+(r.venc?fmtMes(r.venc):'sem data');
+}
+function tvCondosRender(){
+  const root=g('tvc-root'); if(!root) return;
+  const m=MODULES.find(x=>x.id==='elev'); if(!m){ root.innerHTML=''; return; }
+  const {ano,mes}=tvMesAtual();
+  const vis=(typeof valuesVisible==='undefined')?true:valuesVisible, v=x=>vis?f(x):MASK;
+  const breve=new Set(((window.TV_REDE&&TV_REDE.REDE.condos)||[]).filter(c=>c.breve).map(c=>c.hub));
+  const desp=coletaDespesasMes(ano,mes).filter(d=>d.m.id==='elev');
+  const linhas=m.items.map(item=>{
+    const custo=desp.filter(d=>d.item===item).reduce((a,d)=>a+d.vlrMes,0);
+    let receita=0; try{ receita=recOfMes('elev',item,ano,mes)||0; }catch(e){}
+    const inv=(typeof elevInvestimentos!=='undefined'?elevInvestimentos:[]).filter(x=>x.item===item).reduce((a,x)=>a+(x.valor||0),0);
+    return {item,telas:tvTelasDoItem(item),custo,receita,inv,breve:breve.has(item)};
+  });
+  const totT=linhas.filter(l=>!l.breve).reduce((a,l)=>a+l.telas,0);
+  const temNovo=!document.body.classList.contains('mgb-sem-novo')&&window.MGBNovo&&MGBNovo.escolher;
+  const sel=linhas.find(l=>l.item===tvCondoSel);
+  const btn='font:700 13px \'DM Sans\',sans-serif;padding:9px 14px;border-radius:10px;cursor:pointer;';
+  let h='<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px">'+
+    '<div><div style="font:800 18px Syne,sans-serif;color:#16294F">Condomínios</div><div style="font-size:12px;color:#6b6380">'+linhas.filter(l=>!l.breve).length+' no ar · '+totT+' telas · clique no condomínio para ver e lançar as despesas dele</div></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      '<label style="font-size:12px;color:#6b6380">Mês <input type="month" value="'+tvpMes+'" onchange="tvpMes=this.value;tvCondosRender()" style="margin-left:6px;padding:6px 8px;border:1px solid #E3D8BF;border-radius:8px;font:inherit"></label>'+
+      (temNovo?'<button type="button" onclick="MGBNovo.escolher(\'condominio\')" style="'+btn+'background:linear-gradient(135deg,#16294F,#C0A062);color:#fff;border:0">＋ Novo condomínio</button>':'')+
+    '</div></div>';
+  h+='<div style="overflow-x:auto;background:#fff;border:1px solid #E3D8BF;border-radius:14px"><table style="width:100%;border-collapse:collapse;font-size:13px">'+
+    '<thead><tr style="text-align:left;color:#6b6380;font-size:10px;text-transform:uppercase;letter-spacing:.06em"><th style="padding:10px 14px">Condomínio</th><th style="padding:10px">Telas</th><th style="padding:10px;text-align:right">Receita do mês</th><th style="padding:10px;text-align:right">Despesas do mês</th><th style="padding:10px;text-align:right">Investido</th><th style="padding:10px"></th></tr></thead><tbody>'+
+    linhas.map((l,$I)=>'<tr style="border-top:1px solid #F0EADC;'+(l.item===tvCondoSel?'background:#FBF7EE':'')+'">'+
+      '<td style="padding:10px 14px;font-weight:700;color:#16294F">'+tvEsc(l.item)+(l.breve?' <span style="font:600 10px \'DM Mono\',monospace;background:#FCE7D6;color:#8A3B00;border-radius:999px;padding:2px 7px;margin-left:4px">em breve</span>':'')+'</td>'+
+      '<td style="padding:10px">'+l.telas+'</td>'+
+      '<td style="padding:10px;text-align:right;color:#118A5D">'+v(l.receita)+'</td>'+
+      '<td style="padding:10px;text-align:right;color:#B42318">'+v(l.custo)+'</td>'+
+      '<td style="padding:10px;text-align:right">'+(l.inv?v(l.inv):'—')+'</td>'+
+      '<td style="padding:10px;text-align:right"><button type="button" onclick="tvCondoAbrirIdx('+$I+')" style="'+btn+'background:#fff;color:#16294F;border:1px solid #C0A062">'+(l.item===tvCondoSel?'Aberto':'Abrir')+'</button></td></tr>').join('')+
+    '</tbody></table></div>';
+  if(sel){
+    const rows=(db.elev||{})[sel.item]||[];
+    const lic=rows.find(r=>r.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(r.d||'')||/4 ?you ?see/i.test(r.f||'')));
+    const ci=((clientesInfo||{}).elev||{})[sel.item]||{};
+    const inp='padding:8px 10px;border:1px solid #E3D8BF;border-radius:8px;font:inherit;font-size:13px;width:100%;box-sizing:border-box;background:#fff;color:#16294F';
+    const lbl='display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:#6b6380;text-transform:uppercase;letter-spacing:.04em';
+    h+='<div style="margin-top:16px;background:#FBF7EE;border:1px solid #E3D8BF;border-radius:14px;padding:18px">'+
+      '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:baseline"><div style="font:800 17px Syne,sans-serif;color:#16294F">'+tvEsc(sel.item)+'</div>'+
+      '<div style="font-size:12px;color:#6b6380">'+[ci.responsavel?('Síndico(a): '+tvEsc(ci.responsavel)):'',ci.tel?tvEsc(ci.tel):'',ci.bairro?tvEsc(ci.bairro):''].filter(Boolean).join(' · ')+'</div></div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:12px 0">'+
+        '<label style="'+lbl+';width:130px">Telas<input id="tvc-telas" type="number" min="0" value="'+sel.telas+'" style="'+inp+'"></label>'+
+        '<div style="font-size:12px;color:#6b6380;padding-bottom:9px">Licença 4YouSee: '+sel.telas+' × '+f(ELEV_CUSTO_TV)+' = <b>'+v(sel.telas*ELEV_CUSTO_TV)+'/mês</b>'+(lic?'':' · ainda não lançada')+'</div>'+
+        '<button type="button" onclick="tvCondoSalvarTelas()" style="'+btn+'background:#fff;color:#16294F;border:1px solid #C0A062">Salvar telas</button>'+
+      '</div>'+
+      '<div style="font:700 13px \'DM Sans\',sans-serif;color:#16294F;margin:6px 0 8px">Despesas deste condomínio</div>'+
+      (rows.length?'<div style="background:#fff;border:1px solid #E3D8BF;border-radius:10px">'+rows.map((r,i)=>'<div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between;padding:9px 12px;'+(i?'border-top:1px solid #F0EADC':'')+'">'+
+        '<div><div style="font-weight:700;color:#16294F;font-size:13px">'+tvEsc(r.d||'—')+(r.f?' <span style="font-weight:400;color:#6b6380">· '+tvEsc(r.f)+'</span>':'')+'</div><div style="font-size:11px;color:#6b6380">'+tvLinhaLabel(r)+(r.q>1?' · '+r.q+' × '+f(r.u):'')+'</div></div>'+
+        '<div style="display:flex;gap:10px;align-items:center"><b style="color:#B42318">'+(r.t==='Parcelado'?(r.nparc||1)+'x de '+v((r.q||0)*(r.u||0)/(r.nparc||1))+' <span style="font-weight:500;color:#667085;font-size:12px">(total '+v((r.q||0)*(r.u||0))+')</span>':v((r.q||0)*(r.u||0))+(r.t==='Recorrente'?'/mês':''))+'</b><button type="button" onclick="tvCondoDespRemover('+i+')" aria-label="Remover despesa" style="'+btn+'padding:6px 10px;background:#fff;color:#B42318;border:1px solid #F1C8C2">Remover</button></div></div>').join('')+'</div>'
+        :'<div style="font-size:12px;color:#6b6380">Nenhuma despesa lançada ainda.</div>')+
+      '<div style="font:700 13px \'DM Sans\',sans-serif;color:#16294F;margin:16px 0 8px">＋ Lançar despesa neste condomínio</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">'+
+        '<label style="'+lbl+'">Descrição<input id="tvc-d" placeholder="ex: Instalação, cabo, suporte" style="'+inp+'"></label>'+
+        '<label style="'+lbl+'">Fornecedor<input id="tvc-f" placeholder="ex: Tecmax" style="'+inp+'"></label>'+
+        '<label style="'+lbl+'">Tipo<select id="tvc-t" style="'+inp+'"><option value="avista">À vista</option><option value="parc">Parcelado</option><option value="rec">Mensal (recorrente)</option></select></label>'+
+        '<label style="'+lbl+'">Valor (R$) <span style="font-weight:500;text-transform:none">· mensal: por mês · parcelado: total</span><input id="tvc-u" type="number" step="0.01" min="0" placeholder="0,00" style="'+inp+'"></label>'+
+        '<label style="'+lbl+'">Quantidade<input id="tvc-q" type="number" min="1" value="1" style="'+inp+'"></label>'+
+        '<label style="'+lbl+'">Mês<input id="tvc-m" type="month" value="'+tvpMes+'" style="'+inp+'"></label>'+
+        '<label style="'+lbl+'">Parcelas / meses<input id="tvc-n" type="number" min="1" value="1" style="'+inp+'"></label>'+
+      '</div>'+
+      '<div id="tvc-erro" role="alert" style="color:#B42318;font-size:12px;margin-top:6px"></div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" onclick="tvCondoDespSalvar()" style="'+btn+'background:linear-gradient(135deg,#16294F,#C0A062);color:#fff;border:0">✓ Lançar despesa</button></div>'+
+      '<div style="font:700 13px \'DM Sans\',sans-serif;color:#16294F;margin:18px 0 8px">Investimento na instalação (sócios)</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end">'+
+        '<label style="'+lbl+'">Descrição<input id="tvc-id" value="Instalação '+tvEsc(sel.item)+'" style="'+inp+'"></label>'+
+        '<label style="'+lbl+'">Valor (R$)<input id="tvc-iv" type="number" step="0.01" min="0" placeholder="0,00" style="'+inp+'"></label>'+
+        '<label style="'+lbl+'">Pago por<select id="tvc-ip" style="'+inp+'"><option value="eder">Eder</option><option value="jadson">Jadson</option></select></label>'+
+        '<label style="'+lbl+'">Data<input id="tvc-idt" type="date" value="'+new Date().toISOString().slice(0,10)+'" style="'+inp+'"></label>'+
+        '<button type="button" onclick="tvCondoInvestSalvar()" style="'+btn+'background:#fff;color:#16294F;border:1px solid #C0A062">Lançar investimento</button>'+
+      '</div></div>';
+  }
+  root.innerHTML=h;
+}
+function tvCondoAbrirIdx(i){ const m=MODULES.find(x=>x.id==='elev'); if(m&&m.items[i]!=null) tvCondoAbrir(m.items[i]); }
+function tvCondoAbrir(item){ tvCondoSel=(tvCondoSel===item?null:item); tvCondosRender(); }
+function tvAbrirCondominio(item){ tvCondoSel=item; goOperacional('telavertical','tvcondos'); }
+function tvCondoSalvarTelas(){
+  const item=tvCondoSel; if(!item) return;
+  const n=parseInt(g('tvc-telas').value,10); if(!(n>=0)) return;
+  const rows=db.elev[item]||(db.elev[item]=[]);
+  const {ano,mes}=tvMesAtual(), ini=ano+'-'+String(mes+1).padStart(2,'0');
+  const r=rows.find(x=>x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||'')));
+  if(r && r.q!==n){
+    // a mudança vale do mês do painel em diante; os meses anteriores ficam com as telas antigas
+    const [aI,mI]=(r.dataInicio||ini).split('-').map(Number), antes=(ano-aI)*12+(mes-(mI-1)), tot=r.mesesRec||12;
+    if(antes<=0||antes>=tot){ applyToFin(r,-1); r.q=n; applyToFin(r,+1); }
+    else { applyToFin(r,-1); r.mesesRec=antes; applyToFin(r,+1);
+      const novo=Object.assign({},r,{q:n,dataInicio:ini,mesesRec:Math.max(12,tot-antes),pago:false,dataPago:''}); applyToFin(novo,+1); rows.push(novo); }
+  }
+  else if(!r && n>0){ const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:n,u:ELEV_CUSTO_TV,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:ini}; applyToFin(e,+1); rows.push(e); }
+  scheduleSave(); tvCondosRender();
+}
+function tvCondoDespSalvar(){
+  const item=tvCondoSel; if(!item) return;
+  const d=g('tvc-d').value.trim(), fo=g('tvc-f').value.trim(), t=g('tvc-t').value;
+  const u=parseFloat(g('tvc-u').value)||0, q=parseInt(g('tvc-q').value,10)||1, mesI=g('tvc-m').value, n=parseInt(g('tvc-n').value,10)||1;
+  const er=g('tvc-erro');
+  if(!d){ er.textContent='Informe a descrição.'; return; }
+  if(!(u>0)){ er.textContent='Informe o valor.'; return; }
+  if(!/^\d{4}-\d{2}$/.test(mesI)){ er.textContent='Informe o mês.'; return; }
+  er.textContent='';
+  const base={d,f:fo,q,u,cc:item,pago:false,dataPago:''};
+  const row=t==='rec'?Object.assign({t:'Recorrente',tipo:'Serviço',venc:'',mesesRec:Math.max(1,n),dataInicio:mesI},base)
+          :t==='parc'?Object.assign({t:'Parcelado',tipo:'Produto',venc:'',nparc:Math.max(1,n),paga:0,dataInicio:mesI},base)
+          :Object.assign({t:'À vista',tipo:'Produto',venc:mesI},base);
+  applyToFin(row,+1); (db.elev[item]||(db.elev[item]=[])).push(row);
+  scheduleSave(); try{ buildSidebar(); }catch(e){} tvCondosRender();
+}
+function tvCondoDespRemover(i){
+  const item=tvCondoSel; const rows=(db.elev||{})[item]||[]; const r=rows[i]; if(!r) return;
+  if(!confirm('Remover "'+(r.d||'despesa')+'" de '+item+'?')) return;
+  applyToFin(r,-1); rows.splice(i,1); scheduleSave(); tvCondosRender();
+}
+function tvCondoInvestSalvar(){
+  const item=tvCondoSel; if(!item) return;
+  const valor=parseFloat(g('tvc-iv').value)||0; if(!(valor>0)){ g('tvc-iv').focus(); return; }
+  elevInvestimentos.push({id:elevInvestId++, item, descricao:g('tvc-id').value.trim()||('Instalação '+item), valor, pagoPor:g('tvc-ip').value, data:g('tvc-idt').value, criadoEm:new Date().toISOString()});
+  scheduleSave(); tvCondosRender();
+}
 // ── OPERAÇÃO TELA VERTICAL · painel do mês e do sócio (11/10) ───────────────
 // Junta num lugar o que o Eder manda ao sócio no fim do mês e o que a Karen lança.
 let tvpMes=null;
@@ -11064,7 +11228,8 @@ function tvPainelRender(){
       '<div style="display:flex;flex-wrap:wrap;gap:8px">'+
         bt('📄 Relatório do mês ao sócio','elevRelatorioMensal('+ano+','+mes+')',true)+
         bt('🧾 Prestação de contas detalhada',"goPage('relatorios');setTimeout(function(){showRelTab('elev',document.querySelector('[data-reltab=elev]'));g('rele-mes').value='"+tvpMes+"';releResumo();},700)")+
-        bt('💰 Anunciantes, despesas e investimento',"drillMod('elev')")+
+        bt('🏢 Condomínios e despesas',"goOperacional('telavertical','tvcondos')")+
+        bt('💰 Despesas gerais e investimento',"goOperacional('telavertical','tvdespesas')")+
       '</div></div>'+
     (temNovo?'<div style="background:#fff;border:1px solid #E3D8BF;border-radius:14px;padding:16px 18px">'+
       '<div style="font:700 13px \'DM Sans\',sans-serif;color:#16294F;margin-bottom:10px">Cadastrar</div>'+
