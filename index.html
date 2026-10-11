@@ -7045,6 +7045,11 @@ function fNotaInit(){
   fNotaAliqInfo();
   const atual=sel.value; let html='<option value="">— escolha o cliente —</option>';
   MODULES.forEach(m=>{ const itens=fRecClientes().filter(c=>c.mod===m.id); if(!itens.length) return; html+='<optgroup label="'+m.icon+' '+m.label+'">'+itens.map(c=>'<option value="'+m.id+'|'+c.item.replace(/"/g,'&quot;')+'">'+c.item+'</option>').join('')+'</optgroup>'; });
+  // Receitas avulsas (Nova receita: locução etc.) — o tomador vem do CRM/cadastro escolhido no lançamento
+  if(typeof receitasAvulsas!=='undefined'&&receitasAvulsas.length&&typeof MGBLancar!=='undefined'){
+    const recentes=receitasAvulsas.slice().sort((a,b)=>String(b.mes).localeCompare(String(a.mes))).slice(0,15);
+    html+='<optgroup label="🎙️ Receitas avulsas">'+recentes.map(x=>{ const it=MGBLancar.itemReceita(x); return '<option value="_avulsa|'+it.replace(/"/g,'&quot;')+'">'+it+' · '+x.mes.split('-').reverse().join('/')+'</option>'; }).join('')+'</optgroup>';
+  }
   sel.innerHTML=html; if(atual) sel.value=atual;
   fNotaLista();
 }
@@ -7085,6 +7090,12 @@ function fNotaCliente(){
   document.getElementById('f-nota-tom-doc').value=info.cnpj||'';
   const base=(REC_DESC[mod]||'Prestação de serviços de mídia — {item}').replace('{item}',item);
   document.getElementById('f-nota-desc').value=base;
+  if(mod==='_avulsa'){                                    // receita avulsa: descrição e valor vêm do lançamento
+    document.getElementById('f-nota-mod').textContent='Receita avulsa (Nova receita)';
+    const x=(typeof receitasAvulsas!=='undefined'?receitasAvulsas:[]).find(r=>MGBLancar.itemReceita(r)===item);
+    if(x){ document.getElementById('f-nota-tom-nome').value=info.razao||x.cliente; document.getElementById('f-nota-desc').value=x.desc+' — '+x.cliente;
+      const ve=document.getElementById('f-nota-valor'); if(ve) ve.value=fRecNum(x.valor); }
+  }
   const issEl=document.getElementById('f-nota-iss'); if(issEl && !issEl.value && notaConfig.aliquotaMes!=null) issEl.value=fRecNum(notaConfig.aliquotaMes);
   // Rádio Moinho (Bureau): a Nota MGB do mês já vem calculada sozinha no Rádio Ops (fee+comissão+Connectmix) — puxa automático
   const modEl=document.getElementById('f-nota-mod'), valorEl=document.getElementById('f-nota-valor');

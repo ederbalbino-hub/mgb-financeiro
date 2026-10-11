@@ -26,12 +26,13 @@
     { id: 'licenca', rotulo: '💻 Licença ou sistema', grupo: 'Operação', tipo: 'Licença' },
     { id: 'servico', rotulo: '🛠️ Serviço de terceiro', grupo: 'Operação', tipo: 'Serviço' },
     { id: 'escritorio', rotulo: '📎 Escritório', grupo: 'MGB', tipo: 'Outros' },
-    { id: 'outros', rotulo: '🧾 Taxas e outros', grupo: 'MGB', tipo: 'Outros' }
+    { id: 'outros', rotulo: '🧾 Taxas', grupo: 'MGB', tipo: 'Taxas' },
+    { id: 'outro', rotulo: '✏️ Outro (escrever)', grupo: 'Outro', tipo: 'Outros', livre: true }
   ];
   var SERVICOS_RECEITA = [
     { id: 'locucao', rotulo: '🎙️ Locução' },
     { id: 'spot', rotulo: '🎬 Produção de spot' },
-    { id: 'outro', rotulo: '➕ Outro serviço' }
+    { id: 'outro', rotulo: '✏️ Outro (escrever)', livre: true }
   ];
   var MGB_DIA = '_mgb';          // destino "MGB · dia a dia"
   var SEM_DESPESA = ['taroba'];  // módulos que não recebem despesa por aqui
@@ -56,6 +57,7 @@
     if (!d.destino) e.push('Escolha para quem é a despesa.');
     else if (d.destino !== MGB_DIA && !d.item) e.push('Escolha a unidade ou o cliente.');
     if (!categoria(d.categoria)) e.push('Escolha o que foi (categoria).');
+    else if (categoria(d.categoria).livre && !String(d.categoriaTxt || '').trim()) e.push('Escreva o que foi em "Outro".');
     if (!String(d.descricao || '').trim()) e.push('Escreva uma descrição curta.');
     if (!(numero(d.valor) > 0)) e.push('Informe o valor.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.data || ''))) e.push('Informe a data.');
@@ -73,9 +75,9 @@
     var mes = mesDe(d.data);
     var t = d.forma === 'parcelado' ? 'Parcelado' : d.forma === 'mensal' ? 'Recorrente' : 'À vista';
     var r = {
-      t: t, tipo: c.tipo, d: String(d.descricao).trim(), f: String(d.fornecedor || '').trim(), q: 1, u: valor,
+      t: t, tipo: c.livre ? String(d.categoriaTxt || '').trim() || 'Outros' : c.tipo, d: String(d.descricao).trim(), f: String(d.fornecedor || '').trim(), q: 1, u: valor,
       cc: d.item || '', venc: t === 'À vista' ? mes : '', pago: false, dataPago: '',
-      data: d.data, cat: d.categoria, origem: 'lancar', reembolso: d.quemPagou === 'eder',
+      data: d.data, cat: d.categoria, catTxt: c.livre ? String(d.categoriaTxt || '').trim() : '', origem: 'lancar', reembolso: d.quemPagou === 'eder',
       lancadoPor: d.lancadoPor || '', lid: d.lid || ('L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
       criadoEm: d.criadoEm || new Date().toISOString()
     };
@@ -88,7 +90,7 @@
   function avulsaEmpresa(d, id) {
     return {
       id: id, data: d.data, mes: mesDe(d.data), desc: String(d.descricao).trim(), forn: String(d.fornecedor || '').trim(),
-      cat: d.categoria, valor: Math.round(numero(d.valor) * 100) / 100, reembolso: d.quemPagou === 'eder',
+      cat: d.categoria, catTxt: (categoria(d.categoria) || {}).livre ? String(d.categoriaTxt || '').trim() : '', valor: Math.round(numero(d.valor) * 100) / 100, reembolso: d.quemPagou === 'eder',
       lancadoPor: d.lancadoPor || '', criadoEm: d.criadoEm || new Date().toISOString()
     };
   }
@@ -100,8 +102,9 @@
 
   function validarReceita(r) {
     var e = [];
-    if (!String(r.cliente || '').trim()) e.push('Informe o cliente.');
+    if (!String(r.cliente || '').trim()) e.push('Escolha o cliente (do CRM ou já cadastrado).');
     if (!servico(r.servico)) e.push('Escolha o serviço.');
+    else if (servico(r.servico).livre && !String(r.servicoTxt || '').trim()) e.push('Escreva qual é o serviço em "Outro".');
     if (!(numero(r.valor) > 0)) e.push('Informe o valor.');
     if (!/^\d{4}-\d{2}$/.test(String(r.mes || ''))) e.push('Informe o mês de competência.');
     return e;
@@ -109,8 +112,9 @@
   function receitaAvulsa(r, id) {
     var s = servico(r.servico);
     return {
-      id: id, cliente: String(r.cliente).trim(), servico: r.servico,
-      desc: String(r.descricao || '').trim() || s.rotulo.replace(/^\S+\s/, ''),
+      id: id, cliente: String(r.cliente).trim(), servico: r.servico, servicoTxt: s.livre ? String(r.servicoTxt || '').trim() : '',
+      clienteInfo: r.clienteInfo || null,   // {cnpj, razao, email, tel, responsavel, endereco, origem, mod, item, leadId}
+      desc: String(r.descricao || '').trim() || (s.livre ? String(r.servicoTxt || '').trim() : s.rotulo.replace(/^\S+\s/, '')),
       valor: Math.round(numero(r.valor) * 100) / 100, mes: r.mes, lancadoPor: r.lancadoPor || '',
       criadoEm: r.criadoEm || new Date().toISOString()
     };
@@ -119,7 +123,56 @@
     var k = chaveMes(ano, mes0);
     return (lista || []).filter(function (x) { return x && x.mes === k && x.valor > 0; });
   }
-  function itemReceita(x) { return (servico(x.servico) || { rotulo: 'Serviço' }).rotulo.replace(/^\S+\s/, '') + ' · ' + x.cliente + ' #' + x.id; }
+  function itemReceita(x) {
+    var s = servico(x.servico) || { rotulo: 'Serviço' };
+    return (s.livre && x.servicoTxt ? x.servicoTxt : s.rotulo.replace(/^\S+\s/, '').replace(/ \(escrever\)$/, '')) + ' · ' + x.cliente + ' #' + x.id;
+  }
+
+  // ── Cliente padrão: CRM + já cadastrados no hub, num lugar só (pedido do Eder, 11/10) ──
+  // Toda entrada que tem cliente usa esta lista: assim o CNPJ, a razão e o e-mail já vêm para a nota.
+  function normaliza(s) { return String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' '); }
+  function digitos(s) { return String(s || '').replace(/\D/g, ''); }
+  // fontes = { leads, clientesInfo, modulos:[{id,label,items}], anunciantes }
+  function unirClientes(fontes) {
+    fontes = fontes || {};
+    var porChave = {}, lista = [];
+    function chave(c) { var d = digitos(c.cnpj); return d.length >= 11 ? 'd' + d : 'n' + normaliza(c.nome); }
+    function juntar(c) {
+      var k = chave(c), ja = porChave[k] || porChave['n' + normaliza(c.nome)];
+      if (!ja) { porChave[k] = c; if (k[0] === 'd') porChave['n' + normaliza(c.nome)] = c; lista.push(c); return; }
+      ['cnpj', 'razao', 'email', 'tel', 'responsavel', 'endereco'].forEach(function (f) { if (!ja[f] && c[f]) ja[f] = c[f]; });
+      if (c.origem === 'crm') { ja.crm = true; ja.leadId = ja.leadId || c.leadId; ja.estagio = ja.estagio || c.estagio; }
+      if (!porChave[chave(ja)]) porChave[chave(ja)] = ja;
+    }
+    var info = fontes.clientesInfo || {};
+    (fontes.modulos || []).forEach(function (m) {
+      var itens = m.id === 'elev' ? (fontes.anunciantes || []).map(function (a) { return a.nome; }) : (m.items || []);
+      itens.forEach(function (item) {
+        if (!item || /^(Outros|Expansão|Cliente Piloto|Franqueado Piloto)$/.test(item)) return;
+        var i = (info[m.id] || {})[item] || {};
+        juntar({ nome: item, razao: i.razao || i.fantasia || '', cnpj: i.cnpj || '', email: i.email || '', tel: i.tel || '', responsavel: i.responsavel || '',
+          endereco: i.endereco || '', origem: 'hub', mod: m.id, modRot: String(m.label || m.id).split('—').pop().trim(), item: item });
+      });
+    });
+    (fontes.leads || []).forEach(function (l) {
+      if (!l || !l.nome || l.estagio === 'perdido') return;
+      juntar({ nome: l.nome, razao: l.razao || '', cnpj: l.cnpj || '', email: l.email || '', tel: l.tel || '', responsavel: l.responsavel || '',
+        endereco: l.endereco || '', origem: 'crm', crm: true, leadId: l.id, estagio: l.estagio || '' });
+    });
+    return lista;
+  }
+  function buscarClientes(lista, termo, max) {
+    var t = normaliza(termo), d = digitos(termo);
+    var r = (lista || []).filter(function (c) { return !t || normaliza(c.nome).indexOf(t) >= 0 || normaliza(c.razao).indexOf(t) >= 0 || (d.length >= 3 && digitos(c.cnpj).indexOf(d) >= 0); });
+    r.sort(function (a, b) { return (a.origem === 'hub' ? 0 : 1) - (b.origem === 'hub' ? 0 : 1) || normaliza(a.nome).localeCompare(normaliza(b.nome)); });
+    return r.slice(0, max || 8);
+  }
+  function origemCliente(c) {
+    if (!c) return '';
+    if (c.origem === 'hub') return 'Cadastrado no hub · ' + (c.modRot || c.mod) + (c.crm ? ' · está no CRM' : '');
+    if (c.origem === 'crm') return 'CRM' + (c.estagio ? ' · ' + c.estagio : '');
+    return 'Fora do CRM (sem cadastro)';
+  }
 
   // Sugestões tiradas do que já foi lançado: descrição → último fornecedor, valor e categoria.
   function sugestoes(db, avulsas) {
@@ -141,7 +194,8 @@
     CATEGORIAS: CATEGORIAS, SERVICOS_RECEITA: SERVICOS_RECEITA, MGB_DIA: MGB_DIA,
     numero: numero, validarDespesa: validarDespesa, linhaDespesa: linhaDespesa, avulsaEmpresa: avulsaEmpresa,
     avulsasDoMes: avulsasDoMes, validarReceita: validarReceita, receitaAvulsa: receitaAvulsa,
-    receitasDoMes: receitasDoMes, itemReceita: itemReceita, sugestoes: sugestoes
+    receitasDoMes: receitasDoMes, itemReceita: itemReceita, sugestoes: sugestoes,
+    unirClientes: unirClientes, buscarClientes: buscarClientes, origemCliente: origemCliente
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined') return;
@@ -184,8 +238,70 @@
       '#mgb-novo .ok-box{background:#dcefe4;border:1px solid #a7dccf;border-radius:12px;padding:12px 14px;font-size:14px;color:#14583a}' +
       '#mgb-novo .rec{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #ece7f5;font-size:13px}' +
       '#mgb-novo .rec small{color:#6b6380;display:block}' +
-      '#mgb-novo .hint{font-size:12px;color:#6b6380;font-weight:500}';
+      '#mgb-novo .hint{font-size:12px;color:#6b6380;font-weight:500}' +
+      '#mgb-novo .cp-lista{display:flex;flex-direction:column;border:1px solid #e4def2;border-radius:10px;overflow:hidden;margin-top:6px}' +
+      '#mgb-novo .cp-op{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;padding:9px 12px;border:0;border-top:1px solid #ece7f5;background:#fff;font:inherit;color:inherit;cursor:pointer}' +
+      '#mgb-novo .cp-op:first-child{border-top:0}#mgb-novo .cp-op:hover,#mgb-novo .cp-op:focus-visible{background:#f3effd;outline:none}' +
+      '#mgb-novo .cp-op small{display:block;color:#6b6380;font-size:12px}' +
+      '#mgb-novo .cp-tag{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}' +
+      '#mgb-novo .cp-tag.hub{background:#e6f4ec;color:#14583a}#mgb-novo .cp-tag.crm{background:#efeaf8;color:#4E38B2}#mgb-novo .cp-tag.fora{background:#fde3dc;color:#a33a1a}' +
+      '#mgb-novo .cp-card{border:1px solid #a7dccf;background:#f1faf7;border-radius:12px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px}' +
+      '#mgb-novo .cp-card.aviso{border-color:#f3c0b0;background:#fff5f1}' +
+      '#mgb-novo .origem{font-size:13px;color:#3a3446;background:#f6f4fb;border-radius:9px;padding:8px 10px}';
     doc.head.appendChild(st);
+  }
+
+  // ── Seletor de cliente padrão (CRM + cadastrados) ──────────────────────
+  // Uso: seletorCliente(caixa, { aoEscolher: function (c) {}, rotulo: 'Cliente' }). Devolve { valor: function () }.
+  function clientesDoHub() {
+    var f = {};
+    try { f.leads = leads; } catch (e) {}                                                     // eslint-disable-line no-undef
+    try { f.clientesInfo = clientesInfo; } catch (e) {}                                       // eslint-disable-line no-undef
+    try { f.anunciantes = anunciantes; } catch (e) {}                                         // eslint-disable-line no-undef
+    f.modulos = modulos().filter(function (m) { return m.id !== 'taroba'; });
+    return unirClientes(f);
+  }
+  function seletorCliente(caixa, opts) {
+    opts = opts || {};
+    var todos = clientesDoHub(), escolhido = null, id = 'cp' + Math.random().toString(36).slice(2, 7);
+    caixa.innerHTML = '<label class="f" for="' + id + '">' + esc(opts.rotulo || 'Cliente') +
+      ' <span class="hint">· busca no CRM e nos clientes já cadastrados (nome ou CNPJ)</span>' +
+      '<input id="' + id + '" autocomplete="off" placeholder="Digite o nome ou o CNPJ" role="combobox" aria-expanded="false" aria-controls="' + id + '-l"></label>' +
+      '<div class="cp-lista" id="' + id + '-l" role="listbox" hidden></div><div class="cp-sel" aria-live="polite"></div>';
+    var inp = caixa.querySelector('input'), lista = caixa.querySelector('.cp-lista'), sel = caixa.querySelector('.cp-sel');
+    function tag(c) { return c.origem === 'hub' ? '<span class="cp-tag hub">Cadastrado</span>' : c.origem === 'crm' ? '<span class="cp-tag crm">CRM</span>' : '<span class="cp-tag fora">Fora do CRM</span>'; }
+    function mostrar() {
+      var t = inp.value, r = buscarClientes(todos, t, 8);
+      var html = r.map(function (c, i) {
+        return '<button type="button" class="cp-op" role="option" data-i="' + i + '"><span><b>' + esc(c.nome) + '</b><small>' + esc(origemCliente(c)) +
+          (c.cnpj ? ' · CNPJ ' + esc(c.cnpj) : ' · sem CNPJ') + '</small></span>' + tag(c) + '</button>';
+      }).join('');
+      if (String(t).trim().length >= 3 && opts.permitirFora !== false)
+        html += '<button type="button" class="cp-op" data-fora="1"><span><b>Usar “' + esc(t.trim()) + '”</b><small>Cliente fora do CRM: a nota sai sem CNPJ. Melhor cadastrar no CRM antes.</small></span><span class="cp-tag fora">Fora do CRM</span></button>';
+      lista.innerHTML = html || '<p class="sub" style="padding:10px 12px">Nenhum cliente com esse nome. Cadastre no CRM.</p>';
+      lista.hidden = false; inp.setAttribute('aria-expanded', 'true');
+      lista.querySelectorAll('[data-i]').forEach(function (b) { b.addEventListener('click', function () { escolher(r[+b.getAttribute('data-i')]); }); });
+      var fora = lista.querySelector('[data-fora]');
+      if (fora) fora.addEventListener('click', function () { escolher({ nome: inp.value.trim(), origem: 'fora', cnpj: '' }); });
+    }
+    function escolher(c) {
+      escolhido = c; lista.hidden = true; inp.setAttribute('aria-expanded', 'false'); inp.value = c.nome;
+      sel.innerHTML = '<div class="cp-card' + (c.cnpj ? '' : ' aviso') + '" style="margin-top:8px"><b>' + esc(c.nome) + '</b>' +
+        (c.razao && c.razao !== c.nome ? '<span>' + esc(c.razao) + '</span>' : '') +
+        '<span>' + (c.cnpj ? 'CNPJ ' + esc(c.cnpj) : '⚠️ Sem CNPJ: complete no CRM para a nota sair certa.') + '</span>' +
+        (c.email ? '<span>' + esc(c.email) + '</span>' : '') +
+        '<span class="hint">De onde vem: ' + esc(origemCliente(c)) + '</span></div>';
+      if (opts.aoEscolher) opts.aoEscolher(c);
+    }
+    inp.addEventListener('input', function () { escolhido = null; sel.innerHTML = ''; if (opts.aoEscolher) opts.aoEscolher(null); mostrar(); });
+    inp.addEventListener('focus', mostrar);
+    inp.addEventListener('keydown', function (e) { if (e.key === 'ArrowDown') { var p = lista.querySelector('.cp-op'); if (p) { e.preventDefault(); p.focus(); } } if (e.key === 'Escape') { lista.hidden = true; } });
+    lista.addEventListener('keydown', function (e) {
+      var ops = [].slice.call(lista.querySelectorAll('.cp-op')), i = ops.indexOf(doc.activeElement);
+      if (e.key === 'ArrowDown' && i < ops.length - 1) { e.preventDefault(); ops[i + 1].focus(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); if (i > 0) ops[i - 1].focus(); else inp.focus(); }
+    });
+    return { valor: function () { return escolhido; }, foco: function () { inp.focus(); } };
   }
 
   // ── Nova despesa ───────────────────────────────────────────────────────
@@ -202,10 +318,12 @@
       '<div class="duas"><main>' +
       '<section class="card"><div class="sec">1 · Para quem é a despesa?</div>' +
       '<div class="chips" id="lz-areas">' + areas.map(function (a) { return '<button type="button" class="chip" data-area="' + a.id + '" aria-pressed="false">' + esc(a.rot) + '</button>'; }).join('') + '</div>' +
-      '<label class="f" for="lz-item" id="lz-item-w" hidden>Unidade, condomínio ou cliente<select id="lz-item"></select></label>' +
+      '<label class="f" for="lz-item" id="lz-item-w" hidden>Unidade, condomínio ou cliente <span class="hint">· já cadastrados no hub</span><select id="lz-item"></select></label>' +
+      '<div class="origem" id="lz-origem" hidden></div>' +
       '<p class="sub" id="lz-area-dica">MGB · dia a dia é o que não é de um cliente: combustível do dia a dia, almoço, escritório. Viagem a serviço de um cliente vai no cliente.</p></section>' +
       '<section class="card"><div class="sec">2 · O que foi?</div>' +
       Object.keys(grupos).map(function (gname) { return '<div class="grupo">' + esc(gname) + '</div><div class="chips">' + grupos[gname].map(function (c) { return '<button type="button" class="chip" data-cat="' + c.id + '" aria-pressed="false">' + esc(c.rotulo) + '</button>'; }).join('') + '</div>'; }).join('') +
+      '<label class="f" for="lz-cat-txt" id="lz-cat-txt-w" hidden>O que foi?<input id="lz-cat-txt" placeholder="ex.: Conserto do carro, curso, brinde de cliente" autocomplete="off"></label>' +
       '</section>' +
       '<section class="card"><div class="sec">3 · Detalhes</div><div class="campos">' +
       '<label class="f" for="lz-desc">Descrição<input id="lz-desc" list="lz-desc-l" placeholder="ex.: Gasolina ida a Curitiba" autocomplete="off"></label>' +
@@ -239,9 +357,21 @@
         if (estado.item && it.indexOf(estado.item) >= 0) s.value = estado.item;
         estado.item = s.value; w.hidden = false;
       }
+      origemUnidade();
       var parc = el.querySelector('#lz-forma option[value="parcelado"]'); parc.disabled = area === MGB_DIA;
       if (area === MGB_DIA && estado.forma === 'parcelado') { el.querySelector('#lz-forma').value = 'avista'; estado.forma = 'avista'; formaMudou(); }
       resumo();
+    }
+    // De onde vem a unidade escolhida: cadastrada no hub (pelo Novo cliente, com dados do CRM) e o CNPJ, quando houver.
+    function origemUnidade() {
+      var o = el.querySelector('#lz-origem'), area = estado.destino, it = el.querySelector('#lz-item').value;
+      if (area === MGB_DIA || !area) { o.hidden = true; return; }
+      if (!it) { o.hidden = false; o.innerHTML = 'A lista mostra as unidades já cadastradas no hub. Cliente novo? Feche em <b>Novo cliente</b>, que puxa do CRM, e ele aparece aqui.'; return; }
+      var info = {}; try { info = (clientesInfo[area] || {})[it] || {}; } catch (e) {}       // eslint-disable-line no-undef
+      var c = clientesDoHub().filter(function (x) { return normaliza(x.nome) === normaliza(info.fantasia || it) || normaliza(x.nome) === normaliza(it); })[0];
+      var cnpj = info.cnpj || (c && c.cnpj) || '';
+      o.hidden = false;
+      o.innerHTML = '<b>' + esc(it) + '</b> · cadastrado no hub' + (c && c.crm ? ' · está no CRM' : '') + (cnpj ? ' · CNPJ ' + esc(cnpj) : ' · sem CNPJ no cadastro');
     }
     function formaMudou() {
       estado.forma = el.querySelector('#lz-forma').value;
@@ -252,7 +382,7 @@
       resumo();
     }
     function dados() {
-      return { destino: estado.destino, item: estado.destino === MGB_DIA ? '' : el.querySelector('#lz-item').value, categoria: estado.categoria,
+      return { destino: estado.destino, item: estado.destino === MGB_DIA ? '' : el.querySelector('#lz-item').value, categoria: estado.categoria, categoriaTxt: el.querySelector('#lz-cat-txt').value,
         descricao: el.querySelector('#lz-desc').value, fornecedor: el.querySelector('#lz-forn').value, valor: el.querySelector('#lz-valor').value,
         data: el.querySelector('#lz-data').value, forma: estado.forma, parcelas: el.querySelector('#lz-parc').value, meses: el.querySelector('#lz-meses').value,
         quemPagou: estado.quemPagou, jaPaga: estado.jaPaga, lancadoPor: quem() };
@@ -262,7 +392,7 @@
       if (!d.destino) { el.querySelector('#lz-resumo').textContent = 'Escolha para quem é e o que foi.'; return; }
       var mod = modulos().filter(function (x) { return x.id === d.destino; })[0];
       alvo = d.destino === MGB_DIA ? 'MGB · dia a dia' : (mod ? rotMod(mod) : '') + (d.item ? ' › ' + d.item : '');
-      var c = categoria(d.categoria), txt = '<b>' + esc(alvo) + '</b>' + (c ? '<br>' + esc(c.rotulo) : '');
+      var c = categoria(d.categoria), txt = '<b>' + esc(alvo) + '</b>' + (c ? '<br>' + esc(c.livre ? '✏️ ' + (d.categoriaTxt || 'Outro') : c.rotulo) : '');
       if (v > 0 && m) {
         if (d.forma === 'parcelado') { var n = parseInt(d.parcelas, 10) || 2; txt += '<br>' + n + 'x de ' + brl(v / n) + ' a partir de ' + fmtMes(m) + ' (total ' + brl(v) + ')'; }
         else if (d.forma === 'mensal') txt += '<br>' + brl(v) + ' por mês, ' + (parseInt(d.meses, 10) || 1) + ' meses a partir de ' + fmtMes(m);
@@ -273,8 +403,14 @@
     }
 
     el.querySelectorAll('[data-area]').forEach(function (b) { b.addEventListener('click', function () { escolherArea(b.getAttribute('data-area')); }); });
-    el.querySelector('#lz-item').addEventListener('change', function (e) { estado.item = e.target.value; resumo(); });
-    el.querySelectorAll('[data-cat]').forEach(function (b) { b.addEventListener('click', function () { estado.categoria = b.getAttribute('data-cat'); marcar('data-cat', estado.categoria); resumo(); }); });
+    el.querySelector('#lz-item').addEventListener('change', function (e) { estado.item = e.target.value; origemUnidade(); resumo(); });
+    el.querySelectorAll('[data-cat]').forEach(function (b) { b.addEventListener('click', function () {
+      estado.categoria = b.getAttribute('data-cat'); marcar('data-cat', estado.categoria);
+      var livre = !!(categoria(estado.categoria) || {}).livre, w = el.querySelector('#lz-cat-txt-w');
+      w.hidden = !livre; if (livre) el.querySelector('#lz-cat-txt').focus();
+      resumo();
+    }); });
+    el.querySelector('#lz-cat-txt').addEventListener('input', resumo);
     el.querySelectorAll('[data-paga]').forEach(function (b) { b.addEventListener('click', function () { estado.jaPaga = b.getAttribute('data-paga') === '1'; marcar('data-paga', b.getAttribute('data-paga')); resumo(); }); });
     el.querySelectorAll('[data-quem]').forEach(function (b) { b.addEventListener('click', function () { estado.quemPagou = b.getAttribute('data-quem'); marcar('data-quem', estado.quemPagou); resumo(); }); });
     el.querySelector('#lz-forma').addEventListener('change', formaMudou);
@@ -380,32 +516,35 @@
     injetarEstilos();
     var srv = 'locucao', recebida = false;
     var hoje = hojeISO().slice(0, 7);
-    var clientes = {};
-    try { leads.forEach(function (l) { if (l && l.nome) clientes[l.nome] = 1; }); } catch (e) {}          // eslint-disable-line no-undef
-    try { receitasAvulsas.forEach(function (r) { clientes[r.cliente] = 1; }); } catch (e) {}              // eslint-disable-line no-undef
+    var cli = null, picker = null;
     var el = moldura('Nova receita',
       '<div class="duas"><main>' +
       '<section class="card"><div class="sec">1 · Que serviço?</div><div class="chips">' +
       SERVICOS_RECEITA.map(function (s) { return '<button type="button" class="chip" data-srv="' + s.id + '" aria-pressed="' + (s.id === srv) + '">' + esc(s.rotulo) + '</button>'; }).join('') + '</div>' +
+      '<label class="f" for="lr-srv-txt" id="lr-srv-txt-w" hidden>Qual serviço?<input id="lr-srv-txt" placeholder="ex.: Edição de vídeo, jingle" autocomplete="off"></label>' +
       '<p class="sub">Para serviço pontual. Contratos mensais entram pelo Novo cliente, e as comissões das rádios vêm do Rádio Ops.</p></section>' +
-      '<section class="card"><div class="sec">2 · Detalhes</div><div class="campos">' +
-      '<label class="f" for="lr-cli">Cliente<input id="lr-cli" list="lr-cli-l" autocomplete="off" placeholder="ex.: Supermercado Santarém"></label>' +
-      '<datalist id="lr-cli-l">' + Object.keys(clientes).sort().map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>' +
+      '<section class="card"><div class="sec">2 · Cliente</div><div id="lr-cli-box"></div></section>' +
+      '<section class="card"><div class="sec">3 · Detalhes</div><div class="campos">' +
       '<label class="f" for="lr-desc">Descrição (opcional)<input id="lr-desc" placeholder="ex.: Locução spot Dia das Crianças"></label>' +
       '<label class="f" for="lr-valor">Valor (R$)<input id="lr-valor" inputmode="decimal" placeholder="0,00"></label>' +
       '<label class="f" for="lr-mes">Mês da nota (competência)<input id="lr-mes" type="month" value="' + hoje + '"></label>' +
       '</div></section>' +
-      '<section class="card"><div class="sec">3 · Recebimento</div><div class="chips"><button type="button" class="chip" data-rcb="0" aria-pressed="true">A receber</button><button type="button" class="chip" data-rcb="1" aria-pressed="false">✔ Já recebido</button></div>' +
+      '<section class="card"><div class="sec">4 · Recebimento</div><div class="chips"><button type="button" class="chip" data-rcb="0" aria-pressed="true">A receber</button><button type="button" class="chip" data-rcb="1" aria-pressed="false">✔ Já recebido</button></div>' +
       '<p class="sub">Entra na receita do mês e no imposto (Simples). Lembre de emitir a nota.</p></section>' +
       '</main><aside><section class="card"><div class="sec">Vai entrar assim</div><div class="resumo" id="lr-resumo"></div><div class="erros" id="lr-erros" role="alert"></div>' +
       '<button type="button" class="b p" id="lr-ok">Lançar receita</button><div id="lr-feito" aria-live="polite"></div></section>' +
       '<section class="card"><div class="sec">Últimas receitas avulsas</div><div id="lr-recentes"></div></section></aside></div>');
     function marcar(attr, val) { el.querySelectorAll('[' + attr + ']').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute(attr) === String(val))); }); }
-    function dados() { return { servico: srv, cliente: el.querySelector('#lr-cli').value, descricao: el.querySelector('#lr-desc').value, valor: el.querySelector('#lr-valor').value, mes: el.querySelector('#lr-mes').value, lancadoPor: quem() }; }
+    function dados() {
+      return { servico: srv, servicoTxt: el.querySelector('#lr-srv-txt').value, cliente: cli ? cli.nome : '', clienteInfo: cli ? { cnpj: cli.cnpj || '', razao: cli.razao || '', email: cli.email || '', tel: cli.tel || '',
+        responsavel: cli.responsavel || '', endereco: cli.endereco || '', origem: cli.origem, mod: cli.mod || '', item: cli.item || '', leadId: cli.leadId || null } : null,
+        descricao: el.querySelector('#lr-desc').value, valor: el.querySelector('#lr-valor').value, mes: el.querySelector('#lr-mes').value, lancadoPor: quem() };
+    }
     function resumo() {
       var d = dados(), s = servico(d.servico), v = numero(d.valor);
       var imp = 0; try { imp = v * impostoAliq(); } catch (e) {}                              // eslint-disable-line no-undef
-      el.querySelector('#lr-resumo').innerHTML = '<b>' + esc(s.rotulo) + '</b>' + (d.cliente ? ' · ' + esc(d.cliente) : '') +
+      el.querySelector('#lr-resumo').innerHTML = '<b>' + esc(s.livre ? '✏️ ' + (d.servicoTxt || 'Outro serviço') : s.rotulo) + '</b>' + (d.cliente ? ' · ' + esc(d.cliente) : '') +
+        (cli ? '<br><span class="hint">' + (cli.cnpj ? 'CNPJ ' + esc(cli.cnpj) + ' · pronto para a nota' : '⚠️ sem CNPJ para a nota') + '</span>' : '') +
         (v > 0 ? '<br>' + brl(v) + (d.mes ? ' em ' + fmtMes(d.mes) : '') + (imp ? '<br><span class="hint">Simples sobre ela: ' + brl(imp) + '</span>' : '') : '') +
         '<br><span class="hint">' + (recebida ? 'Já recebido' : 'A receber') + '</span>';
     }
@@ -423,15 +562,26 @@
         salvar(); lista();
       }); });
     }
-    el.querySelectorAll('[data-srv]').forEach(function (b) { b.addEventListener('click', function () { srv = b.getAttribute('data-srv'); marcar('data-srv', srv); resumo(); }); });
+    el.querySelectorAll('[data-srv]').forEach(function (b) { b.addEventListener('click', function () {
+      srv = b.getAttribute('data-srv'); marcar('data-srv', srv);
+      var livre = !!(servico(srv) || {}).livre; el.querySelector('#lr-srv-txt-w').hidden = !livre; if (livre) el.querySelector('#lr-srv-txt').focus();
+      resumo();
+    }); });
+    el.querySelector('#lr-srv-txt').addEventListener('input', resumo);
+    picker = seletorCliente(el.querySelector('#lr-cli-box'), { rotulo: 'Cliente da nota', aoEscolher: function (c) { cli = c; resumo(); } });
     el.querySelectorAll('[data-rcb]').forEach(function (b) { b.addEventListener('click', function () { recebida = b.getAttribute('data-rcb') === '1'; marcar('data-rcb', b.getAttribute('data-rcb')); resumo(); }); });
-    ['#lr-cli', '#lr-valor', '#lr-mes'].forEach(function (s) { el.querySelector(s).addEventListener('input', resumo); });
+    ['#lr-valor', '#lr-mes'].forEach(function (s) { el.querySelector(s).addEventListener('input', resumo); });
     el.querySelector('#lr-ok').addEventListener('click', function () {
       var d = dados(), erros = validarReceita(d), errEl = el.querySelector('#lr-erros');
       if (erros.length) { errEl.innerHTML = erros.map(esc).join('<br>'); return; }
       errEl.textContent = '';
       var x = receitaAvulsa(d, receitaAvulsaId++);                                            // eslint-disable-line no-undef
       receitasAvulsas.push(x);                                                                // eslint-disable-line no-undef
+      try {                                                                                   // dados do tomador para a Nota avulsa (Contabilidade › Nota)
+        clientesInfo._avulsa = clientesInfo._avulsa || {};                                    // eslint-disable-line no-undef
+        var ci = x.clienteInfo || {};
+        clientesInfo._avulsa[itemReceita(x)] = { cnpj: ci.cnpj || '', razao: ci.razao || x.cliente, fantasia: x.cliente, email: ci.email || '', tel: ci.tel || '', responsavel: ci.responsavel || '', endereco: ci.endereco || '' }; // eslint-disable-line no-undef
+      } catch (e) {}
       if (recebida) {
         var k = (+x.mes.slice(0, 4)) + '-' + (+x.mes.slice(5, 7) - 1), it = itemReceita(x);
         recPagamentos._avulsa = recPagamentos._avulsa || {}; recPagamentos._avulsa[it] = recPagamentos._avulsa[it] || {}; // eslint-disable-line no-undef
@@ -445,8 +595,8 @@
       lista();
     });
     resumo(); lista();
-    el.querySelector('#lr-cli').focus();
+    picker.foco();
   }
 
-  global.MGBLancar = Object.assign(api, { despesa: novaDespesa, receita: novaReceita, fechar: fechar });
+  global.MGBLancar = Object.assign(api, { despesa: novaDespesa, receita: novaReceita, fechar: fechar, seletorCliente: seletorCliente, clientesDoHub: clientesDoHub });
 })(typeof window !== 'undefined' ? window : globalThis);
