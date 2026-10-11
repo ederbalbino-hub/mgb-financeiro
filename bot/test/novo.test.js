@@ -150,3 +150,50 @@ test("contrato Mercadão: cotas, inserções, valor, vigência e pagamento", () 
   assert.match(adiant, /Pagamento único e antecipado de <strong>R\$ 1\.200,00/);
   assert.doesNotMatch(N.contratoMercadao({ ...base, nome: "<img src=x>" }), /<img/);
 });
+
+// ── Revisão de 11/10: CRM como base, TV interna, CNPJ ────────────────
+test("CRM: produto do formulário puxa os leads certos primeiro", () => {
+  const leads = [
+    { id: 1, nome: "Cond A", produto: "elev", estagio: "fechado" },
+    { id: 2, nome: "Vaapty Minas", produto: "vaapty", estagio: "fechado" },
+    { id: 3, nome: "Já feito", produto: "vaapty", estagio: "fechado", itemCriado: "x" },
+    { id: 4, nome: "Em negociação", produto: "vaapty", estagio: "negociando" }
+  ];
+  const g = N.leadsParaProduto(leads, "vaapty");
+  assert.deepEqual(g.certos.map((l) => l.id), [2]);
+  assert.deepEqual(g.outros.map((l) => l.id), [1]);
+  assert.equal(N.PRODUTO_LEAD.anunciante, "elev");
+  assert.equal(N.PRODUTO_LEAD.mercadao, "radio");
+});
+
+test("CNPJ: respostas das duas bases viram os mesmos campos", () => {
+  const a = N.normalizarCNPJ("brasilapi", { razao_social: "ÓTICA X LTDA", nome_fantasia: "Ótica X", logradouro: "RUA A", numero: "10", bairro: "Centro", municipio: "LONDRINA", uf: "PR", cep: "86010000", email: "CONTATO@X.COM", ddd_telefone_1: "4333334444" });
+  assert.equal(a.razao, "ÓTICA X LTDA");
+  assert.equal(a.email, "contato@x.com");
+  assert.equal(a.cep, "86010000");
+  assert.equal(a.endereco, "RUA A, nº 10, Centro, LONDRINA/PR, CEP 86010-000");
+  const b = N.normalizarCNPJ("cnpjws", { razao_social: "Y SA", estabelecimento: { tipo_logradouro: "Avenida", logradouro: "Brasil", numero: "5", cidade: { nome: "Cascavel" }, estado: { sigla: "PR" }, cep: "85800-000", ddd1: "45", telefone1: "99998888" } });
+  assert.equal(b.logradouro, "Avenida Brasil");
+  assert.equal(b.cidade, "Cascavel");
+  assert.equal(b.tel, "4599998888");
+  assert.equal(b.cep, "85800000");
+});
+
+test("TV interna: contrato padrão próprio, custo informado", () => {
+  const html = N.contratoRadioInterna({ nome: "Academia Z", valor: 300, inicio: "2026-11-01", meses: 12, servico: "tv" });
+  assert.match(html, /TV Interna/);
+  assert.match(html, /TV corporativa/);
+  assert.doesNotMatch(html, /ECAD/);
+  assert.equal(N.sobraRadio(300, 0), 300);
+  const d = N.despesaRadio("2026-11-01", 12, "90", "Licença da TV interna");
+  assert.equal(d.u, 90);
+  assert.equal(d.d, "Licença da TV interna");
+  assert.equal(N.despesaRadio("2026-11-01", 12).u, 70);
+});
+
+test("contratos usam a logo oficial quando ela é passada", () => {
+  const com = N.contratoRadioInterna({ nome: "X", valor: 1, inicio: "2026-11-01" }, { logo: "data:image/png;base64,AAA" });
+  assert.match(com, /<img src="data:image\/png;base64,AAA"/);
+  const sem = N.contratoMercadao({ nome: "X", cotas: 1, valorCota: 100, inicio: "2026-11-01", meses: 1 });
+  assert.match(sem, /MGB<span[^>]*>\.<\/span>/);
+});

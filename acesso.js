@@ -51,7 +51,9 @@
       paginas: ['home', 'overview', 'custos', 'contabilidade', 'operacional:contratos', 'relatorios', 'gerador',
         'radioops', 'ferramentas'],
       extras: ['valores', 'ropsResumo', 'ropsAlerta', 'renovacao', 'novo'],
-      abas: { ferramentas: ['backup'] }
+      abas: { ferramentas: ['backup'] },
+      // Revisão de 11/10: Rádio Ops e "Rádio Moinho (Bureau)" abriam a mesma tela. Fica só o módulo Moinho.
+      ocultar: ['#nav-radioops', '#home-rops-card']
     },
     // Guina só participa do Rádio Ops.
     bureau: {
@@ -124,6 +126,31 @@
     return null;
   }
 
+  // ── Renovação por telefone (revisão de 11/10) ──────────────────────────
+  // A Karen vê os contratos que vencem neste mês e no próximo e encaminha ao Eder.
+  // O Eder liga, marca "Renovado com o cliente" e o contrato ganha o mesmo prazo de novo
+  // (sem Assinafy). Cada contrato some da lista assim que é encaminhado ou resolvido.
+  function chaveRenov(c) { return [c.origem, c.nome, c.fimKey].join('|'); }
+
+  function contratosParaRenovar(lista, ref, renov, modoEder) {
+    renov = renov || {};
+    return (lista || []).filter(function (c) {
+      if (c.fimKey == null || c.fimKey < ref || c.fimKey > ref + 1) return false;
+      var r = renov[chaveRenov(c)];
+      if (!r) return true;
+      return modoEder && r.s === 'eder';
+    }).sort(function (a, b) { return a.fimKey - b.fimKey || String(a.nome).localeCompare(String(b.nome)); });
+  }
+
+  // Estende o contrato pelo mesmo prazo (ou pelo prazo informado). Funciona para rec[mod][item] e anunciantes.
+  function estenderContrato(obj, meses) {
+    if (!obj) return null;
+    var atual = parseInt(obj.meses, 10) || 12;
+    var mais = parseInt(meses, 10) || atual;
+    obj.meses = atual + mais;
+    return obj.meses;
+  }
+
   function decodificarToken(token) {
     try {
       var corpo = String(token).split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
@@ -139,7 +166,10 @@
     temExtra: temExtra,
     podeAba: podeAba,
     primeiraAba: primeiraAba,
-    alvoDoOnclick: alvoDoOnclick
+    alvoDoOnclick: alvoDoOnclick,
+    chaveRenov: chaveRenov,
+    contratosParaRenovar: contratosParaRenovar,
+    estenderContrato: estenderContrato
   };
 
   if (typeof module !== 'undefined' && module.exports) { module.exports = api; }
@@ -167,8 +197,14 @@
       'body.mgb-sem-ropsResumo #rops-tab-resumo,body.mgb-sem-ropsResumo #rops-resumo-wrap,body.mgb-sem-ropsResumo #nav-rops-badge{display:none!important}' +
       'body.mgb-sem-ropsAlerta #home-rops-alert{display:none!important}' +
       'body.mgb-sem-ropsPainel #rops-tab-painel,body.mgb-sem-ropsPainel #rops-painel-wrap{display:none!important}' +
-      '#mgb-renov{cursor:pointer;margin:0 0 14px;padding:12px 16px;border-radius:14px;background:#fff7ed;border:1.5px solid #f2b880;color:#7a3e00;font:14px "DM Sans",system-ui,sans-serif;text-align:left;max-width:640px;width:100%;box-sizing:border-box}' +
-      '#mgb-renov b{display:block;font-size:14px;margin-bottom:4px}#mgb-renov span{display:block;font-size:13px;color:#5d3a12}' +
+      '#mgb-renov{margin:0 auto 14px;padding:12px 16px;border-radius:14px;background:#fff7ed;border:1.5px solid #f2b880;color:#7a3e00;font-family:"DM Sans",system-ui,sans-serif;font-size:14px;text-align:left;max-width:640px;width:100%;box-sizing:border-box}' +
+      '#mgb-renov>b{display:block;font-size:14px;margin-bottom:4px}#mgb-renov>span{display:block;font-size:13px;color:#5d3a12;margin-bottom:6px}' +
+      '#mgb-renov .rv-lin{border-top:1px solid #f6d3ad;padding:6px 0}' +
+      '#mgb-renov .rv-nome{all:unset;cursor:pointer;display:block;width:100%;font-size:13.5px;color:#5d3a12;padding:4px 0}#mgb-renov .rv-nome:focus-visible{outline:2px solid #c2410c}' +
+      '#mgb-renov .rv-caixa{margin:6px 0 4px;padding:10px 12px;background:#fff;border:1px solid #f2b880;border-radius:10px;font-size:13px;color:#3a2a14;display:flex;flex-direction:column;gap:4px}' +
+      '#mgb-renov .rv-caixa[hidden]{display:none}#mgb-renov .rv-bts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}' +
+      '#mgb-renov .rv-bts button{min-height:38px;padding:0 12px;border-radius:9px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}' +
+      '#mgb-renov .rv-ok{background:#c2410c;border:1px solid #c2410c;color:#fff}#mgb-renov .rv-nao{background:#fff;border:1px solid #f2b880;color:#7a3e00}' +
       '#mgb-login{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:#f3f1ec;font-family:"DM Sans",system-ui,sans-serif}' +
       '#mgb-login form{width:100%;max-width:360px;background:#fff;border:1px solid #ddd8ce;border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 40px rgba(36,26,56,.08)}' +
       '#mgb-login h1{margin:0;font-size:22px;color:#241a38}#mgb-login p{margin:0;font-size:14px;color:#5d5868}' +
@@ -209,6 +245,11 @@
       if (!alvo) return;
       if (pode(perfilAtual, alvo)) el.removeAttribute('data-mgb-bloq');
       else el.setAttribute('data-mgb-bloq', '');
+    });
+
+    // Itens escondidos de propósito para o perfil (ex.: Rádio Ops duplicado da Karen)
+    ((PERFIS[perfilAtual] && PERFIS[perfilAtual].ocultar) || []).forEach(function (sel) {
+      doc.querySelectorAll(sel).forEach(function (el) { el.setAttribute('data-mgb-bloq', ''); });
     });
 
     // Lista de módulos e seu título só para quem vê os módulos
@@ -287,27 +328,120 @@
     }
   }
 
-  // Aviso na Home: contratos que encerram neste mês (para renovar).
+  // Aviso na Home: contratos que vencem (este mês e o próximo) para renovar por telefone.
+  function renovacoes() {
+    try {
+      var ci = global.clientesInfo || (typeof clientesInfo !== 'undefined' ? clientesInfo : null);  // eslint-disable-line no-undef
+      if (!ci) return {};
+      if (!ci._renovacoes) ci._renovacoes = {};
+      return ci._renovacoes;
+    } catch (e) { return {}; }
+  }
+  function salvar() { try { global.scheduleSave(); } catch (e) { try { scheduleSave(); } catch (e2) {} } }  // eslint-disable-line no-undef
+  function nomeMes(k) { var M = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']; return M[k % 12] + '/' + String(Math.floor(k / 12)).slice(2); }
+  function contatoDe(c) {
+    var info = null;
+    try {
+      var mods = global.MODULES || MODULES;                         // eslint-disable-line no-undef
+      var m = mods.filter(function (x) { return x.label === c.origem; })[0];
+      var ci = global.clientesInfo || clientesInfo;                 // eslint-disable-line no-undef
+      info = (m && ci[m.id] && ci[m.id][c.nome]) || (c.origem === 'Elevadores' && ci.elev && ci.elev[c.nome]) || null;
+    } catch (e) {}
+    return info || {};
+  }
+  function objetoDoContrato(c) {
+    try {
+      if (c.origem === 'Elevadores') {
+        var an = (global.anunciantes || anunciantes);               // eslint-disable-line no-undef
+        return an.filter(function (a) { return a.nome === c.nome && (a.inicio || '') === c.inicio; })[0] || null;
+      }
+      var mods = global.MODULES || MODULES;                         // eslint-disable-line no-undef
+      var m = mods.filter(function (x) { return x.label === c.origem; })[0];
+      var r = global.rec || rec;                                    // eslint-disable-line no-undef
+      return m && r[m.id] ? r[m.id][c.nome] || null : null;
+    } catch (e) { return null; }
+  }
+
+  // Custos recorrentes da unidade que acabavam junto com o contrato (licença) acompanham a renovação.
+  function estenderCustos(c) {
+    try {
+      if (c.origem === 'Elevadores') return;
+      var mods = global.MODULES || MODULES;                         // eslint-disable-line no-undef
+      var m = mods.filter(function (x) { return x.label === c.origem; })[0];
+      var base = global.db || db;                                   // eslint-disable-line no-undef
+      var lista = m && base[m.id] && base[m.id][c.nome];
+      (lista || []).forEach(function (row) {
+        if (row.t !== 'Recorrente' || !row.dataInicio) return;
+        var p = row.dataInicio.split('-').map(Number);
+        var fim = p[0] * 12 + (p[1] - 1) + (parseInt(row.mesesRec, 10) || 0) - 1;
+        if (fim !== c.fimKey) return;
+        global.applyToFin(row, -1);
+        row.mesesRec = (parseInt(row.mesesRec, 10) || 0) + (c.meses || 12);
+        global.applyToFin(row, +1);
+      });
+    } catch (e) {}
+  }
+
   function montarAvisoRenovacao() {
     var el = doc.getElementById('mgb-renov');
     var hubs = doc.querySelector('.home-hubs');
+    var eder = !!perfilAtual && perfilAtual.indexOf('admin') === 0;
     var lista = [];
     if (temExtra(perfilAtual, 'renovacao') && typeof global.contratosLista === 'function') {
       try {
         var d = new Date(), ref = d.getFullYear() * 12 + d.getMonth();
-        lista = global.contratosLista().filter(function (c) { return c.fimKey === ref; });
+        lista = contratosParaRenovar(global.contratosLista(), ref, renovacoes(), eder);
       } catch (e) { lista = []; }
     }
     if (!lista.length || !hubs) { if (el) el.remove(); return; }
     if (!el) {
-      el = doc.createElement('button');
-      el.type = 'button';
+      el = doc.createElement('section');
       el.id = 'mgb-renov';
-      el.setAttribute('onclick', "goPage('overview')");
       hubs.parentNode.insertBefore(el, hubs);
     }
-    el.innerHTML = '<b>' + lista.length + (lista.length === 1 ? ' contrato encerra' : ' contratos encerram') + ' este mês. Hora de renovar.</b>' +
-      '<span>' + lista.map(function (c) { return esc(c.nome) + ' (' + esc(c.origem) + ')'; }).join(' · ') + '</span>';
+    var renov = renovacoes();
+    el.innerHTML = '<b>' + (eder ? 'Renovar por telefone · ' : 'Contratos vencendo · ') + lista.length + '</b>' +
+      '<span>' + (eder ? 'Ligue para o cliente e marque o resultado. Renovado não precisa de Assinafy.' : 'Clique no cliente para encaminhar ao Eder. Ele renova por telefone.') + '</span>' +
+      lista.map(function (c, i) {
+        var info = contatoDe(c);
+        var tel = String(info.tel || '').replace(/\D/g, '');
+        var r = renov[chaveRenov(c)];
+        var linha = '<div class="rv-lin" data-i="' + i + '"><button type="button" class="rv-nome" data-abre="' + i + '"><b>' + esc(c.nome) + '</b> · ' + esc(c.origem) +
+          ' · vence ' + nomeMes(c.fimKey) + (r && r.s === 'eder' ? ' · <em>a Karen encaminhou</em>' : '') + '</button>' +
+          '<div class="rv-caixa" id="rv-caixa-' + i + '" hidden>' +
+          (info.responsavel ? '<div>Responsável: ' + esc(info.responsavel) + '</div>' : '') +
+          (tel ? '<div>Telefone: <a href="tel:+55' + tel + '">' + esc(info.tel) + '</a> · <a href="https://wa.me/55' + tel + '" target="_blank" rel="noopener">WhatsApp</a></div>' : '') +
+          '<div>Contrato de ' + (c.meses || 12) + ' meses' + (c.valor ? ', ' + esc('R$ ' + Number(c.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })) + '/mês' : '') + '.</div>' +
+          (eder
+            ? '<div class="rv-bts"><button type="button" class="rv-ok" data-renova="' + i + '">✓ Renovado com o cliente (+' + (c.meses || 12) + ' meses)</button><button type="button" class="rv-nao" data-nao="' + i + '">Não renovou</button></div>'
+            : '<div class="rv-bts"><button type="button" class="rv-ok" data-enc="' + i + '">Encaminhar ao Eder para renovar por telefone</button></div>') +
+          '</div></div>';
+        return linha;
+      }).join('');
+    function marcarR(i, s, extra) {
+      var c = lista[i];
+      var r = renovacoes();
+      r[chaveRenov(c)] = Object.assign({ s: s, em: new Date().toISOString().slice(0, 10), por: sessao ? sessao.usuario.login : '' }, extra || {});
+      salvar();
+      montarAvisoRenovacao();
+    }
+    el.querySelectorAll('[data-abre]').forEach(function (b) {
+      b.addEventListener('click', function () { var cx = doc.getElementById('rv-caixa-' + b.getAttribute('data-abre')); if (cx) cx.hidden = !cx.hidden; });
+    });
+    el.querySelectorAll('[data-enc]').forEach(function (b) { b.addEventListener('click', function () { marcarR(+b.getAttribute('data-enc'), 'eder'); }); });
+    el.querySelectorAll('[data-nao]').forEach(function (b) { b.addEventListener('click', function () { marcarR(+b.getAttribute('data-nao'), 'nao'); }); });
+    el.querySelectorAll('[data-renova]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var i = +b.getAttribute('data-renova'), c = lista[i];
+        var obj = objetoDoContrato(c);
+        var novo = estenderContrato(obj, c.meses);
+        if (!novo) { b.textContent = 'Não achei o contrato no hub'; return; }
+        estenderCustos(c);
+        try { if (c.origem === 'Elevadores') global.syncAnuncReceita(); } catch (e) {}
+        try { global.buildAll(); } catch (e) {}
+        marcarR(i, 'renovado', { meses: c.meses || 12 });
+      });
+    });
   }
 
   function envolverNavegacao() {
@@ -434,7 +568,7 @@
     if (!el) { el = doc.createElement('div'); el.id = 'mgb-login'; doc.body.appendChild(el); }
     el.innerHTML =
       '<form novalidate>' +
-      '<h1>MGB Hub</h1><p>Entre com o seu usuário para ver a sua área de trabalho.</p>' +
+      '<img src="marca/mgb-logo-roxo.svg" alt="MGB Mídia" width="117" height="60" style="display:block;margin-bottom:4px"><h1>Hub</h1><p>Entre com o seu usuário para ver a sua área de trabalho.</p>' +
       '<label for="mgb-usuario">Usuário<input id="mgb-usuario" name="usuario" autocomplete="username" autocapitalize="none" required></label>' +
       '<label for="mgb-senha">Senha<input id="mgb-senha" name="senha" type="password" autocomplete="current-password" required></label>' +
       '<div class="erro" role="alert" id="mgb-erro">' + (aviso || '') + '</div>' +

@@ -20,6 +20,10 @@
  * (webhook da Assinafy não é usado: a conta só aceita 1 URL, e é a do Rádio Ops — usa verificarPendentes + instalarGatilho)
  * POST (sem action, webhook da Assinafy) -> document_ready: baixa o PDF certificado
  *      e reenvia por e-mail a TODOS os signatários automaticamente.
+ *
+ * 11/10/2026: o PDF assinado também é guardado no Google Drive, em
+ *   MGB contratos / Assinados / <ano>   (pasta "MGB contratos" já existente)
+ * e o link do arquivo vai no e-mail para o Eder.
  */
 
 // Chave/conta da Assinafy NÃO ficam no código — configurar em Project Settings
@@ -38,6 +42,40 @@ function ASSINAFY_ACCOUNT_ID_() {
 }
 const EDER_EMAIL = 'ederbalbino@gmail.com';
 const MGB_TELEFONE = '(43) 99696-0078';
+// Pasta "MGB contratos" no Drive do Eder (MGB Mídia / MGB contratos)
+const PASTA_CONTRATOS_ID = '1CrMJzTHlssDm0yK-lP9vUeGIZ80pirsx';
+
+/** Subpasta (cria se não existir) */
+function subpasta_(pai, nome) {
+  const it = pai.getFoldersByName(nome);
+  return it.hasNext() ? it.next() : pai.createFolder(nome);
+}
+
+/** Guarda o PDF assinado em MGB contratos/Assinados/<ano>. Devolve a URL do arquivo (ou '' se falhar). */
+function salvarNoDrive_(pdfBlob) {
+  try {
+    const raiz = DriveApp.getFolderById(PASTA_CONTRATOS_ID);
+    const ano = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'yyyy');
+    const pasta = subpasta_(subpasta_(raiz, 'Assinados'), ano);
+    const nome = pdfBlob.getName();
+    const repetidos = pasta.getFilesByName(nome);
+    if (repetidos.hasNext()) return repetidos.next().getUrl();   // o gatilho pode rodar 2x: não duplica
+    return pasta.createFile(pdfBlob).getUrl();
+  } catch (e) {
+    Logger.log('Drive: ' + e);
+    return '';
+  }
+}
+
+/**
+ * Rode UMA VEZ pelo botão ▶ Executar depois de atualizar o código: autoriza o acesso ao Drive
+ * e cria as pastas MGB contratos/Assinados/<ano>.
+ */
+function autorizarDrive() {
+  const raiz = DriveApp.getFolderById(PASTA_CONTRATOS_ID);
+  const ano = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'yyyy');
+  Logger.log('Pasta pronta: ' + subpasta_(subpasta_(raiz, 'Assinados'), ano).getUrl());
+}
 
 /**
  * Rode esta função UMA VEZ pelo botão ▶ Executar do editor (não pela URL) —
@@ -209,6 +247,7 @@ function reenviarAssinado_(docId, meta) {
   });
   if (resp.getResponseCode() !== 200) return { ok: false };
   const pdfBlob = resp.getBlob().setName(meta.nomeDoc + '.pdf');
+  const urlDrive = salvarNoDrive_(pdfBlob);
 
   const emails = (meta.signatarios || []).map(s => s.email).filter(Boolean);
   if (emails.length) {
@@ -221,7 +260,8 @@ function reenviarAssinado_(docId, meta) {
       attachments: [pdfBlob]
     });
   }
-  try { MailApp.sendEmail(EDER_EMAIL, 'MGB Assinafy — ' + meta.nomeDoc + ' assinado por todos ✅', 'O contrato foi assinado por todos e enviado automaticamente para: ' + emails.join(', ')); } catch (er) {}
+  try { MailApp.sendEmail(EDER_EMAIL, 'MGB Assinafy — ' + meta.nomeDoc + ' assinado por todos ✅', 'O contrato foi assinado por todos e enviado automaticamente para: ' + emails.join(', ') +
+    (urlDrive ? '\n\nGuardado no Drive: ' + urlDrive : '\n\n⚠️ Não consegui guardar no Drive (rode autorizarDrive no editor do Apps Script).')); } catch (er) {}
 
   PropertiesService.getScriptProperties().deleteProperty('doc_' + docId);
   return { ok: true };
