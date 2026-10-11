@@ -69,3 +69,36 @@ test("sugestões vêm do que já foi lançado", () => {
   assert.equal(s.descricoes["Almoço"].cat, "alimentacao");
   assert.deepEqual(s.fornecedores, ["Restaurante X", "Tecmax"]);
 });
+
+test("'Outro' exige escrever o que foi e vira o tipo da linha", () => {
+  assert.ok(L.validarDespesa({ ...base, categoria: "outro" }).some((e) => /Outro/.test(e)));
+  const r = L.linhaDespesa({ ...base, categoria: "outro", categoriaTxt: "Brinde de cliente" });
+  assert.equal(r.tipo, "Brinde de cliente");
+  assert.equal(r.catTxt, "Brinde de cliente");
+  assert.ok(L.validarReceita({ servico: "outro", cliente: "X", valor: 10, mes: "2026-10" }).some((e) => /Outro/.test(e)));
+  assert.equal(L.receitaAvulsa({ servico: "outro", servicoTxt: "Jingle", cliente: "X", valor: 10, mes: "2026-10" }, 1).desc, "Jingle");
+});
+
+test("cliente padrão junta CRM e cadastrados, sem repetir, com CNPJ", () => {
+  const fontes = {
+    modulos: [{ id: "radio", label: "Rádio Interna", items: ["Supermercado Santarém", "Outros"] }, { id: "elev", label: "Tela Vertical", items: ["Lagoa Dourada"] }],
+    anunciantes: [{ nome: "Arfix" }],
+    clientesInfo: { radio: { "Supermercado Santarém": { cnpj: "12.345.678/0001-90", razao: "Santarém Ltda" } }, elev: { Arfix: { cnpj: "" } } },
+    leads: [
+      { id: 1, nome: "Supermercado Santarem", cnpj: "12345678000190", email: "fin@santarem.com", estagio: "fechado" },
+      { id: 2, nome: "Arfix", cnpj: "11.111.111/0001-11", estagio: "fechado" },
+      { id: 3, nome: "Ótica Nova", cnpj: "", estagio: "negociando" },
+      { id: 4, nome: "Perdido SA", estagio: "perdido" }
+    ]
+  };
+  const l = L.unirClientes(fontes);
+  const nomes = l.map((c) => c.nome);
+  assert.deepEqual(nomes.sort(), ["Arfix", "Supermercado Santarém", "Ótica Nova"].sort());   // sem "Outros", sem condomínio, sem perdido, sem duplicar
+  const s = l.find((c) => c.nome === "Supermercado Santarém");
+  assert.equal(s.origem, "hub"); assert.equal(s.crm, true); assert.equal(s.email, "fin@santarem.com"); assert.equal(s.leadId, 1);
+  assert.equal(l.find((c) => c.nome === "Arfix").cnpj, "11.111.111/0001-11");                  // CNPJ completado pelo CRM
+  assert.equal(L.buscarClientes(l, "santarem")[0].nome, "Supermercado Santarém");
+  assert.equal(L.buscarClientes(l, "1111")[0].nome, "Arfix");
+  assert.match(L.origemCliente(s), /Cadastrado no hub · Rádio Interna · está no CRM/);
+  assert.match(L.origemCliente(l.find((c) => c.nome === "Ótica Nova")), /^CRM · negociando/);
+});

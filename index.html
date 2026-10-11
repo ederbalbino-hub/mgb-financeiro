@@ -745,7 +745,22 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 #page-operacional .hub-tab{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:rgba(58,38,94,0.18);border:1px solid rgba(155,29,204,.15);color:rgba(58,38,94,0.91);transition:all .2s;white-space:nowrap;font-family:'DM Sans',sans-serif;margin-bottom:6px}
 #page-operacional .hub-tab:hover{color:#D6367F;background:rgba(232,25,125,.08)}
 #page-operacional .hub-tab.active{background:#FFFFFF;color:#241A38;border-color:rgba(232,25,125,.35)}
-.home-tv-atalhos{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.home-tv-atalhos button{font:600 11px "DM Sans",sans-serif;padding:5px 9px;border-radius:999px;border:1px solid rgba(22,41,79,.18);background:#fff;color:#16294F;cursor:pointer}.home-tv-atalhos button:hover{background:#16294F;color:#fff}
+/* Card Tela Vertical na Home: ocupa 2 colunas, atalhos em grade compacta (11/10) */
+.home-hubs{grid-auto-flow:row dense}
+#home-tv-card{grid-column:span 2;--accent:#C0A062;background:linear-gradient(135deg,#16294F 0%,#1d3566 65%,#3a3f4f 100%);border-color:#16294F;display:flex;flex-direction:column;gap:10px}
+#home-tv-card::before{background:#C0A062;opacity:.22}
+#home-tv-card .home-hub-title{color:#fff}
+#home-tv-card .home-hub-desc{color:rgba(255,255,255,.72);margin-bottom:8px}
+#home-tv-card .home-hub-cta{color:#C0A062}
+#home-tv-card .home-tv-info{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;position:relative;z-index:1}
+#home-tv-card .home-tv-info .home-hub-ico{grid-row:1/3;margin:0}
+#home-tv-card .home-tv-info .home-hub-title{margin:0}
+#home-tv-card .home-tv-info .home-hub-desc{grid-column:2;margin:0;min-height:0}
+#home-tv-card .home-tv-info .home-hub-cta{grid-column:3;grid-row:1/3}
+.home-tv-atalhos{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;position:relative;z-index:1}
+.home-tv-atalhos button{display:flex;align-items:center;gap:7px;width:100%;min-height:30px;text-align:left;font:600 11.5px "DM Sans",sans-serif;padding:5px 9px;border-radius:8px;border:1px solid rgba(192,160,98,.28);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .15s,border-color .15s}
+.home-tv-atalhos button:hover,.home-tv-atalhos button:focus-visible{background:rgba(192,160,98,.22);border-color:#C0A062;outline:none}
+@media (max-width:680px){.home-tv-atalhos button{font-size:11px;padding:5px 7px}}
 #page-operacional .hub-panel{display:none}
 #page-operacional .hub-panel.active{display:block}
 #page-relatorios .rel-tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:rgba(58,38,94,0.18);border:1px solid rgba(155,29,204,.15);color:rgba(58,38,94,0.95);transition:all .2s;white-space:nowrap;font-family:'DM Sans',sans-serif}
@@ -989,19 +1004,22 @@ body{-webkit-font-smoothing:antialiased}
             <div class="home-hub-cta">Abrir →</div>
           </div>
           <div class="home-hub-card" style="--accent:#C0A062" onclick="goOperacional('telavertical')" id="home-tv-card">
-            <div class="home-hub-ico">🛗</div>
-            <div class="home-hub-title">Tela Vertical</div>
-            <div class="home-hub-desc">Tudo dos elevadores num lugar só</div>
-            <div class="home-tv-atalhos">
+            <div class="home-tv-info">
+              <div class="home-hub-ico">🛗</div>
+              <div class="home-hub-title">Tela Vertical</div>
+              <div class="home-hub-desc">Tudo dos elevadores num lugar só</div>
+              <div class="home-hub-cta">Abrir →</div>
+            </div>
+            <div class="home-tv-atalhos" aria-label="Atalhos da Tela Vertical">
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvpainel')">📊 Mês e sócio</button>
-              <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvcondos')">🏢 Condomínios e despesas</button>
+              <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvcondos')">🏢 Condomínios</button>
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvanunc')">📣 Anunciantes</button>
+              <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvdespesas')">💸 Despesas gerais</button>
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','elevador')">📄 Contrato anunciante</button>
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','parceria')">✍️ Contrato condomínio</button>
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvproposta')">🛗 Proposta elevadores</button>
               <button type="button" onclick="event.stopPropagation();goOperacional('telavertical','tvsindicos')">🤝 Proposta síndicos</button>
             </div>
-            <div class="home-hub-cta">Abrir →</div>
           </div>
           <div class="home-hub-card" style="--accent:#D946EF" onclick="goPage('apresmgb')">
             <div class="home-hub-ico">🌐</div>
@@ -6930,8 +6948,93 @@ function fRecInit(){
   const atual=sel.value; let html='<option value="">— escolha o cliente —</option>';
   MODULES.forEach(m=>{ const itens=fRecClientes().filter(c=>c.mod===m.id); if(!itens.length) return; html+='<optgroup label="'+m.icon+' '+m.label+'">'+itens.map(c=>'<option value="'+m.id+'|'+c.item.replace(/"/g,'&quot;')+'">'+c.item+'</option>').join('')+'</optgroup>'; });
   sel.innerHTML=html; if(atual) sel.value=atual;
+  try{ mgbSeletorNoForm('rec'); }catch(e){ console.error('seletor recibo',e); }
   fRecLista(); fRecPreview();
 }
+// ── Cliente padrão também no Recibo e na Nota avulsa (11/10, pedido do Eder) ──
+// O <select> antigo continua guardando "módulo|cliente" (fica escondido); o seletor busca CRM + cadastrados.
+const _cpForm={};
+function mgbSeletorNoForm(tipo){
+  if(typeof MGBLancar==='undefined'||!MGBLancar.seletorCliente) return;
+  const cfg=tipo==='rec'
+    ? {sel:'f-rec-cli', mod:'f-rec-mod', nome:'f-rec-pagador', doc:'f-rec-doc', email:null, desc:'f-rec-desc', fn:()=>fRecCliente(), rot:'Cliente (pagador)'}
+    : {sel:'f-nota-cli', mod:'f-nota-mod', nome:'f-nota-tom-nome', doc:'f-nota-tom-doc', email:'f-nota-tom-email', desc:'f-nota-desc', fn:()=>fNotaCliente(), rot:'Cliente (tomador)'};
+  const sel=document.getElementById(cfg.sel); if(!sel) return;
+  if(_cpForm[tipo]) return;
+  const caixa=document.createElement('div'); caixa.id=cfg.sel+'-busca'; caixa.style.marginTop='10px'; sel.parentNode.insertBefore(caixa,sel); sel.style.display='none';
+  const lbl=caixa.previousElementSibling; if(lbl&&lbl.tagName==='LABEL'&&/Cliente/.test(lbl.textContent)) lbl.style.display='none';
+  const set=(id,v)=>{ const el=id&&document.getElementById(id); if(el) el.value=v||''; };
+  _cpForm[tipo]=MGBLancar.seletorCliente(caixa,{rotulo:cfg.rot, aoEscolher:c=>{
+    sel.dataset.livre='';
+    if(!c){ return; }
+    const op=c.origem==='hub'&&c.mod?[...sel.options].find(o=>o.value===c.mod+'|'+c.item):null;
+    if(op){ sel.value=op.value; cfg.fn(); }
+    else {
+      sel.value=''; sel.dataset.livre=c.nome;
+      set(cfg.nome,c.razao||c.nome); set(cfg.doc,c.cnpj); if(cfg.email) set(cfg.email,c.email); set(cfg.desc,'Prestação de serviços de mídia — '+c.nome);
+      const m=document.getElementById(cfg.mod); if(m) m.textContent=MGBLancar.origemCliente(c);
+      if(tipo==='rec') try{ fRecPreview(); }catch(e){}
+    }
+    const d=document.getElementById(cfg.doc); if(d&&!d.value&&c.cnpj) d.value=c.cnpj;
+    const em=cfg.email&&document.getElementById(cfg.email); if(em&&!em.value&&c.email) em.value=c.email;
+  }});
+  // Nota: receitas avulsas lançadas continuam a um clique
+  if(tipo==='nota') mgbNotaAvulsasChips();
+}
+function mgbNotaAvulsasChips(){
+  const caixa=document.getElementById('f-nota-cli-busca'); if(!caixa) return;
+  let w=document.getElementById('f-nota-avulsas'); if(!w){ w=document.createElement('div'); w.id='f-nota-avulsas'; w.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:12px'; caixa.appendChild(w); }
+  const l=(typeof receitasAvulsas!=='undefined'?receitasAvulsas:[]).slice().sort((a,b)=>String(b.mes).localeCompare(String(a.mes))).slice(0,6);
+  w.innerHTML=l.length?'<span style="color:var(--muted);align-self:center">Receitas avulsas lançadas:</span>'+l.map(x=>{ const it=MGBLancar.itemReceita(x); return '<button type="button" class="anunc-btn" data-it="'+it.replace(/"/g,'&quot;')+'">'+it.replace(/ #\d+$/,'')+' · '+x.mes.split('-').reverse().join('/')+'</button>'; }).join(''):'';
+  w.querySelectorAll('[data-it]').forEach(b=>b.addEventListener('click',()=>{ const sel=document.getElementById('f-nota-cli'); sel.value='_avulsa|'+b.dataset.it; fNotaCliente(); const x=receitasAvulsas.find(r=>MGBLancar.itemReceita(r)===b.dataset.it); if(x&&_cpForm.nota) _cpForm.nota.definir(x.cliente); }));
+}
+// ── Cliente padrão nos contratos (Anunciante Tela Vertical, Mercadão, Vaapty, Condomínio) — 11/10 ──
+// Mesmo seletor do hub (CRM + cadastrados). Preenche razão, fantasia, CNPJ, contato e dispara a busca do CNPJ do próprio contrato.
+const CP_CONTRATOS={
+  mercadao:{frame:'frame-mercadao', antes:'#sec-cliente .card', tipo:'setTipo',
+    campos:{razao:'razao_social',fantasia:'nome_fantasia',cnpj:'cnpj',resp:'contato_nome',email:'contato_email',tel:'contato_tel',cargo:'contato_cargo'}, cnpjFn:'buscarCNPJ'},
+  elevador:{frame:'frame-elevador', card:'e-card-crm', tipo:'eSetTipo',
+    campos:{razao:'e-razao',fantasia:'e-fantasia',cnpj:'e-cnpj',resp:'e-resp',email:'e-email',tel:'e-tel',cargo:'e-cargo'}, cnpjFn:'eBuscarCNPJ'},
+  vaapty:{frame:'frame-vaapty', card:'v-card-crm', tipo:'vSetTipo',
+    campos:{razao:'v-razao',fantasia:'v-fantasia',cnpj:'v-cnpj',resp:'v-resp',email:'v-email',tel:'v-tel',cargo:'v-cargo'}, cnpjFn:'vBuscarCNPJ'},
+  parceria:{antes:'#parc-form .parc-section',
+    campos:{razao:'p-razao',cnpj:'p-cnpj',resp:'p-sindico',email:'p-email',tel:'p-wpp'}, cnpjFn:'parcCNPJAuto'}
+};
+function mgbSeletorContrato(nome){
+  if(typeof MGBLancar==='undefined'||!MGBLancar.seletorCliente) return;
+  const cfg=CP_CONTRATOS[nome]; if(!cfg) return;
+  let w=window, d=document;
+  if(cfg.frame){ const fr=document.getElementById(cfg.frame); if(!fr||!fr.contentDocument||!fr.contentDocument.body) return; w=fr.contentWindow; d=fr.contentDocument; }
+  if(d.getElementById('cp-contrato-'+nome)){ if(cfg.card){ const cd=d.getElementById(cfg.card); if(cd) cd.style.display='block'; } return; } // já montado: o carregador antigo esconde o card quando não há cadastrados
+  const caixa=d.createElement('div'); caixa.id='cp-contrato-'+nome;
+  if(cfg.card){                                                   // troca o select antigo "Cliente já fechado no CRM?" pelo seletor
+    const card=d.getElementById(cfg.card); if(!card) return;
+    card.style.display='block';
+    const tit=card.querySelector('.card-title'); if(tit) tit.innerHTML='<div class="icon">🔎</div> Cliente (CRM ou já cadastrado)';
+    const grid=card.querySelector('.form-grid'); if(grid) grid.style.display='none';
+    card.appendChild(caixa);
+  } else {
+    const ref=d.querySelector(cfg.antes); if(!ref) return;
+    const card=d.createElement('div'); card.className=nome==='parceria'?'parc-section':'card';
+    card.innerHTML=nome==='parceria'?'<h3>🔎 Condomínio (CRM ou já cadastrado)</h3>':'<div class="card-title"><div class="icon">🔎</div> Cliente (CRM ou já cadastrado)</div>';
+    card.appendChild(caixa); ref.parentNode.insertBefore(card,ref);
+  }
+  const set=(k,v)=>{ const id=cfg.campos[k]; const el=id&&d.getElementById(id); if(el&&v!=null&&v!==''){ el.value=v; } };
+  MGBLancar.seletorCliente(caixa,{rotulo:nome==='parceria'?'Condomínio':'Cliente', aoEscolher:c=>{
+    if(!c) return;
+    const dig=String(c.cnpj||'').replace(/\D/g,'');
+    try{ if(cfg.tipo&&typeof w[cfg.tipo]==='function') w[cfg.tipo](dig.length===11?'pf':'pj'); }catch(e){}
+    set('fantasia',c.nome); set('razao',c.razao||(cfg.campos.fantasia?'':c.nome)); set('cnpj',c.cnpj); set('resp',c.responsavel); set('email',c.email); set('tel',c.tel); set('cargo',c.cargo);
+    // A busca do CNPJ traz razão social e endereço oficiais; nome fantasia e contato do CRM/cadastro prevalecem.
+    const contato=()=>{ set('fantasia',c.nome); set('resp',c.responsavel); set('email',c.email); set('tel',c.tel); set('cargo',c.cargo); };
+    if(dig.length===14&&cfg.cnpjFn&&typeof w[cfg.cnpjFn]==='function'){
+      try{ Promise.resolve(nome==='parceria'?w[cfg.cnpjFn](d.getElementById(cfg.campos.cnpj)):w[cfg.cnpjFn](dig)).then(contato,contato); setTimeout(contato,1500); }catch(e){ console.warn('CNPJ',e); }
+    }
+  }});
+}
+function mgbSeletoresContratos(){ Object.keys(CP_CONTRATOS).forEach(n=>{ try{ mgbSeletorContrato(n); }catch(e){ console.error('seletor contrato '+n,e); } }); }
+['frame-mercadao','frame-elevador','frame-vaapty'].forEach(id=>{ const fr=document.getElementById(id); if(fr) fr.addEventListener('load',()=>setTimeout(mgbSeletoresContratos,50)); });
+document.addEventListener('DOMContentLoaded',()=>setTimeout(mgbSeletoresContratos,300));
 function fRecCliente(){
   const v=document.getElementById('f-rec-cli').value; if(!v){ fRecPreview(); return; }
   const [mod,item]=v.split('|'); const m=MODULES.find(x=>x.id===mod)||{};
@@ -6953,7 +7056,8 @@ function fRecColeta(){
   const g=id=>{ const el=document.getElementById(id); return el?el.value:''; };
   const v=g('f-rec-cli'); const [mod,item]=v?v.split('|'):['',''];
   const m=MODULES.find(x=>x.id===mod)||{};
-  return { numero:g('f-rec-num').trim()||fRecProximoNum(), data:g('f-rec-data')||new Date().toISOString().slice(0,10), mod, modLabel:m.label||'', cliente:item,
+  const livre=(document.getElementById('f-rec-cli')||{dataset:{}}).dataset.livre||'';
+  return { numero:g('f-rec-num').trim()||fRecProximoNum(), data:g('f-rec-data')||new Date().toISOString().slice(0,10), mod, modLabel:m.label||(livre?'CRM':''), cliente:item||livre,
     pagador:g('f-rec-pagador').trim(), doc:g('f-rec-doc').trim(), desc:g('f-rec-desc').trim(), comp:fRecCompGet(), valor:fRecParseValor(g('f-rec-valor')), forma:g('f-rec-forma')||'pix', obs:g('f-rec-obs').trim() };
 }
 function fRecDataExt(iso){ const d=new Date((iso||'')+'T12:00:00'); if(isNaN(d)) return iso||''; const M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; return d.getDate()+' de '+M[d.getMonth()]+' de '+d.getFullYear(); }
@@ -7002,7 +7106,7 @@ function fRecGerar(){
   try{ scheduleSave(); }catch(e){}
   fRecLista(); fRecAbrirImpressao(rec);
 }
-function fRecLimpar(){ ['f-rec-pagador','f-rec-doc','f-rec-desc','f-rec-valor','f-rec-obs'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); document.getElementById('f-rec-cli').value=''; document.getElementById('f-rec-mod').textContent=''; document.getElementById('f-rec-hint').textContent=''; document.getElementById('f-rec-num').value=fRecProximoNum(); fRecPreview(); }
+function fRecLimpar(){ ['f-rec-pagador','f-rec-doc','f-rec-desc','f-rec-valor','f-rec-obs'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); document.getElementById('f-rec-cli').value=''; document.getElementById('f-rec-cli').dataset.livre=''; if(_cpForm.rec) _cpForm.rec.limpar(); document.getElementById('f-rec-mod').textContent=''; document.getElementById('f-rec-hint').textContent=''; document.getElementById('f-rec-num').value=fRecProximoNum(); fRecPreview(); }
 function fRecLista(){
   const el=document.getElementById('f-rec-lista'); if(!el) return;
   const lst=[...recibos].sort((a,b)=>(b.ts||0)-(a.ts||0));
@@ -7012,7 +7116,7 @@ function fRecLista(){
       '<td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap"><a href="#" onclick="event.preventDefault();fRecReimprimir('+r.id+')" style="margin-right:10px">imprimir</a><a href="#" onclick="event.preventDefault();fRecEditar('+r.id+')" style="margin-right:10px">editar</a><a href="#" onclick="event.preventDefault();fRecExcluir('+r.id+')" style="color:var(--red)">excluir</a></td></tr>').join('')+'</table>';
 }
 function fRecReimprimir(id){ const r=recibos.find(x=>x.id===id); if(r) fRecAbrirImpressao(r); }
-function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod+'|'+r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); fRecCompSet(r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
+function fRecEditar(id){ const r=recibos.find(x=>x.id===id); if(!r) return; const s=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; }; s('f-rec-num',r.numero); s('f-rec-data',r.data); s('f-rec-cli',r.mod?r.mod+'|'+r.cliente:''); document.getElementById('f-rec-cli').dataset.livre=r.mod?'':(r.cliente||''); if(_cpForm.rec) _cpForm.rec.definir(r.cliente); document.getElementById('f-rec-mod').textContent='Módulo: '+(r.modLabel||''); s('f-rec-pagador',r.pagador); s('f-rec-doc',r.doc); s('f-rec-desc',r.desc); fRecCompSet(r.comp); s('f-rec-valor',fRecNum(r.valor)); s('f-rec-forma',r.forma||'pix'); s('f-rec-obs',r.obs); fRecPreview(); window.scrollTo({top:0,behavior:'smooth'}); }
 function fRecExcluir(id){ const r=recibos.find(x=>x.id===id); if(!r) return; if(!confirm('Excluir o recibo '+r.numero+'?')) return; recibos=recibos.filter(x=>x.id!==id); try{ scheduleSave(); }catch(e){} fRecLista(); }
 function showFerrTab(t, el){
   ['pdf','img','video','qr','etq','calc','backup','status'].forEach(k=>{ const d=document.getElementById('ferr-'+k); if(d)d.style.display=k===t?'block':'none'; });
@@ -7045,7 +7149,13 @@ function fNotaInit(){
   fNotaAliqInfo();
   const atual=sel.value; let html='<option value="">— escolha o cliente —</option>';
   MODULES.forEach(m=>{ const itens=fRecClientes().filter(c=>c.mod===m.id); if(!itens.length) return; html+='<optgroup label="'+m.icon+' '+m.label+'">'+itens.map(c=>'<option value="'+m.id+'|'+c.item.replace(/"/g,'&quot;')+'">'+c.item+'</option>').join('')+'</optgroup>'; });
+  // Receitas avulsas (Nova receita: locução etc.) — o tomador vem do CRM/cadastro escolhido no lançamento
+  if(typeof receitasAvulsas!=='undefined'&&receitasAvulsas.length&&typeof MGBLancar!=='undefined'){
+    const recentes=receitasAvulsas.slice().sort((a,b)=>String(b.mes).localeCompare(String(a.mes))).slice(0,15);
+    html+='<optgroup label="🎙️ Receitas avulsas">'+recentes.map(x=>{ const it=MGBLancar.itemReceita(x); return '<option value="_avulsa|'+it.replace(/"/g,'&quot;')+'">'+it+' · '+x.mes.split('-').reverse().join('/')+'</option>'; }).join('')+'</optgroup>';
+  }
   sel.innerHTML=html; if(atual) sel.value=atual;
+  try{ mgbSeletorNoForm('nota'); mgbNotaAvulsasChips(); }catch(e){ console.error('seletor nota',e); }
   fNotaLista();
 }
 function fNotaAliqInfo(){
@@ -7085,6 +7195,12 @@ function fNotaCliente(){
   document.getElementById('f-nota-tom-doc').value=info.cnpj||'';
   const base=(REC_DESC[mod]||'Prestação de serviços de mídia — {item}').replace('{item}',item);
   document.getElementById('f-nota-desc').value=base;
+  if(mod==='_avulsa'){                                    // receita avulsa: descrição e valor vêm do lançamento
+    document.getElementById('f-nota-mod').textContent='Receita avulsa (Nova receita)';
+    const x=(typeof receitasAvulsas!=='undefined'?receitasAvulsas:[]).find(r=>MGBLancar.itemReceita(r)===item);
+    if(x){ document.getElementById('f-nota-tom-nome').value=info.razao||x.cliente; document.getElementById('f-nota-desc').value=x.desc+' — '+x.cliente;
+      const ve=document.getElementById('f-nota-valor'); if(ve) ve.value=fRecNum(x.valor); }
+  }
   const issEl=document.getElementById('f-nota-iss'); if(issEl && !issEl.value && notaConfig.aliquotaMes!=null) issEl.value=fRecNum(notaConfig.aliquotaMes);
   // Rádio Moinho (Bureau): a Nota MGB do mês já vem calculada sozinha no Rádio Ops (fee+comissão+Connectmix) — puxa automático
   const modEl=document.getElementById('f-nota-mod'), valorEl=document.getElementById('f-nota-valor');
@@ -7112,6 +7228,7 @@ function fNotaCliente(){
 function fNotaLimpar(){
   // não apaga f-nota-aliq-mes: é a configuração do mês, fica valendo pra próxima nota
   ['f-nota-tom-nome','f-nota-tom-doc','f-nota-tom-email','f-nota-desc','f-nota-cod','f-nota-valor','f-nota-iss'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  try{ const s=document.getElementById('f-nota-cli'); if(s) s.dataset.livre=''; if(_cpForm.nota) _cpForm.nota.limpar(); }catch(e){}
   document.getElementById('f-nota-cli').value=''; document.getElementById('f-nota-mod').textContent=''; document.getElementById('f-nota-status').innerHTML=''; document.getElementById('f-nota-retem').checked=false;
   document.getElementById('f-nota-sem-nota').checked=false; fNotaToggleSemNota();
 }
@@ -8249,6 +8366,7 @@ function showOpPanel(name, btn){
   if(name==='vaapty'){
     try{ const fv=document.getElementById('frame-vaapty'); if(fv&&fv.contentWindow&&fv.contentWindow.vCarregarClientesCRM) fv.contentWindow.vCarregarClientesCRM(); }catch(e){}
   }
+  try{ mgbSeletoresContratos(); }catch(e){}           // seletor de cliente padrão nos contratos (depois dos carregadores antigos)
   window.scrollTo(0,0);
 }
 
@@ -8451,33 +8569,28 @@ function reabrirMes(comp){
 // Receita = nota MGB cheia (inclui o Connectmix cobrado do cliente); o repasse
 // à Connectmix entra como DESPESA própria na Cobrança Mensal — líquido = fee+comissões.
 // ── Comissão do Guina (11/10, Eder) ──
-// O Guina ganha 25% da comissão de agência (20%) que a MGB recebe da Rádio Alvorada e da Rádio Evangelizar (Curitiba).
-// A fonte é o Rádio Ops (painel "Suas comissões"): se o cache trouxer o valor do mês, o hub usa ele.
-// Sem cache, usa a mesma agenda do painel: out/26 R$ 3.000 de comissão (Evangelizar 2.500 + Alvorada 500) → R$ 750;
-// nov/26 a jan/27 só Alvorada R$ 500 → R$ 125.
-const GUINA_BASE_EXTRA=[
+// O Guina ganha 25% (cfg.guinaComissaoPct do Rádio Ops) da comissão de agência que a MGB recebe das rádios.
+// Fonte única: o campo "comissoes" de cada mês do Rádio Ops (out/26 = R$ 3.000 — Evangelizar 2.500 + Alvorada 500;
+// nov/26 em diante = R$ 500 — Alvorada). Essas comissões JÁ estão dentro da Nota MGB, então não se somam de novo.
+// A agenda abaixo só vale se o hub ainda não tiver sincronizado o Rádio Ops (sem cache).
+const GUINA_AGENDA_SEM_CACHE=[
   {nome:'Rádio Evangelizar',valor:2500,de:'2026-10',ate:'2026-10'},
   {nome:'Rádio Alvorada',valor:500,de:'2026-10',ate:'2027-01'}
 ];
 const GUINA_INICIO='2026-10';
-function guinaDoCache(d){
-  if(!d) return null;
-  const v=[d.guina,d.comissaoGuina,d.guinaComissao,d.guinaValor].find(x=>typeof x==='number'&&x>=0);
-  if(v==null) return null;
-  const base=[d.guinaBase,d.baseGuina].find(x=>typeof x==='number'&&x>0);
-  return {valor:v, base:base||null};
-}
 function ropsFinMes(ano,mes){
   const key=ano+'-'+String(mes+1).padStart(2,'0');
   let cache=null; try{ cache=JSON.parse(localStorage.getItem('rops_cache')||'null'); }catch(e){}
   const d=(cache&&cache.meses)?cache.meses.find(x=>x.mes===key):null;
   const pct=(cache&&cache.cfg&&cache.cfg.guinaComissaoPct)||25;
-  const fontes=GUINA_BASE_EXTRA.filter(x=>key>=GUINA_INICIO&&key>=x.de&&key<=x.ate);
-  let base=fontes.reduce((a,x)=>a+x.valor,0), guina=Math.round(base*pct)/100, origem='agenda';
-  const c=guinaDoCache(d);
-  if(c){ guina=c.valor; base=c.base||(pct?Math.round(c.valor*10000/pct)/100:base); origem='Rádio Ops'; }
+  let base=0, origem='Rádio Ops', fontes=[];
+  if(key>=GUINA_INICIO){
+    if(d){ base=d.comissoes||0; }
+    else if(!cache){ fontes=GUINA_AGENDA_SEM_CACHE.filter(x=>key>=x.de&&key<=x.ate); base=fontes.reduce((a,x)=>a+x.valor,0); origem='agenda (Rádio Ops não sincronizado)'; }
+  }
+  const guina=Math.round(base*pct)/100;
   return {receita:d?(d.notaMGB||0):0, despesaCmx:d?(d.connectmix||0):0, radios:d?(d.radios||0):0,
-    guina:guina, guinaPct:pct, guinaBase:base, guinaBaseRops:0, guinaFontes:fontes.map(x=>x.nome), guinaOrigem:origem};
+    guina:guina, guinaPct:pct, guinaBase:base, guinaBaseRops:d?(d.comissoes||0):0, guinaFontes:fontes.map(x=>x.nome), guinaOrigem:origem};
 }
 // Despesa do mês = mesma fonte que Visão Despesas (db + despesas compartilhadas)
 function finGetDesp(y,m){ return despesaTotalMes(y,m); }
@@ -9653,7 +9766,7 @@ function coletaDespesasMes(selAno,selMes){
       m:MODULES.find(x=>x.id==='radioops'),
       item:'Moinho Globo',
       idx:'_guina',
-      r:{d:'Comissão do Guina · '+ropsFm.guinaPct+'% de '+f(ropsFm.guinaBase)+' de comissão'+(ropsFm.guinaFontes.length?' ('+ropsFm.guinaFontes.join(' + ')+')':'')+' · Rádio Ops',f:'Guina'},
+      r:{d:'Comissão do Guina · '+ropsFm.guinaPct+'% de '+f(ropsFm.guinaBase)+' de comissão das rádios'+(ropsFm.guinaFontes.length?' ('+ropsFm.guinaFontes.join(' + ')+')':'')+' · '+ropsFm.guinaOrigem,f:'Guina'},
       vlrMes:ropsFm.guina,
       tipoLbl:'Comissão',
       mes:selMes,ano:selAno
