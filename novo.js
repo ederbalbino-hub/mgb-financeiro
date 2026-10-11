@@ -374,8 +374,13 @@
     st.id = 'mgb-novo-css';
     st.textContent =
       'body.mgb-sem-novo #mgb-novo-btn{display:none!important}' +
-      '#mgb-novo-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;max-width:640px;margin:0 auto 16px;min-height:52px;border:0;border-radius:14px;background:#4E38B2;color:#fff;font:700 16px "DM Sans",system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(78,56,178,.25)}' +
-      '#mgb-novo-btn:focus-visible{outline:3px solid #b9a9f5;outline-offset:2px}' +
+      '#mgb-novo-btn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;max-width:1040px;margin:0 auto 16px}' +
+      '#mgb-novo-btn .lz-b{display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 16px;border:0;border-radius:14px;color:#fff;font:600 16px "DM Sans",system-ui,sans-serif;cursor:pointer;text-align:left;box-shadow:0 6px 18px rgba(36,26,56,.18)}' +
+      '#mgb-novo-btn .lz-b b{display:block;font-size:16px}#mgb-novo-btn .lz-b small{display:block;font-size:12px;font-weight:500;opacity:.85}' +
+      '#mgb-novo-btn .lz-mais{font-size:22px;line-height:1}' +
+      '#mgb-novo-btn .cli{background:#4E38B2}#mgb-novo-btn .desp{background:#B4235A}#mgb-novo-btn .rec{background:#14724A}' +
+      '#mgb-novo-btn .lz-b:focus-visible{outline:3px solid #b9a9f5;outline-offset:2px}' +
+      '@media (max-width:680px){#mgb-novo-btn{grid-template-columns:1fr}#mgb-novo-btn .lz-b{min-height:48px}}' +
       '#mgb-novo{position:fixed;inset:0;z-index:9600;background:rgba(36,26,56,.45);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;font-family:"DM Sans",system-ui,sans-serif;color:#241a38}' +
       '#mgb-novo .box{width:100%;max-width:1040px;background:#f6f4fb;border-radius:18px;box-shadow:0 20px 60px rgba(36,26,56,.3);overflow:hidden}' +
       '#mgb-novo .top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 22px;background:#fff;border-bottom:1px solid #e4def2}' +
@@ -410,12 +415,22 @@
     if (doc.getElementById('mgb-novo-btn')) return;
     var hubs = doc.querySelector('.home-hubs');
     if (!hubs) return;
-    var b = doc.createElement('button');
-    b.type = 'button';
-    b.id = 'mgb-novo-btn';
-    b.innerHTML = '<span aria-hidden="true" style="font-size:20px;line-height:1">＋</span> Novo cliente';
-    b.addEventListener('click', function () { abrir(); });
-    hubs.parentNode.insertBefore(b, hubs);
+    // Três atalhos lado a lado (11/10): Novo cliente (CRM), Nova despesa e Nova receita (lancar.js)
+    var linha = doc.createElement('div');
+    linha.id = 'mgb-novo-btn';
+    linha.setAttribute('role', 'group');
+    linha.setAttribute('aria-label', 'Lançar');
+    function botao(rotulo, sub, cls, fn) {
+      var b = doc.createElement('button');
+      b.type = 'button'; b.className = 'lz-b ' + cls;
+      b.innerHTML = '<span aria-hidden="true" class="lz-mais">＋</span><span><b>' + rotulo + '</b><small>' + sub + '</small></span>';
+      b.addEventListener('click', fn);
+      linha.appendChild(b);
+    }
+    botao('Novo cliente', 'fechado no CRM', 'cli', function () { abrir(); });
+    botao('Nova despesa', 'viagem, instalação, sistema', 'desp', function () { if (global.MGBLancar) global.MGBLancar.despesa(); });
+    botao('Nova receita', 'locução e serviço avulso', 'rec', function () { if (global.MGBLancar) global.MGBLancar.receita(); });
+    hubs.parentNode.insertBefore(linha, hubs);
   }
 
   function fechar() { var el = doc.getElementById('mgb-novo'); if (el) el.remove(); doc.removeEventListener('keydown', escFecha); }
