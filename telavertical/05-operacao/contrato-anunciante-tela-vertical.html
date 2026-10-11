@@ -151,7 +151,7 @@ tr.tot td{font-weight:700;background:var(--tv-champagne);color:var(--tv-navy)}
     <option value="Lagoa Dourada"><option value="Lake Portinari"><option value="Spazio Louvre"><option value="Terra Parque"><option value="Residencial Málaga"><option value="Spot"><option value="Resid. Bella Fiori"><option value="Tay"><option value="Uptown"><option value="Ed. Ayrton Senna 1"><option value="Ed. Ayrton Senna 2">
   </datalist>
   <button class="add-row no-print" onclick="tvAddRow()">+ adicionar condomínio</button>
-  <p class="mini" style="margin-top:4px">Entrega mínima de 100 inserções/dia por tela (~3.000/mês). Impactos estimados pela metodologia DOOH: cada pessoa é alcançada ~3× por mês. Pessoas/mês conforme informação das administrações (residenciais: moradores; comerciais: fluxo estimado).</p>
+  <p class="mini" style="margin-top:4px">Entrega mínima de 150 inserções/dia por tela (~4.500/mês). Impactos estimados pela metodologia DOOH: cada pessoa é alcançada ~3× por mês. Pessoas/mês conforme informação das administrações (residenciais: moradores; comerciais: fluxo estimado).</p>
 
   <!-- 4. PLANO -->
   <h2>4. Plano e Investimento</h2>
@@ -180,7 +180,7 @@ tr.tot td{font-weight:700;background:var(--tv-champagne);color:var(--tv-navy)}
       <div class="row"><span class="l">Duração do spot</span><span class="v f"><select id="dur" onchange="tvCalc()"><option value="1">10 segundos — sem áudio (padrão)</option><option value="2">20 segundos — sem áudio (2×)</option><option value="3">30 segundos — sem áudio (3×)</option></select><span class="fp"></span></span></div>
       <div class="row"><span class="l">Formato</span><span class="v f"><select id="fmt"><option>Vídeo (MP4 / H.264)</option><option>Imagem estática (JPG / PNG)</option></select><span class="fp"></span></span></div>
       <div class="row"><span class="l">Resolução</span><span class="v">1100 × 900 px (paisagem) — sem áudio</span></div>
-      <div class="row"><span class="l">Exibições</span><span class="v">Mínimo de 100 inserções/dia por tela (~3.000/mês)</span></div>
+      <div class="row"><span class="l">Exibições</span><span class="v">Mínimo de 150 inserções/dia por tela (~4.500/mês)</span></div>
     </div>
     <div class="row" style="border:none"><span class="l">Observações</span><span class="v f"><textarea id="obs" rows="2"></textarea><span class="fp"></span></span></div>
   </div>
@@ -223,7 +223,7 @@ tr.tot td{font-weight:700;background:var(--tv-champagne);color:var(--tv-navy)}
 </main>
 
 <script>
-const INS_DIA=100, DIAS=30;
+const INS_DIA=150, DIAS=30;
 const fmtBRL=v=>'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const num=s=>parseFloat(String(s||'').replace(/\./g,'').replace(',','.'))||0;
 function syncAll(){

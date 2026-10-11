@@ -2674,7 +2674,7 @@ textarea { resize:vertical; min-height:70px; }
   <div id=&quot;e-sec-midia&quot; class=&quot;section&quot;>
     <div class=&quot;card&quot;>
       <div class=&quot;card-title&quot;><div class=&quot;icon&quot;>🏢</div> Selecione os Condomínios</div>
-      <p style=&quot;font-size:12px;color:#6B7280;margin-bottom:14px&quot;>Entrega mínima: <strong>100 inserções/dia por tela</strong> (~3.000/mês).</p>
+      <p style=&quot;font-size:12px;color:#6B7280;margin-bottom:14px&quot;>Entrega mínima: <strong>150 inserções/dia por tela</strong> (~4.500/mês).</p>
       <div class=&quot;condo-grid&quot; id=&quot;e-condo-grid&quot;></div>
       <div class=&quot;summary-box&quot; id=&quot;e-condo-summary&quot; style=&quot;display:none&quot;>
         <div class=&quot;sum-item&quot;><div class=&quot;sum-num&quot; id=&quot;e-sum-condos&quot;>0</div><div class=&quot;sum-lbl&quot;>Condomínios</div></div>
@@ -2771,7 +2771,7 @@ const ePlanos = [
   { id:'semestral',  nome:'Semestral',  meses:6,  desc:'Ótimo para construção de marca. Frequência gera lembrança.' },
   { id:'anual',      nome:'Anual',      meses:12, desc:'Máxima visibilidade. Sua marca referência nos condomínios.' },
 ];
-const INS_DIA=(function(){ try{ return (window.parent.TV_REDE&&window.parent.TV_REDE.REDE.insercoesDia)||100; }catch(err){ return 100; } })(), INS_MES=30;
+const INS_DIA=(function(){ try{ return (window.parent.TV_REDE&&window.parent.TV_REDE.REDE.insercoesDia)||150; }catch(err){ return 150; } })(), INS_MES=30;
 // Fator de frequência DOOH: cada pessoa é impactada ~3x/mês (padrão indústria)
 const FREQ_IMPACTO=3;
 let eTipo='pj', eCondos=new Set(), ePlano=null;
@@ -12779,6 +12779,16 @@ function custosPelaNota(){
     const rows=(db.radio||{})[item]||[];
     rows.filter(x=>x.t==='Recorrente' && (RX_LISTEN.test(x.d||'')||RX_LISTEN.test(x.f||''))).forEach(r=>{ if(recorrenteNovoValor(rows,r,CUSTO_NOTA.radio)) log.push('radio:'+item); });
   });
+  // 2b) Rádios ListenX que não estavam lançadas (Eder, 11/10): as lojas Móveis Brasília têm rádio
+  //     (1 por loja, mesma quantidade das telas) e as duas Emagrecentro 1 cada.
+  const addListen=(mid,item)=>{
+    const rows=(db[mid]||(db[mid]={}))[item]||(db[mid][item]=[]);
+    if(rows.some(x=>x.t==='Recorrente' && (RX_LISTEN.test(x.d||'')||RX_LISTEN.test(x.f||'')))) return;
+    const e={t:'Recorrente',tipo:'Licença',d:'Rádio',f:'Listen',q:1,u:CUSTO_NOTA.radio,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:CUSTO_NOTA.desde};
+    applyToFin(e,+1); rows.push(e); log.push('listen+:'+mid+':'+item);
+  };
+  ((MODULES.find(x=>x.id==='mb')||{}).items||[]).forEach(i=>addListen('mb',i));
+  ((MODULES.find(x=>x.id==='tv')||{}).items||[]).filter(i=>/emagrecentro/i.test(i)).forEach(i=>addListen('tv',i));
   // 3) Plataforma de Gestão 4YouSee (Analytics + adicionais): despesa única, sem rateio por tela
   despesasComp.filter(d=>/gest[aã]o/i.test(d.nome||'') && /4 ?you ?see/i.test((d.forn||'')+' '+(d.nome||''))).forEach(d=>{
     if(d.valor===CUSTO_NOTA.gestao4ys||!d.inicio) return;

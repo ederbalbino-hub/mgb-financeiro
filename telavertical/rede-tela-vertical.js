@@ -7,11 +7,12 @@
  *   hub     nome do condomínio no módulo Tela Vertical do hub
  *   pessoas público do mês (moradores; nos comerciais, circulação mensal)
  *   torres  nº de torres/elevadores (quando não informado, conta 1 por tela)
+ *   breve   ainda não está no ar: fica fora da rede, do contrato e das contagens (Liberty, 11/10/2026)
  */
 (function (global) {
   'use strict';
   var REDE = {
-    insercoesDia: 100,          // entrega por tela/dia (confirmado pelo Eder em 11/10/2026)
+    insercoesDia: 150,          // entrega por tela/dia (Eder, 11/10/2026: 150; 100 é pouco)
     exposicoesDia: 3.5,         // exposições diárias por pessoa nos residenciais (mesmo da proposta)
     condos: [
       { id: 'lagoa',       hub: 'Lagoa Dourada',      nome: 'Lagoa Dourada',      bairro: 'Aquaville',             zona: 'Leste',  tipo: 'residencial', pessoas: 1344,  telas: 7, torres: 5 },
@@ -28,7 +29,7 @@
       { id: 'ever',        hub: 'Ever',               nome: 'Cond. Ever',         bairro: 'Norte',                 zona: 'Norte',  tipo: 'residencial', pessoas: 800,   telas: 2 },
       { id: 'dampezzo',    hub: 'Ampezzo',            nome: "Resid. D'Ampezzo",   bairro: 'Centro',                zona: 'Centro', tipo: 'residencial', pessoas: 200,   telas: 1, torres: 1 },
       { id: 'itamaraty',   hub: 'Itamaraty',          nome: 'Ed. Itamaraty',      bairro: 'Centro',                zona: 'Centro', tipo: 'comercial',   pessoas: 11000, telas: 1, torres: 1 },
-      { id: 'liberty',     hub: 'Liberty',            nome: 'Liberty Residence',  bairro: 'Nossa Sra. de Lourdes', zona: 'Centro', tipo: 'residencial', pessoas: 78,    telas: 1, torres: 1 },
+      { id: 'liberty',     hub: 'Liberty',            nome: 'Liberty Residence',  bairro: 'Nossa Sra. de Lourdes', zona: 'Centro', tipo: 'residencial', pessoas: 78,    telas: 1, torres: 1, breve: true },
       { id: 'villasolare', hub: 'Villa Solare',       nome: 'Villa Solare',       bairro: 'Gleba Palhano',         zona: 'Sul',    tipo: 'residencial', pessoas: 234,   telas: 2, torres: 2 }
     ]
   };
@@ -42,12 +43,14 @@
   // hub = { itens: ['Lagoa Dourada', ...], telas: function(item){...}, info: function(item){...} }
   function lista(hub) {
     var base = REDE.condos.slice();
-    if (!hub || !hub.itens || !hub.itens.length) return base.map(function (c) { return Object.assign({}, c); });
+    var noAr = base.filter(function (c) { return !c.breve; });
+    if (!hub || !hub.itens || !hub.itens.length) return noAr.map(function (c) { return Object.assign({}, c); });
     return hub.itens.map(function (item) {
       var ref = base.filter(function (c) { return norm(c.hub) === norm(item) || norm(c.nome) === norm(item); })[0];
       var info = (hub.info && hub.info(item)) || {};
       var t = hub.telas ? hub.telas(item) : 0;
       return {
+        breve: !!(ref && ref.breve),
         id: ref ? ref.id : norm(item),
         hub: item,
         nome: ref ? ref.nome : item,
@@ -59,7 +62,7 @@
         torres: ref && ref.torres ? ref.torres : (Number(info.torres) || 0),
         semDados: !ref
       };
-    }).filter(function (c) { return c.telas > 0; });
+    }).filter(function (c) { return c.telas > 0 && !c.breve; });
   }
 
   var api = { REDE: REDE, lista: lista, impactos: impactos, norm: norm };

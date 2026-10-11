@@ -82,7 +82,7 @@
   /* ---------- simulador de impacto (anunciantes.html) ---------- */
   var simList = $('sim-list');
   if (simList && window.TV_CONDOS) {
-    var INSERCOES_DIA = 100;      // inserções do anúncio por tela/dia
+    var INSERCOES_DIA = 150;      // inserções do anúncio por tela/dia
     var DIAS = 30;                // mês
     var FREQ_MES = 3;             // cada pessoa impactada ~3× por mês (padrão DOOH)
     var REDE = window.TV_REDE || { telas: 38, pessoas: 80000, condominios: 16 };

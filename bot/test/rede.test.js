@@ -6,8 +6,8 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const R = require("../../telavertical/rede-tela-vertical.js");
 
-test("entrega de 100 inserções por tela/dia", () => {
-  assert.equal(R.REDE.insercoesDia, 100);
+test("entrega de 150 inserções por tela/dia", () => {
+  assert.equal(R.REDE.insercoesDia, 150);
 });
 
 test("lista viva usa as telas do hub e o público da rede, casando nomes diferentes", () => {
@@ -24,8 +24,9 @@ test("lista viva usa as telas do hub e o público da rede, casando nomes diferen
   assert.ok(!por["Sem Tela"], "condomínio sem tela não entra no contrato");
 });
 
-test("sem o hub, usa a rede completa (16 condomínios, 39 telas)", () => {
+test("sem o hub, usa a rede no ar (15 condomínios, 38 telas; Liberty em breve)", () => {
   const l = R.lista();
-  assert.equal(l.length, 16);
-  assert.equal(l.reduce((a, c) => a + c.telas, 0), 39);
+  assert.equal(l.length, 15);
+  assert.equal(l.reduce((a, c) => a + c.telas, 0), 38);
+  assert.ok(!R.lista({ itens: ["Liberty"], telas: () => 1 }).length, "Liberty fica fora mesmo com licença no hub");
 });
