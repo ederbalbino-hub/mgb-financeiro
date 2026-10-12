@@ -7519,35 +7519,62 @@ function fFatEhManual(modulo){ return FAT_MANUAL_MODULOS.indexOf(modulo)>-1; }
 function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).value||''; return r.id+'|'+comp; }
 // Clientes criados pelo Novo cliente (têm lead do CRM) que ainda não estão na planilha de faturamento (12/10):
 // entram na lista do mês com CNPJ, e-mail e endereço do cadastro, e o valor do contrato na competência escolhida.
-function fFatClientesDoHub(rowsPlanilha){
-  const comp=(document.getElementById('f-fat-comp')||{}).value||new Date().toISOString().slice(0,7);
-  const [ano,mes]=comp.split('-').map(Number); const out=[];
-  const modRot={vaapty:'Vaapty',radio:'Rádio Interna',tv:'TV Interna',mb:'MB — Móveis Brasília'};
-  const codigoDe=modulo=>{ const r=rowsPlanilha.find(x=>x.modulo===modulo&&x.ctribnac)||rowsPlanilha.find(x=>x.modulo==='TV Interna'&&x.ctribnac)||{}; return {ctribnac:r.ctribnac||'', cnbs:r.cnbs||''}; };
+// Contratos lançados pelo hub (Novo cliente com lead do CRM + receitas avulsas), no formato da planilha.
+// inicio = mês em que começa a pagar; meses = duração. Base do Faturamento e do "incluir" na planilha.
+function fFatContratosHub(rowsPlanilha){
+  rowsPlanilha=rowsPlanilha||[]; const out=[];
+  const modRot={vaapty:'Vaapty',radio:'Rádio Interna',tv:'TV Interna'};
+  const codigoDe=modulo=>{ const r=rowsPlanilha.find(x=>x.modulo===modulo&&x.ctribnac)||rowsPlanilha.find(x=>x.modulo==='TV Interna'&&x.ctribnac)||{}; return {ctribnac:r.ctribnac||notaConfig.fatCtribnac||'', cnbs:r.cnbs||notaConfig.fatCnbs||''}; };
   ['vaapty','radio','tv'].forEach(mid=>{
     const m=MODULES.find(x=>x.id===mid); if(!m) return;
     m.items.forEach(item=>{
       const info=((clientesInfo||{})[mid]||{})[item]; if(!info||!info.leadId) return;              // só os criados pelo Novo cliente
-      if(rowsPlanilha.some(r=>fSimNome(r.cliente,item)>=0.85||(info.cnpj&&String(r.cnpj).replace(/\D/g,'')===String(info.cnpj).replace(/\D/g,'')&&fSimNome(r.cliente,item)>=0.6))) return;
-      const valor=recOfMes(mid,item,ano,mes-1); if(!(valor>0)) return;
+      const ro=recObj(mid,item); if(!(ro.valor>0)||!ro.inicio) return;
       const modulo=modRot[mid]||m.label; const cod=codigoDe(mid==='vaapty'?'TV Interna':modulo);
-      out.push({ linha:null, id:'hub-'+mid+'-'+fNormNome(item), modulo:mid==='vaapty'?'Vaapty':modulo, cliente:info.razao||item, cnpj:info.cnpj||'', email:info.email||'',
+      out.push({ id:'hub-'+mid+'-'+fNormNome(item), modulo, cliente:info.razao||item, cnpj:info.cnpj||'', email:info.email||'',
         logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'', bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
-        valor, issRetido:false, descricao:(REC_DESC[mid]||'Prestação de serviços de mídia — {item}').replace('{item}',item), ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:true,
-        modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true, hubMod:mid, hubItem:item });
+        valor:ro.valor, inicio:ro.inicio, meses:ro.meses||12, descricao:(REC_DESC[mid]||'Prestação de serviços de mídia — {item}').replace('{item}',item),
+        ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:info.notaFiscal===false?'nao':'sim', hubMod:mid, hubItem:item, apelido:item });
     });
   });
-  // Receitas avulsas da competência (Nova receita: locução, serviço pontual) — também viram nota/boleto
-  if(typeof MGBLancar!=='undefined') MGBLancar.receitasDoMes(receitasAvulsas,ano,mes-1).forEach(x=>{
-    const ci=x.clienteInfo||{}, item=MGBLancar.itemReceita(x);
-    if(rowsPlanilha.some(r=>fSimNome(r.cliente,x.cliente)>=0.85 && Math.abs((+r.valor||0)-x.valor)<0.01)) return;
-    const cod=codigoDe('TV Interna');
-    out.push({ linha:null, id:'hub-avulsa-'+x.id, modulo:'Avulsa', cliente:ci.razao||x.cliente, cnpj:ci.cnpj||'', email:ci.email||'',
-      logradouro:'', numero:'', complemento:'', bairro:'', cidade:'', uf:'', cep:'', valor:x.valor, issRetido:false,
-      descricao:x.desc+' — '+x.cliente, ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:true,
-      modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true, hubMod:'_avulsa', hubItem:item });
+  if(typeof MGBLancar!=='undefined') (receitasAvulsas||[]).filter(x=>x&&x.valor>0&&x.mes).forEach(x=>{
+    const ci=x.clienteInfo||{}, cod=codigoDe('TV Interna');
+    out.push({ id:'hub-avulsa-'+x.id, modulo:'Avulsa', cliente:ci.razao||x.cliente, cnpj:ci.cnpj||'', email:ci.email||'',
+      logradouro:'', numero:'', complemento:'', bairro:'', cidade:'', uf:'', cep:'', valor:x.valor, inicio:x.mes, meses:1,
+      descricao:x.desc+' — '+x.cliente, ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:'sim', hubMod:'_avulsa', hubItem:MGBLancar.itemReceita(x), apelido:x.cliente });
   });
   return out;
+}
+function fFatNoContrato(c,comp){ const [a,m]=comp.split('-').map(Number), [ai,mi]=c.inicio.split('-').map(Number); const k=(a*12+m)-(ai*12+mi); return k>=0&&k<(c.meses||12); }
+// Linhas do mês: contratos do hub que ainda não estão na planilha (os que já foram incluídos vêm da própria planilha).
+function fFatClientesDoHub(rowsPlanilha){
+  const comp=(document.getElementById('f-fat-comp')||{}).value||new Date().toISOString().slice(0,7);
+  return fFatContratosHub(rowsPlanilha).filter(c=>fFatNoContrato(c,comp)).filter(c=>{
+    if(rowsPlanilha.some(r=>r.id===c.id)) return false;
+    if(c.hubMod==='_avulsa') return !rowsPlanilha.some(r=>fSimNome(r.cliente,c.apelido)>=0.85&&Math.abs((+r.valor||0)-c.valor)<0.01);
+    return !rowsPlanilha.some(r=>fSimNome(r.cliente,c.apelido)>=0.85||(c.cnpj&&String(r.cnpj).replace(/\D/g,'')===String(c.cnpj).replace(/\D/g,'')&&fSimNome(r.cliente,c.apelido)>=0.6));
+  }).map(c=>({ linha:null, ...c, issRetido:false, boleto:c.boleto!=='nao', modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true }));
+}
+// Grava na planilha "MGB Faturamento - Clientes" (ação incluir do Apps Script) cada contrato do hub, com o mês em que
+// começa a pagar e os meses do contrato. Idempotente: só reenvia quando valor/início/meses/cadastro mudam.
+async function fFatPlanilhaSync(){
+  if(!_cargaSheetsOk) return {enviados:0};
+  notaConfig.fatPlanilha=notaConfig.fatPlanilha||{}; const feito=notaConfig.fatPlanilha; let enviados=0, erros=[];
+  for(const c of fFatContratosHub([])){
+    const campos={id:c.id,modulo:c.modulo,cliente:c.cliente,cnpj:c.cnpj,email:c.email,logradouro:c.logradouro,numero:c.numero,complemento:c.complemento,
+      bairro:c.bairro,cidade:c.cidade,uf:c.uf,cep:c.cep,valor:String(c.valor),inicio:c.inicio,meses:String(c.meses),descricao:c.descricao,
+      ctribnac:String(c.ctribnac||''),cnbs:String(c.cnbs||''),boleto:c.boleto};
+    const sig=JSON.stringify(campos); if(feito[c.id]&&feito[c.id].sig===sig) continue;
+    const qs=new URLSearchParams({action:'incluir'}); Object.keys(campos).forEach(k=>{ if(campos[k]) qs.set(k,campos[k]); });
+    try{
+      const r=await fetch(FATURAMENTO_API_URL+'?'+qs.toString()); const j=await r.json();
+      if(j&&j.ok){ feito[c.id]={sig, linha:j.linha, em:new Date().toISOString()}; enviados++; }
+      else erros.push(c.cliente+': '+((j&&j.erro)||'sem resposta'));
+    }catch(e){ erros.push(c.cliente+': '+e.message); break; }   // script antigo/sem rede: tenta de novo na próxima abertura
+  }
+  if(enviados){ try{ scheduleSave(); }catch(e){} }
+  if(erros.length) console.warn('fFatPlanilhaSync',erros);
+  return {enviados, erros};
 }
 // Provisionamento (12/10, Eder): cada contrato lançado aparece em TODOS os meses em que vai ser cobrado,
 // a partir do mês em que o cliente começa a pagar, pelo número de meses do contrato — igual à Visão Receita.
@@ -7693,10 +7720,18 @@ async function fFatCarregar(){
   const btn=document.getElementById('f-fat-btn-carregar')||{style:{}}; const st=document.getElementById('f-fat-status')||{set innerHTML(v){}};
   btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Lendo a planilha…</div>';
   try{
-    const r=await fetch(FATURAMENTO_API_URL+'?action=listar');
+    const compSel=(document.getElementById('f-fat-comp')||{}).value||'';
+    try{ await fFatPlanilhaSync(); }catch(e){}
+    const r=await fetch(FATURAMENTO_API_URL+'?action=listar'+(compSel?'&mesRef='+encodeURIComponent(compSel):''));
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
     fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:((row.boleto===false||fFatEhManual(row.modulo))?'nota':'ambos'), descricao:(row.modulo==='Tarobá'?FAT_DESC_TAROBA:row.descricao), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
+    // linhas que o hub incluiu na planilha (id "hub-…"): religa ao cliente do hub e completa o código de serviço
+    const ref=(j.rows||[]).find(x=>x.modulo==='TV Interna'&&x.ctribnac);
+    if(ref&&(notaConfig.fatCtribnac!==ref.ctribnac||notaConfig.fatCnbs!==ref.cnbs)){ notaConfig.fatCtribnac=ref.ctribnac; notaConfig.fatCnbs=ref.cnbs; }
+    const doHubPorId={}; fFatContratosHub(j.rows||[]).forEach(c=>doHubPorId[c.id]=c);
+    fatLinhas.forEach(r=>{ const c=doHubPorId[r.id]; if(!c) return; r.hubMod=c.hubMod; r.hubItem=c.hubItem; r.doHub=true;
+      if(!r.ctribnac){ r.ctribnac=c.ctribnac; r.cnbs=c.cnbs; } });
     const novos=fFatClientesDoHub(j.rows||[]); fatLinhas=fatLinhas.concat(novos);
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
     fFatAplicarHistorico();
@@ -14777,7 +14812,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
