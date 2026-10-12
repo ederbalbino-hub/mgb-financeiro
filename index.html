@@ -1128,6 +1128,7 @@ body{-webkit-font-smoothing:antialiased}
         <button class="badd" onclick="toggleRelatorioAnual()" style="white-space:nowrap">📄 Relatório Anual</button>
       </div>
     </div>
+    <div id="aviso-virada-geral"></div>
     <div class="ov-summary" id="ov-summary"></div>
     <div class="ov-chart-wrap">
       <div class="ov-chart-card">
@@ -1174,6 +1175,7 @@ body{-webkit-font-smoothing:antialiased}
         </div>
       </div>
 
+      <div id="aviso-virada-rec"></div>
       <!-- Gráfico anual Jan-Dez -->
       <div style="padding:0 22px 14px">
         <div class="cc">
@@ -1221,6 +1223,7 @@ body{-webkit-font-smoothing:antialiased}
         </div>
       </div>
 
+      <div id="aviso-virada-desp"></div>
       <!-- Gráfico anual Jan-Dez -->
       <div style="padding:0 22px 14px">
         <div class="cc">
@@ -1266,6 +1269,7 @@ body{-webkit-font-smoothing:antialiased}
         </div>
       </div>
 
+      <div id="aviso-virada-emp"></div>
       <!-- KPIs imposto + total empresa -->
       <div class="ov-summary" id="ov-emp-kpis"></div>
       <div id="ov-emp-retirada"></div>
@@ -7576,6 +7580,86 @@ async function fFatPlanilhaSync(){
   if(erros.length) console.warn('fFatPlanilhaSync',erros);
   return {enviados, erros};
 }
+// ── AVISOS DE VIRADA DE MÊS (12/10, Eder: "para não me assustar") ──────────────────────────────
+// Compara o mês escolhido com o anterior e antecipa o próximo: contratos que terminam ou começam,
+// despesas que entram/saem e lançamentos que ainda faltam (Tarobá digitada mês a mês, comissões do Rádio Ops).
+function _mesMais(ano,mes,d){ const x=new Date(ano,mes+d,1); return [x.getFullYear(),x.getMonth()]; }
+function _nomeMes(ano,mes){ return MESES[mes].slice(0,3).toLowerCase()+'/'+String(ano).slice(2); }
+function _recMapa(ano,mes){ const o={}; coletaClientesMes(ano,mes).forEach(l=>{ const k=l.modId+'|'+l.item; if(!o[k]) o[k]={rot:l.modLabel+' · '+l.item, mod:l.modId, item:l.item, v:0}; o[k].v+=l.valor; }); return o; }
+function _despMapa(ano,mes){
+  const o={};
+  coletaDespesasMes(ano,mes).forEach(d=>{
+    const desc=((d.r&&d.r.d)||'').replace(/\s·.*$/,'');                       // tira o detalhe variável ("· 25% de R$ …")
+    if(/^Imposto/i.test(desc)||d.idx==='_repasse_vaapty') return;            // derivados da receita: explicados à parte
+    const k=(d.m&&d.m.id||'')+'|'+d.item+'|'+desc;
+    if(!o[k]) o[k]={rot:(d.item==='Empresa'?'':d.item+' · ')+desc, v:0};
+    o[k].v+=d.vlrMes||0;
+  });
+  return o;
+}
+function avisosVirada(ano,mes){
+  const [pa,pm]=_mesMais(ano,mes,-1);
+  const rA=_recMapa(pa,pm), rB=_recMapa(ano,mes), dA=_despMapa(pa,pm), dB=_despMapa(ano,mes);
+  const R=x=>Math.round(x*100)/100, out={rec:[],desp:[],pend:[],ant:_nomeMes(pa,pm),mes:_nomeMes(ano,mes)};
+  // pendências de preenchimento (não é queda de verdade)
+  const pendKey=new Set();
+  ['Rádio Tarobá Londrina','Rádio Tarobá Cascavel'].forEach(it=>{
+    try{ if(!recTarobaGetMes(it,ano,mes) && recTarobaGetMes(it,pa,pm)>0){ pendKey.add('taroba|'+it); out.pend.push({txt:'Tarobá · '+it.replace('Rádio Tarobá ','')+': comissão de '+out.mes+' ainda não lançada', v:recTarobaGetMes(it,pa,pm), dica:'A Tarobá é digitada mês a mês no módulo, quando a comissão fecha. Em '+out.ant+' foi '+f(recTarobaGetMes(it,pa,pm))+'.'}); } }catch(e){}
+  });
+  try{
+    const a=ropsFinMes(pa,pm), b=ropsFinMes(ano,mes);
+    if(!(b.receita>0) && a.receita>0){ pendKey.add('radioops|Moinho Globo'); out.pend.push({txt:'Rádio Ops · Moinho: comissões de '+out.mes+' ainda não lançadas', v:a.receita, dica:'A nota do Moinho e a comissão do Guina aparecem quando o Guina lançar o mês no Rádio Ops. Em '+out.ant+' a nota foi '+f(a.receita)+'.'}); }
+    if(/não sincronizado/i.test(b.guinaOrigem||'')) out.pend.push({txt:'Rádio Ops não sincronizado neste navegador', v:0, dica:'Receita do Moinho e comissão do Guina estão usando a agenda. Abra o Rádio Ops uma vez para sincronizar.'});
+  }catch(e){}
+  Object.keys(Object.assign({},rA,rB)).forEach(k=>{
+    const a=(rA[k]||{}).v||0, b=(rB[k]||{}).v||0, x=rB[k]||rA[k]; if(Math.abs(b-a)<0.01||pendKey.has(k)) return;
+    out.rec.push({tipo:!b?'sai':(!a?'entra':'muda'), rot:x.rot, a:R(a), b:R(b)});
+  });
+  Object.keys(Object.assign({},dA,dB)).forEach(k=>{
+    const a=(dA[k]||{}).v||0, b=(dB[k]||{}).v||0, x=dB[k]||dA[k]; if(Math.abs(b-a)<0.01) return;
+    out.desp.push({tipo:!b?'sai':(!a?'entra':'muda'), rot:x.rot, a:R(a), b:R(b)});
+  });
+  const ord=l=>l.sort((x,y)=>Math.abs(y.b-y.a)-Math.abs(x.b-x.a));
+  ord(out.rec); ord(out.desp);
+  out.recA=R(finGetRecPrevista(pa,pm)); out.recB=R(finGetRecPrevista(ano,mes));
+  out.despA=R(despesaTotalMes(pa,pm)); out.despB=R(despesaTotalMes(ano,mes));
+  out.impA=R(out.recA*impostoAliq()); out.impB=R(out.recB*impostoAliq());
+  return out;
+}
+// tipo: 'rec' | 'desp' | 'emp' | 'geral'. Mostra "por que mudou em relação ao mês anterior" e "o que vem no próximo mês".
+function avisoViradaHtml(ano,mes,tipo){
+  let A,B; try{ A=avisosVirada(ano,mes); const [na,nm]=_mesMais(ano,mes,1); B=avisosVirada(na,nm); }catch(e){ console.warn('avisosVirada',e); return ''; }
+  const sinal=v=>(v>0?'+':'')+f(v), cor=v=>v<0?'var(--red)':'var(--green)';
+  const icone={sai:'⬇',entra:'⬆',muda:'↔'}, verbo={sai:'termina',entra:'começa',muda:'muda'};
+  const linha=(x,ehDesp)=>`<li style="margin:2px 0">${icone[x.tipo]} <b>${escHtml(x.rot)}</b> ${verbo[x.tipo]}: ${x.tipo==='muda'?f(x.a)+' → '+f(x.b):f(x.tipo==='sai'?x.a:x.b)}${x.tipo==='sai'&&!ehDesp?' <span style="color:var(--hint)">(contrato acabou — renovar?)</span>':''}</li>`;
+  const pend=P=>P.pend.map(p=>`<li style="margin:2px 0">⏳ <b>${escHtml(p.txt)}</b>${p.v?' <span style="color:var(--hint)">('+f(p.v)+' no mês anterior)</span>':''}<div style="font-size:10px;color:var(--hint)">${escHtml(p.dica)}</div></li>`).join('');
+  const bloco=(P,titulo,futuro)=>{
+    const usaRec=tipo!=='desp', usaDesp=tipo!=='rec';
+    const lim=tipo==='geral'?5:10;
+    const lista=(L,ehDesp)=>{ // agrupa iguais ("Sistema TV começa" em 15 unidades) e limita o tamanho
+      const g={}, soltos=[];
+      L.forEach(x=>{ const parte=x.rot.split(' · '); const desc=parte.length>1?parte.slice(1).join(' · '):''; const k=x.tipo+'|'+desc; (g[k]=g[k]||[]).push(x); });
+      const linhas=[];
+      Object.keys(g).forEach(k=>{ const xs=g[k]; if(xs.length>=3&&k.split('|')[1]){ const tot=xs.reduce((a,x)=>a+(x.tipo==='sai'?x.a:x.b-(x.tipo==='muda'?x.a:0)),0);
+          linhas.push({peso:Math.abs(tot), html:`<li style="margin:2px 0">${icone[xs[0].tipo]} <b>${escHtml(k.split('|')[1])}</b> ${verbo[xs[0].tipo]} em ${xs.length} unidades: ${f(tot)} <span style="color:var(--hint)" title="${escHtml(xs.map(x=>x.rot.split(' · ')[0]).join(', '))}">(${escHtml(xs.slice(0,4).map(x=>x.rot.split(' · ')[0]).join(', '))}${xs.length>4?'…':''})</span></li>`}); }
+        else xs.forEach(x=>linhas.push({peso:Math.abs(x.b-x.a), html:linha(x,ehDesp)})); });
+      linhas.sort((a,b)=>b.peso-a.peso);
+      const resto=linhas.slice(lim);
+      return linhas.slice(0,lim).map(l=>l.html).join('')+(resto.length?`<li style="margin:2px 0;color:var(--hint)">+ ${resto.length} outra(s) mudança(s) menor(es), somando ${f(resto.reduce((a,l)=>a+l.peso,0))}</li>`:'');
+    };
+    const itensRec=usaRec?lista(P.rec,false):'', itensDesp=usaDesp?lista(P.desp,true):'';
+    const pd=usaRec||tipo==='desp'?pend(P):'';
+    if(!itensRec&&!itensDesp&&!pd) return '';
+    const dRec=P.recB-P.recA, dDesp=P.despB-P.despA;
+    const resumo=[usaRec?`receita ${f(P.recA)} → ${f(P.recB)} (<span style="color:${cor(dRec)}">${sinal(dRec)}</span>)`:'', usaDesp?`despesa ${f(P.despA)} → ${f(P.despB)} (<span style="color:${cor(-dDesp)}">${sinal(dDesp)}</span>)`:''].filter(Boolean).join(' · ');
+    const imp=(tipo==='emp'||tipo==='desp')&&Math.abs(P.impB-P.impA)>=0.01?`<li style="margin:2px 0">↔ <b>Imposto Simples</b> acompanha a receita: ${f(P.impA)} → ${f(P.impB)}</li>`:'';
+    return `<details ${futuro?'':'open'} style="margin:0 0 8px;border:1px solid ${futuro?'rgba(108,85,219,.35)':'rgba(245,158,11,.4)'};background:${futuro?'rgba(108,85,219,.06)':'rgba(245,158,11,.07)'};border-radius:10px;padding:8px 12px">
+      <summary style="cursor:pointer;font-size:12px;font-weight:600">${titulo} <span style="font-weight:400;color:var(--muted);font-size:11px">— ${resumo}</span></summary>
+      <ul style="list-style:none;padding:6px 0 0;margin:0;font-size:11.5px">${pd}${itensRec}${itensDesp}${imp}</ul></details>`;
+  };
+  const h=bloco(A,`🔎 Por que ${A.mes} muda em relação a ${A.ant}`,false)+bloco(B,`📅 O que muda em ${B.mes}`,true);
+  return h?`<div style="padding:0 22px 6px">${h}</div>`:'';
+}
 // Provisionamento (12/10, Eder): cada contrato lançado aparece em TODOS os meses em que vai ser cobrado,
 // a partir do mês em que o cliente começa a pagar, pelo número de meses do contrato — igual à Visão Receita.
 function escHtml(x){ return String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -9613,6 +9697,7 @@ function buildLancRec(){
   }
   const selMes=parseInt(mSel.value);
   const selAno=parseInt(aSel.value);
+  try{ const _av=g('aviso-virada-rec'); if(_av) _av.innerHTML=avisoViradaHtml(selAno,selMes,'rec'); }catch(e){}
 
   // Gráfico anual Jan-Dez
   const anoGraf=selAno;
@@ -10035,6 +10120,7 @@ function buildVisaoDespesas(){
   }
   const selMes=parseInt(mSel.value);
   const selAno=parseInt(aSel.value);
+  try{ const _av=g('aviso-virada-desp'); if(_av) _av.innerHTML=avisoViradaHtml(selAno,selMes,'desp'); }catch(e){}
 
   // Gráfico Jan-Dez
   const despPorMes=MESES.map((_,mi)=>despesaTotalMes(selAno,mi));
@@ -10142,6 +10228,7 @@ function buildVisaoEmpresa(){
   }
   const selMes=parseInt(mSel.value);
   const selAno=parseInt(aSel.value);
+  try{ const _av=g('aviso-virada-emp'); if(_av) _av.innerHTML=avisoViradaHtml(selAno,selMes,'emp'); }catch(e){}
 
   const recOf=receitaOficialMes(selAno,selMes);
   const receitaMes=recOf.valor;
@@ -10791,6 +10878,7 @@ function buildOverview(){
   }
   const selMes=parseInt(mSel?mSel.value:new Date().getMonth());
   const selAno=parseInt(aSel?aSel.value:new Date().getFullYear());
+  try{ const _av=g('aviso-virada-geral'); if(_av) _av.innerHTML=avisoViradaHtml(selAno,selMes,'geral'); }catch(e){}
 
   syncFinanceiro();
   const grandTot=MODULES.reduce((a,m)=>a+totalMod(m.id),0);
