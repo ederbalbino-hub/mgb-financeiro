@@ -865,6 +865,20 @@
       ' type="' + (tipo || 'text') + '" value="' + esc(valor == null ? '' : valor) + '"' + (extra || '') + '></label>';
   }
 
+  // 12/10 (Eder): o mês em que o cliente começa a pagar depende de cada negociação — fica em aberto e a Karen escolhe.
+  // A receita (Visão Receita, Contabilidade, caixa e Faturamento) entra a partir dele, pelo número de meses do contrato;
+  // o contrato e as despesas continuam valendo a partir do início.
+  function mesBr(p) { var m = /^(\d{4})-(\d{2})/.exec(p || ''); return m ? ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][+m[2] - 1] + '/' + m[1] : '—'; }
+  function campoPaga() {
+    return '<label class="f" for="nv-paga">Começa a pagar em *<input id="nv-paga" type="month" value="" title="Mês da 1ª cobrança (boleto/nota). A receita entra na Visão Receita e no Faturamento a partir dele."></label>';
+  }
+  function validarPaga(erros) {
+    var p = val('paga');
+    if (!/^\d{4}-\d{2}$/.test(p)) erros.push('Escolha o mês em que o cliente começa a pagar.');
+    return p;
+  }
+  function comPaga(p, fn) { global._mgbPagaDesde = p; try { return fn(); } finally { global._mgbPagaDesde = null; } }
+
   var UNIDADE = {
     radio: { mod: 'radio', titulo: 'Nova rádio interna', modulo: 'Rádio Interna', custoRot: 'Custo da rádio', despesa: 'Licença da rádio interna',
       contrato: 'Contrato Rádio Interna', prefixo: 'MGB-RAD-', criar: 'Criar rádio interna e enviar contrato', feito: 'Rádio interna criada',
@@ -897,7 +911,7 @@
       '<section class="card"><div class="sec">2 · Plano</div><div class="campos">' +
       campoNv('valor', 'Valor mensal do contrato (R$) *', L.valor ? String(L.valor).replace('.', ',') : '', 'text', ' inputmode="decimal" placeholder="0,00"', true) +
       campoNv('custo', C.custoRot + ' (R$/mês)', String(tipo === 'tv' ? CUSTO_TELA : CUSTO_RADIO).replace('.', ','), 'text', ' inputmode="decimal"' + (C.custoFixo ? ' readonly' : '')) +
-      campoNv('inicio', 'Início *', ini, 'date') +
+      campoNv('inicio', 'Início *', ini, 'date') + campoPaga() +
       '<label class="f" for="nv-vig">Duração<select id="nv-vig"><option value="12">12 meses</option><option value="24">24 meses</option><option value="6">6 meses</option></select></label>' +
       '<label class="f" for="nv-nf">Nota fiscal<select id="nv-nf"><option value="nota">Nota + boleto todo dia 5</option><option value="boleto">Só boleto, sem nota</option></select></label>' +
       '</div></section></main>' +
@@ -942,6 +956,7 @@
     };
     var errosEl = doc.getElementById('nv-erros');
     var erros = validarRadio(d, itensModulo(C.mod)).map(function (x) { return x.replace('Rádio Interna', C.modulo); });
+    var paga = validarPaga(erros);
     if (erros.length) { errosEl.innerHTML = erros.map(esc).join('<br>'); return; }
     errosEl.textContent = '';
     var btn = doc.getElementById('nv-criar');
@@ -952,9 +967,10 @@
     try {
       var cliente = { cnpj: d.cnpj, razao: d.razao || d.nome, fantasia: d.nome, responsavel: d.responsavel, tel: d.wpp, email: d.email,
         endereco: d.end, notaFiscal: d.nf === 'nota' };
-      var criado = global.mgbCriarUnidadeModulo(C.mod, d.nome, { valor: valor, inicio: d.inicio.slice(0, 7), meses: meses, cliente: cliente });
+      var criado = global.mgbCriarUnidadeModulo(C.mod, d.nome, { valor: valor, inicio: paga, meses: meses, cliente: cliente });
       if (!criado) throw new Error('o módulo ' + C.modulo + ' não foi encontrado');
-      marcar(1, 'ok', 'Unidade <b>' + esc(d.nome) + '</b> criada com receita de ' + brl(valor) + '/mês por ' + meses + ' meses.');
+      registrarJornada(C.mod, d.nome, 'Unidade criada no Novo cliente · ' + brl(valor) + '/mês · começa a pagar em ' + mesBr(paga) + ' (' + meses + ' meses)');
+      marcar(1, 'ok', 'Unidade <b>' + esc(d.nome) + '</b> criada com receita de ' + brl(valor) + '/mês por ' + meses + ' meses, a partir de ' + mesBr(paga) + '.');
     } catch (e) {
       marcar(1, 'erro', 'Não consegui criar a unidade: ' + esc(e.message) + '. Nada foi lançado.');
       btn.disabled = false; btn.textContent = 'Tentar de novo';
@@ -1234,7 +1250,7 @@
       campoNv('vtela', 'Valor por tela/mês (R$, base 10 s) *', '', 'text', ' inputmode="decimal" placeholder="Ex.: 290,00"') +
       campoNv('vfinal', 'Valor mensal final (R$, se negociado)', L.valor ? String(L.valor).replace('.', ',') : '', 'text', ' inputmode="decimal"', true) +
       campoSel('plano', 'Plano', [['mensal', 'Mensal (1 mês)'], ['trimestral', 'Trimestral (3 meses)'], ['semestral', 'Semestral (6 meses)'], ['anual', 'Anual (12 meses)']], 'semestral') +
-      campoSel('pgto', 'Pagamento', pgtos, pgtos[0]) + campoNv('inicio', 'Início *', inicioPadrao(), 'date') +
+      campoSel('pgto', 'Pagamento', pgtos, pgtos[0]) + campoNv('inicio', 'Início *', inicioPadrao(), 'date') + campoPaga() +
       campoNv('obs', 'Observação sobre o material', '', 'text', ' placeholder="Ex.: cliente entrega o vídeo pronto"') +
       '</div></section></main>' +
       '<aside><section class="card"><div class="sec">Conta do mês</div>' +
@@ -1281,6 +1297,7 @@
     if (!/^\d{4}-\d{2}-\d{2}$/.test(d.inicio)) erros.push('Informe a data de início.');
     if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) erros.push('O e-mail parece incompleto.');
     if (!w) erros.push('O gerador do contrato Tela Vertical não carregou. Recarregue a página.');
+    var paga = validarPaga(erros);
     var errosEl = doc.getElementById('nv-erros');
     if (erros.length) { errosEl.innerHTML = erros.map(esc).join('<br>'); return; }
     errosEl.textContent = '';
@@ -1304,10 +1321,10 @@
       w.eval('eCondos.clear()');
       ids.forEach(function (id) { w.eToggle(id); });
       w.eSelPlano(val('plano'));
-      w.eGerar();
+      comPaga(paga, function () { w.eGerar(); });
       html = documentoDoFrame(w, 'e-contract-out');
       if (!html) throw new Error('o contrato não foi gerado');
-      marcar(1, 'ok', 'Contrato Tela Vertical gerado e anunciante <b>' + esc(d.nome) + '</b> lançado em ' + ids.length + (ids.length === 1 ? ' condomínio' : ' condomínios') + ' (' + brl(k.mensal) + '/mês por ' + k.meses + (k.meses === 1 ? ' mês' : ' meses') + ').');
+      marcar(1, 'ok', 'Contrato Tela Vertical gerado e anunciante <b>' + esc(d.nome) + '</b> lançado em ' + ids.length + (ids.length === 1 ? ' condomínio' : ' condomínios') + ' (' + brl(k.mensal) + '/mês por ' + k.meses + (k.meses === 1 ? ' mês' : ' meses') + ', a partir de ' + mesBr(paga) + ').');
     } catch (e) {
       marcar(1, 'erro', 'Não consegui gerar o contrato: ' + esc(e.message) + '.');
       btn.disabled = false; btn.textContent = 'Tentar de novo';
@@ -1355,13 +1372,13 @@
       campoNv('envio', 'Custo de envio do box (R$)', '', 'text', ' inputmode="decimal" placeholder="0,00 (frete, Correios)"') +
       campoNv('qtd', 'Quantidade de boxes', '1', 'number', ' min="1"') +
       campoNv('valor', 'Valor negociado (R$/mês) *', L.valor ? String(L.valor).replace('.', ',') : String(tabela).replace('.', ','), 'text', ' inputmode="decimal"', !!L.valor) +
-      campoNv('inicio', 'Início *', inicioPadrao(), 'date') + campoSel('pgto', 'Pagamento', pgtos, pgtos[0]) +
+      campoNv('inicio', 'Início *', inicioPadrao(), 'date') + campoPaga() + campoSel('pgto', 'Pagamento', pgtos, pgtos[0]) +
       '</div><p class="sub">Valor de tabela: ' + brl(tabela) + '/mês · prazo de 12 meses com renovação automática.</p></section></main>' +
       '<aside><section class="card"><div class="sec">Conta do mês</div>' +
       '<div class="conta"><span>Franqueado paga</span><b id="nv-mensal" style="color:#14583a">—</b></div>' +
       '<p class="sub" id="nv-desc"></p></section>' +
       '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
-      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato e cria a unidade no módulo Vaapty com a receita, a licença 4YouSee, o envio e o repasse de 15%. A receita entra na Cobrança e no Faturamento a partir do mês de início.</span></div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato e cria a unidade no módulo Vaapty com a receita, a licença 4YouSee, o envio e o repasse de 15%. A receita entra na Visão Receita e no Faturamento a partir do mês em que começa a pagar, pelos 12 meses.</span></div>' +
       '<div class="passo" id="nv-p2"><i>2</i><span>Envia o contrato pelo Assinafy.</span></div>' +
       '<div class="passo" id="nv-p3"><i>3</i><span>Marca o cliente do CRM como cadastrado.</span></div>' +
       '<div class="passo" id="nv-p4"><i>4</i><span>Prepara o aviso ao Cleiton para instalar o box depois da assinatura.</span></div>' +
@@ -1411,6 +1428,7 @@
     if (!/^\d{4}-\d{2}-\d{2}$/.test(d.inicio)) erros.push('Informe a data de início.');
     if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) erros.push('O e-mail parece incompleto.');
     if (!w) erros.push('O gerador do contrato Vaapty não carregou. Recarregue a página.');
+    var paga = validarPaga(erros);
     var errosEl = doc.getElementById('nv-erros');
     if (erros.length) { errosEl.innerHTML = erros.map(esc).join('<br>'); return; }
     errosEl.textContent = '';
@@ -1430,10 +1448,10 @@
       w.document.getElementById('v-negociado').value = String(d.valor).replace('.', ',');
       preencher(w, 'v-inicio', d.inicio);
       var pg = w.document.getElementById('v-pgto'); Array.prototype.forEach.call(pg.options, function (o, i) { if (o.text === val('pgto')) pg.selectedIndex = i; });
-      w.vGerar();
+      comPaga(paga, function () { w.vGerar(); });
       html = documentoDoFrame(w, 'v-contract-out');
       if (!html) throw new Error('o contrato não foi gerado');
-      marcar(1, 'ok', 'Contrato Vaapty gerado e unidade <b>' + esc(d.nome) + '</b> criada com ' + brl(d.valor) + '/mês por 12 meses.');
+      marcar(1, 'ok', 'Contrato Vaapty gerado e unidade <b>' + esc(d.nome) + '</b> criada com ' + brl(d.valor) + '/mês por 12 meses, a partir de ' + mesBr(paga) + '.');
     } catch (e) {
       marcar(1, 'erro', 'Não consegui gerar o contrato: ' + esc(e.message) + '.');
       btn.disabled = false; btn.textContent = 'Tentar de novo';
@@ -1450,7 +1468,7 @@
         var et = etiquetasBox().filter(function (e) { return String(e.patCode).toUpperCase() === pat; })[0];
         info.patrimonio = pat; info.player = et ? et.player || '' : ''; info.etiquetaId = et ? et.id : null;
       }
-      registrarJornada('vaapty', d.nome, 'Unidade criada no Novo cliente · ' + brl(d.valor) + '/mês desde ' + d.inicio.split('-').reverse().join('/') + (pat ? ' · patrimônio ' + pat : ''));
+      registrarJornada('vaapty', d.nome, 'Unidade criada no Novo cliente · ' + brl(d.valor) + '/mês · contrato desde ' + d.inicio.split('-').reverse().join('/') + ' · começa a pagar em ' + mesBr(paga) + (pat ? ' · patrimônio ' + pat : ''));
       ['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf'].forEach(function (c) { if (val(c)) info[c] = val(c); });  // endereço vai para a nota/boleto
       // licença 4YouSee do(s) box(es), recorrente desde o início do contrato — a despesa nasce junto com a receita
       db.vaapty = db.vaapty || {}; db.vaapty[d.nome] = db.vaapty[d.nome] || [];               // eslint-disable-line no-undef

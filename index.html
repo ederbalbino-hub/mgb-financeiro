@@ -1190,7 +1190,7 @@ body{-webkit-font-smoothing:antialiased}
             <div class="ttitle" id="lanc-rec-titulo">Clientes — Jun/2026</div>
             <div style="display:flex;align-items:center;gap:12px">
               <div style="font-size:10px;color:var(--hint)" id="lanc-rec-sum"></div>
-              
+              <button id="lanc-rec-asaas" onclick="lancRecConferirAsaas()" title="Lê as cobranças do mês no Asaas e atualiza o status de cada cliente" style="font-size:10px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Conferir com o Asaas</button>
             </div>
           </div>
           <div style="overflow-x:auto">
@@ -1199,7 +1199,7 @@ body{-webkit-font-smoothing:antialiased}
                 <th>Módulo</th>
                 <th>Cliente / Unidade</th>
                 <th class="tr">Valor</th>
-                <th>Status</th>
+                <th title="Espelho do Asaas: pago, em aberto ou vencido">Status no Asaas</th>
                 <th title="Marque os clientes que precisam de nota fiscal">NF?</th>
                 <th>Obs.</th>
               </tr></thead>
@@ -6680,6 +6680,9 @@ function copiarSpot() {
           <span id="f-fat-venc" class="ferr-info"></span>
         </div>
         <div id="f-fat-status" style="margin-top:10px"></div>
+        <details style="margin-top:12px" ontoggle="if(this.open) fFatProvRender()"><summary style="cursor:pointer;font-size:12px;font-weight:600">📅 Provisionado pelos contratos — próximos 12 meses</summary>
+          <p style="font-size:11px;color:var(--muted);margin:6px 0">Cada contrato aparece em todos os meses em que vai ser cobrado, a partir do mês em que o cliente começa a pagar. É a mesma conta da Visão Receita; os clientes novos do hub entram sozinhos na lista do dia 5 de cada mês.</p>
+          <div id="f-fat-prov"></div></details>
       </div>
       <div class="ferr-card" style="margin-top:14px">
         <div class="ferr-t">Clientes ativos na planilha</div>
@@ -7531,10 +7534,45 @@ function fFatClientesDoHub(rowsPlanilha){
       out.push({ linha:null, id:'hub-'+mid+'-'+fNormNome(item), modulo:mid==='vaapty'?'Vaapty':modulo, cliente:info.razao||item, cnpj:info.cnpj||'', email:info.email||'',
         logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'', bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
         valor, issRetido:false, descricao:(REC_DESC[mid]||'Prestação de serviços de mídia — {item}').replace('{item}',item), ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:true,
-        modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true });
+        modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true, hubMod:mid, hubItem:item });
     });
   });
+  // Receitas avulsas da competência (Nova receita: locução, serviço pontual) — também viram nota/boleto
+  if(typeof MGBLancar!=='undefined') MGBLancar.receitasDoMes(receitasAvulsas,ano,mes-1).forEach(x=>{
+    const ci=x.clienteInfo||{}, item=MGBLancar.itemReceita(x);
+    if(rowsPlanilha.some(r=>fSimNome(r.cliente,x.cliente)>=0.85 && Math.abs((+r.valor||0)-x.valor)<0.01)) return;
+    const cod=codigoDe('TV Interna');
+    out.push({ linha:null, id:'hub-avulsa-'+x.id, modulo:'Avulsa', cliente:ci.razao||x.cliente, cnpj:ci.cnpj||'', email:ci.email||'',
+      logradouro:'', numero:'', complemento:'', bairro:'', cidade:'', uf:'', cep:'', valor:x.valor, issRetido:false,
+      descricao:x.desc+' — '+x.cliente, ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:true,
+      modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true, hubMod:'_avulsa', hubItem:item });
+  });
   return out;
+}
+// Provisionamento (12/10, Eder): cada contrato lançado aparece em TODOS os meses em que vai ser cobrado,
+// a partir do mês em que o cliente começa a pagar, pelo número de meses do contrato — igual à Visão Receita.
+function escHtml(x){ return String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fFatProvisionamento(meses){
+  meses=meses||12; const h=new Date(); const cols=[];
+  for(let k=0;k<meses;k++){ const d=new Date(h.getFullYear(),h.getMonth()+k,1); cols.push({ano:d.getFullYear(),mes:d.getMonth(),rot:MESES[d.getMonth()].slice(0,3)+'/'+String(d.getFullYear()).slice(2)}); }
+  const linhas=[];
+  MODULES.forEach(m=>{
+    if(m.id==='elev'){
+      (anunciantes||[]).forEach(a=>{ const v=cols.map(c=>{ const [aI,mI]=(a.inicio||'').split('-').map(Number); const k=(c.ano-aI)*12+(c.mes-(mI-1)); return (a.inicio&&k>=0&&k<(a.meses||1))?a.valor:0; }); if(v.some(x=>x)) linhas.push({mod:m.label.split('—')[0].trim(), item:a.nome, v}); });
+      return;
+    }
+    m.items.forEach(item=>{ const v=cols.map(c=>recOfMes(m.id,item,c.ano,c.mes)||0); if(v.some(x=>x)) linhas.push({mod:m.label.split('—')[0].trim(), item, v}); });
+  });
+  return {cols, linhas, totais:cols.map((_,i)=>linhas.reduce((a,l)=>a+l.v[i],0))};
+}
+function fFatProvRender(){
+  const box=document.getElementById('f-fat-prov'); if(!box) return;
+  const p=fFatProvisionamento(12), fm=v=>v?v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}):'';
+  box.innerHTML='<div style="overflow-x:auto"><table style="font-size:11px;border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;padding:4px 6px">Cliente</th>'+
+    p.cols.map(c=>'<th style="text-align:right;padding:4px 6px;white-space:nowrap">'+c.rot+'</th>').join('')+'</tr></thead><tbody>'+
+    p.linhas.map(l=>'<tr><td style="padding:3px 6px;border-top:1px solid var(--border2);white-space:nowrap"><span style="color:var(--muted);font-size:10px">'+escHtml(l.mod)+'</span> · '+escHtml(l.item)+'</td>'+
+      l.v.map(v=>'<td style="text-align:right;padding:3px 6px;border-top:1px solid var(--border2);font-family:\'DM Mono\',monospace;'+(v?'':'color:var(--hint)')+'">'+(fm(v)||'·')+'</td>').join('')+'</tr>').join('')+
+    '<tr style="font-weight:700"><td style="padding:5px 6px;border-top:2px solid var(--border2)">Total provisionado</td>'+p.totais.map(t=>'<td style="text-align:right;padding:5px 6px;border-top:2px solid var(--border2);font-family:\'DM Mono\',monospace">'+fm(t)+'</td>').join('')+'</tr></tbody></table></div>';
 }
 function fFatGuardar(r){
   fatEmissoes[fFatKey(r)]={ status:r.status, modo:r.modo, valor:r.valor, boleto:fFatBoleto(r), paymentId:r.paymentId||null, invoiceId:r.invoiceId||null,
@@ -7562,22 +7600,49 @@ function fSimNome(a,b){ // similaridade 0–1 (Levenshtein) — tolera grafias d
   for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
   return 1-d[a.length][b.length]/Math.max(a.length,b.length);
 }
-// Boleto PAGO no Asaas → marca "recebido" na Visão Receita do mês (só marca, nunca desmarca; só com correspondência clara de módulo + cliente).
+// Espelho do Asaas na Visão Receita (12/10, Eder): o status de cada cliente vem da cobrança no Asaas — sem ticar à mão.
+// Grava em recPagamentos[mod][item]['AAAA-M'] = {pago, fonte:'asaas', asaas:{st, nf, boletoUrl, em}}.
+// "pago" segue o Asaas (pago → recebido; estorno/cancelado volta a pendente). Baixa manual (fonte 'manual') não é tocada.
+function fFatAlvoHub(r){
+  if(r.hubMod&&r.hubItem) return {mod:r.hubMod,item:r.hubItem};
+  const mod=MODULES.find(m=>fNormNome(m.label).indexOf(fNormNome(r.modulo))>-1||fNormNome(r.modulo).indexOf(fNormNome(m.label))>-1); if(!mod) return null;
+  const itens=mod.id==='elev'?(anunciantes||[]).map(a=>a.nome):Object.keys((rec&&rec[mod.id])||{}); let melhor=null, ms=0;
+  itens.forEach(it=>{ const s=fSimNome(it,r.cliente); if(s>ms){ ms=s; melhor=it; } });
+  return (melhor&&ms>=0.85)?{mod:mod.id,item:melhor}:null;
+}
 function fFatReceitaAuto(comp){
   const mm=/^(\d{4})-(\d{2})$/.exec(comp||''); if(!mm) return 0;
   const ano=+mm[1], mes=+mm[2]-1, key=recPagKey(ano,mes); let n=0;
-  fatLinhas.filter(r=>r.statusPagamento==='pago').forEach(r=>{
-    const mod=MODULES.find(m=>fNormNome(m.label).indexOf(fNormNome(r.modulo))>-1||fNormNome(r.modulo).indexOf(fNormNome(m.label))>-1); if(!mod) return;
-    const itens=Object.keys((rec&&rec[mod.id])||{}); let melhor=null, ms=0;
-    itens.forEach(it=>{ const s=fSimNome(it,r.cliente); if(s>ms){ ms=s; melhor=it; } });
-    if(!melhor || ms<0.85) return;
-    if(!recPagamentos[mod.id]) recPagamentos[mod.id]={}; if(!recPagamentos[mod.id][melhor]) recPagamentos[mod.id][melhor]={};
-    const pg=recPagamentos[mod.id][melhor][key]||{pago:false,obs:''};
-    if(pg.pago) return;
-    recPagamentos[mod.id][melhor][key]={...pg,pago:true,obs:(pg.obs||'')||'Pago no Asaas'}; n++;
+  fatLinhas.forEach(r=>{
+    const emitido=r.paymentId||r.invoiceId||r.statusPagamento||['emitida','boleto-emitido','aguardando-nota'].indexOf(r.status)>-1;
+    if(!emitido) return;
+    const alvo=fFatAlvoHub(r); if(!alvo) return;
+    const P=recPagamentos[alvo.mod]||(recPagamentos[alvo.mod]={}), Q=P[alvo.item]||(P[alvo.item]={});
+    const pg=Q[key]||{pago:false,obs:''};
+    const st=r.statusPagamento||(r.paymentId?'pendente':'nota');
+    const asaas={st, nf:r.nfNumero||'', boletoUrl:r.boletoUrl||'', em:r.statusPagamentoEm||r.emitidoEm||new Date().toISOString(), valor:fFatBoleto?fFatBoleto(r):r.valor};
+    const novo={...pg, asaas};
+    if(pg.fonte!=='manual'){ novo.pago=(st==='pago'); novo.fonte='asaas'; }
+    if(JSON.stringify(novo)===JSON.stringify(pg)) return;
+    Q[key]=novo; n++;
   });
   if(n){ try{ buildLancRec(); }catch(e){} try{ scheduleSave(); }catch(e){} }
   return n;
+}
+// Botão da Visão Receita: confere o mês escolhido com o Asaas (lê a planilha + Asaas da competência)
+async function lancRecConferirAsaas(){
+  const btn=g('lanc-rec-asaas'); const ano=parseInt(g('lanc-ano-sel2').value), mes=parseInt(g('lanc-mes-sel2').value);
+  const comp=ano+'-'+String(mes+1).padStart(2,'0');
+  if(btn){ btn.disabled=true; btn.textContent='Conferindo…'; }
+  try{ fFatInit(); const c=document.getElementById('f-fat-comp'); if(c) c.value=comp; await fFatCarregar(); await new Promise(r=>setTimeout(r,200)); await fFatSincronizarAsaas(false); }
+  catch(e){ console.error(e); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='🔄 Conferir com o Asaas'; } try{ buildLancRec(); }catch(e){} }
+}
+function recBaixaManual(modId,item,key){
+  const P=recPagamentos[modId]||(recPagamentos[modId]={}), Q=P[item]||(P[item]={}); const pg=Q[key]||{pago:false,obs:''};
+  if(pg.fonte==='manual'&&pg.pago){ if(!confirm('Desfazer a baixa manual de '+item+'?')) return; Q[key]={...pg,pago:false,fonte:pg.asaas?'asaas':null}; if(pg.asaas) Q[key].pago=pg.asaas.st==='pago'; }
+  else { if(!confirm('Dar baixa manual em '+item+'? Use só para recebimento fora do Asaas (Pix direto, dinheiro, permuta).')) return; Q[key]={...pg,pago:true,fonte:'manual',baixaEm:new Date().toISOString(),baixaPor:(window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||''}; }
+  buildLancRec(); scheduleSave();
 }
 // Conferência automática com o Asaas: ao abrir o Hub e ao voltar pra aba, no máx. a cada 6 h (≈ 2–4×/dia). Não mexe se o Faturamento estiver na tela.
 async function fFatRotinaAuto(){
@@ -9542,7 +9607,7 @@ function buildLancRec(){
   const totalPago=linhas.filter(l=>l.pago).reduce((a,l)=>a+l.valor,0);
   const totalPend=totalPrev-totalPago;
 
-  g('lanc-rec-sum').textContent=`${linhas.filter(l=>l.pago).length}/${linhas.length} recebidos`;
+  g('lanc-rec-sum').textContent=`${linhas.filter(l=>l.pago).length}/${linhas.length} recebidos · ${linhas.filter(l=>l.asaas).length} com cobrança no Asaas`;
   const semIni=clientesSemInicio();
   const semIniHtml=semIni.length?`<span style="font-size:10px;color:var(--amber);background:var(--ad);padding:3px 9px;border-radius:6px;margin-left:auto;cursor:help" title="${semIni.map(s=>s.m.label.split('—')[0].trim()+' › '+s.item+' ('+f(s.valor)+')').join('\n')}">⚠️ ${semIni.length} cliente(s) sem mês de início configurado — não estão sendo contabilizados</span>`:'';
   g('lanc-rec-foot').innerHTML=`
@@ -9561,13 +9626,7 @@ function buildLancRec(){
     <td style="font-size:10px;color:var(--muted)">${l.modIcon} ${l.modLabel}</td>
     <td style="font-weight:500">${l.item}${l.sub?`<div style="font-size:9px;color:var(--hint);margin-top:2px">${l.sub}</div>`:''}</td>
     <td class="tr mono" style="color:var(--green);font-weight:700">${f(l.valor)}</td>
-    <td>
-      <button onclick="toggleRecPago('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}',${i})"
-        style="font-size:10px;padding:3px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;
-        background:${l.pago?'var(--gd)':'rgba(248,113,113,.15)'};color:${l.pago?'var(--green)':'var(--red)'}">
-        ${l.pago?'✓ Recebido':'Pendente'}
-      </button>
-    </td>
+    <td>${recStatusAsaas(l)}</td>
     <td style="text-align:center">
       <input type="checkbox" ${l.nota?'checked':''}
         onchange="toggleNotaFlag('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}')"
@@ -9607,7 +9666,7 @@ function coletaClientesMes(selAno,selMes){
         if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
         const pg=recPagamentos[m.id][item][_key]||{pago:false};
         const def=recDefault(m.id,item);
-        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,obs:def.obs,nota:def.nota,key:_key,sub:(a.telas||[]).join(', ')});
+        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,obs:def.obs,nota:def.nota,key:_key,sub:(a.telas||[]).join(', ')});
       });
       return; // pula iteração por items pra elev
     }
@@ -9618,7 +9677,7 @@ function coletaClientesMes(selAno,selMes){
       if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
       const pg=recPagamentos[m.id][item][_key]||{pago:false};
       const def=recDefault(m.id,item);
-      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,obs:def.obs,nota:def.nota,key:_key});
+      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,obs:def.obs,nota:def.nota,key:_key});
     });
   });
   // Receitas avulsas (Nova receita: locuções e serviços pontuais)
@@ -9627,7 +9686,7 @@ function coletaClientesMes(selAno,selMes){
     if(!recPagamentos['_avulsa']) recPagamentos['_avulsa']={};
     if(!recPagamentos['_avulsa'][item]) recPagamentos['_avulsa'][item]={};
     const pg=recPagamentos['_avulsa'][item][_key]||{pago:false};
-    linhas.push({modId:'_avulsa',modLabel:'Avulsa',modIcon:'🎙️',item,valor:x.valor,pago:pg.pago,obs:x.desc,nota:true,key:_key,sub:x.desc+(x.lancadoPor?' · lançado por '+x.lancadoPor:'')});
+    linhas.push({modId:'_avulsa',modLabel:'Avulsa',modIcon:'🎙️',item,valor:x.valor,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,obs:x.desc,nota:true,key:_key,sub:x.desc+(x.lancadoPor?' · lançado por '+x.lancadoPor:'')});
   });
   // Receita manual avulsa do mês (não vinculada a módulo)
   const manualRec=(fin[selAno]||{})[selMes]?.receita||0;
@@ -9641,6 +9700,23 @@ function coletaClientesMes(selAno,selMes){
   return linhas;
 }
 
+// Status da Visão Receita = espelho do Asaas (sem ticar). Fora do Asaas, só "baixa manual" com confirmação.
+function recStatusAsaas(l){
+  const it=l.item.replace(/\\/g,'\\\\').replace(/'/g,"\\'"), a=l.asaas;
+  const chip=(bg,cor,txt,tit)=>`<span title="${tit||''}" style="display:inline-block;font-size:10px;padding:3px 10px;border-radius:6px;font-weight:600;background:${bg};color:${cor};white-space:nowrap">${txt}</span>`;
+  const quando=a&&a.em?new Date(a.em).toLocaleDateString('pt-BR'):'';
+  let h;
+  if(l.fonte==='manual'&&l.pago) h=chip('var(--gd)','var(--green)','✓ Baixa manual','Recebido fora do Asaas');
+  else if(a&&a.st==='pago') h=chip('var(--gd)','var(--green)','✓ Pago no Asaas',quando?'Conferido em '+quando:'');
+  else if(a&&a.st==='vencido') h=chip('rgba(248,113,113,.15)','var(--red)','⚠ Vencido no Asaas',quando);
+  else if(a&&a.st==='cancelado') h=chip('rgba(148,140,170,.18)','var(--muted)','Cancelado no Asaas',quando);
+  else if(a&&a.st==='nota') h=chip('rgba(108,85,219,.12)','#6C55DB','Só nota emitida',(a.nf?'NF '+a.nf:''));
+  else if(a) h=chip('rgba(245,158,11,.15)','var(--amber)','⏳ Boleto em aberto',(a.nf?'NF '+a.nf+' · ':'')+quando);
+  else h=chip('rgba(148,140,170,.12)','var(--hint)','Sem cobrança no Asaas','Ainda não emitido no Faturamento do dia 5');
+  if(a&&a.boletoUrl) h+=` <a href="${a.boletoUrl}" target="_blank" rel="noopener" style="font-size:10px">boleto</a>`;
+  if(!(a&&a.st==='pago')) h+=` <a href="#" onclick="event.preventDefault();recBaixaManual('${l.modId}','${it}','${l.key}')" style="font-size:9px;color:var(--hint);margin-left:4px">${l.fonte==='manual'&&l.pago?'desfazer':'baixa manual'}</a>`;
+  return h;
+}
 function toggleRecPago(modId,item,key,idx){
   if(!recPagamentos[modId]) recPagamentos[modId]={};
   if(!recPagamentos[modId][item]) recPagamentos[modId][item]={};
@@ -10926,7 +11002,7 @@ function buildReceitas(){
         </div>
         <div class="rec-row">
           <div>
-            <div class="rec-field-lbl" style="color:var(--amber)">📅 Mês de início</div>
+            <div class="rec-field-lbl" style="color:var(--amber)">📅 Começa a pagar em</div>
             <input class="rec-input" type="month"
               value="${ro.inicio||''}" data-item="${safeItem}" data-field="inicio"
               style="color-scheme:dark" title="Quando começa a cobrar">
@@ -12684,7 +12760,7 @@ window.mgbCriarUnidadeModulo=function(modId,nome,opts){
     db[modId][nome]=[];
     rec[modId][nome]={
       valor:opts.valor||0,
-      inicio:opts.inicio||new Date().toISOString().slice(0,7),
+      inicio:window._mgbPagaDesde||opts.inicio||new Date().toISOString().slice(0,7),   // Novo cliente: mês em que começa a pagar
       meses:opts.meses||12
     };
   }
@@ -12703,7 +12779,7 @@ window.mgbCriarUnidadeModulo=function(modId,nome,opts){
 // no contrato, nunca uma unidade nova.
 window.mgbCriarAnunciante=function(nome,valor,meses,inicio,telas,cliente){
   if(!nome || !valor || !telas || !telas.length) return null;
-  anunciantes.push({id:anuncId++, nome, valor, meses:meses||1, inicio:inicio||new Date().toISOString().slice(0,7), telas});
+  anunciantes.push({id:anuncId++, nome, valor, meses:meses||1, inicio:window._mgbPagaDesde||inicio||new Date().toISOString().slice(0,7), telas});
   if(cliente){
     if(!clientesInfo['elev']) clientesInfo['elev']={};
     clientesInfo['elev'][nome]=cliente;
@@ -13154,6 +13230,13 @@ function empresaMigrarFixas(){
   };
   fix('Contador',500,'2026-06'); fix('Cleiton',1500,'2026-10'); fix('Karen',500,'2026-10');
   migracoes.empresaFixas_20261009=true;
+  try{ scheduleSave(); }catch(e){}
+}
+// 12/10 (Eder): os R$ 500 da Karen começam a valer só em novembro/2026 — sai de outubro.
+function karenDesdeNovembro(){
+  if(!_cargaSheetsOk || migracoes.karenNov_20261012) return;
+  empresaDespesas.filter(x=>/^karen\b/i.test(String(x.nome).trim())).forEach(x=>{ if(!x.inicio||x.inicio<'2026-11') x.inicio='2026-11'; });
+  migracoes.karenNov_20261012=true;
   try{ scheduleSave(); }catch(e){}
 }
 // ── CUSTOS PELA NOTA DOS FORNECEDORES (Eder, 11/10/2026) ──────────────────────
@@ -14428,14 +14511,15 @@ function relvLerUnidades(ano,mes){
   return vaaptyRepasseMes(ano,mes).itens.map(x=>({item:x.item+(x.mod!=='vaapty'?' ('+x.modRot+')':''), valor:x.valor}));
 }
 // ── Repasse à franqueadora Vaapty (12/10, Eder: "tudo que for Vaapty tem 15%") ──
-// Base = receita bruta do mês de todas as unidades Vaapty (módulo Vaapty + itens com "Vaapty" no nome em outros módulos).
+// Base = receita bruta do mês das unidades do módulo Vaapty.
 // Entra sozinho como despesa do mês (coletaDespesasMes) e no relatório de repasse.
-// "Rádio Vaapty" é contratada pela própria franqueadora (CNPJ 23.974.954/0001-09): fica fora do repasse por padrão.
+// 12/10 (Eder): a Rádio Interna com nome Vaapty NÃO entra — rádio não é produto homologado pela franqueadora.
+// Base do repasse = só as unidades do módulo Vaapty (TV).
 function vaaptyCfg(){ notaConfig.vaapty=notaConfig.vaapty||{pct:15,excluir:['radio|Rádio Vaapty'],email:'',enviado:{}}; const c=notaConfig.vaapty; if(c.pct==null) c.pct=15; c.excluir=c.excluir||[]; c.enviado=c.enviado||{}; return c; }
 function vaaptyRepasseItens(){
   const ex=new Set(vaaptyCfg().excluir), out=[];
-  MODULES.forEach(m=>{ if(m.id==='taroba') return; (m.id==='elev'?[]:m.items).forEach(item=>{
-    if(m.id==='vaapty'||/vaapty/i.test(item)) out.push({mod:m.id, modRot:m.label.split('—').pop().trim(), item, incluido:!ex.has(m.id+'|'+item)});
+  MODULES.forEach(m=>{ if(m.id!=='vaapty') return; m.items.forEach(item=>{
+    if(m.id==='vaapty') out.push({mod:m.id, modRot:m.label.split('—').pop().trim(), item, incluido:!ex.has(m.id+'|'+item)});
   }); });
   return out;
 }
@@ -14693,7 +14777,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
