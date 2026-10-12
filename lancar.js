@@ -613,5 +613,72 @@
     picker.foco();
   }
 
-  global.MGBLancar = Object.assign(api, { despesa: novaDespesa, receita: novaReceita, fechar: fechar, seletorCliente: seletorCliente, clientesDoHub: clientesDoHub });
+  // ── Ficha do cliente: a jornada inteira num clique (12/10, pedido do Eder) ──
+  // CRM (estágio e histórico), cadastro (CNPJ/contato), contrato, equipamento (patrimônio da etiqueta),
+  // receita e despesas da unidade (inclusive custo de envio) e a linha do tempo.
+  function fichaCliente(modId, item) {
+    injetarEstilos();
+    var mod = modulos().filter(function (m) { return m.id === modId; })[0] || { label: modId, icon: '' };
+    var info = {}; try { info = (clientesInfo[modId] || {})[item] || {}; } catch (e) {}                 // eslint-disable-line no-undef
+    var todos = clientesDoHub();
+    var c = todos.filter(function (x) { return x.mod === modId && x.item === item; })[0] || {};
+    var lead = null;
+    try {
+      lead = leads.filter(function (l) { return (info.leadId && l.id === info.leadId) || l.itemCriado === item; })[0] ||   // eslint-disable-line no-undef
+        leads.filter(function (l) { return c.leadId && l.id === c.leadId; })[0] || null;                               // eslint-disable-line no-undef
+    } catch (e) {}
+    var hoje = new Date(), ano = hoje.getFullYear(), mes = hoje.getMonth();
+    var contrato = {}; try { contrato = (rec[modId] || {})[item] || {}; } catch (e) {}                   // eslint-disable-line no-undef
+    var receitaMes = 0; try { receitaMes = recOfMes(modId, item, ano, mes) || 0; } catch (e) {}           // eslint-disable-line no-undef
+    var despMes = []; try { despMes = coletaDespesasMes(ano, mes).filter(function (d) { return d.m.id === modId && d.item === item; }); } catch (e) {} // eslint-disable-line no-undef
+    var linhas = []; try { linhas = (db[modId] || {})[item] || []; } catch (e) {}                          // eslint-disable-line no-undef
+    var investido = linhas.filter(function (r) { return r.t !== 'Recorrente'; }).reduce(function (a, r) { return a + (r.q || 0) * (r.u || 0); }, 0);
+    var envio = linhas.filter(function (r) { return r.cat === 'envio' || /envio|frete/i.test(r.d || ''); });
+    var etq = null; try { etq = (etiquetas || []).filter(function (e) { return (info.etiquetaId && e.id === info.etiquetaId) || (info.patrimonio && e.patCode === info.patrimonio); })[0] || null; } catch (e) {} // eslint-disable-line no-undef
+    var custoMes = despMes.reduce(function (a, d) { return a + d.vlrMes; }, 0);
+    function fim() { if (!contrato.inicio) return ''; var p = contrato.inicio.split('-').map(Number), t = p[0] * 12 + p[1] - 1 + (contrato.meses || 12) - 1; return ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][t % 12] + '/' + String(Math.floor(t / 12)).slice(2); }
+    var linha = function (rot, val) { return val ? '<div class="rec"><div><small>' + esc(rot) + '</small>' + val + '</div></div>' : ''; };
+    var eventos = [];
+    if (lead) {
+      if (lead.criado) eventos.push({ em: lead.criado, t: 'Lead criado no CRM' + (lead.origem ? ' · ' + lead.origem : '') });
+      (lead.historico || []).forEach(function (h) { eventos.push({ em: h.data, t: h.texto }); });
+    }
+    (info.jornada || []).forEach(function (j) { eventos.push({ em: new Date(j.em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }), t: j.texto }); });
+    if (etq) eventos.push({ em: (etq.data || '').split('-').reverse().join('/'), t: 'Etiqueta ' + etq.patCode + ' gerada para ' + (etq.franqueado || '') + (etq.destCidadeUf ? ' (' + etq.destCidadeUf + ')' : '') });
+    function chave(t) {                                                     // ordena: aceita dd/mm/aaaa [hh:mm] e aaaa-mm-dd
+      var m = String(t || '').match(/(\d{2})\/(\d{2})\/(\d{4})(?:,?\s*(\d{2}):(\d{2}))?/);
+      if (m) return m[3] + m[2] + m[1] + (m[4] || '00') + (m[5] || '00');
+      m = String(t || '').match(/(\d{4})-(\d{2})-(\d{2})/); return m ? m[1] + m[2] + m[3] + '0000' : '0';
+    }
+    eventos.sort(function (a, b) { return chave(a.em).localeCompare(chave(b.em)); });
+    var el = moldura('Ficha · ' + item,
+      '<div class="duas"><main>' +
+      '<section class="card"><div class="sec">' + esc((mod.icon || '') + ' ' + String(mod.label).split('—').pop().trim()) + '</div>' +
+      '<div style="font-size:20px;font-weight:700">' + esc(item) + '</div>' +
+      '<div class="sub">' + esc(info.razao || c.razao || '') + (info.cnpj || c.cnpj ? ' · CNPJ ' + esc(info.cnpj || c.cnpj) : ' · sem CNPJ no cadastro') + '</div>' +
+      '<div class="sub">' + esc([info.responsavel || c.responsavel, info.cargo || c.cargo].filter(Boolean).join(' · ')) + (info.tel || c.tel ? ' · ' + esc(info.tel || c.tel) : '') + (info.email || c.email ? ' · ' + esc(info.email || c.email) : '') + '</div>' +
+      '</section>' +
+      '<section class="card"><div class="sec">Linha do tempo</div>' +
+      (eventos.length ? eventos.map(function (e) { return '<div class="rec"><div>' + esc(e.t) + '<small>' + esc(e.em || '') + '</small></div></div>'; }).join('') : '<p class="sub">Sem eventos registrados ainda. A partir de agora, CRM, contrato e envio entram aqui sozinhos.</p>') +
+      '</section></main><aside>' +
+      '<section class="card"><div class="sec">CRM</div>' +
+      (lead ? '<div class="resumo"><b>' + esc(lead.nome) + '</b><br>Estágio: ' + esc(lead.estagio || '') + (lead.valor ? '<br>Valor estimado: ' + brl(lead.valor) + '/mês' : '') + '</div>' +
+        '<button type="button" class="b p" id="fc-crm">Abrir no CRM</button>' : '<p class="sub">Não achei o lead deste cliente no CRM.</p>') +
+      '</section>' +
+      '<section class="card"><div class="sec">Contrato e receita</div>' +
+      linha('Valor', contrato.valor ? brl(contrato.valor) + '/mês' : '') + linha('Vigência', contrato.inicio ? fmtMes(contrato.inicio.slice(0, 7)) + ' → ' + fim() + ' (' + (contrato.meses || 12) + ' meses)' : '') +
+      linha('Receita deste mês', brl(receitaMes)) + '</section>' +
+      '<section class="card"><div class="sec">Equipamento</div>' +
+      (info.patrimonio || etq ? linha('Patrimônio', '<b>' + esc(info.patrimonio || etq.patCode) + '</b>') + linha('Player', esc(info.player || (etq && etq.player) || '')) +
+        linha('Enviado para', etq ? esc([etq.destNome, etq.destCidadeUf].filter(Boolean).join(' · ')) : '') : '<p class="sub">Sem patrimônio vinculado.</p>') +
+      linha('Custo de envio', envio.length ? brl(envio.reduce(function (a, r) { return a + r.q * r.u; }, 0)) : '') + '</section>' +
+      '<section class="card"><div class="sec">Custos</div>' + linha('Despesas deste mês', brl(custoMes)) +
+      despMes.map(function (d) { return '<div class="rec"><div>' + esc(d.r.d || '') + '<small>' + esc(d.tipoLbl || '') + '</small></div><b>' + brl(d.vlrMes) + '</b></div>'; }).join('') +
+      linha('Investido (à vista e parcelado)', brl(investido)) + linha('Sobra do mês', '<b>' + brl(receitaMes - custoMes) + '</b>') + '</section>' +
+      '</aside></div>');
+    var b = el.querySelector('#fc-crm');
+    if (b) b.addEventListener('click', function () { fechar(); try { global.goPage('leads'); setTimeout(function () { global.openLeadModal('edit', lead.id); }, 150); } catch (e) {} });
+  }
+
+  global.MGBLancar = Object.assign(api, { ficha: fichaCliente, despesa: novaDespesa, receita: novaReceita, fechar: fechar, seletorCliente: seletorCliente, clientesDoHub: clientesDoHub });
 })(typeof window !== 'undefined' ? window : globalThis);
