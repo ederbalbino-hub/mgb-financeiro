@@ -568,8 +568,9 @@
 
   // mapa: campo do formulário (nv-<id>) → campo do CNPJ
   function completarPorCNPJ(cnpj, mapa) {
+    vigiarCNPJ(mapa);
     var st = doc.getElementById('nv-cnpj-st');
-    if (!String(cnpj || '').replace(/\D/g, '')) { if (st) st.textContent = 'Sem CNPJ no CRM: preencha os dados que faltam.'; return Promise.resolve(null); }
+    if (!String(cnpj || '').replace(/\D/g, '')) { if (st) st.textContent = 'Sem CNPJ no CRM: digite o CNPJ que o hub busca e preenche o resto sozinho.'; return Promise.resolve(null); }
     if (st) st.textContent = 'Buscando os dados do CNPJ…';
     return buscarCNPJ(cnpj).then(function (r) {
       if (!r) { if (st) st.textContent = 'Não achei o CNPJ nas bases públicas: complete os campos à mão.'; return null; }
@@ -582,6 +583,29 @@
       if (st) st.textContent = n ? 'Dados do CNPJ preenchidos (' + n + ' campos). Confira.' : 'CNPJ conferido.';
       return r;
     });
+  }
+
+  // CNPJ digitado à mão (lead sem CNPJ no CRM): ao completar 14 dígitos, busca e preenche sozinho,
+  // e guarda o CNPJ no lead do CRM para a próxima vez (12/10, pedido do Eder).
+  function vigiarCNPJ(mapa) {
+    var inp = doc.getElementById('nv-cnpj');
+    if (!inp || inp.dataset.vigiado) return;
+    inp.dataset.vigiado = '1';
+    var ultimo = String(inp.value || '').replace(/\D/g, '');
+    function checar() {
+      var dig = String(inp.value || '').replace(/\D/g, '');
+      if (dig.length !== 14 || dig === ultimo) return;
+      ultimo = dig;
+      inp.value = dig.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+      if (leadAtual && !String(leadAtual.cnpj || '').replace(/\D/g, '')) {
+        leadAtual.cnpj = inp.value;
+        try { scheduleSave(); } catch (e) {}                 // eslint-disable-line no-undef
+      }
+      completarPorCNPJ(inp.value, mapa);
+    }
+    inp.addEventListener('input', checar);
+    inp.addEventListener('change', checar);
+    inp.addEventListener('paste', function () { setTimeout(checar, 0); });
   }
 
   function avisoCNPJ() { return '<p class="sub" id="nv-cnpj-st" aria-live="polite"></p>'; }
