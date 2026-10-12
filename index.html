@@ -2854,18 +2854,19 @@ function eGerar(){
   const torTot=sel.reduce((s,c)=>s+(c.torres||0),0);
   const condoTotal='<tr style=&quot;font-weight:700;background:#F3EDE2;color:#16294F&quot;><td style=&quot;color:#16294F&quot;>TOTAL</td><td style=&quot;color:#16294F&quot;></td><td style=&quot;color:#16294F&quot;>'+torTot+'</td><td style=&quot;color:#16294F&quot;>'+telas+'</td><td style=&quot;color:#16294F&quot;>'+pessTot.toLocaleString('pt-BR')+'</td><td style=&quot;color:#16294F&quot;>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td style=&quot;color:#16294F&quot;>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
 
-  const headerHTML='<div style=&quot;background:linear-gradient(135deg,#16294F 0%,#16294F 55%,#C0A062 100%);padding:14px 24px;border-radius:8px 8px 0 0;color:#fff;margin:-32px -32px 12px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
-    '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
-      '<div style=&quot;width:5px;height:44px;background:#C0A062;border-radius:3px;flex-shrink:0&quot;></div>'+
+  // Cabeçalho claro (12/10): o PDF da Assinafy perde fundos coloridos — navy em fundo branco + faixa dourada
+  const headerHTML='<div style=&quot;background:#fff;padding:14px 0 12px;margin:-8px 0 14px;border-bottom:3px solid #C0A062;display:flex;align-items:flex-end;justify-content:space-between;gap:24px&quot;>'+
+    '<div style=&quot;display:flex;align-items:center;gap:10px&quot;>'+
+      '<div style=&quot;width:5px;height:40px;background:#C0A062;border-radius:3px;flex-shrink:0&quot;></div>'+
       '<div>'+
-        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.5px&quot;>Tela Vertical</div>'+
-        '<div style=&quot;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px&quot;>Elevando a sua comunicação</div>'+
+        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.5px;color:#16294F&quot;>Tela Vertical</div>'+
+        '<div style=&quot;font-size:10px;color:#8A7A55;margin-top:1px&quot;>Mídia em elevadores · uma empresa MGB Comunicação e Marketing Ltda.</div>'+
       '</div>'+
     '</div>'+
-    '<div style=&quot;border-left:1px solid rgba(255,255,255,.15);padding-left:18px;text-align:right&quot;>'+
-      '<div style=&quot;font-size:8px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1.5px;text-transform:uppercase&quot;>Contrato de Veiculação</div>'+
-      '<div style=&quot;font-size:11px;font-weight:700;margin-top:3px&quot;>Mídia em Elevadores</div>'+
-      '<div style=&quot;font-size:9px;color:rgba(255,255,255,.55);margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
+    '<div style=&quot;text-align:right&quot;>'+
+      '<div style=&quot;font-size:12px;color:#16294F;font-weight:800;letter-spacing:1.2px;text-transform:uppercase&quot;>Contrato de Veiculação</div>'+
+      '<div style=&quot;font-size:11px;color:#16294F;font-weight:600;margin-top:2px&quot;>Mídia em Elevadores</div>'+
+      '<div style=&quot;font-size:9.5px;color:#6B7280;margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
     '</div>'+
   '</div>';
   document.getElementById('e-contract-out').innerHTML=
@@ -3535,18 +3536,16 @@ function vGerar(){
   if(!nome){ alert('Preencha o nome/razão social do franqueado na aba Franqueado.'); vSwitch('franqueado'); return; }
   const VS=(tit,txt)=>'<div class=&quot;contract-section&quot;><h3>'+tit+'</h3><p style=&quot;font-size:11.5px;line-height:1.7;color:#374151&quot;>'+txt+'</p></div>';
 
-  const headerHTML = '<div style=&quot;background:linear-gradient(135deg,#2A0A18 0%,#9B1D4A 55%,#D6367F 100%);padding:14px 24px;border-radius:8px 8px 0 0;color:#fff;margin:-32px -32px 12px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
-    '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
-      '<div style=&quot;width:5px;height:44px;background:#D6367F;border-radius:3px;flex-shrink:0&quot;></div>'+
-      '<div>'+
-        '<img src=&quot;https://ederbalbino-hub.github.io/mgb-financeiro/marca/mgb-logo-branco.png&quot; alt=&quot;MGB Mídia&quot; style=&quot;height:34px;width:auto;display:block&quot;>'+
-        '<div style=&quot;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px&quot;>Rede TV Vaapty</div>'+
-      '</div>'+
+  // Cabeçalho claro (12/10): o PDF da Assinafy perde fundos coloridos, então logo roxo em fundo branco + faixa fina
+  const headerHTML = '<div style=&quot;background:#fff;padding:14px 0 12px;margin:-8px 0 14px;border-bottom:3px solid #D6367F;display:flex;align-items:flex-end;justify-content:space-between;gap:24px&quot;>'+
+    '<div>'+
+      '<img src=&quot;https://ederbalbino-hub.github.io/mgb-financeiro/marca/mgb-logo-roxo.png&quot; alt=&quot;MGB Mídia&quot; style=&quot;height:40px;width:auto;display:block&quot;>'+
+      '<div style=&quot;font-size:10.5px;color:#9B1D4A;font-weight:700;margin-top:4px;letter-spacing:.3px&quot;>Rede TV Vaapty</div>'+
     '</div>'+
-    '<div style=&quot;border-left:1px solid rgba(255,255,255,.15);padding-left:18px;text-align:right&quot;>'+
-      '<div style=&quot;font-size:8px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1.5px;text-transform:uppercase&quot;>Contrato de Comodato e Serviços</div>'+
-      '<div style=&quot;font-size:11px;font-weight:700;margin-top:3px&quot;>Comodato + Gestão TV Vaapty</div>'+
-      '<div style=&quot;font-size:9px;color:rgba(255,255,255,.55);margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
+    '<div style=&quot;text-align:right&quot;>'+
+      '<div style=&quot;font-size:12px;color:#2A1760;font-weight:800;letter-spacing:1.2px;text-transform:uppercase&quot;>Contrato de Comodato e Serviços</div>'+
+      '<div style=&quot;font-size:11px;color:#9B1D4A;font-weight:600;margin-top:2px&quot;>Comodato + Gestão TV Vaapty</div>'+
+      '<div style=&quot;font-size:9.5px;color:#6B7280;margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
     '</div>'+
   '</div>';
 
@@ -3660,7 +3659,8 @@ async function vEnviarAssinatura(){
   const email = vUltimoPayload.email;
   if(!email){ alert('Preencha o e-mail do franqueado (aba Franqueado) antes de enviar pra assinatura.'); return; }
   const css = Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n');
-  const htmlDoc = '<!DOCTYPE html><html lang=&quot;pt-BR&quot;><head><meta charset=&quot;UTF-8&quot;><style>'+css+'body{padding:24px;background:#fff}</style></head><body><div class=&quot;contract-preview&quot;>'+document.getElementById('v-contract-out').innerHTML+'</div></body></html>';
+  let htmlDoc = '<!DOCTYPE html><html lang=&quot;pt-BR&quot;><head><meta charset=&quot;UTF-8&quot;><style>'+css+'body{padding:24px;background:#fff}</style></head><body><div class=&quot;contract-preview&quot;>'+document.getElementById('v-contract-out').innerHTML+'</div></body></html>';
+  try{ if(window.parent &amp;&amp; window.parent.MGBNovo &amp;&amp; window.parent.MGBNovo.logosEmbutidas) htmlDoc = window.parent.MGBNovo.logosEmbutidas(htmlDoc); }catch(err){}
   const btn=document.getElementById('v-ass-btn'); const st=document.getElementById('v-ass-status');
   btn.disabled=true; btn.style.opacity='.6'; st.textContent='Enviando pra assinatura…';
   try{

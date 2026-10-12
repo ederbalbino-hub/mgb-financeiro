@@ -1530,7 +1530,7 @@
     });
   }
 
-  global.MGBNovo = Object.assign(api, { abrir: abrir, escolher: escolherLead });
+  global.MGBNovo = Object.assign(api, { abrir: abrir, escolher: escolherLead, logosEmbutidas: logosEmbutidas });
   function iniciar() { injetarEstilos(); inserirBotaoHome(); carregarLogo(); }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })(typeof window !== 'undefined' ? window : globalThis);
