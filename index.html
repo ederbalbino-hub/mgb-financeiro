@@ -960,6 +960,7 @@ body{-webkit-font-smoothing:antialiased}
         </button>
 
         <!-- 💰 aviso do Rádio Ops: relatório aprovado pelo cliente, nota pra emitir (vem do rops_cache) -->
+        <div id="home-vaapty-alert" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#FDF2F8,#F5F3FF);border:2px solid #D6367F;color:#831843;font-size:13.5px;line-height:1.5"></div>
         <div id="home-rops-alert" onclick="goPage('radioops')" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#ECFDF5,#F0FDF4 60%,#FFFBEB);border:2px solid #118A5D;box-shadow:0 8px 30px rgba(17,138,93,.18);color:#065F46;font-size:13.5px;line-height:1.5"></div>
         <!-- Hubs principais -->
         <div class="home-hubs">
@@ -1189,7 +1190,7 @@ body{-webkit-font-smoothing:antialiased}
             <div class="ttitle" id="lanc-rec-titulo">Clientes — Jun/2026</div>
             <div style="display:flex;align-items:center;gap:12px">
               <div style="font-size:10px;color:var(--hint)" id="lanc-rec-sum"></div>
-              
+              <button id="lanc-rec-asaas" onclick="lancRecConferirAsaas()" title="Lê as cobranças do mês no Asaas e atualiza o status de cada cliente" style="font-size:10px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Conferir com o Asaas</button>
             </div>
           </div>
           <div style="overflow-x:auto">
@@ -1198,7 +1199,7 @@ body{-webkit-font-smoothing:antialiased}
                 <th>Módulo</th>
                 <th>Cliente / Unidade</th>
                 <th class="tr">Valor</th>
-                <th>Status</th>
+                <th title="Espelho do Asaas: pago, em aberto ou vencido">Status no Asaas</th>
                 <th title="Marque os clientes que precisam de nota fiscal">NF?</th>
                 <th>Obs.</th>
               </tr></thead>
@@ -2853,18 +2854,19 @@ function eGerar(){
   const torTot=sel.reduce((s,c)=>s+(c.torres||0),0);
   const condoTotal='<tr style=&quot;font-weight:700;background:#F3EDE2;color:#16294F&quot;><td style=&quot;color:#16294F&quot;>TOTAL</td><td style=&quot;color:#16294F&quot;></td><td style=&quot;color:#16294F&quot;>'+torTot+'</td><td style=&quot;color:#16294F&quot;>'+telas+'</td><td style=&quot;color:#16294F&quot;>'+pessTot.toLocaleString('pt-BR')+'</td><td style=&quot;color:#16294F&quot;>'+(telas*INS_DIA*INS_MES).toLocaleString('pt-BR')+'</td><td style=&quot;color:#16294F&quot;>'+impTot.toLocaleString('pt-BR')+'</td></tr>';
 
-  const headerHTML='<div style=&quot;background:linear-gradient(135deg,#16294F 0%,#16294F 55%,#C0A062 100%);padding:14px 24px;border-radius:8px 8px 0 0;color:#fff;margin:-32px -32px 12px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
-    '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
-      '<div style=&quot;width:5px;height:44px;background:#C0A062;border-radius:3px;flex-shrink:0&quot;></div>'+
+  // Cabeçalho claro (12/10): o PDF da Assinafy perde fundos coloridos — navy em fundo branco + faixa dourada
+  const headerHTML='<div style=&quot;background:#fff;padding:14px 0 12px;margin:-8px 0 14px;border-bottom:3px solid #C0A062;display:flex;align-items:flex-end;justify-content:space-between;gap:24px&quot;>'+
+    '<div style=&quot;display:flex;align-items:center;gap:10px&quot;>'+
+      '<div style=&quot;width:5px;height:40px;background:#C0A062;border-radius:3px;flex-shrink:0&quot;></div>'+
       '<div>'+
-        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.5px&quot;>Tela Vertical</div>'+
-        '<div style=&quot;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px&quot;>Elevando a sua comunicação</div>'+
+        '<div style=&quot;font-family:Inter,Arial,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.5px;color:#16294F&quot;>Tela Vertical</div>'+
+        '<div style=&quot;font-size:10px;color:#8A7A55;margin-top:1px&quot;>Mídia em elevadores · uma empresa MGB Comunicação e Marketing Ltda.</div>'+
       '</div>'+
     '</div>'+
-    '<div style=&quot;border-left:1px solid rgba(255,255,255,.15);padding-left:18px;text-align:right&quot;>'+
-      '<div style=&quot;font-size:8px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1.5px;text-transform:uppercase&quot;>Contrato de Veiculação</div>'+
-      '<div style=&quot;font-size:11px;font-weight:700;margin-top:3px&quot;>Mídia em Elevadores</div>'+
-      '<div style=&quot;font-size:9px;color:rgba(255,255,255,.55);margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
+    '<div style=&quot;text-align:right&quot;>'+
+      '<div style=&quot;font-size:12px;color:#16294F;font-weight:800;letter-spacing:1.2px;text-transform:uppercase&quot;>Contrato de Veiculação</div>'+
+      '<div style=&quot;font-size:11px;color:#16294F;font-weight:600;margin-top:2px&quot;>Mídia em Elevadores</div>'+
+      '<div style=&quot;font-size:9.5px;color:#6B7280;margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
     '</div>'+
   '</div>';
   document.getElementById('e-contract-out').innerHTML=
@@ -3006,7 +3008,8 @@ async function eEnviarAssinatura(){
       nomeDoc:'Contrato Tela Vertical - '+nome,
       html:htmlDoc,
       signatarios:[{nome:nome,email:email},{nome:'Eder Balbino — Tela Vertical',email:'ederbalbino@gmail.com'}],
-      mensagem:'Segue o contrato de mídia em elevadores da Tela Vertical para assinatura eletrônica.'
+      mensagem:'Segue o contrato de mídia em elevadores da Tela Vertical para assinatura eletrônica.',
+      pasta:'Tela Vertical/Anunciantes/'+nome
     })});
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
@@ -3531,67 +3534,82 @@ function vGerar(){
   if(inicio){ const d=new Date(inicio+'T00:00:00'); d.setMonth(d.getMonth()+12); fimDate=d.toLocaleDateString('pt-BR'); }
 
   if(!nome){ alert('Preencha o nome/razão social do franqueado na aba Franqueado.'); vSwitch('franqueado'); return; }
+  const VS=(tit,txt)=>'<div class=&quot;contract-section&quot;><h3>'+tit+'</h3><p style=&quot;font-size:11.5px;line-height:1.7;color:#374151&quot;>'+txt+'</p></div>';
 
-  const headerHTML = '<div style=&quot;background:linear-gradient(135deg,#2A0A18 0%,#9B1D4A 55%,#D6367F 100%);padding:14px 24px;border-radius:8px 8px 0 0;color:#fff;margin:-32px -32px 12px;display:flex;align-items:center;justify-content:space-between;gap:24px&quot;>'+
-    '<div style=&quot;display:flex;align-items:center;gap:12px&quot;>'+
-      '<div style=&quot;width:5px;height:44px;background:#D6367F;border-radius:3px;flex-shrink:0&quot;></div>'+
-      '<div>'+
-        '<img src=&quot;https://ederbalbino-hub.github.io/mgb-financeiro/marca/mgb-logo-branco.png&quot; alt=&quot;MGB Mídia&quot; style=&quot;height:34px;width:auto;display:block&quot;>'+
-        '<div style=&quot;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px&quot;>Rede TV Vaapty</div>'+
-      '</div>'+
+  // Cabeçalho claro (12/10): o PDF da Assinafy perde fundos coloridos, então logo roxo em fundo branco + faixa fina
+  const headerHTML = '<div style=&quot;background:#fff;padding:14px 0 12px;margin:-8px 0 14px;border-bottom:3px solid #D6367F;display:flex;align-items:flex-end;justify-content:space-between;gap:24px&quot;>'+
+    '<div>'+
+      '<img src=&quot;https://ederbalbino-hub.github.io/mgb-financeiro/marca/mgb-logo-roxo.png&quot; alt=&quot;MGB Mídia&quot; style=&quot;height:40px;width:auto;display:block&quot;>'+
+      '<div style=&quot;font-size:10.5px;color:#9B1D4A;font-weight:700;margin-top:4px;letter-spacing:.3px&quot;>Rede TV Vaapty</div>'+
     '</div>'+
-    '<div style=&quot;border-left:1px solid rgba(255,255,255,.15);padding-left:18px;text-align:right&quot;>'+
-      '<div style=&quot;font-size:8px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1.5px;text-transform:uppercase&quot;>Contrato de Franquia</div>'+
-      '<div style=&quot;font-size:11px;font-weight:700;margin-top:3px&quot;>Comodato + Gestão TV Vaapty</div>'+
-      '<div style=&quot;font-size:9px;color:rgba(255,255,255,.55);margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
+    '<div style=&quot;text-align:right&quot;>'+
+      '<div style=&quot;font-size:12px;color:#2A1760;font-weight:800;letter-spacing:1.2px;text-transform:uppercase&quot;>Contrato de Comodato e Serviços</div>'+
+      '<div style=&quot;font-size:11px;color:#9B1D4A;font-weight:600;margin-top:2px&quot;>Comodato + Gestão TV Vaapty</div>'+
+      '<div style=&quot;font-size:9.5px;color:#6B7280;margin-top:2px&quot;>Nº '+num+' · '+today.toLocaleDateString('pt-BR')+'</div>'+
     '</div>'+
   '</div>';
 
   document.getElementById('v-contract-out').innerHTML =
     headerHTML+
     '<div class=&quot;contract-section&quot;><h3>1. Partes</h3>'+
-      erow('CONTRATADA','MGB Mídia — CNPJ 23.770.170/0001-50')+
+      erow('CONTRATADA','MGB Comunicação e Marketing Ltda. — CNPJ 23.770.170/0001-50 — Rua Raul Juliato, 200, Parque Granville, Londrina/PR, CEP 86047-230')+
       erow(isPJ?'Razão Social (CONTRATANTE)':'Nome (CONTRATANTE)', isPJ?vgv('v-razao'):vgv('v-nomepf'))+
       (isPJ&amp;&amp;vgv('v-fantasia')?erow('Nome Fantasia/Unidade',vgv('v-fantasia')):'')+
       erow(docLbl,doc)+
       erow('Endereço',end)+
       erow('Responsável',vgv('v-resp')+(vgv('v-cargo')?' ('+vgv('v-cargo')+')':''))+
-      erow('Telefone',vgv('v-tel'))+erow('E-mail',vgv('v-email'))+
+      erow('Telefone',vgv('v-tel'))+erow('E-mail para boleto, nota fiscal e avisos',vgv('v-email'))+
     '</div>'+
-    '<div class=&quot;contract-section&quot;><h3>2. Objeto</h3>'+
-      '<p style=&quot;font-size:12px;line-height:1.7;color:#374151&quot;>Cessão em <b>comodato</b> de equipamento de exibição digital ('+(vgv('v-qtd-box')||'1')+' box, identificação '+(vgv('v-serie')||'a definir')+') para veiculação de conteúdo audiovisual no estabelecimento da CONTRATANTE, mais a prestação de serviços de <b>gestão, suporte técnico e atualização de conteúdo</b> pela CONTRATADA.</p>'+
-    '</div>'+
-    '<div class=&quot;contract-section&quot;><h3>3. Prazo</h3>'+
-      erow('Duração','12 meses')+erow('Início',inicio?new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—')+erow('Término previsto',fimDate||'—')+
-      '<p style=&quot;font-size:11px;color:#6B7280;margin-top:6px&quot;>Renovação automática por períodos iguais, salvo aviso em contrário com 30 dias de antecedência.</p>'+
-    '</div>'+
-    '<div class=&quot;contract-section&quot;><h3>4. Comodato do Equipamento</h3>'+
-      '<p style=&quot;font-size:11.5px;line-height:1.7;color:#374151&quot;>4.1. O equipamento permanece de propriedade da CONTRATADA — a CONTRATANTE não pode vendê-lo, alugá-lo ou repassá-lo a terceiros.<br>'+
-      '4.2. Dano por mau uso, negligência ou dolo: reposição pelo valor de mercado é responsabilidade da CONTRATANTE.<br>'+
-      '4.3. Furto ou roubo: a CONTRATANTE deve avisar a CONTRATADA imediatamente e registrar Boletim de Ocorrência em até 5 dias úteis, permanecendo responsável pelo valor de reposição do equipamento.<br>'+
-      '4.4. Ao fim do contrato, devolução em até 10 dias — sob pena de cobrança do valor integral do equipamento.</p>'+
-    '</div>'+
-    '<div class=&quot;contract-section&quot;><h3>5. Responsabilidades da Contratante</h3>'+
-      '<p style=&quot;font-size:11.5px;line-height:1.7;color:#374151&quot;>Manter internet estável e ativa no local (necessária pra atualização e monitoramento remoto), fornecer local adequado com energia e segurança física, e avisar a CONTRATADA sobre mau funcionamento ou necessidade de manutenção.</p>'+
-    '</div>'+
-    '<div class=&quot;contract-section&quot;><h3>6. Receita de Parceiros Locais</h3>'+
-      '<p style=&quot;font-size:11.5px;line-height:1.7;color:#374151&quot;>Receita obtida pela CONTRATANTE com parceiros/anunciantes locais próprios é de titularidade exclusiva da CONTRATANTE — sem repasse à CONTRATADA.</p>'+
-    '</div>'+
-    '<div class=&quot;contract-section&quot;><h3>7. Valor e Pagamento</h3>'+
-      erow('Valor de tabela', vFmt(VALOR_TABELA)+'/mês')+
-      erow('Valor negociado', vFmt(mensal)+'/mês')+
-      erow('Forma de pagamento', pgtoTxt)+
-    '</div>'+
+    VS('2. Objeto',
+      '2.1. Cessão em <b>comodato</b> de '+(vgv('v-qtd-box')||'1')+' equipamento(s) de exibição digital (box/player, patrimônio '+(vgv('v-serie')||'a definir')+') para veiculação de conteúdo audiovisual no estabelecimento da CONTRATANTE.<br>'+
+      '2.2. Licença de uso, intransferível e limitada à vigência deste contrato, da plataforma de gestão de conteúdo e do software do player.<br>'+
+      '2.3. Prestação de serviços de gestão remota da programação, monitoramento e suporte técnico pela CONTRATADA.')+
+    VS('3. Prazo, ativação e renovação automática',
+      '3.1. Prazo de 12 (doze) meses contados da <b>data de ativação</b>, entendida como a instalação do equipamento e a primeira exibição no estabelecimento. Início previsto: '+(inicio?new Date(inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—')+'.<br>'+
+      '3.2. O contrato se <b>renova automaticamente</b> por períodos sucessivos de 12 meses, salvo manifestação contrária de qualquer parte, por escrito, com antecedência mínima de 30 (trinta) dias do término do período em curso.<br>'+
+      '3.3. A cada renovação, o valor mensal será reajustado pela variação acumulada do IPCA/IBGE dos 12 meses anteriores, ou pelo índice que o substituir.')+
+    VS('4. Valor, faturamento e pagamento',
+      '4.1. A CONTRATANTE pagará o valor mensal de <b>'+vFmt(mensal)+'</b> (valor de tabela '+vFmt(VALOR_TABELA)+'), forma de pagamento: '+pgtoTxt+'.<br>'+
+      '4.2. O <b>primeiro vencimento ocorre 30 (trinta) dias após a data de ativação</b>; os demais, no mesmo dia dos meses seguintes.<br>'+
+      '4.3. A cobrança será feita por <b>boleto bancário, acompanhado da nota fiscal de serviço</b>, enviados ao e-mail informado pela CONTRATANTE.<br>'+
+      '4.4. O <b>não recebimento do boleto ou da nota fiscal</b>, inclusive por falha técnica, de e-mail ou de sistema, <b>não isenta a CONTRATANTE do pagamento</b> na data do vencimento, cabendo a ela solicitar a segunda via à CONTRATADA.<br>'+
+      '4.5. Em caso de atraso incidirão multa de 2% (dois por cento), juros de mora de 1% (um por cento) ao mês pro rata die e atualização monetária pelo IPCA.<br>'+
+      '4.6. Atraso superior a 15 (quinze) dias autoriza a CONTRATADA a suspender a exibição, sem prejuízo da cobrança; atraso superior a 60 (sessenta) dias autoriza a rescisão do contrato e a retirada do equipamento.')+
+    VS('5. Comodato do equipamento',
+      '5.1. O equipamento permanece de propriedade da CONTRATADA; a CONTRATANTE não pode vendê-lo, alugá-lo, emprestá-lo ou repassá-lo a terceiros.<br>'+
+      '5.2. Dano por mau uso, negligência ou dolo: a reposição pelo valor de mercado é responsabilidade da CONTRATANTE.<br>'+
+      '5.3. Furto ou roubo: a CONTRATANTE deve avisar a CONTRATADA imediatamente e registrar Boletim de Ocorrência em até 5 dias úteis, permanecendo responsável pelo valor de reposição do equipamento.<br>'+
+      '5.4. Ao fim do contrato, o equipamento deve ser devolvido em até 10 (dez) dias, nas mesmas condições em que foi recebido, sob pena de cobrança do seu valor integral.')+
+    VS('6. Conteúdo, direitos de imagem e direitos autorais',
+      '6.1. A CONTRATANTE é a <b>única responsável</b> pelo conteúdo que fornecer, aprovar ou solicitar para exibição: fotos, vídeos, músicas, textos, marcas, ofertas e preços.<br>'+
+      '6.2. Cabe <b>exclusivamente à CONTRATANTE</b>: (a) obter e guardar as <b>autorizações de uso de imagem e voz</b> de clientes, funcionários e de qualquer pessoa retratada em fotos ou vídeos publicados; (b) obter as licenças de <b>direitos autorais</b> e conexos de obras, músicas, fontes e marcas de terceiros; e (c) efetuar o <b>recolhimento ao ECAD</b> pela execução pública de música no estabelecimento, quando devido.<br>'+
+      '6.3. A <b>CONTRATADA não se responsabiliza</b> por reclamações, notificações, multas, indenizações ou processos decorrentes do conteúdo da CONTRATANTE ou da falta das autorizações e licenças acima. Se for acionada, a CONTRATANTE assume a defesa e ressarce integralmente o que a CONTRATADA vier a pagar, inclusive custas e honorários.<br>'+
+      '6.4. A CONTRATADA pode recusar ou retirar do ar conteúdo que entenda ilícito, ofensivo ou contrário ao Código de Defesa do Consumidor, às normas do CONAR ou à legislação, sem que isso gere desconto.<br>'+
+      '6.5. Peças eventualmente produzidas pela CONTRATADA ficam licenciadas à CONTRATANTE apenas para exibição na rede durante a vigência deste contrato.')+
+    VS('7. Obrigações da contratante',
+      '7.1. Manter internet estável e ativa no local (necessária para atualização e monitoramento remoto), fornecer local adequado com energia elétrica e segurança física, permitir o acesso da CONTRATADA para instalação, manutenção e retirada, e avisar sobre mau funcionamento.<br>'+
+      '7.2. Interrupções causadas por falta de internet, de energia ou de acesso ao local não suspendem nem reduzem a mensalidade.')+
+    VS('8. Suporte técnico',
+      '8.1. Suporte remoto em dias úteis, em horário comercial. Visitas técnicas por defeito do equipamento são feitas sem custo; as causadas por mau uso, mudança de local ou rede da CONTRATANTE podem ser cobradas mediante orçamento prévio.<br>'+
+      '8.2. A CONTRATADA empregará os melhores esforços para manter a exibição, sem garantia de funcionamento ininterrupto, e não responde por lucros cessantes.')+
+    VS('9. Receita de parceiros locais','Receita obtida pela CONTRATANTE com parceiros ou anunciantes locais próprios é de titularidade exclusiva da CONTRATANTE, sem repasse à CONTRATADA.')+
+    VS('10. Proteção de dados (LGPD)','As partes tratarão dados pessoais apenas na medida necessária à execução deste contrato, em conformidade com a Lei nº 13.709/2018 (LGPD), comprometendo-se a adotar medidas de segurança adequadas.')+
     '<div class=&quot;contract-total&quot;>'+
       '<div class=&quot;small&quot;>Valor mensal</div><div class=&quot;big&quot;>'+vFmt(mensal)+'</div>'+
-      '<div class=&quot;small&quot; style=&quot;margin-top:6px&quot;>Total do contrato (12 meses): '+vFmt(total)+'</div>'+
+      '<div class=&quot;small&quot; style=&quot;margin-top:6px&quot;>Total do primeiro período (12 meses): '+vFmt(total)+'</div>'+
     '</div>'+
+    VS('11. Rescisão',
+      '11.1. Após o primeiro período, qualquer parte pode rescindir mediante aviso prévio, por escrito, de 30 (trinta) dias.<br>'+
+      '11.2. Rescisão antecipada pela CONTRATANTE dentro do primeiro período de 12 meses, sem justa causa: multa equivalente a 20% (vinte por cento) das mensalidades restantes até o fim do período.<br>'+
+      '11.3. Em qualquer caso, permanecem as obrigações de pagamento até a data da rescisão e de devolução do equipamento (cláusula 5.4).')+
+    VS('12. Disposições gerais',
+      '12.1. A tolerância de qualquer parte quanto ao descumprimento de cláusula não implica novação ou renúncia.<br>'+
+      '12.2. As partes reconhecem a validade da assinatura eletrônica deste instrumento (MP nº 2.200-2/2001 e Lei nº 14.063/2020).<br>'+
+      '12.3. Fica eleito o foro da comarca de Londrina/PR para dirimir quaisquer questões deste contrato.')+
     '<div class=&quot;sig-area&quot;>'+
-      '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>MGB Mídia</div><div class=&quot;srole&quot;>CONTRATADA · CNPJ 23.770.170/0001-50</div></div>'+
+      '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>MGB Comunicação e Marketing Ltda.</div><div class=&quot;srole&quot;>CONTRATADA · CNPJ 23.770.170/0001-50</div></div>'+
       '<div class=&quot;sig-line&quot;><div class=&quot;sname&quot;>'+(nome||'________________')+'</div><div class=&quot;srole&quot;>CONTRATANTE · '+docLbl+' '+(doc||'')+'</div></div>'+
-    '</div>'+
-    '<div class=&quot;clauses&quot;><h4>Rescisão</h4><p>Rescindível por qualquer parte mediante aviso prévio de 30 dias, ressalvada a obrigação de devolução do equipamento (cláusula 4.4).</p>'+
-    '<h4>Foro</h4><p>Fica eleito o foro da comarca de Londrina/PR.</p></div>';
+    '</div>';
 
   vUltimoPayload = {
     nome: nome, razao_social: vgv('v-razao'), nome_fantasia: vgv('v-fantasia'),
@@ -3641,15 +3659,17 @@ async function vEnviarAssinatura(){
   const email = vUltimoPayload.email;
   if(!email){ alert('Preencha o e-mail do franqueado (aba Franqueado) antes de enviar pra assinatura.'); return; }
   const css = Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n');
-  const htmlDoc = '<!DOCTYPE html><html lang=&quot;pt-BR&quot;><head><meta charset=&quot;UTF-8&quot;><style>'+css+'body{padding:24px;background:#fff}</style></head><body><div class=&quot;contract-preview&quot;>'+document.getElementById('v-contract-out').innerHTML+'</div></body></html>';
+  let htmlDoc = '<!DOCTYPE html><html lang=&quot;pt-BR&quot;><head><meta charset=&quot;UTF-8&quot;><style>'+css+'body{padding:24px;background:#fff}</style></head><body><div class=&quot;contract-preview&quot;>'+document.getElementById('v-contract-out').innerHTML+'</div></body></html>';
+  try{ if(window.parent &amp;&amp; window.parent.MGBNovo &amp;&amp; window.parent.MGBNovo.logosEmbutidas) htmlDoc = window.parent.MGBNovo.logosEmbutidas(htmlDoc); }catch(err){}
   const btn=document.getElementById('v-ass-btn'); const st=document.getElementById('v-ass-status');
   btn.disabled=true; btn.style.opacity='.6'; st.textContent='Enviando pra assinatura…';
   try{
     const r = await fetch(ASSINAFY_API_URL+'?action=enviar', { method:'POST', body: JSON.stringify({
       nomeDoc: 'Contrato Vaapty - '+vUltimoPayload.nome,
       html: htmlDoc,
-      signatarios: [ {nome: vUltimoPayload.nome, email: email}, {nome:'Eder Balbino — MGB Mídia / Rede TV Vaapty', email:'ederbalbino@gmail.com'} ],
-      mensagem: 'Segue o contrato de franquia Vaapty para assinatura eletrônica.'
+      signatarios: [ {nome: vUltimoPayload.nome, email: email}, {nome:'Eder Balbino — MGB Comunicação e Marketing Ltda.', email:'ederbalbino@gmail.com'} ],
+      mensagem: 'Segue o contrato de comodato e prestação de serviços TV Vaapty para assinatura eletrônica.',
+      pasta: 'Vaapty/'+vUltimoPayload.nome
     })});
     const j = await r.json();
     if(j.erro) throw new Error(j.erro);
@@ -5655,10 +5675,15 @@ function copiarSpot() {
             </div>
             <div>
               <label class="anunc-form-lbl">↩ Repasse Vaapty (%)</label>
-              <input class="anunc-form-inp" id="relv-repasse" type="number" min="0" max="100" step="1" value="15" style="width:100%">
+              <input class="anunc-form-inp" id="relv-repasse" type="number" min="0" max="100" step="1" value="15" style="width:100%" onchange="vaaptyCfgSalvar()">
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="anunc-form-lbl">✉️ E-mail da franqueadora (recebe o relatório)</label>
+              <input class="anunc-form-inp" id="relv-email" type="email" placeholder="financeiro@vaapty.com.br" style="width:100%" onchange="vaaptyCfgSalvar()">
             </div>
           </div>
-          <div style="font-size:11px;color:var(--hint);margin-bottom:12px">As receitas vêm direto das unidades lançadas na aba <strong>Vaapty</strong> (Franqueado Piloto, Expansão) para o mês escolhido.</div>
+          <div style="font-size:11px;color:var(--hint);margin-bottom:6px">Entram no repasse todas as unidades Vaapty: as do módulo <strong>Vaapty</strong> e as de outros módulos com "Vaapty" no nome (ex.: rádio). Desmarque o que não deve entrar. O repasse também já entra sozinho nas despesas do mês.</div>
+          <div id="relv-unidades" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:12px;font-size:12px"></div>
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
             <div style="font-size:12px;color:var(--muted)" id="relv-resumo">—</div>
             <button onclick="relvGerar()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">✨ Gerar Relatório</button>
@@ -5669,7 +5694,10 @@ function copiarSpot() {
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
           <button onclick="relvVoltar()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px">← Editar dados</button>
           <button onclick="relvPrint()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">🖨️ Imprimir / PDF</button>
+          <button onclick="relvEnviar()" style="background:#2A1760;border:none;color:#fff;padding:8px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">✉️ Enviar à franqueadora</button>
+          <button onclick="relvMarcarEnviado()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px">✓ Marcar como enviado</button>
         </div>
+        <div id="relv-enviado" style="font-size:12px;color:var(--green);text-align:right;margin:-4px 0 10px"></div>
         <div id="relv-output" style="background:#fff;color:#222;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:'DM Sans',sans-serif"></div>
       </div>
     </div><!-- /rel-sub-vaapty -->
@@ -6652,6 +6680,9 @@ function copiarSpot() {
           <span id="f-fat-venc" class="ferr-info"></span>
         </div>
         <div id="f-fat-status" style="margin-top:10px"></div>
+        <details style="margin-top:12px" ontoggle="if(this.open) fFatProvRender()"><summary style="cursor:pointer;font-size:12px;font-weight:600">📅 Provisionado pelos contratos — próximos 12 meses</summary>
+          <p style="font-size:11px;color:var(--muted);margin:6px 0">Cada contrato aparece em todos os meses em que vai ser cobrado, a partir do mês em que o cliente começa a pagar. É a mesma conta da Visão Receita; os clientes novos do hub entram sozinhos na lista do dia 5 de cada mês.</p>
+          <div id="f-fat-prov"></div></details>
       </div>
       <div class="ferr-card" style="margin-top:14px">
         <div class="ferr-t">Clientes ativos na planilha</div>
@@ -7486,6 +7517,63 @@ function fFatInit(){
 function fFatEhManual(modulo){ return FAT_MANUAL_MODULOS.indexOf(modulo)>-1; }
 // ── Histórico do Faturamento: o que já foi enviado a cada cliente em cada mês (sobrevive a recarregar a página) ──
 function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).value||''; return r.id+'|'+comp; }
+// Clientes criados pelo Novo cliente (têm lead do CRM) que ainda não estão na planilha de faturamento (12/10):
+// entram na lista do mês com CNPJ, e-mail e endereço do cadastro, e o valor do contrato na competência escolhida.
+function fFatClientesDoHub(rowsPlanilha){
+  const comp=(document.getElementById('f-fat-comp')||{}).value||new Date().toISOString().slice(0,7);
+  const [ano,mes]=comp.split('-').map(Number); const out=[];
+  const modRot={vaapty:'Vaapty',radio:'Rádio Interna',tv:'TV Interna',mb:'MB — Móveis Brasília'};
+  const codigoDe=modulo=>{ const r=rowsPlanilha.find(x=>x.modulo===modulo&&x.ctribnac)||rowsPlanilha.find(x=>x.modulo==='TV Interna'&&x.ctribnac)||{}; return {ctribnac:r.ctribnac||'', cnbs:r.cnbs||''}; };
+  ['vaapty','radio','tv'].forEach(mid=>{
+    const m=MODULES.find(x=>x.id===mid); if(!m) return;
+    m.items.forEach(item=>{
+      const info=((clientesInfo||{})[mid]||{})[item]; if(!info||!info.leadId) return;              // só os criados pelo Novo cliente
+      if(rowsPlanilha.some(r=>fSimNome(r.cliente,item)>=0.85||(info.cnpj&&String(r.cnpj).replace(/\D/g,'')===String(info.cnpj).replace(/\D/g,'')&&fSimNome(r.cliente,item)>=0.6))) return;
+      const valor=recOfMes(mid,item,ano,mes-1); if(!(valor>0)) return;
+      const modulo=modRot[mid]||m.label; const cod=codigoDe(mid==='vaapty'?'TV Interna':modulo);
+      out.push({ linha:null, id:'hub-'+mid+'-'+fNormNome(item), modulo:mid==='vaapty'?'Vaapty':modulo, cliente:info.razao||item, cnpj:info.cnpj||'', email:info.email||'',
+        logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'', bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
+        valor, issRetido:false, descricao:(REC_DESC[mid]||'Prestação de serviços de mídia — {item}').replace('{item}',item), ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:true,
+        modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true, hubMod:mid, hubItem:item });
+    });
+  });
+  // Receitas avulsas da competência (Nova receita: locução, serviço pontual) — também viram nota/boleto
+  if(typeof MGBLancar!=='undefined') MGBLancar.receitasDoMes(receitasAvulsas,ano,mes-1).forEach(x=>{
+    const ci=x.clienteInfo||{}, item=MGBLancar.itemReceita(x);
+    if(rowsPlanilha.some(r=>fSimNome(r.cliente,x.cliente)>=0.85 && Math.abs((+r.valor||0)-x.valor)<0.01)) return;
+    const cod=codigoDe('TV Interna');
+    out.push({ linha:null, id:'hub-avulsa-'+x.id, modulo:'Avulsa', cliente:ci.razao||x.cliente, cnpj:ci.cnpj||'', email:ci.email||'',
+      logradouro:'', numero:'', complemento:'', bairro:'', cidade:'', uf:'', cep:'', valor:x.valor, issRetido:false,
+      descricao:x.desc+' — '+x.cliente, ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:true,
+      modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true, hubMod:'_avulsa', hubItem:item });
+  });
+  return out;
+}
+// Provisionamento (12/10, Eder): cada contrato lançado aparece em TODOS os meses em que vai ser cobrado,
+// a partir do mês em que o cliente começa a pagar, pelo número de meses do contrato — igual à Visão Receita.
+function escHtml(x){ return String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fFatProvisionamento(meses){
+  meses=meses||12; const h=new Date(); const cols=[];
+  for(let k=0;k<meses;k++){ const d=new Date(h.getFullYear(),h.getMonth()+k,1); cols.push({ano:d.getFullYear(),mes:d.getMonth(),rot:MESES[d.getMonth()].slice(0,3)+'/'+String(d.getFullYear()).slice(2)}); }
+  const linhas=[];
+  MODULES.forEach(m=>{
+    if(m.id==='elev'){
+      (anunciantes||[]).forEach(a=>{ const v=cols.map(c=>{ const [aI,mI]=(a.inicio||'').split('-').map(Number); const k=(c.ano-aI)*12+(c.mes-(mI-1)); return (a.inicio&&k>=0&&k<(a.meses||1))?a.valor:0; }); if(v.some(x=>x)) linhas.push({mod:m.label.split('—')[0].trim(), item:a.nome, v}); });
+      return;
+    }
+    m.items.forEach(item=>{ const v=cols.map(c=>recOfMes(m.id,item,c.ano,c.mes)||0); if(v.some(x=>x)) linhas.push({mod:m.label.split('—')[0].trim(), item, v}); });
+  });
+  return {cols, linhas, totais:cols.map((_,i)=>linhas.reduce((a,l)=>a+l.v[i],0))};
+}
+function fFatProvRender(){
+  const box=document.getElementById('f-fat-prov'); if(!box) return;
+  const p=fFatProvisionamento(12), fm=v=>v?v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}):'';
+  box.innerHTML='<div style="overflow-x:auto"><table style="font-size:11px;border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;padding:4px 6px">Cliente</th>'+
+    p.cols.map(c=>'<th style="text-align:right;padding:4px 6px;white-space:nowrap">'+c.rot+'</th>').join('')+'</tr></thead><tbody>'+
+    p.linhas.map(l=>'<tr><td style="padding:3px 6px;border-top:1px solid var(--border2);white-space:nowrap"><span style="color:var(--muted);font-size:10px">'+escHtml(l.mod)+'</span> · '+escHtml(l.item)+'</td>'+
+      l.v.map(v=>'<td style="text-align:right;padding:3px 6px;border-top:1px solid var(--border2);font-family:\'DM Mono\',monospace;'+(v?'':'color:var(--hint)')+'">'+(fm(v)||'·')+'</td>').join('')+'</tr>').join('')+
+    '<tr style="font-weight:700"><td style="padding:5px 6px;border-top:2px solid var(--border2)">Total provisionado</td>'+p.totais.map(t=>'<td style="text-align:right;padding:5px 6px;border-top:2px solid var(--border2);font-family:\'DM Mono\',monospace">'+fm(t)+'</td>').join('')+'</tr></tbody></table></div>';
+}
 function fFatGuardar(r){
   fatEmissoes[fFatKey(r)]={ status:r.status, modo:r.modo, valor:r.valor, boleto:fFatBoleto(r), paymentId:r.paymentId||null, invoiceId:r.invoiceId||null,
     boletoUrl:r.boletoUrl||null, erro:r.erro||null, em:r.emitidoEm||new Date().toISOString(), nf:r.nfNumero||null,
@@ -7512,22 +7600,49 @@ function fSimNome(a,b){ // similaridade 0–1 (Levenshtein) — tolera grafias d
   for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
   return 1-d[a.length][b.length]/Math.max(a.length,b.length);
 }
-// Boleto PAGO no Asaas → marca "recebido" na Visão Receita do mês (só marca, nunca desmarca; só com correspondência clara de módulo + cliente).
+// Espelho do Asaas na Visão Receita (12/10, Eder): o status de cada cliente vem da cobrança no Asaas — sem ticar à mão.
+// Grava em recPagamentos[mod][item]['AAAA-M'] = {pago, fonte:'asaas', asaas:{st, nf, boletoUrl, em}}.
+// "pago" segue o Asaas (pago → recebido; estorno/cancelado volta a pendente). Baixa manual (fonte 'manual') não é tocada.
+function fFatAlvoHub(r){
+  if(r.hubMod&&r.hubItem) return {mod:r.hubMod,item:r.hubItem};
+  const mod=MODULES.find(m=>fNormNome(m.label).indexOf(fNormNome(r.modulo))>-1||fNormNome(r.modulo).indexOf(fNormNome(m.label))>-1); if(!mod) return null;
+  const itens=mod.id==='elev'?(anunciantes||[]).map(a=>a.nome):Object.keys((rec&&rec[mod.id])||{}); let melhor=null, ms=0;
+  itens.forEach(it=>{ const s=fSimNome(it,r.cliente); if(s>ms){ ms=s; melhor=it; } });
+  return (melhor&&ms>=0.85)?{mod:mod.id,item:melhor}:null;
+}
 function fFatReceitaAuto(comp){
   const mm=/^(\d{4})-(\d{2})$/.exec(comp||''); if(!mm) return 0;
   const ano=+mm[1], mes=+mm[2]-1, key=recPagKey(ano,mes); let n=0;
-  fatLinhas.filter(r=>r.statusPagamento==='pago').forEach(r=>{
-    const mod=MODULES.find(m=>fNormNome(m.label).indexOf(fNormNome(r.modulo))>-1||fNormNome(r.modulo).indexOf(fNormNome(m.label))>-1); if(!mod) return;
-    const itens=Object.keys((rec&&rec[mod.id])||{}); let melhor=null, ms=0;
-    itens.forEach(it=>{ const s=fSimNome(it,r.cliente); if(s>ms){ ms=s; melhor=it; } });
-    if(!melhor || ms<0.85) return;
-    if(!recPagamentos[mod.id]) recPagamentos[mod.id]={}; if(!recPagamentos[mod.id][melhor]) recPagamentos[mod.id][melhor]={};
-    const pg=recPagamentos[mod.id][melhor][key]||{pago:false,obs:''};
-    if(pg.pago) return;
-    recPagamentos[mod.id][melhor][key]={...pg,pago:true,obs:(pg.obs||'')||'Pago no Asaas'}; n++;
+  fatLinhas.forEach(r=>{
+    const emitido=r.paymentId||r.invoiceId||r.statusPagamento||['emitida','boleto-emitido','aguardando-nota'].indexOf(r.status)>-1;
+    if(!emitido) return;
+    const alvo=fFatAlvoHub(r); if(!alvo) return;
+    const P=recPagamentos[alvo.mod]||(recPagamentos[alvo.mod]={}), Q=P[alvo.item]||(P[alvo.item]={});
+    const pg=Q[key]||{pago:false,obs:''};
+    const st=r.statusPagamento||(r.paymentId?'pendente':'nota');
+    const asaas={st, nf:r.nfNumero||'', boletoUrl:r.boletoUrl||'', em:r.statusPagamentoEm||r.emitidoEm||new Date().toISOString(), valor:fFatBoleto?fFatBoleto(r):r.valor};
+    const novo={...pg, asaas};
+    if(pg.fonte!=='manual'){ novo.pago=(st==='pago'); novo.fonte='asaas'; }
+    if(JSON.stringify(novo)===JSON.stringify(pg)) return;
+    Q[key]=novo; n++;
   });
   if(n){ try{ buildLancRec(); }catch(e){} try{ scheduleSave(); }catch(e){} }
   return n;
+}
+// Botão da Visão Receita: confere o mês escolhido com o Asaas (lê a planilha + Asaas da competência)
+async function lancRecConferirAsaas(){
+  const btn=g('lanc-rec-asaas'); const ano=parseInt(g('lanc-ano-sel2').value), mes=parseInt(g('lanc-mes-sel2').value);
+  const comp=ano+'-'+String(mes+1).padStart(2,'0');
+  if(btn){ btn.disabled=true; btn.textContent='Conferindo…'; }
+  try{ fFatInit(); const c=document.getElementById('f-fat-comp'); if(c) c.value=comp; await fFatCarregar(); await new Promise(r=>setTimeout(r,200)); await fFatSincronizarAsaas(false); }
+  catch(e){ console.error(e); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='🔄 Conferir com o Asaas'; } try{ buildLancRec(); }catch(e){} }
+}
+function recBaixaManual(modId,item,key){
+  const P=recPagamentos[modId]||(recPagamentos[modId]={}), Q=P[item]||(P[item]={}); const pg=Q[key]||{pago:false,obs:''};
+  if(pg.fonte==='manual'&&pg.pago){ if(!confirm('Desfazer a baixa manual de '+item+'?')) return; Q[key]={...pg,pago:false,fonte:pg.asaas?'asaas':null}; if(pg.asaas) Q[key].pago=pg.asaas.st==='pago'; }
+  else { if(!confirm('Dar baixa manual em '+item+'? Use só para recebimento fora do Asaas (Pix direto, dinheiro, permuta).')) return; Q[key]={...pg,pago:true,fonte:'manual',baixaEm:new Date().toISOString(),baixaPor:(window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||''}; }
+  buildLancRec(); scheduleSave();
 }
 // Conferência automática com o Asaas: ao abrir o Hub e ao voltar pra aba, no máx. a cada 6 h (≈ 2–4×/dia). Não mexe se o Faturamento estiver na tela.
 async function fFatRotinaAuto(){
@@ -7582,6 +7697,7 @@ async function fFatCarregar(){
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
     fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:((row.boleto===false||fFatEhManual(row.modulo))?'nota':'ambos'), descricao:(row.modulo==='Tarobá'?FAT_DESC_TAROBA:row.descricao), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
+    const novos=fFatClientesDoHub(j.rows||[]); fatLinhas=fatLinhas.concat(novos);
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
     fFatAplicarHistorico();
     fFatSincronizarAsaas(false); // confere com o Asaas o que já foi emitido (não trava a tela)
@@ -7633,7 +7749,7 @@ function fFatLista(){
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
       return '<tr style="'+''+'"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<input type="checkbox" '+((r.status==='aguardando-nota'||r.status==='emitida')?'disabled title="Já enviado neste mês" ':'')+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+(manual?' <span title="valor digitado à mão, padrão só nota" style="font-size:9px;color:#B45309">✋ valor manual</span>':'')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+(r.doHub?' <span title="Cliente novo do hub (Novo cliente). Não está na planilha de faturamento: os dados vêm do cadastro." style="font-size:9px;color:#6C55DB;font-weight:700">✨ novo no hub</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+(manual?'<input value="'+(r.valor?String(r.valor).replace('.',','):'')+'" placeholder="valor" onchange="fFatValor(\''+r.id+'\',this.value)" style="width:92px;text-align:right;font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">':f(r.valor||0))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((r.modo==='nota')?'—':f(fFatBoleto(r))+(r.issRetido&&r.modo!=='boleto'&&Number(notaConfig.aliquotaMes)>0?' <span title="valor da nota menos o ISS retido" style="font-size:9px;color:var(--muted)">líq.</span>':''))+'</td>'+
@@ -9491,7 +9607,7 @@ function buildLancRec(){
   const totalPago=linhas.filter(l=>l.pago).reduce((a,l)=>a+l.valor,0);
   const totalPend=totalPrev-totalPago;
 
-  g('lanc-rec-sum').textContent=`${linhas.filter(l=>l.pago).length}/${linhas.length} recebidos`;
+  g('lanc-rec-sum').textContent=`${linhas.filter(l=>l.pago).length}/${linhas.length} recebidos · ${linhas.filter(l=>l.asaas).length} com cobrança no Asaas`;
   const semIni=clientesSemInicio();
   const semIniHtml=semIni.length?`<span style="font-size:10px;color:var(--amber);background:var(--ad);padding:3px 9px;border-radius:6px;margin-left:auto;cursor:help" title="${semIni.map(s=>s.m.label.split('—')[0].trim()+' › '+s.item+' ('+f(s.valor)+')').join('\n')}">⚠️ ${semIni.length} cliente(s) sem mês de início configurado — não estão sendo contabilizados</span>`:'';
   g('lanc-rec-foot').innerHTML=`
@@ -9510,13 +9626,7 @@ function buildLancRec(){
     <td style="font-size:10px;color:var(--muted)">${l.modIcon} ${l.modLabel}</td>
     <td style="font-weight:500">${l.item}${l.sub?`<div style="font-size:9px;color:var(--hint);margin-top:2px">${l.sub}</div>`:''}</td>
     <td class="tr mono" style="color:var(--green);font-weight:700">${f(l.valor)}</td>
-    <td>
-      <button onclick="toggleRecPago('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}',${i})"
-        style="font-size:10px;padding:3px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;
-        background:${l.pago?'var(--gd)':'rgba(248,113,113,.15)'};color:${l.pago?'var(--green)':'var(--red)'}">
-        ${l.pago?'✓ Recebido':'Pendente'}
-      </button>
-    </td>
+    <td>${recStatusAsaas(l)}</td>
     <td style="text-align:center">
       <input type="checkbox" ${l.nota?'checked':''}
         onchange="toggleNotaFlag('${l.modId}','${l.item.replace(/'/g,"\\'")}','${l.key}')"
@@ -9556,7 +9666,7 @@ function coletaClientesMes(selAno,selMes){
         if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
         const pg=recPagamentos[m.id][item][_key]||{pago:false};
         const def=recDefault(m.id,item);
-        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,obs:def.obs,nota:def.nota,key:_key,sub:(a.telas||[]).join(', ')});
+        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,obs:def.obs,nota:def.nota,key:_key,sub:(a.telas||[]).join(', ')});
       });
       return; // pula iteração por items pra elev
     }
@@ -9567,7 +9677,7 @@ function coletaClientesMes(selAno,selMes){
       if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
       const pg=recPagamentos[m.id][item][_key]||{pago:false};
       const def=recDefault(m.id,item);
-      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,obs:def.obs,nota:def.nota,key:_key});
+      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,obs:def.obs,nota:def.nota,key:_key});
     });
   });
   // Receitas avulsas (Nova receita: locuções e serviços pontuais)
@@ -9576,7 +9686,7 @@ function coletaClientesMes(selAno,selMes){
     if(!recPagamentos['_avulsa']) recPagamentos['_avulsa']={};
     if(!recPagamentos['_avulsa'][item]) recPagamentos['_avulsa'][item]={};
     const pg=recPagamentos['_avulsa'][item][_key]||{pago:false};
-    linhas.push({modId:'_avulsa',modLabel:'Avulsa',modIcon:'🎙️',item,valor:x.valor,pago:pg.pago,obs:x.desc,nota:true,key:_key,sub:x.desc+(x.lancadoPor?' · lançado por '+x.lancadoPor:'')});
+    linhas.push({modId:'_avulsa',modLabel:'Avulsa',modIcon:'🎙️',item,valor:x.valor,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,obs:x.desc,nota:true,key:_key,sub:x.desc+(x.lancadoPor?' · lançado por '+x.lancadoPor:'')});
   });
   // Receita manual avulsa do mês (não vinculada a módulo)
   const manualRec=(fin[selAno]||{})[selMes]?.receita||0;
@@ -9590,6 +9700,23 @@ function coletaClientesMes(selAno,selMes){
   return linhas;
 }
 
+// Status da Visão Receita = espelho do Asaas (sem ticar). Fora do Asaas, só "baixa manual" com confirmação.
+function recStatusAsaas(l){
+  const it=l.item.replace(/\\/g,'\\\\').replace(/'/g,"\\'"), a=l.asaas;
+  const chip=(bg,cor,txt,tit)=>`<span title="${tit||''}" style="display:inline-block;font-size:10px;padding:3px 10px;border-radius:6px;font-weight:600;background:${bg};color:${cor};white-space:nowrap">${txt}</span>`;
+  const quando=a&&a.em?new Date(a.em).toLocaleDateString('pt-BR'):'';
+  let h;
+  if(l.fonte==='manual'&&l.pago) h=chip('var(--gd)','var(--green)','✓ Baixa manual','Recebido fora do Asaas');
+  else if(a&&a.st==='pago') h=chip('var(--gd)','var(--green)','✓ Pago no Asaas',quando?'Conferido em '+quando:'');
+  else if(a&&a.st==='vencido') h=chip('rgba(248,113,113,.15)','var(--red)','⚠ Vencido no Asaas',quando);
+  else if(a&&a.st==='cancelado') h=chip('rgba(148,140,170,.18)','var(--muted)','Cancelado no Asaas',quando);
+  else if(a&&a.st==='nota') h=chip('rgba(108,85,219,.12)','#6C55DB','Só nota emitida',(a.nf?'NF '+a.nf:''));
+  else if(a) h=chip('rgba(245,158,11,.15)','var(--amber)','⏳ Boleto em aberto',(a.nf?'NF '+a.nf+' · ':'')+quando);
+  else h=chip('rgba(148,140,170,.12)','var(--hint)','Sem cobrança no Asaas','Ainda não emitido no Faturamento do dia 5');
+  if(a&&a.boletoUrl) h+=` <a href="${a.boletoUrl}" target="_blank" rel="noopener" style="font-size:10px">boleto</a>`;
+  if(!(a&&a.st==='pago')) h+=` <a href="#" onclick="event.preventDefault();recBaixaManual('${l.modId}','${it}','${l.key}')" style="font-size:9px;color:var(--hint);margin-left:4px">${l.fonte==='manual'&&l.pago?'desfazer':'baixa manual'}</a>`;
+  return h;
+}
 function toggleRecPago(modId,item,key,idx){
   if(!recPagamentos[modId]) recPagamentos[modId]={};
   if(!recPagamentos[modId][item]) recPagamentos[modId][item]={};
@@ -9802,6 +9929,13 @@ function coletaDespesasMes(selAno,selMes){
       r:{d:av.desc+(av.reembolso?' · Eder pagou (reembolso)':''), f:av.forn||'—', t:'À vista', data:av.data, cat:av.cat},
       vlrMes:av.valor, tipoLbl:cat.replace(/^\S+\s/,'')||'Dia a dia', mes:selMes, ano:selAno });
   });
+
+  // Repasse à franqueadora Vaapty: % sobre a receita bruta das unidades Vaapty do mês (12/10)
+  try{
+    const rv=vaaptyRepasseMes(selAno,selMes);
+    if(rv.valor>0) out.push({ m:MODULES.find(x=>x.id==='vaapty')||empMod, item:'Franqueadora Vaapty', idx:'_repasse_vaapty',
+      r:{d:'Repasse '+rv.pct+'% à franqueadora Vaapty (sobre '+f(rv.base)+')', f:'VA Vaapty Gestão de Franquias'}, vlrMes:rv.valor, tipoLbl:'Repasse', mes:selMes, ano:selAno });
+  }catch(e){}
 
   // Pró-labore do Eder (regra de 11/10/2026: fixo, pago todo dia 21) — financas.js
   try{
@@ -10868,7 +11002,7 @@ function buildReceitas(){
         </div>
         <div class="rec-row">
           <div>
-            <div class="rec-field-lbl" style="color:var(--amber)">📅 Mês de início</div>
+            <div class="rec-field-lbl" style="color:var(--amber)">📅 Começa a pagar em</div>
             <input class="rec-input" type="month"
               value="${ro.inicio||''}" data-item="${safeItem}" data-field="inicio"
               style="color-scheme:dark" title="Quando começa a cobrar">
@@ -12626,7 +12760,7 @@ window.mgbCriarUnidadeModulo=function(modId,nome,opts){
     db[modId][nome]=[];
     rec[modId][nome]={
       valor:opts.valor||0,
-      inicio:opts.inicio||new Date().toISOString().slice(0,7),
+      inicio:window._mgbPagaDesde||opts.inicio||new Date().toISOString().slice(0,7),   // Novo cliente: mês em que começa a pagar
       meses:opts.meses||12
     };
   }
@@ -12645,7 +12779,7 @@ window.mgbCriarUnidadeModulo=function(modId,nome,opts){
 // no contrato, nunca uma unidade nova.
 window.mgbCriarAnunciante=function(nome,valor,meses,inicio,telas,cliente){
   if(!nome || !valor || !telas || !telas.length) return null;
-  anunciantes.push({id:anuncId++, nome, valor, meses:meses||1, inicio:inicio||new Date().toISOString().slice(0,7), telas});
+  anunciantes.push({id:anuncId++, nome, valor, meses:meses||1, inicio:window._mgbPagaDesde||inicio||new Date().toISOString().slice(0,7), telas});
   if(cliente){
     if(!clientesInfo['elev']) clientesInfo['elev']={};
     clientesInfo['elev'][nome]=cliente;
@@ -13098,6 +13232,13 @@ function empresaMigrarFixas(){
   migracoes.empresaFixas_20261009=true;
   try{ scheduleSave(); }catch(e){}
 }
+// 12/10 (Eder): os R$ 500 da Karen começam a valer só em novembro/2026 — sai de outubro.
+function karenDesdeNovembro(){
+  if(!_cargaSheetsOk || migracoes.karenNov_20261012) return;
+  empresaDespesas.filter(x=>/^karen\b/i.test(String(x.nome).trim())).forEach(x=>{ if(!x.inicio||x.inicio<'2026-11') x.inicio='2026-11'; });
+  migracoes.karenNov_20261012=true;
+  try{ scheduleSave(); }catch(e){}
+}
 // ── CUSTOS PELA NOTA DOS FORNECEDORES (Eder, 11/10/2026) ──────────────────────
 // 4YouSee Enterprise (F6 Sistemas, NFS-e 7523, ref. set/26): 57,20 × R$ 39,56 por tela/player + R$ 35,00 adicionais.
 // 4YouSee Analytics (NFS-e 7468): R$ 409,94 fixo. ListenX (NFS-e 724406): 55 × R$ 64,87 por rádio + R$ 295,75 plano Avançado.
@@ -13125,6 +13266,21 @@ function mbInstalacaoPaga(){
   }));
   migracoes.mbInstalacaoPaga_202610=true;
   if(n){ try{ scheduleSave(); }catch(e){} console.log('mbInstalacaoPaga: '+n+' linha(s) marcadas como pagas'); }
+}
+// 12/10: unidade Vaapty criada sem a licença 4YouSee (o Novo Vaapty não lançava) — lança 1 por box desde o início do contrato
+function vaaptyLicencas(){
+  if(!_cargaSheetsOk || migracoes.vaaptyLicencas_20261012) return;
+  const m=MODULES.find(x=>x.id==='vaapty'); if(!m){ migracoes.vaaptyLicencas_20261012=true; return; }
+  let n=0;
+  m.items.forEach(item=>{
+    const rows=db.vaapty[item]||(db.vaapty[item]=[]);
+    if(rows.some(r=>r.t==='Recorrente'&&/4you/i.test((r.d||'')+(r.f||'')))) return;
+    const r0=(rec.vaapty||{})[item]; if(!r0||!r0.valor) return;
+    const linha={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:CUSTO_NOTA.tela,cc:item,venc:'',pago:false,dataPago:'',mesesRec:r0.meses||12,dataInicio:(r0.inicio||new Date().toISOString().slice(0,7)).slice(0,7)};
+    rows.push(linha); try{ applyToFin(linha,+1); }catch(e){} n++;
+  });
+  migracoes.vaaptyLicencas_20261012=true;
+  if(n){ try{ scheduleSave(); }catch(e){} console.log('vaaptyLicencas: '+n); }
 }
 function custosPelaNota(){
   if(!_cargaSheetsOk || migracoes.custosNota_202610) return;
@@ -13448,6 +13604,7 @@ function togglePrivate(){
 }
 
 function buildHome(){
+  try{ vaaptyAvisoHome(); }catch(e){}
   const now=new Date();
   g('home-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 
@@ -14351,9 +14508,59 @@ function showRelTab(id, el){
 // ── RELATÓRIO VAAPTY (repasse de comissão) ────────────────────────────────
 // Lê a receita das unidades do módulo Vaapty no mês escolhido
 function relvLerUnidades(ano,mes){
-  const vmod=MODULES.find(m=>m.id==='vaapty');
-  if(!vmod) return [];
-  return vmod.items.map(item=>({item, valor:recOfMes('vaapty',item,ano,mes)})).filter(x=>x.valor>0);
+  return vaaptyRepasseMes(ano,mes).itens.map(x=>({item:x.item+(x.mod!=='vaapty'?' ('+x.modRot+')':''), valor:x.valor}));
+}
+// ── Repasse à franqueadora Vaapty (12/10, Eder: "tudo que for Vaapty tem 15%") ──
+// Base = receita bruta do mês das unidades do módulo Vaapty.
+// Entra sozinho como despesa do mês (coletaDespesasMes) e no relatório de repasse.
+// 12/10 (Eder): a Rádio Interna com nome Vaapty NÃO entra — rádio não é produto homologado pela franqueadora.
+// Base do repasse = só as unidades do módulo Vaapty (TV).
+function vaaptyCfg(){ notaConfig.vaapty=notaConfig.vaapty||{pct:15,excluir:['radio|Rádio Vaapty'],email:'',enviado:{}}; const c=notaConfig.vaapty; if(c.pct==null) c.pct=15; c.excluir=c.excluir||[]; c.enviado=c.enviado||{}; return c; }
+function vaaptyRepasseItens(){
+  const ex=new Set(vaaptyCfg().excluir), out=[];
+  MODULES.forEach(m=>{ if(m.id!=='vaapty') return; m.items.forEach(item=>{
+    if(m.id==='vaapty') out.push({mod:m.id, modRot:m.label.split('—').pop().trim(), item, incluido:!ex.has(m.id+'|'+item)});
+  }); });
+  return out;
+}
+function vaaptyRepasseMes(ano,mes){
+  const pct=Number(vaaptyCfg().pct)||0;
+  const itens=vaaptyRepasseItens().filter(x=>x.incluido).map(x=>({...x, valor:recOfMes(x.mod,x.item,ano,mes)||0})).filter(x=>x.valor>0);
+  const base=itens.reduce((a,x)=>a+x.valor,0);
+  return {pct, base, valor:Math.round(base*pct)/100, itens};
+}
+function vaaptyCfgSalvar(){
+  const c=vaaptyCfg(); const p=g('relv-repasse'), e=g('relv-email');
+  if(p) c.pct=parseFloat(p.value)||0; if(e) c.email=e.value.trim();
+  try{ scheduleSave(); }catch(err){} relvResumo();
+}
+function vaaptyToggleItem(chave,on){ const c=vaaptyCfg(); c.excluir=c.excluir.filter(k=>k!==chave); if(!on) c.excluir.push(chave); try{ scheduleSave(); }catch(e){} relvResumo(); }
+function relvEnviar(){
+  const {ano,mes}=relvMesAno(); const r=vaaptyRepasseMes(ano,mes); const c=vaaptyCfg();
+  const fm=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const mesNome=MESES[mes]+'/'+ano;
+  const corpo='Olá,\n\nSegue o relatório de repasse TV Vaapty de '+mesNome+'.\n\n'+r.itens.map(x=>'• '+x.item+': '+fm(x.valor)).join('\n')+
+    '\n\nTotal vendido: '+fm(r.base)+'\nRepasse '+r.pct+'%: '+fm(r.valor)+'\n\nO PDF do relatório vai em anexo.\n\nEder Balbino\nMGB Comunicação e Marketing Ltda. · (43) 99696-0078';
+  window.open('mailto:'+encodeURIComponent(c.email||'')+'?subject='+encodeURIComponent('Repasse TV Vaapty — '+mesNome)+'&body='+encodeURIComponent(corpo),'_blank');
+  relvPrint();
+}
+function relvMarcarEnviado(){
+  const {ano,mes}=relvMesAno(); const k=ano+'-'+String(mes+1).padStart(2,'0');
+  vaaptyCfg().enviado[k]=new Date().toLocaleDateString('pt-BR'); try{ scheduleSave(); }catch(e){}
+  const el=g('relv-enviado'); if(el) el.textContent='✓ Relatório de '+MESES[mes]+'/'+ano+' marcado como enviado em '+vaaptyCfg().enviado[k]+'.';
+  try{ vaaptyAvisoHome(); }catch(e){}
+}
+// Aviso na Home do dia 25 ao dia 10: relatório de repasse do mês ainda não enviado
+function vaaptyAvisoHome(){
+  const box=g('home-vaapty-alert'); if(!box) return;
+  const h=new Date(); let ano=h.getFullYear(), mes=h.getMonth();
+  if(h.getDate()<=10){ mes--; if(mes<0){ mes=11; ano--; } } else if(h.getDate()<25){ box.style.display='none'; return; }
+  const k=ano+'-'+String(mes+1).padStart(2,'0'); const r=vaaptyRepasseMes(ano,mes);
+  if(!r.base || vaaptyCfg().enviado[k]){ box.style.display='none'; return; }
+  const fm=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  box.style.display='block';
+  box.innerHTML='<b>📤 Repasse Vaapty de '+MESES[mes]+'/'+ano+':</b> '+fm(r.valor)+' ('+r.pct+'% de '+fm(r.base)+') · gerar e enviar o relatório à franqueadora<div style="font-size:11.5px;margin-top:4px;opacity:.8">Clique para abrir o relatório já no mês certo.</div>';
+  box.onclick=()=>{ goPage('relatorios'); setTimeout(()=>{ try{ showRelTab('vaapty',document.querySelector('#page-relatorios .rel-tab:nth-child(2)')); g('relv-mes').value=k; relvResumo(); }catch(e){} },120); };
 }
 function relvMesAno(){
   const iso=g('relv-mes').value || new Date().toISOString().slice(0,7);
@@ -14361,7 +14568,13 @@ function relvMesAno(){
   return {ano,mes:mes-1}; // mes 0-based
 }
 function relvResumo(){
+  const c=vaaptyCfg();
+  if(g('relv-repasse')&&document.activeElement!==g('relv-repasse')) g('relv-repasse').value=c.pct;
+  if(g('relv-email')&&document.activeElement!==g('relv-email')) g('relv-email').value=c.email||'';
+  if(g('relv-mes')&&!g('relv-mes').value) g('relv-mes').value=new Date().toISOString().slice(0,7);
+  const ub=g('relv-unidades'); if(ub) ub.innerHTML=vaaptyRepasseItens().map(x=>{ const ch=(x.mod+'|'+x.item).replace(/'/g,"\\'"); return `<label style="display:inline-flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" ${x.incluido?'checked':''} onchange="vaaptyToggleItem('${ch}',this.checked)"> ${x.item}${x.mod!=='vaapty'?' <span style="color:var(--hint)">· '+x.modRot+'</span>':''}</label>`; }).join('')||'<span style="color:var(--hint)">Nenhuma unidade Vaapty cadastrada.</span>';
   const {ano,mes}=relvMesAno();
+  const k=ano+'-'+String(mes+1).padStart(2,'0'); const ev=g('relv-enviado'); if(ev) ev.textContent=c.enviado[k]?'✓ Relatório de '+MESES[mes]+'/'+ano+' enviado em '+c.enviado[k]+'.':'';
   const rep=parseFloat(g('relv-repasse').value)||0;
   const un=relvLerUnidades(ano,mes);
   const total=un.reduce((a,x)=>a+x.valor,0);
@@ -14564,7 +14777,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->

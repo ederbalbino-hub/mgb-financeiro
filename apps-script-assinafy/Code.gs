@@ -24,7 +24,14 @@
  * 11/10/2026: o PDF assinado também é guardado no Google Drive, em
  *   MGB contratos / Assinados / <ano>   (pasta "MGB contratos" já existente)
  * e o link do arquivo vai no e-mail para o Eder.
+ *
+ * 12/10/2026: pasta por produto e cliente. O hub manda `pasta` (ex.: "Vaapty/Vaapty Minas"):
+ *   - ao ENVIAR, a cópia "(enviado para assinatura)" já fica em MGB contratos/<pasta>/
+ *   - quando todos ASSINAM, o PDF certificado vai para a mesma pasta.
+ *   Sem `pasta`, continua em MGB contratos/Assinados/<ano>.
+ *   Nome institucional nos e-mails: MGB Comunicação e Marketing Ltda.
  */
+const MGB_RAZAO = 'MGB Comunicação e Marketing Ltda.';
 
 // Chave/conta da Assinafy NÃO ficam no código — configurar em Project Settings
 // → Script Properties: ASSINAFY_API_KEY e ASSINAFY_ACCOUNT_ID (mesmos valores
@@ -52,6 +59,21 @@ function subpasta_(pai, nome) {
 }
 
 /** Guarda o PDF assinado em MGB contratos/Assinados/<ano>. Devolve a URL do arquivo (ou '' se falhar). */
+/** Pasta "MGB contratos/<a>/<b>" (cria o caminho se não existir) */
+function pastaDoCaminho_(caminho) {
+  let p = DriveApp.getFolderById(PASTA_CONTRATOS_ID);
+  String(caminho || '').split('/').map(x => x.trim().replace(/[\\:*?"<>|]/g, '-')).filter(Boolean).forEach(nome => { p = subpasta_(p, nome); });
+  return p;
+}
+function salvarNaPasta_(blob, caminho) {
+  try {
+    const pasta = pastaDoCaminho_(caminho);
+    const repetidos = pasta.getFilesByName(blob.getName());
+    while (repetidos.hasNext()) repetidos.next().setTrashed(true);
+    return pasta.createFile(blob).getUrl();
+  } catch (e) { Logger.log('Drive (pasta): ' + e); return ''; }
+}
+
 function salvarNoDrive_(pdfBlob) {
   try {
     const raiz = DriveApp.getFolderById(PASTA_CONTRATOS_ID);
@@ -117,7 +139,7 @@ function doPost(e) {
     const action = (e.parameter.action || '').toString();
     if (action === 'enviar') {
       const body = JSON.parse(e.postData.contents || '{}');
-      return cors_(json_(enviarParaAssinatura_(body.nomeDoc, body.html, body.signatarios, body.mensagem)));
+      return cors_(json_(enviarParaAssinatura_(body.nomeDoc, body.html, body.signatarios, body.mensagem, body.pasta)));
     }
     // sem "action" conhecida = webhook da Assinafy (document_ready)
     return cors_(json_(processarWebhook_(e)));
@@ -146,11 +168,14 @@ function assinafyReq_(metodo, caminho, payload, contentTypeJson) {
 }
 
 /** Envia um HTML (contrato gerado no hub) como PDF pra assinatura eletrônica */
-function enviarParaAssinatura_(nomeDoc, html, signatarios, mensagem) {
+function enviarParaAssinatura_(nomeDoc, html, signatarios, mensagem, pasta) {
   if (!nomeDoc || !html || !signatarios || !signatarios.length) {
     throw new Error('Faltam dados: nomeDoc, html e signatarios[].');
   }
   const pdf = Utilities.newBlob(html, 'text/html', nomeDoc + '.html').getAs('application/pdf').setName(nomeDoc + '.pdf');
+  // cópia do que foi enviado, já na pasta do produto/cliente (o assinado chega depois na mesma pasta)
+  let urlEnviado = '';
+  if (pasta) urlEnviado = salvarNaPasta_(pdf.copyBlob().setName(nomeDoc + ' (enviado para assinatura ' + Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd-MM-yyyy') + ').pdf'), pasta);
   const doc = assinafyReq_('post', '/accounts/' + ASSINAFY_ACCOUNT_ID_() + '/documents', { file: pdf }, false);
   let st = doc.status, tent = 0;
   while (st !== 'metadata_ready' && tent < 10) {
@@ -175,13 +200,13 @@ function enviarParaAssinatura_(nomeDoc, html, signatarios, mensagem) {
   assinafyReq_('post', '/documents/' + doc.id + '/assignments', {
     method: 'virtual',
     signers: ids.map(id => ({ id: id })),
-    message: mensagem || ('Documento enviado pela MGB Mídia / Tela Vertical. Dúvidas: ' + MGB_TELEFONE)
+    message: mensagem || ('Documento enviado pela ' + MGB_RAZAO + '. Dúvidas: ' + MGB_TELEFONE)
   }, true);
 
   // guarda metadados pro webhook saber pra quem reenviar quando todos assinarem
-  PropertiesService.getScriptProperties().setProperty('doc_' + doc.id, JSON.stringify({ nomeDoc: nomeDoc, signatarios: signatarios }));
+  PropertiesService.getScriptProperties().setProperty('doc_' + doc.id, JSON.stringify({ nomeDoc: nomeDoc, signatarios: signatarios, pasta: pasta || '' }));
 
-  return { docId: doc.id };
+  return { docId: doc.id, urlEnviado: urlEnviado };
 }
 
 function consultarStatus_(docId) {
@@ -247,16 +272,16 @@ function reenviarAssinado_(docId, meta) {
   });
   if (resp.getResponseCode() !== 200) return { ok: false };
   const pdfBlob = resp.getBlob().setName(meta.nomeDoc + '.pdf');
-  const urlDrive = salvarNoDrive_(pdfBlob);
+  const urlDrive = meta.pasta ? salvarNaPasta_(pdfBlob.copyBlob().setName(meta.nomeDoc + ' (assinado).pdf'), meta.pasta) : salvarNoDrive_(pdfBlob);
 
   const emails = (meta.signatarios || []).map(s => s.email).filter(Boolean);
   if (emails.length) {
     MailApp.sendEmail({
       to: emails.join(','),
-      name: 'MGB Mídia',
+      name: MGB_RAZAO,
       replyTo: EDER_EMAIL,
       subject: meta.nomeDoc + ' — assinado por todos ✅',
-      body: 'Olá!\n\nSegue em anexo o contrato "' + meta.nomeDoc + '", assinado eletronicamente por todas as partes.\n\nQualquer dúvida, é só responder este e-mail.\n\nEder Balbino\nMGB Mídia · ' + MGB_TELEFONE,
+      body: 'Olá!\n\nSegue em anexo o contrato "' + meta.nomeDoc + '", assinado eletronicamente por todas as partes.\n\nQualquer dúvida, é só responder este e-mail.\n\nEder Balbino\n' + MGB_RAZAO + ' · ' + MGB_TELEFONE,
       attachments: [pdfBlob]
     });
   }
