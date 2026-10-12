@@ -585,6 +585,44 @@
     });
   }
 
+  // ── Rascunho do formulário (12/10, pedido do Eder): "Salvar e continuar depois" ──
+  // Guarda os campos nv-* em clientesInfo._rascunhos[acao|lead] (vai para o Sheets com o resto) e recarrega ao reabrir.
+  var acaoAtual = '';
+  function chaveRascunho() { return acaoAtual + '|' + (leadAtual ? leadAtual.id : ''); }
+  function rascunhos() { try { clientesInfo._rascunhos = clientesInfo._rascunhos || {}; return clientesInfo._rascunhos; } catch (e) { return {}; } } // eslint-disable-line no-undef
+  function camposForm() { return Array.prototype.slice.call(doc.querySelectorAll('#mgb-novo input[id^="nv-"], #mgb-novo select[id^="nv-"], #mgb-novo textarea[id^="nv-"]')).filter(function (e) { return !e.readOnly && e.type !== 'button'; }); }
+  function ligarRascunho(acao) {
+    acaoAtual = acao;
+    var btn = doc.getElementById('nv-criar'); if (!btn || doc.getElementById('nv-rascunho')) return;
+    var r = doc.createElement('button');
+    r.type = 'button'; r.className = 'b'; r.id = 'nv-rascunho'; r.textContent = '💾 Salvar e continuar depois';
+    btn.parentNode.insertBefore(r, btn);
+    var st = doc.createElement('p'); st.className = 'sub'; st.id = 'nv-rascunho-st'; st.setAttribute('aria-live', 'polite');
+    btn.parentNode.insertBefore(st, btn.nextSibling);
+    r.addEventListener('click', function () {
+      var v = {}; camposForm().forEach(function (e) { v[e.id] = e.value; });
+      rascunhos()[chaveRascunho()] = { em: new Date().toISOString(), valores: v, nome: leadAtual ? leadAtual.nome : '' };
+      try { scheduleSave(); } catch (e) {}                                                   // eslint-disable-line no-undef
+      st.textContent = '✔ Rascunho salvo às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + '. Ao abrir este cliente de novo no Novo, os campos voltam preenchidos.';
+    });
+    var salvo = rascunhos()[chaveRascunho()];
+    if (salvo && salvo.valores) {
+      Object.keys(salvo.valores).forEach(function (id) { var e = doc.getElementById(id); if (e && !e.readOnly && salvo.valores[id] !== '') { e.value = salvo.valores[id]; e.dispatchEvent(new Event('input', { bubbles: true })); } });
+      st.textContent = 'Rascunho de ' + new Date(salvo.em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' carregado. Confira e crie quando estiver pronto.';
+    }
+  }
+  function apagarRascunho() { try { delete rascunhos()[chaveRascunho()]; } catch (e) {} }
+  // Jornada do cliente: eventos que a Ficha do cliente mostra (lancar.js › fichaCliente)
+  function registrarJornada(modId, nome, texto) {
+    try {
+      clientesInfo[modId] = clientesInfo[modId] || {};                                       // eslint-disable-line no-undef
+      var i = clientesInfo[modId][nome] = clientesInfo[modId][nome] || {};                   // eslint-disable-line no-undef
+      (i.jornada = i.jornada || []).push({ em: new Date().toISOString(), texto: texto });
+    } catch (e) {}
+  }
+  // Etiquetas de box geradas em Ferramentas › Etiquetas (patrimônio MGBTVV-xxxx), mais recentes primeiro
+  function etiquetasBox() { try { return (etiquetas || []).slice().sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); }); } catch (e) { return []; } } // eslint-disable-line no-undef
+
   // CNPJ digitado à mão (lead sem CNPJ no CRM): ao completar 14 dígitos, busca e preenche sozinho,
   // e guarda o CNPJ no lead do CRM para a próxima vez (12/10, pedido do Eder).
   function vigiarCNPJ(mapa) {
@@ -666,6 +704,7 @@
     torres.addEventListener('input', function () { mexeuTelas = true; });
     nTorres.addEventListener('input', function () { if (!mexeuTelas) { torres.value = nTorres.value; atualizarConta(); } });
     el.querySelector('#nv-criar').addEventListener('click', criarCondominio);
+    ligarRascunho('condominio');
     completarPorCNPJ(L.cnpj, { end: 'endereco', bairro: 'bairro', email: 'email', wpp: 'tel' });
     var foco = el.querySelector('#nv-torres'); if (foco) foco.focus();
   }
@@ -675,6 +714,7 @@
     var p = doc.getElementById('nv-p' + n);
     if (!p) return;
     p.className = 'passo ' + estado;
+    if (n === 1 && estado === 'ok') apagarRascunho();
     p.querySelector('i').textContent = estado === 'ok' ? '✓' : estado === 'erro' ? '!' : n;
     if (texto) p.querySelector('span').innerHTML = texto;
   }
@@ -885,6 +925,7 @@
     el.querySelector('#nv-custo').addEventListener('input', atualizarConta);
     atualizarConta();
     el.querySelector('#nv-criar').addEventListener('click', function () { criarUnidade(tipo); });
+    ligarRascunho(tipo);
     completarPorCNPJ(L.cnpj, { razao: 'razao', end: 'endereco', email: 'email', wpp: 'tel' });
     el.querySelector('#nv-valor').focus();
   }
@@ -960,7 +1001,12 @@
           .then(function () { return { ok: true, msg: 'Contrato enviado ao cliente (' + esc(email) + ') e a você pelo Assinafy. Quando todos assinarem, o PDF vai por e-mail e fica salvo no Drive.' + ver }; })
           .catch(function (e) { return { ok: false, msg: 'Contrato gerado, mas o envio ao Assinafy falhou: ' + esc(e.message) + '.' + ver }; })
       : Promise.resolve({ ok: false, msg: 'Contrato gerado, mas sem e-mail do cliente: nada foi enviado.' + ver });
-    return p.then(function (r) { marcar(n, r.ok ? 'ok' : 'erro', r.msg); return r; });
+    return p.then(function (r) {
+      marcar(n, r.ok ? 'ok' : 'erro', r.msg);
+      registrarJornada(modId, nome, r.ok ? 'Contrato enviado para assinatura (Assinafy) · ' + (email || '') : 'Contrato gerado, envio para assinatura pendente');
+      try { scheduleSave(); } catch (e) {}                                                   // eslint-disable-line no-undef
+      return r;
+    });
   }
 
   function concluir(btn, texto) {
@@ -1038,6 +1084,7 @@
     el.querySelector('#nv-vcota').addEventListener('input', atualizarConta);
     atualizarConta();
     el.querySelector('#nv-criar').addEventListener('click', function () { criarMercadao(rep); });
+    ligarRascunho('mercadao');
     completarPorCNPJ(L.cnpj, { razao: 'razao', end: 'endereco', email: 'email', wpp: 'tel' });
     el.querySelector('#nv-cotas').focus();
   }
@@ -1215,6 +1262,7 @@
     }
     var box = el.querySelector('.box'); box.addEventListener('input', conta); box.addEventListener('change', conta); conta();
     el.querySelector('#nv-criar').addEventListener('click', function () { criarAnuncianteElev(conta()); });
+    ligarRascunho('anunciante');
     completarPorCNPJ(L.cnpj, MAPA_END);
   }
 
@@ -1299,7 +1347,9 @@
       campoNv('tel', 'Telefone / WhatsApp', L.tel, 'text', '', true) + campoNv('email', 'E-mail (recebe o contrato)', L.email, 'email', '', true) +
       '</div>' + avisoCNPJ() + '</section>' + camposEndereco() +
       '<section class="card"><div class="sec">2 · Equipamento e valores</div><div class="campos">' +
-      campoNv('serie', 'Nº de série do box', '', 'text', ' placeholder="Ex.: VPT-0042"') +
+      campoNv('serie', 'Patrimônio do box (da etiqueta)', '', 'text', ' list="nv-serie-l" autocomplete="off" placeholder="Ex.: MGBTVV-0002"') +
+      '<datalist id="nv-serie-l">' + etiquetasBox().map(function (e) { return '<option value="' + esc(e.patCode) + '">' + esc((e.franqueado || '') + (e.player ? ' · player ' + e.player : '') + (e.data ? ' · ' + e.data.split('-').reverse().join('/') : '')) + '</option>'; }).join('') + '</datalist>' +
+      campoNv('envio', 'Custo de envio do box (R$)', '', 'text', ' inputmode="decimal" placeholder="0,00 (frete, Correios)"') +
       campoNv('qtd', 'Quantidade de boxes', '1', 'number', ' min="1"') +
       campoNv('valor', 'Valor negociado (R$/mês) *', L.valor ? String(L.valor).replace('.', ',') : String(tabela).replace('.', ','), 'text', ' inputmode="decimal"', !!L.valor) +
       campoNv('inicio', 'Início *', inicioPadrao(), 'date') + campoSel('pgto', 'Pagamento', pgtos, pgtos[0]) +
@@ -1313,7 +1363,7 @@
       '<div class="passo" id="nv-p3"><i>3</i><span>Marca o cliente do CRM como cadastrado.</span></div>' +
       '<div class="passo" id="nv-p4"><i>4</i><span>Prepara o aviso ao Cleiton para instalar o box depois da assinatura.</span></div>' +
       '<div class="erros" id="nv-erros" role="alert"></div>' +
-      '<button type="button" class="b p" id="nv-criar"' + (w ? '' : ' disabled') + '>Criar unidade e enviar contrato</button>' +
+      '<button type="button" class="b p" id="nv-criar"' + (w ? '' : ' disabled') + '>✍️ Criar unidade e enviar para assinatura</button>' +
       '</section></aside></div>', true);
     function conta() {
       var v = numero(val('valor'));
@@ -1323,7 +1373,30 @@
     }
     el.querySelector('.box').addEventListener('input', conta); conta();
     el.querySelector('#nv-criar').addEventListener('click', criarVaapty);
+    ligarRascunho('vaapty');
+    ligarPatrimonio(L);
     completarPorCNPJ(L.cnpj, MAPA_END);
+  }
+
+  // Patrimônio: sugere a etiqueta enviada para este franqueado e mostra player/destino/data ao escolher
+  function ligarPatrimonio(L) {
+    var inp = doc.getElementById('nv-serie'); if (!inp) return;
+    var info = doc.createElement('p'); info.className = 'sub'; info.id = 'nv-serie-info'; info.setAttribute('aria-live', 'polite');
+    inp.closest('section').appendChild(info);
+    function etiquetaDe(cod) { return etiquetasBox().filter(function (e) { return String(e.patCode).toUpperCase() === String(cod).trim().toUpperCase(); })[0]; }
+    function mostrar() {
+      var e = etiquetaDe(inp.value);
+      info.innerHTML = e ? '📦 Etiqueta <b>' + esc(e.patCode) + '</b> · ' + esc(e.franqueado || '') + (e.player ? ' · player ' + esc(e.player) : '') +
+        (e.destCidadeUf ? ' · enviada para ' + esc(e.destCidadeUf) : '') + (e.data ? ' em ' + e.data.split('-').reverse().join('/') : '') :
+        (inp.value ? 'Patrimônio sem etiqueta gerada. Gere em Ferramentas › Etiquetas quando enviar o box.' : 'Escolha a etiqueta do box enviado (Ferramentas › Etiquetas).');
+    }
+    inp.addEventListener('input', mostrar);
+    if (!inp.value) {                                                // sugere a etiqueta cujo franqueado parece com o nome do lead
+      var nome = String(L.nome || '').toLowerCase().replace(/vaapty|[-–]/g, '').trim();
+      var sug = nome && etiquetasBox().filter(function (e) { var f = String(e.franqueado || '').toLowerCase(); return nome.split(/\s+/).some(function (p) { return p.length > 3 && f.indexOf(p) >= 0; }); })[0];
+      if (sug) inp.value = sug.patCode;
+    }
+    mostrar();
   }
 
   function criarVaapty() {
@@ -1363,10 +1436,28 @@
       btn.disabled = false; btn.textContent = 'Tentar de novo';
       return;
     }
-    try {   // guarda o e-mail e o endereço no cadastro (o gerador antigo não guarda)
-      var info = clientesInfo.vaapty && clientesInfo.vaapty[d.nome];   // eslint-disable-line no-undef
-      if (info) { info.email = d.email; info.razao = val('razao'); }
-    } catch (e) {}
+    try {   // guarda e-mail, razão, patrimônio e lead no cadastro (o gerador antigo não guarda)
+      clientesInfo.vaapty = clientesInfo.vaapty || {};                                     // eslint-disable-line no-undef
+      var info = clientesInfo.vaapty[d.nome] = clientesInfo.vaapty[d.nome] || {};        // eslint-disable-line no-undef
+      info.email = d.email; info.razao = val('razao'); info.cnpj = info.cnpj || d.cnpj;
+      info.responsavel = info.responsavel || val('resp'); info.tel = info.tel || val('tel'); info.cargo = info.cargo || val('cargo');
+      if (leadAtual) info.leadId = leadAtual.id;
+      var pat = val('serie').toUpperCase();
+      if (pat) {
+        var et = etiquetasBox().filter(function (e) { return String(e.patCode).toUpperCase() === pat; })[0];
+        info.patrimonio = pat; info.player = et ? et.player || '' : ''; info.etiquetaId = et ? et.id : null;
+      }
+      registrarJornada('vaapty', d.nome, 'Unidade criada no Novo cliente · ' + brl(d.valor) + '/mês desde ' + d.inicio.split('-').reverse().join('/') + (pat ? ' · patrimônio ' + pat : ''));
+      var envio = numero(val('envio'));
+      if (envio > 0) {                                                                       // custo de envio vira despesa à vista da unidade
+        db.vaapty = db.vaapty || {}; db.vaapty[d.nome] = db.vaapty[d.nome] || [];          // eslint-disable-line no-undef
+        var linha = { t: 'À vista', tipo: 'Envio', d: 'Envio do box' + (pat ? ' ' + pat : ''), f: 'Frete', q: 1, u: Math.round(envio * 100) / 100, cc: d.nome,
+          venc: new Date().toISOString().slice(0, 7), pago: false, dataPago: '', cat: 'envio', origem: 'novo', criadoEm: new Date().toISOString() };
+        db.vaapty[d.nome].push(linha);                                                      // eslint-disable-line no-undef
+        try { applyToFin(linha, +1); } catch (e) {}                                          // eslint-disable-line no-undef
+        registrarJornada('vaapty', d.nome, 'Custo de envio do box lançado: R$ ' + envio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      }
+    } catch (e) { console.warn('cadastro vaapty', e); }
     if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
     try { scheduleSave(); } catch (e) {}                         // eslint-disable-line no-undef
     try { global.buildSidebar(); } catch (e) {}
