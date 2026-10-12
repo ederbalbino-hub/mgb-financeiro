@@ -830,20 +830,23 @@
   }
 
   // Envia ao Assinafy (Apps Script do hub). Assinam o cliente e o Eder. Guarda o docId no cadastro do cliente.
+  var PASTA_PRODUTO = { vaapty: 'Vaapty', elev: 'Tela Vertical', radio: 'Rádio Interna', tv: 'TV Interna', mercadao: 'Mercadão', condominio: 'Tela Vertical/Condomínios', mb: 'Móveis Brasília' };
+  function pastaDrive(modId, nome) { return (PASTA_PRODUTO[modId] || 'Outros') + '/' + String(nome || 'sem nome').trim(); }
   function enviarAssinafy(modId, nome, nomeDoc, corpo, signatario, email, mensagem) {
     return fetch(ASSINAFY_API_URL + '?action=enviar', {
       method: 'POST',
       body: JSON.stringify({
         nomeDoc: nomeDoc,
         html: documentoContrato(corpo),
-        signatarios: [{ nome: signatario, email: email }, { nome: 'Eder Balbino — MGB Mídia', email: 'ederbalbino@gmail.com' }],
-        mensagem: mensagem
+        signatarios: [{ nome: signatario, email: email }, { nome: 'Eder Balbino — MGB Comunicação e Marketing Ltda.', email: 'ederbalbino@gmail.com' }],
+        mensagem: mensagem,
+        pasta: pastaDrive(modId, nome)                     // MGB contratos/<produto>/<cliente> no Drive (12/10)
       })
     }).then(function (r) { return r.json(); }).then(function (j) {
       if (!j || j.erro) throw new Error((j && j.erro) || 'resposta vazia');
       try {
         var info = clientesInfo[modId] && clientesInfo[modId][nome];  // eslint-disable-line no-undef
-        if (info) { info.assinafyDocId = j.docId; scheduleSave(); }    // eslint-disable-line no-undef
+        if (info) { info.assinafyDocId = j.docId; info.pastaDrive = pastaDrive(modId, nome); if (j.urlEnviado) info.contratoEnviadoUrl = j.urlEnviado; scheduleSave(); } // eslint-disable-line no-undef
       } catch (e) {}
       return j;
     });
@@ -1464,7 +1467,7 @@
     try { global.buildHome(); } catch (e) {}
 
     enviarComStatus('vaapty', d.nome, 'Contrato Vaapty - ' + d.nome, html, val('resp') || d.nome, d.email,
-      'Segue o contrato de franquia Vaapty para assinatura eletrônica.', 2).finally(function () {
+      'Segue o contrato de comodato e prestação de serviços TV Vaapty para assinatura eletrônica.', 2).finally(function () {
       var txt = 'Nova unidade Vaapty: ' + d.nome + (val('cidade') ? ' (' + val('cidade') + ')' : '') + ' · ' + (val('qtd') || '1') + ' box. Início ' + d.inicio.split('-').reverse().join('/') +
         '. Contrato enviado para assinatura: preparar a instalação assim que for assinado.';
       marcar(4, 'ok', 'Aviso pronto: <a href="https://wa.me/?text=' + encodeURIComponent(txt) + '" target="_blank" rel="noopener">enviar ao Cleiton no WhatsApp</a>.');
