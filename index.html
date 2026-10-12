@@ -564,6 +564,8 @@ tbody td{padding:7px 10px;color:var(--text);vertical-align:middle;white-space:no
 .lead-card-wa{font-size:13px;text-decoration:none;line-height:1}
 .lead-produto-chip{font-size:11px;font-weight:600;padding:5px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s}
 .lead-produto-chip.on{color:#fff;border-color:transparent}
+button.lead-produto-chip{font-family:inherit}
+.lead-produto-chip:focus-visible{outline:2px solid #6C55DB;outline-offset:2px}
 .lead-hist-item{font-size:10.5px;color:var(--muted);background:var(--surface2);border-radius:7px;padding:6px 9px}
 .lead-hist-item b{color:var(--text)}
 .pes-cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
@@ -5752,6 +5754,7 @@ function copiarSpot() {
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" autocomplete="off" style="width:100%"></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl" id="lead-estagio-lbl">Estágio do lead</label><div id="lead-estagio-chips" role="radiogroup" aria-labelledby="lead-estagio-lbl" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">WhatsApp (DDD + número)</label><input class="anunc-form-inp" id="lead-tel" name="telefone" type="tel" placeholder="43999998888" inputmode="numeric" autocomplete="tel" style="width:100%"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Responsável (contato)</label><input class="anunc-form-inp" id="lead-responsavel" placeholder="Ex: João Silva" autocomplete="off" style="width:100%"></div>
@@ -12588,7 +12591,10 @@ function leadColDrop(e,stageId){
 function leadChangeStage(id,novoEstagio){
   const l=leads.find(x=>x.id===id); if(!l) return;
   const antigo=l.estagio;
+  if(antigo===novoEstagio) return;
   l.estagio=novoEstagio;
+  const agora=new Date(); if(!l.historico) l.historico=[];
+  l.historico.push({data:agora.toLocaleDateString('pt-BR')+' '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), texto:'Estágio: '+leadStage(antigo).label+' → '+leadStage(novoEstagio).label});
   if(novoEstagio==='fechado' && antigo!=='fechado'){
     leadFecharRegistrarCliente(l);
   }
@@ -12705,12 +12711,35 @@ function openLeadModal(mode,id){
   g('lead-del-btn').style.display = mode==='edit' ? '' : 'none';
   g('lead-historico-wrap').style.display = mode==='edit' ? '' : 'none';
   renderLeadProdutoChips(l ? l.produto : '');
+  renderLeadEstagioChips(l ? (l.estagio||'novo') : 'novo');
   renderLeadHistorico(l ? (l.historico||[]) : []);
   const modal=g('lead-modal');
   modal.classList.remove('hidden'); modal.classList.add('open');
   modal.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(3px)';
   setTimeout(()=>g('lead-nome').focus(),60);
+  _leadEscAviso=0; setTimeout(()=>{ _leadSnap=leadFormSnap(); },80);
 }
+// ── Estágio direto no formulário (12/10, pedido do Eder): escolhe e o card pula de coluna ao salvar, sem arrastar no kanban ──
+let _leadEstagioSel='novo';
+function renderLeadEstagioChips(sel){
+  _leadEstagioSel=sel||'novo';
+  const box=g('lead-estagio-chips'); if(!box) return;
+  box.innerHTML=LEAD_STAGES.map(s=>`<button type="button" role="radio" aria-checked="${s.id===_leadEstagioSel}" class="lead-produto-chip${s.id===_leadEstagioSel?' on':''}" style="${s.id===_leadEstagioSel?`background:${s.color};`:''}" onclick="renderLeadEstagioChips('${s.id}')">${s.label}</button>`).join('');
+}
+// Esc fecha o formulário do lead. Com alteração não salva, o 1º Esc avisa e o 2º descarta.
+let _leadSnap='', _leadEscAviso=0;
+function leadFormSnap(){
+  return JSON.stringify(['lead-nome','lead-tel','lead-responsavel','lead-funcao','lead-cnpj','lead-origem','lead-valor','lead-lembrete','lead-obs'].map(i=>(g(i)||{}).value||'').concat([_leadProdutoSel,_leadEstagioSel]));
+}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape') return;
+  const m=g('lead-modal'); if(!m||!m.classList.contains('open')) return;
+  e.preventDefault();
+  if(leadFormSnap()!==_leadSnap && Date.now()-_leadEscAviso>3000){
+    _leadEscAviso=Date.now(); leadToast('Alterações não salvas — Esc de novo para descartar, ou clique Salvar'); return;
+  }
+  closeLeadModal();
+});
 function closeLeadModal(){
   const modal=g('lead-modal');
   modal.classList.add('hidden'); modal.classList.remove('open'); modal.style.display='none';
@@ -12752,6 +12781,7 @@ function saveLeadModal(){
   const lembrete=g('lead-lembrete').value||'';
   const obs=g('lead-obs').value.trim();
   let l;
+  const estagio=_leadEstagioSel||'novo';
   if(curLeadId!=null){
     l=leads.find(x=>x.id===curLeadId);
     if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
@@ -12760,6 +12790,8 @@ function saveLeadModal(){
     leads.push(l);
   }
   closeLeadModal();
+  // mudou o estágio no formulário: mesmo caminho do arrastar no kanban (fechado registra o cliente, fechado/perdido limpa o lembrete)
+  if(l && l.estagio!==estagio){ leadChangeStage(l.id,estagio); leadToast('✓ '+l.nome+' → '+leadStage(estagio).label); }
   buildLeads();
   scheduleSave();
   if(l) leadSyncCalendar(l).then(buildLeads); // em segundo plano — não trava o salvar
