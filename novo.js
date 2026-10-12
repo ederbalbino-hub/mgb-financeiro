@@ -1361,7 +1361,7 @@
       '<div class="conta"><span>Franqueado paga</span><b id="nv-mensal" style="color:#14583a">—</b></div>' +
       '<p class="sub" id="nv-desc"></p></section>' +
       '<section class="card"><div class="sec">Ao criar, o hub faz</div>' +
-      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato Vaapty e cria a unidade no módulo Vaapty com a receita.</span></div>' +
+      '<div class="passo" id="nv-p1"><i>1</i><span>Gera o contrato e cria a unidade no módulo Vaapty com a receita, a licença 4YouSee, o envio e o repasse de 15%. A receita entra na Cobrança e no Faturamento a partir do mês de início.</span></div>' +
       '<div class="passo" id="nv-p2"><i>2</i><span>Envia o contrato pelo Assinafy.</span></div>' +
       '<div class="passo" id="nv-p3"><i>3</i><span>Marca o cliente do CRM como cadastrado.</span></div>' +
       '<div class="passo" id="nv-p4"><i>4</i><span>Prepara o aviso ao Cleiton para instalar o box depois da assinatura.</span></div>' +
@@ -1451,6 +1451,15 @@
         info.patrimonio = pat; info.player = et ? et.player || '' : ''; info.etiquetaId = et ? et.id : null;
       }
       registrarJornada('vaapty', d.nome, 'Unidade criada no Novo cliente · ' + brl(d.valor) + '/mês desde ' + d.inicio.split('-').reverse().join('/') + (pat ? ' · patrimônio ' + pat : ''));
+      ['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf'].forEach(function (c) { if (val(c)) info[c] = val(c); });  // endereço vai para a nota/boleto
+      // licença 4YouSee do(s) box(es), recorrente desde o início do contrato — a despesa nasce junto com a receita
+      db.vaapty = db.vaapty || {}; db.vaapty[d.nome] = db.vaapty[d.nome] || [];               // eslint-disable-line no-undef
+      var qtdBox = parseInt(val('qtd'), 10) || 1;
+      var lic = { t: 'Recorrente', tipo: 'Licença', d: 'Sistema TV', f: '4Yousee', q: qtdBox, u: CUSTO_TELA, cc: d.nome, venc: '', pago: false, dataPago: '',
+        mesesRec: 12, dataInicio: d.inicio.slice(0, 7), origem: 'novo' };
+      db.vaapty[d.nome].push(lic);                                                             // eslint-disable-line no-undef
+      try { applyToFin(lic, +1); } catch (e) {}                                                // eslint-disable-line no-undef
+      registrarJornada('vaapty', d.nome, 'Licença 4YouSee lançada: ' + qtdBox + ' × R$ 39,56/mês desde ' + d.inicio.split('-').reverse().join('/') + ' · repasse de 15% à franqueadora entra sozinho');
       var envio = numero(val('envio'));
       if (envio > 0) {                                                                       // custo de envio vira despesa à vista da unidade
         db.vaapty = db.vaapty || {}; db.vaapty[d.nome] = db.vaapty[d.nome] || [];          // eslint-disable-line no-undef

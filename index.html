@@ -7514,6 +7514,28 @@ function fFatInit(){
 function fFatEhManual(modulo){ return FAT_MANUAL_MODULOS.indexOf(modulo)>-1; }
 // ── Histórico do Faturamento: o que já foi enviado a cada cliente em cada mês (sobrevive a recarregar a página) ──
 function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).value||''; return r.id+'|'+comp; }
+// Clientes criados pelo Novo cliente (têm lead do CRM) que ainda não estão na planilha de faturamento (12/10):
+// entram na lista do mês com CNPJ, e-mail e endereço do cadastro, e o valor do contrato na competência escolhida.
+function fFatClientesDoHub(rowsPlanilha){
+  const comp=(document.getElementById('f-fat-comp')||{}).value||new Date().toISOString().slice(0,7);
+  const [ano,mes]=comp.split('-').map(Number); const out=[];
+  const modRot={vaapty:'Vaapty',radio:'Rádio Interna',tv:'TV Interna',mb:'MB — Móveis Brasília'};
+  const codigoDe=modulo=>{ const r=rowsPlanilha.find(x=>x.modulo===modulo&&x.ctribnac)||rowsPlanilha.find(x=>x.modulo==='TV Interna'&&x.ctribnac)||{}; return {ctribnac:r.ctribnac||'', cnbs:r.cnbs||''}; };
+  ['vaapty','radio','tv'].forEach(mid=>{
+    const m=MODULES.find(x=>x.id===mid); if(!m) return;
+    m.items.forEach(item=>{
+      const info=((clientesInfo||{})[mid]||{})[item]; if(!info||!info.leadId) return;              // só os criados pelo Novo cliente
+      if(rowsPlanilha.some(r=>fSimNome(r.cliente,item)>=0.85||(info.cnpj&&String(r.cnpj).replace(/\D/g,'')===String(info.cnpj).replace(/\D/g,'')&&fSimNome(r.cliente,item)>=0.6))) return;
+      const valor=recOfMes(mid,item,ano,mes-1); if(!(valor>0)) return;
+      const modulo=modRot[mid]||m.label; const cod=codigoDe(mid==='vaapty'?'TV Interna':modulo);
+      out.push({ linha:null, id:'hub-'+mid+'-'+fNormNome(item), modulo:mid==='vaapty'?'Vaapty':modulo, cliente:info.razao||item, cnpj:info.cnpj||'', email:info.email||'',
+        logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'', bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
+        valor, issRetido:false, descricao:(REC_DESC[mid]||'Prestação de serviços de mídia — {item}').replace('{item}',item), ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:true,
+        modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true });
+    });
+  });
+  return out;
+}
 function fFatGuardar(r){
   fatEmissoes[fFatKey(r)]={ status:r.status, modo:r.modo, valor:r.valor, boleto:fFatBoleto(r), paymentId:r.paymentId||null, invoiceId:r.invoiceId||null,
     boletoUrl:r.boletoUrl||null, erro:r.erro||null, em:r.emitidoEm||new Date().toISOString(), nf:r.nfNumero||null,
@@ -7610,6 +7632,7 @@ async function fFatCarregar(){
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
     fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:((row.boleto===false||fFatEhManual(row.modulo))?'nota':'ambos'), descricao:(row.modulo==='Tarobá'?FAT_DESC_TAROBA:row.descricao), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
+    const novos=fFatClientesDoHub(j.rows||[]); fatLinhas=fatLinhas.concat(novos);
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
     fFatAplicarHistorico();
     fFatSincronizarAsaas(false); // confere com o Asaas o que já foi emitido (não trava a tela)
@@ -7661,7 +7684,7 @@ function fFatLista(){
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
       return '<tr style="'+''+'"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<input type="checkbox" '+((r.status==='aguardando-nota'||r.status==='emitida')?'disabled title="Já enviado neste mês" ':'')+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+(manual?' <span title="valor digitado à mão, padrão só nota" style="font-size:9px;color:#B45309">✋ valor manual</span>':'')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+(r.doHub?' <span title="Cliente novo do hub (Novo cliente). Não está na planilha de faturamento: os dados vêm do cadastro." style="font-size:9px;color:#6C55DB;font-weight:700">✨ novo no hub</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+(manual?'<input value="'+(r.valor?String(r.valor).replace('.',','):'')+'" placeholder="valor" onchange="fFatValor(\''+r.id+'\',this.value)" style="width:92px;text-align:right;font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">':f(r.valor||0))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((r.modo==='nota')?'—':f(fFatBoleto(r))+(r.issRetido&&r.modo!=='boleto'&&Number(notaConfig.aliquotaMes)>0?' <span title="valor da nota menos o ISS retido" style="font-size:9px;color:var(--muted)">líq.</span>':''))+'</td>'+
@@ -13161,6 +13184,21 @@ function mbInstalacaoPaga(){
   migracoes.mbInstalacaoPaga_202610=true;
   if(n){ try{ scheduleSave(); }catch(e){} console.log('mbInstalacaoPaga: '+n+' linha(s) marcadas como pagas'); }
 }
+// 12/10: unidade Vaapty criada sem a licença 4YouSee (o Novo Vaapty não lançava) — lança 1 por box desde o início do contrato
+function vaaptyLicencas(){
+  if(!_cargaSheetsOk || migracoes.vaaptyLicencas_20261012) return;
+  const m=MODULES.find(x=>x.id==='vaapty'); if(!m){ migracoes.vaaptyLicencas_20261012=true; return; }
+  let n=0;
+  m.items.forEach(item=>{
+    const rows=db.vaapty[item]||(db.vaapty[item]=[]);
+    if(rows.some(r=>r.t==='Recorrente'&&/4you/i.test((r.d||'')+(r.f||'')))) return;
+    const r0=(rec.vaapty||{})[item]; if(!r0||!r0.valor) return;
+    const linha={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:CUSTO_NOTA.tela,cc:item,venc:'',pago:false,dataPago:'',mesesRec:r0.meses||12,dataInicio:(r0.inicio||new Date().toISOString().slice(0,7)).slice(0,7)};
+    rows.push(linha); try{ applyToFin(linha,+1); }catch(e){} n++;
+  });
+  migracoes.vaaptyLicencas_20261012=true;
+  if(n){ try{ scheduleSave(); }catch(e){} console.log('vaaptyLicencas: '+n); }
+}
 function custosPelaNota(){
   if(!_cargaSheetsOk || migracoes.custosNota_202610) return;
   const log=[];
@@ -14392,7 +14430,8 @@ function relvLerUnidades(ano,mes){
 // ── Repasse à franqueadora Vaapty (12/10, Eder: "tudo que for Vaapty tem 15%") ──
 // Base = receita bruta do mês de todas as unidades Vaapty (módulo Vaapty + itens com "Vaapty" no nome em outros módulos).
 // Entra sozinho como despesa do mês (coletaDespesasMes) e no relatório de repasse.
-function vaaptyCfg(){ notaConfig.vaapty=notaConfig.vaapty||{pct:15,excluir:[],email:'',enviado:{}}; const c=notaConfig.vaapty; if(c.pct==null) c.pct=15; c.excluir=c.excluir||[]; c.enviado=c.enviado||{}; return c; }
+// "Rádio Vaapty" é contratada pela própria franqueadora (CNPJ 23.974.954/0001-09): fica fora do repasse por padrão.
+function vaaptyCfg(){ notaConfig.vaapty=notaConfig.vaapty||{pct:15,excluir:['radio|Rádio Vaapty'],email:'',enviado:{}}; const c=notaConfig.vaapty; if(c.pct==null) c.pct=15; c.excluir=c.excluir||[]; c.enviado=c.enviado||{}; return c; }
 function vaaptyRepasseItens(){
   const ex=new Set(vaaptyCfg().excluir), out=[];
   MODULES.forEach(m=>{ if(m.id==='taroba') return; (m.id==='elev'?[]:m.items).forEach(item=>{
@@ -14654,7 +14693,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);} buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
