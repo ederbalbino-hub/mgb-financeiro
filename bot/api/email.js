@@ -61,12 +61,19 @@ export default async function handler(req, res) {
       const anexos = [];
       const falharam = [];
       for (const n of notas) {
-        try {
-          const { base64, numero } = await buscarPdfBase64(ambiente === "sandbox" ? "sandbox" : "producao", n.invoiceId);
-          anexos.push({ filename: (n.nomeArquivo || `nota-${numero}`) + ".pdf", content: base64 });
-        } catch (e) {
-          falharam.push({ invoiceId: n.invoiceId, erro: e.message });
+        let ultimoErro = null;
+        for (let tentativa = 0; tentativa < 3; tentativa++) {
+          try {
+            const { base64, numero } = await buscarPdfBase64(ambiente === "sandbox" ? "sandbox" : "producao", n.invoiceId);
+            anexos.push({ filename: (n.nomeArquivo || `nota-${numero}`) + ".pdf", content: base64 });
+            ultimoErro = null;
+            break;
+          } catch (e) {
+            ultimoErro = e;
+            await new Promise((r) => setTimeout(r, 800 * (tentativa + 1))); // rate limit / PDF ainda gerando
+          }
         }
+        if (ultimoErro) falharam.push({ invoiceId: n.invoiceId, erro: ultimoErro.message });
       }
 
       if (!anexos.length) {

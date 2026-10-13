@@ -7507,10 +7507,12 @@ async function fLeoEnviarEmail(){
     })});
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('Erro '+r.status));
-    prontas.forEach(u=>u.status='enviada');
+    const falhas=(j.falharam||[]);
+    const idsFalha=new Set(falhas.map(f=>f.invoiceId));
+    prontas.forEach(u=>{ if(!idsFalha.has(u.invoiceId)) u.status='enviada'; }); // só marca as que realmente foram anexadas
     try{ scheduleSave(); }catch(e){}
     fLeoLista();
-    st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ E-mail enviado com '+j.enviados+' nota(s)'+(j.falharam&&j.falharam.length?' — '+j.falharam.length+' não puderam ser baixadas':'')+'.</div>';
+    st.innerHTML='<div class="ferr-info" style="color:'+(falhas.length?'var(--red)':'var(--green)')+'">✓ E-mail enviado com '+j.enviados+' nota(s)'+(falhas.length?' — ⚠ '+falhas.length+' NÃO anexadas (continuam como "emitida"; clique em enviar de novo pra mandar só elas). Motivo: '+String(falhas[0].erro).replace(/</g,'&lt;')+'':'')+'.</div>';
   }catch(e){
     st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+'</div>';
   }finally{ btn.disabled=false; btn.style.opacity='1'; }
