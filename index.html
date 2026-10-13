@@ -7525,6 +7525,8 @@ function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).valu
 // entram na lista do mês com CNPJ, e-mail e endereço do cadastro, e o valor do contrato na competência escolhida.
 // Contratos lançados pelo hub (Novo cliente com lead do CRM + receitas avulsas), no formato da planilha.
 // inicio = mês em que começa a pagar; meses = duração. Base do Faturamento e do "incluir" na planilha.
+// Simulação de treino (13/10): clientes com nome começando em "TREINO" nunca vão para a planilha nem para o Faturamento.
+const FAT_RX_TREINO=/^\s*treino\b/i;
 function fFatContratosHub(rowsPlanilha){
   rowsPlanilha=rowsPlanilha||[]; const out=[];
   const modRot={vaapty:'Vaapty',radio:'Rádio Interna',tv:'TV Interna'};
@@ -7533,6 +7535,7 @@ function fFatContratosHub(rowsPlanilha){
     const m=MODULES.find(x=>x.id===mid); if(!m) return;
     m.items.forEach(item=>{
       const info=((clientesInfo||{})[mid]||{})[item]; if(!info||!info.leadId) return;              // só os criados pelo Novo cliente
+      if(FAT_RX_TREINO.test(item)||FAT_RX_TREINO.test(info.razao||'')) return;                      // treino da equipe: nunca vai para o dia 5
       const ro=recObj(mid,item); if(!(ro.valor>0)||!ro.inicio) return;
       const modulo=modRot[mid]||m.label; const cod=codigoDe(mid==='vaapty'?'TV Interna':modulo);
       out.push({ id:'hub-'+mid+'-'+fNormNome(item), modulo, cliente:info.razao||item, cnpj:info.cnpj||'', email:info.email||'',
@@ -7541,7 +7544,7 @@ function fFatContratosHub(rowsPlanilha){
         ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:info.notaFiscal===false?'nao':'sim', hubMod:mid, hubItem:item, apelido:item });
     });
   });
-  if(typeof MGBLancar!=='undefined') (receitasAvulsas||[]).filter(x=>x&&x.valor>0&&x.mes).forEach(x=>{
+  if(typeof MGBLancar!=='undefined') (receitasAvulsas||[]).filter(x=>x&&x.valor>0&&x.mes&&!FAT_RX_TREINO.test(x.cliente||'')).forEach(x=>{
     const ci=x.clienteInfo||{}, cod=codigoDe('TV Interna');
     out.push({ id:'hub-avulsa-'+x.id, modulo:'Avulsa', cliente:ci.razao||x.cliente, cnpj:ci.cnpj||'', email:ci.email||'',
       logradouro:'', numero:'', complemento:'', bairro:'', cidade:'', uf:'', cep:'', valor:x.valor, inicio:x.mes, meses:1,
@@ -7714,20 +7717,48 @@ function fSimNome(a,b){ // similaridade 0–1 (Levenshtein) — tolera grafias d
 // Espelho do Asaas na Visão Receita (12/10, Eder): o status de cada cliente vem da cobrança no Asaas — sem ticar à mão.
 // Grava em recPagamentos[mod][item]['AAAA-M'] = {pago, fonte:'asaas', asaas:{st, nf, boletoUrl, em}}.
 // "pago" segue o Asaas (pago → recebido; estorno/cancelado volta a pendente). Baixa manual (fonte 'manual') não é tocada.
-function fFatAlvoHub(r){
-  if(r.hubMod&&r.hubItem) return {mod:r.hubMod,item:r.hubItem};
-  const mod=MODULES.find(m=>fNormNome(m.label).indexOf(fNormNome(r.modulo))>-1||fNormNome(r.modulo).indexOf(fNormNome(m.label))>-1); if(!mod) return null;
-  const itens=mod.id==='elev'?(anunciantes||[]).map(a=>a.nome):Object.keys((rec&&rec[mod.id])||{}); let melhor=null, ms=0;
-  itens.forEach(it=>{ const s=fSimNome(it,r.cliente); if(s>ms){ ms=s; melhor=it; } });
-  return (melhor&&ms>=0.85)?{mod:mod.id,item:melhor}:null;
+// Liga uma linha da planilha (cobrança no Asaas) às linhas da Visão Receita do mês. Pode ligar a VÁRIAS
+// (ex.: "mb-gestao" R$ 3.500 = as 6 lojas Móveis Brasília). Ordem: vínculo do hub → vínculo salvo →
+// CNPJ + valor → CNPJ + soma por módulo → nome. Nome sozinho falhava ("Emagrecentro Zona Norte (Saul)").
+const FAT_VINCULOS_PADRAO={ 'venturelli-bureau':[{mod:'radioops',item:'Moinho Globo'}] };  // nota do Moinho sai em nome da Família Venturelli
+function fFatDocDe(mod,item){
+  const ci=((clientesInfo||{})[mod]||{})[item]||{}; let d=String(ci.cnpj||'').replace(/\D/g,'');
+  if(d.length!==14&&d.length!==11){ try{ d=String(recDefault(mod,item).obs||'').replace(/\D/g,''); }catch(e){ d=''; } }
+  return (d.length===14||d.length===11)?d:'';
 }
+function fFatAlvos(r,linhasMes){
+  if(r.hubMod&&r.hubItem) return [{mod:r.hubMod,item:r.hubItem}];
+  const salvo=((notaConfig.fatVinculos||{})[r.id])||FAT_VINCULOS_PADRAO[r.id]; if(salvo) return salvo;
+  const doc=String(r.cnpj||'').replace(/\D/g,''), val=Number(r.valor)||0, perto=(a,b)=>Math.abs(a-b)<0.01;
+  if(doc){
+    const cand=linhasMes.filter(l=>fFatDocDe(l.modId,l.item)===doc);
+    if(cand.length===1) return [{mod:cand[0].modId,item:cand[0].item}];
+    if(cand.length>1){
+      const mesmoValor=cand.filter(l=>perto(l.valor,val));
+      if(mesmoValor.length===1) return [{mod:mesmoValor[0].modId,item:mesmoValor[0].item}];
+      const porMod={}; cand.forEach(l=>(porMod[l.modId]=porMod[l.modId]||[]).push(l));
+      const grupo=Object.values(porMod).find(g=>g.length>1&&perto(g.reduce((a,l)=>a+l.valor,0),val));
+      if(grupo) return grupo.map(l=>({mod:l.modId,item:l.item}));
+      let melhor=null, ms=0; (mesmoValor.length?mesmoValor:cand).forEach(l=>{ const x=fSimNome(l.item,r.cliente); if(x>ms){ ms=x; melhor=l; } });
+      if(melhor&&ms>=0.5) return [{mod:melhor.modId,item:melhor.item}];
+    }
+  }
+  const mod=MODULES.find(m=>fNormNome(m.label).indexOf(fNormNome(r.modulo))>-1||fNormNome(r.modulo).indexOf(fNormNome(m.label))>-1); if(!mod) return [];
+  const itens=mod.id==='elev'?(anunciantes||[]).map(a=>a.nome):Object.keys((rec&&rec[mod.id])||{}); let melhor=null, ms=0;
+  itens.forEach(it=>{ const x=fSimNome(it,r.cliente); if(x>ms){ ms=x; melhor=it; } });
+  return (melhor&&ms>=0.85)?[{mod:mod.id,item:melhor}]:[];
+}
+function fFatAlvoHub(r){ const a=fFatAlvos(r,coletaClientesMes(new Date().getFullYear(),new Date().getMonth())); return a[0]||null; }
 function fFatReceitaAuto(comp){
   const mm=/^(\d{4})-(\d{2})$/.exec(comp||''); if(!mm) return 0;
   const ano=+mm[1], mes=+mm[2]-1, key=recPagKey(ano,mes); let n=0;
+  const linhasMes=coletaClientesMes(ano,mes);
   fatLinhas.forEach(r=>{
     const emitido=r.paymentId||r.invoiceId||r.statusPagamento||['emitida','boleto-emitido','aguardando-nota'].indexOf(r.status)>-1;
+    const alvos=fFatAlvos(r,linhasMes);
+    alvos.forEach(a=>{ const d=recDefault(a.mod,a.item); if(d.fatId!==r.id){ d.fatId=r.id; n++; } });   // cliente está na planilha do dia 5
     if(!emitido) return;
-    const alvo=fFatAlvoHub(r); if(!alvo) return;
+    alvos.forEach(alvo=>{
     const P=recPagamentos[alvo.mod]||(recPagamentos[alvo.mod]={}), Q=P[alvo.item]||(P[alvo.item]={});
     const pg=Q[key]||{pago:false,obs:''};
     const st=r.statusPagamento||(r.paymentId?'pendente':'nota');
@@ -7736,6 +7767,7 @@ function fFatReceitaAuto(comp){
     if(pg.fonte!=='manual'){ novo.pago=(st==='pago'); novo.fonte='asaas'; }
     if(JSON.stringify(novo)===JSON.stringify(pg)) return;
     Q[key]=novo; n++;
+    });
   });
   if(n){ try{ buildLancRec(); }catch(e){} try{ scheduleSave(); }catch(e){} }
   return n;
@@ -9786,7 +9818,7 @@ function coletaClientesMes(selAno,selMes){
         if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
         const pg=recPagamentos[m.id][item][_key]||{pago:false};
         const def=recDefault(m.id,item);
-        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,obs:def.obs,nota:def.nota,key:_key,sub:(a.telas||[]).join(', ')});
+        linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:a.valor,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,fatId:def.fatId||null,obs:def.obs,nota:def.nota,key:_key,sub:(a.telas||[]).join(', ')});
       });
       return; // pula iteração por items pra elev
     }
@@ -9797,7 +9829,7 @@ function coletaClientesMes(selAno,selMes){
       if(!recPagamentos[m.id][item]) recPagamentos[m.id][item]={};
       const pg=recPagamentos[m.id][item][_key]||{pago:false};
       const def=recDefault(m.id,item);
-      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,obs:def.obs,nota:def.nota,key:_key});
+      linhas.push({modId:m.id,modLabel:m.label.split('—')[0].trim(),modIcon:m.icon,item,valor:val,pago:pg.pago,asaas:pg.asaas||null,fonte:pg.fonte||null,fatId:def.fatId||null,obs:def.obs,nota:def.nota,key:_key});
     });
   });
   // Receitas avulsas (Nova receita: locuções e serviços pontuais)
@@ -9832,7 +9864,12 @@ function recStatusAsaas(l){
   else if(a&&a.st==='cancelado') h=chip('rgba(148,140,170,.18)','var(--muted)','Cancelado no Asaas',quando);
   else if(a&&a.st==='nota') h=chip('rgba(108,85,219,.12)','#6C55DB','Só nota emitida',(a.nf?'NF '+a.nf:''));
   else if(a) h=chip('rgba(245,158,11,.15)','var(--amber)','⏳ Boleto em aberto',(a.nf?'NF '+a.nf+' · ':'')+quando);
-  else h=chip('rgba(148,140,170,.12)','var(--hint)','Sem cobrança no Asaas','Ainda não emitido no Faturamento do dia 5');
+  else if(/^leo cosm/i.test(l.item)&&typeof leoUnidades!=='undefined'&&leoUnidades.length&&l.key===recPagKey(new Date().getFullYear(),new Date().getMonth())){
+    const ok=leoUnidades.filter(u=>u.status==='emitida'||u.status==='enviada').length;   // Léo: notas sem boleto, aba Nota Fiscal › Léo
+    h=ok?chip('rgba(108,85,219,.12)','#6C55DB','Notas Léo: '+ok+' de '+leoUnidades.length,'Notas emitidas na aba Nota Fiscal › Léo (sem boleto no Asaas)'):chip('rgba(148,140,170,.12)','var(--hint)','Notas Léo não emitidas','Aba Nota Fiscal › Léo');
+  }
+  else if(l.fatId) h=chip('rgba(148,140,170,.12)','var(--hint)','Ainda não emitido','Está na planilha do dia 5 ('+l.fatId+'), mas a cobrança deste mês ainda não foi emitida no Asaas.');
+  else h=chip('rgba(148,140,170,.12)','var(--hint)','Fora da planilha de faturamento','Este cliente não está na planilha "MGB Faturamento - Clientes", então não tem boleto/nota no dia 5. Se ele deve pagar por boleto, inclua na planilha (ou lance pelo Novo cliente).');
   if(a&&a.boletoUrl) h+=` <a href="${a.boletoUrl}" target="_blank" rel="noopener" style="font-size:10px">boleto</a>`;
   if(!(a&&a.st==='pago')) h+=` <a href="#" onclick="event.preventDefault();recBaixaManual('${l.modId}','${it}','${l.key}')" style="font-size:9px;color:var(--hint);margin-left:4px">${l.fonte==='manual'&&l.pago?'desfazer':'baixa manual'}</a>`;
   return h;
