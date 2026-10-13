@@ -6656,6 +6656,7 @@ function copiarSpot() {
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
           <button class="ferr-btn" onclick="fLeoEmitirTodas()" id="f-leo-btn-emitir">🧴 Emitir as 31 notas</button>
+          <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fLeoConferirTodas()">🔄 Conferir status</button>
           <button class="ferr-btn" style="background:#0D9488" onclick="fLeoEnviarEmail()" id="f-leo-btn-email">📧 Enviar e-mail consolidado</button>
           <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fLeoResetar()">↺ Resetar status (novo mês)</button>
           <span id="f-leo-resumo" class="ferr-info"></span>
@@ -7455,6 +7456,13 @@ async function fLeoAguardarAutorizacao(id, tentativas){
     if(r.ok){ u.pdfUrl=j.pdfUrl||u.pdfUrl; if(j.status==='AUTHORIZED'){ u.status='emitida'; try{ scheduleSave(); }catch(e){} fLeoLista(); return; } if(j.status==='ERROR'){ u.status='erro'; u.erro=j.erro||'Erro na emissão'; try{ scheduleSave(); }catch(e){} fLeoLista(); return; } }
   }catch(e){}
   setTimeout(()=>fLeoAguardarAutorizacao(id,tentativas+1), 6000);
+}
+function fLeoConferirTodas(){
+  const abertas=leoUnidades.filter(u=>u.invoiceId&&u.status!=='emitida'&&u.status!=='enviada'&&u.status!=='erro');
+  const st=document.getElementById('f-leo-status');
+  if(!abertas.length){ st.innerHTML='<div class="ferr-info">Nenhuma nota aguardando autorização.</div>'; return; }
+  st.innerHTML='<div class="ferr-info">Conferindo '+abertas.length+' nota(s) no Asaas…</div>';
+  abertas.forEach(u=>fLeoAguardarAutorizacao(u.id,0));
 }
 async function fLeoEmitirTodas(){
   if(notaConfig.aliquotaMes==null){ alert('Informe a alíquota ISS do mês antes de emitir.'); return; }
