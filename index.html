@@ -7490,8 +7490,12 @@ function fLeoResetar(){
   document.getElementById('f-leo-status').innerHTML='';
 }
 async function fLeoEnviarEmail(){
-  const prontas=leoUnidades.filter(u=>u.status==='emitida'&&u.invoiceId);
-  if(!prontas.length){ alert('Nenhuma nota emitida ainda pra mandar.'); return; }
+  let prontas=leoUnidades.filter(u=>u.status==='emitida'&&u.invoiceId);
+  if(!prontas.length){
+    const jaEnviadas=leoUnidades.filter(u=>u.status==='enviada'&&u.invoiceId);
+    if(jaEnviadas.length && confirm('Nenhuma nota pendente de envio. Reenviar TODAS as '+jaEnviadas.length+' já enviadas num e-mail novo?')) prontas=jaEnviadas;
+    else { if(!jaEnviadas.length) alert('Nenhuma nota emitida ainda pra mandar.'); return; }
+  }
   const destino=document.getElementById('f-leo-email-destino').value.trim();
   if(!destino){ alert('Informe o e-mail de destino.'); return; }
   const ambiente=document.getElementById('f-leo-amb').value||'producao';
