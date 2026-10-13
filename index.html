@@ -5795,6 +5795,7 @@ function copiarSpot() {
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Função/Cargo</label><input class="anunc-form-inp" id="lead-funcao" placeholder="Ex: Síndico, Gerente..." autocomplete="off" style="width:100%"></div>
           </div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">CNPJ (opcional — usado pra preencher o contrato depois)</label><input class="anunc-form-inp" id="lead-cnpj" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off" oninput="leadMaskCNPJ(this)" style="width:100%"></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">E-mail (recebe contrato, nota e boleto)</label><input class="anunc-form-inp" id="lead-email" type="email" placeholder="financeiro@cliente.com.br" autocomplete="off" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Produto de interesse</label><div id="lead-produto-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">De onde veio esse lead?</label><select class="anunc-form-inp" id="lead-origem" style="width:100%"></select></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -8940,7 +8941,7 @@ let relAjustes={ov:{},man:[]}; // relatório Mercadão: ov=valores editados por 
 let pessoalRecId=1, pessoalDespId=1;
 
 // ── LEADS / CRM ───────────────────────────────────────────────────────────
-// leads = [{id, nome, tel, responsavel, funcao, produto:modId, origem, valor, lembrete:'YYYY-MM-DD'|'YYYY-MM-DDTHH:mm', obs, estagio, historico:[{data,texto}], itemCriado, calEventId, criado:'YYYY-MM-DD'}]
+// leads = [{id, nome, tel, responsavel, funcao, cnpj, email, produto:modId|'mercadao', origem, valor, lembrete:'YYYY-MM-DD'|'YYYY-MM-DDTHH:mm', obs, estagio, historico:[{data,texto}], itemCriado, calEventId, criado:'YYYY-MM-DD'}]
 const LEAD_STAGES=[
   {id:'novo',       label:'Novo',        color:'#2563EB'},
   {id:'contatado',  label:'Contatado',   color:'#D97706'},
@@ -12732,7 +12733,11 @@ function leadNormalizaLembreteInput(v){
 function leadsPendentes(){
   return leads.filter(l=>leadLembreteVencido(l));
 }
-function leadModPor(id){ return MODULES.find(m=>m.id===id); }
+// Produtos do CRM que não são módulo do financeiro (13/10): Rádio Mercadão é cadastrado pelo Novo cliente
+// e cobrado pela Cobrança Mensal, sem unidade própria. extra:true = não cria cadastro em clientesInfo ao fechar.
+const LEAD_PRODUTOS_EXTRA=[{id:'mercadao', label:'Rádio Mercadão', icon:'🛒', color:'#C2410C', extra:true}];
+function leadProdutos(){ return MODULES.concat(LEAD_PRODUTOS_EXTRA); }
+function leadModPor(id){ return leadProdutos().find(m=>m.id===id); }
 function leadStage(id){ return LEAD_STAGES.find(s=>s.id===id)||LEAD_STAGES[0]; }
 
 function buildLeadsBadge(){
@@ -12752,7 +12757,7 @@ function initLeadsFiltros(){
   }
   const pSel=g('leads-f-prod');
   if(pSel && !pSel.options.length){
-    pSel.innerHTML='<option value="">Todos os produtos</option>'+MODULES.map(m=>`<option value="${m.id}">${m.icon} ${m.label.split('—')[0].trim()}</option>`).join('');
+    pSel.innerHTML='<option value="">Todos os produtos</option>'+leadProdutos().map(m=>`<option value="${m.id}">${m.icon} ${m.label.split('—')[0].trim()}</option>`).join('');
   }
   const eSel=g('leads-f-estagio');
   if(eSel && !eSel.options.length){
@@ -12958,9 +12963,9 @@ window.mgbCriarAnunciante=function(nome,valor,meses,inicio,telas,cliente){
 // no CRM?" dentro dos contratos — assim não duplica lançamento no financeiro.
 function leadFecharRegistrarCliente(l){
   const m=leadModPor(l.produto);
-  if(!m){ leadToast(`✅ "${l.nome}" fechado!`); return; }
+  if(!m||m.extra){ leadToast(`✅ "${l.nome}" fechado! Cadastre pelo Novo cliente${m?' ('+m.label+')':''}.`); return; }
   if(!clientesInfo[m.id]) clientesInfo[m.id]={};
-  clientesInfo[m.id][l.nome]={cnpj:l.cnpj||'', fantasia:l.nome||'', responsavel:l.responsavel||'', cargo:l.funcao||'', tel:l.tel||''};
+  clientesInfo[m.id][l.nome]={cnpj:l.cnpj||'', fantasia:l.nome||'', responsavel:l.responsavel||'', cargo:l.funcao||'', tel:l.tel||'', email:l.email||''};
   leadToast(`✅ "${l.nome}" fechado! Gere o contrato em ${m.label.split('—')[0].trim()} pra lançar no financeiro.`);
 }
 
@@ -13008,6 +13013,7 @@ function openLeadModal(mode,id){
   g('lead-responsavel').value = l ? (l.responsavel||'') : '';
   g('lead-cnpj').value = l ? (l.cnpj||'') : '';
   g('lead-funcao').value = l ? (l.funcao||'') : '';
+  if(g('lead-email')) g('lead-email').value = l ? (l.email||'') : '';
   g('lead-origem').value = l ? (l.origem||'') : '';
   g('lead-valor').value = l && l.valor ? l.valor : '';
   g('lead-lembrete').value = l ? leadNormalizaLembreteInput(l.lembrete) : '';
@@ -13053,7 +13059,7 @@ let _leadProdutoSel='';
 function renderLeadProdutoChips(sel){
   _leadProdutoSel = sel||'';
   const box=g('lead-produto-chips');
-  box.innerHTML = MODULES.map(m=>`<div class="lead-produto-chip${m.id===_leadProdutoSel?' on':''}" style="${m.id===_leadProdutoSel?`background:${m.color};`:''}" onclick="leadPickProduto('${m.id}')">${m.icon} ${m.label.split('—')[0].trim()}</div>`).join('');
+  box.innerHTML = leadProdutos().map(m=>`<div class="lead-produto-chip${m.id===_leadProdutoSel?' on':''}" style="${m.id===_leadProdutoSel?`background:${m.color};`:''}" onclick="leadPickProduto('${m.id}')">${m.icon} ${m.label.split('—')[0].trim()}</div>`).join('');
 }
 function leadPickProduto(id){ renderLeadProdutoChips(id===_leadProdutoSel?'':id); }
 function renderLeadHistorico(hist){
@@ -13080,6 +13086,8 @@ function saveLeadModal(){
   const responsavel=g('lead-responsavel').value.trim();
   const funcao=g('lead-funcao').value.trim();
   const cnpj=g('lead-cnpj').value.trim();
+  const email=((g('lead-email')||{}).value||'').trim();
+  if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ g('lead-email').focus(); leadToast('⚠ O e-mail parece incompleto'); return; }
   const origem=g('lead-origem').value||'';
   const valor=parseFloat(g('lead-valor').value)||0;
   const lembrete=g('lead-lembrete').value||'';
@@ -13088,9 +13096,9 @@ function saveLeadModal(){
   const estagio=_leadEstagioSel||'novo';
   if(curLeadId!=null){
     l=leads.find(x=>x.id===curLeadId);
-    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
+    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
   } else {
-    l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
+    l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, email, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
     leads.push(l);
   }
   closeLeadModal();
@@ -13675,6 +13683,7 @@ async function leadsExportToSheet(){
         responsavel: l.responsavel||'',
         funcao: l.funcao||'',
         cnpj: l.cnpj||'',
+        email: l.email||'',
         produto: m?m.label.split('—')[0].trim():(l.produto||''),
         origem: l.origem||'',
         estagio: st.label.replace(/[✅❌]/g,'').trim(),

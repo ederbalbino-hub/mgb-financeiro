@@ -164,7 +164,15 @@ test("CRM: produto do formulário puxa os leads certos primeiro", () => {
   assert.deepEqual(g.certos.map((l) => l.id), [2]);
   assert.deepEqual(g.outros.map((l) => l.id), [1]);
   assert.equal(N.PRODUTO_LEAD.anunciante, "elev");
-  assert.equal(N.PRODUTO_LEAD.mercadao, "radio");
+  assert.equal(N.PRODUTO_LEAD.mercadao, "mercadao");
+  // 13/10: Mercadão tem produto próprio no CRM, e os leads antigos (cadastrados como Rádio Interna) continuam aparecendo
+  const m = N.leadsParaProduto([
+    { id: 5, nome: "Loja Bela", produto: "mercadao", estagio: "fechado" },
+    { id: 6, nome: "Loja antiga", produto: "radio", estagio: "fechado" },
+    { id: 7, nome: "Cond B", produto: "elev", estagio: "fechado" }
+  ], "mercadao");
+  assert.deepEqual(m.certos.map((l) => l.id), [5, 6]);
+  assert.deepEqual(m.outros.map((l) => l.id), [7]);
 });
 
 test("CNPJ: respostas das duas bases viram os mesmos campos", () => {
