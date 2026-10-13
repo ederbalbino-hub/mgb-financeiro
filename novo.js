@@ -810,6 +810,7 @@
     }
     var out = doc.getElementById('parc-output');
     if (!out || !out.innerHTML.trim()) return Promise.resolve({ ok: false, msg: 'Contrato não gerado. Gere pela aba Contratos › Parceria Cond.' });
+    if (ehTreino(d.nome)) return Promise.resolve({ ok: true, msg: 'TREINO: contrato gerado e <b>não enviado</b> à Assinafy, para não gastar crédito.' });
     if (!d.email) return Promise.resolve({ ok: false, msg: 'Contrato gerado, mas sem e-mail do síndico. Envie pela aba Contratos › Parceria Cond. quando tiver o e-mail.' });
     return enviarAssinafy('elev', d.nome, 'Contrato de Parceria - ' + d.nome, out.innerHTML, d.sindico || d.nome, d.email,
       'Segue o contrato de parceria da Tela Vertical (telas digitais nos elevadores) para assinatura eletrônica.')
@@ -832,7 +833,11 @@
   // Envia ao Assinafy (Apps Script do hub). Assinam o cliente e o Eder. Guarda o docId no cadastro do cliente.
   var PASTA_PRODUTO = { vaapty: 'Vaapty', elev: 'Tela Vertical', radio: 'Rádio Interna', tv: 'TV Interna', mercadao: 'Mercadão', condominio: 'Tela Vertical/Condomínios', mb: 'Móveis Brasília' };
   function pastaDrive(modId, nome) { return (PASTA_PRODUTO[modId] || 'Outros') + '/' + String(nome || 'sem nome').trim(); }
+  // Treino da equipe (13/10): cliente "TREINO …" gera o contrato, mas nunca vai para a Assinafy (cada envio gasta crédito)
+  var RX_TREINO = /^\s*treino\b/i;
+  function ehTreino(nome) { return RX_TREINO.test(String(nome || '')); }
   function enviarAssinafy(modId, nome, nomeDoc, corpo, signatario, email, mensagem) {
+    if (ehTreino(nome)) return Promise.reject(new Error('TREINO: contrato gerado e não enviado à Assinafy (não gasta crédito)'));
     return fetch(ASSINAFY_API_URL + '?action=enviar', {
       method: 'POST',
       body: JSON.stringify({
@@ -1015,14 +1020,16 @@
   // Envia ao Assinafy e marca o passo n com o resultado.
   function enviarComStatus(modId, nome, nomeDoc, corpo, signatario, email, mensagem, n) {
     var ver = linkVerContrato(corpo);
-    var p = email
+    var p = ehTreino(nome)
+      ? Promise.resolve({ ok: true, treino: true, msg: 'TREINO: contrato gerado e <b>não enviado</b> à Assinafy, para não gastar crédito.' + ver })
+      : email
       ? enviarAssinafy(modId, nome, nomeDoc, corpo, signatario, email, mensagem)
           .then(function () { return { ok: true, msg: 'Contrato enviado ao cliente (' + esc(email) + ') e a você pelo Assinafy. Quando todos assinarem, o PDF vai por e-mail e fica salvo no Drive.' + ver }; })
           .catch(function (e) { return { ok: false, msg: 'Contrato gerado, mas o envio ao Assinafy falhou: ' + esc(e.message) + '.' + ver }; })
       : Promise.resolve({ ok: false, msg: 'Contrato gerado, mas sem e-mail do cliente: nada foi enviado.' + ver });
     return p.then(function (r) {
       marcar(n, r.ok ? 'ok' : 'erro', r.msg);
-      registrarJornada(modId, nome, r.ok ? 'Contrato enviado para assinatura (Assinafy) · ' + (email || '') : 'Contrato gerado, envio para assinatura pendente');
+      registrarJornada(modId, nome, r.treino ? 'Contrato gerado (treino, não enviado à Assinafy)' : r.ok ? 'Contrato enviado para assinatura (Assinafy) · ' + (email || '') : 'Contrato gerado, envio para assinatura pendente');
       try { scheduleSave(); } catch (e) {}                                                   // eslint-disable-line no-undef
       return r;
     });
@@ -1167,7 +1174,9 @@
       hoje: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }), logo: LOGO, numero: num
     });
     var ver = linkVerContrato(corpo);
-    var envio = d.email
+    var envio = ehTreino(d.nome)
+      ? Promise.resolve({ ok: true, msg: 'TREINO: contrato gerado e <b>não enviado</b> à Assinafy, para não gastar crédito.' + ver })
+      : d.email
       ? enviarAssinafy('mercadao', d.nome, 'Contrato Rádio Mercadão - ' + d.nome, corpo, d.responsavel || d.nome, d.email,
           'Segue o contrato de anúncio na rádio interna do Mercadão da Prochet para assinatura eletrônica.')
           .then(function () { return { ok: true, msg: 'Contrato enviado à loja (' + esc(d.email) + ') e a você pelo Assinafy.' + ver }; })

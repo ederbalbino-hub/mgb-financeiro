@@ -3003,6 +3003,7 @@ async function eEnviarAssinatura(){
   const email=egv('e-email');
   if(!email){ alert('Preencha o e-mail do contratante (aba 1. Cliente) antes de enviar pra assinatura.'); return; }
   const nome=(eTipo==='pj')?(egv('e-fantasia')||egv('e-razao')):egv('e-nomepf');
+  if(/^\s*treino\b/i.test(nome)){ document.getElementById('e-ass-status').textContent='TREINO: contrato não enviado à Assinafy (não gasta crédito).'; return; }
   const css=Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n');
   const htmlDoc='&lt;!DOCTYPE html&gt;&lt;html lang=&quot;pt-BR&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;UTF-8&quot;&gt;&lt;style&gt;'+css+'body{padding:24px;background:#fff}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;div class=&quot;contract-preview&quot;&gt;'+out.innerHTML+'&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;';
   const btn=document.getElementById('e-ass-btn'); const st=document.getElementById('e-ass-status');
@@ -3662,6 +3663,7 @@ async function vEnviarAssinatura(){
   if(!vUltimoPayload){ alert('Gere o contrato primeiro.'); return; }
   const email = vUltimoPayload.email;
   if(!email){ alert('Preencha o e-mail do franqueado (aba Franqueado) antes de enviar pra assinatura.'); return; }
+  if(/^\s*treino\b/i.test(vUltimoPayload.nome||'')){ document.getElementById('v-ass-status').textContent='TREINO: contrato não enviado à Assinafy (não gasta crédito).'; return; }
   const css = Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n');
   let htmlDoc = '<!DOCTYPE html><html lang=&quot;pt-BR&quot;><head><meta charset=&quot;UTF-8&quot;><style>'+css+'body{padding:24px;background:#fff}</style></head><body><div class=&quot;contract-preview&quot;>'+document.getElementById('v-contract-out').innerHTML+'</div></body></html>';
   try{ if(window.parent &amp;&amp; window.parent.MGBNovo &amp;&amp; window.parent.MGBNovo.logosEmbutidas) htmlDoc = window.parent.MGBNovo.logosEmbutidas(htmlDoc); }catch(err){}
