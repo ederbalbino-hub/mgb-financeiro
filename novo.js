@@ -295,14 +295,15 @@
 
   // ── CRM como base: a Karen só cadastra cliente que está fechado no CRM ──
   // Produto do formulário → produto do lead no CRM (módulo).
-  var PRODUTO_LEAD = { condominio: 'elev', anunciante: 'elev', vaapty: 'vaapty', radio: 'radio', mercadao: 'radio', tv: 'tv' };
+  var PRODUTO_LEAD = { condominio: 'elev', anunciante: 'elev', vaapty: 'vaapty', radio: 'radio', mercadao: 'mercadao', tv: 'tv' };  // 13/10: o CRM tem o produto Rádio Mercadão
 
   // Leads fechados e não cadastrados, com os do produto certo primeiro.
   function leadsParaProduto(lista, produto) {
-    var alvo = PRODUTO_LEAD[produto];
+    var alvo = [].concat(PRODUTO_LEAD[produto]);
+    if (produto === 'mercadao') alvo.push('radio');                 // leads antigos de Mercadão foram cadastrados como Rádio Interna
     var pend = leadsPendentes(lista);
-    var certos = pend.filter(function (l) { return l.produto === alvo; });
-    var outros = pend.filter(function (l) { return l.produto !== alvo; });
+    var certos = pend.filter(function (l) { return alvo.indexOf(l.produto) >= 0; });
+    var outros = pend.filter(function (l) { return alvo.indexOf(l.produto) < 0; });
     return { certos: certos, outros: outros };
   }
 
@@ -467,7 +468,7 @@
     condominio: 'Condomínio', anunciante: 'Anunciante Tela Vertical', vaapty: 'Unidade Vaapty',
     radio: 'Rádio interna', mercadao: 'Anunciante Mercadão', tv: 'TV interna'
   };
-  var ACOES_DO_LEAD = { elev: ['condominio', 'anunciante'], radio: ['radio', 'mercadao'], vaapty: ['vaapty'], tv: ['tv'] };
+  var ACOES_DO_LEAD = { elev: ['condominio', 'anunciante'], radio: ['radio', 'mercadao'], mercadao: ['mercadao'], vaapty: ['vaapty'], tv: ['tv'] };
 
   function leadPorId(id) { return listaLeads().filter(function (l) { return String(l.id) === String(id); })[0] || null; }
 
@@ -484,7 +485,7 @@
 
   function linhaLead(l, acoes) {
     var m = modulo(l.produto);
-    var rot = m ? m.label.split('—')[0].trim() : 'Sem produto';
+    var rot = m ? m.label.split('—')[0].trim() : (l.produto === 'mercadao' ? 'Rádio Mercadão' : 'Sem produto');
     var bts = acoes.map(function (a, i) {
       return '<button type="button" class="b' + (i === 0 ? ' p' : '') + '" data-lead="' + esc(l.id) + '" data-acao="' + a + '">' + esc(ROTULO_ACAO[a]) + '</button>';
     }).join('');
