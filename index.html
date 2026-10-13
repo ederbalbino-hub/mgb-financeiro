@@ -7525,6 +7525,8 @@ function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).valu
 // entram na lista do mês com CNPJ, e-mail e endereço do cadastro, e o valor do contrato na competência escolhida.
 // Contratos lançados pelo hub (Novo cliente com lead do CRM + receitas avulsas), no formato da planilha.
 // inicio = mês em que começa a pagar; meses = duração. Base do Faturamento e do "incluir" na planilha.
+// Simulação de treino (13/10): clientes com nome começando em "TREINO" nunca vão para a planilha nem para o Faturamento.
+const FAT_RX_TREINO=/^\s*treino\b/i;
 function fFatContratosHub(rowsPlanilha){
   rowsPlanilha=rowsPlanilha||[]; const out=[];
   const modRot={vaapty:'Vaapty',radio:'Rádio Interna',tv:'TV Interna'};
@@ -7533,6 +7535,7 @@ function fFatContratosHub(rowsPlanilha){
     const m=MODULES.find(x=>x.id===mid); if(!m) return;
     m.items.forEach(item=>{
       const info=((clientesInfo||{})[mid]||{})[item]; if(!info||!info.leadId) return;              // só os criados pelo Novo cliente
+      if(FAT_RX_TREINO.test(item)||FAT_RX_TREINO.test(info.razao||'')) return;                      // treino da equipe: nunca vai para o dia 5
       const ro=recObj(mid,item); if(!(ro.valor>0)||!ro.inicio) return;
       const modulo=modRot[mid]||m.label; const cod=codigoDe(mid==='vaapty'?'TV Interna':modulo);
       out.push({ id:'hub-'+mid+'-'+fNormNome(item), modulo, cliente:info.razao||item, cnpj:info.cnpj||'', email:info.email||'',
@@ -7541,7 +7544,7 @@ function fFatContratosHub(rowsPlanilha){
         ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:info.notaFiscal===false?'nao':'sim', hubMod:mid, hubItem:item, apelido:item });
     });
   });
-  if(typeof MGBLancar!=='undefined') (receitasAvulsas||[]).filter(x=>x&&x.valor>0&&x.mes).forEach(x=>{
+  if(typeof MGBLancar!=='undefined') (receitasAvulsas||[]).filter(x=>x&&x.valor>0&&x.mes&&!FAT_RX_TREINO.test(x.cliente||'')).forEach(x=>{
     const ci=x.clienteInfo||{}, cod=codigoDe('TV Interna');
     out.push({ id:'hub-avulsa-'+x.id, modulo:'Avulsa', cliente:ci.razao||x.cliente, cnpj:ci.cnpj||'', email:ci.email||'',
       logradouro:'', numero:'', complemento:'', bairro:'', cidade:'', uf:'', cep:'', valor:x.valor, inicio:x.mes, meses:1,
