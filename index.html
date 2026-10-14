@@ -7624,7 +7624,12 @@ function fFatClientesDoHub(rowsPlanilha){
     if(rowsPlanilha.some(r=>r.id===c.id)) return false;
     if(c.hubMod==='_avulsa') return !rowsPlanilha.some(r=>fSimNome(r.cliente,c.apelido)>=0.85&&Math.abs((+r.valor||0)-c.valor)<0.01);
     return !rowsPlanilha.some(r=>fSimNome(r.cliente,c.apelido)>=0.85||(c.cnpj&&String(r.cnpj).replace(/\D/g,'')===String(c.cnpj).replace(/\D/g,'')&&fSimNome(r.cliente,c.apelido)>=0.6));
-  }).map(c=>({ linha:null, ...c, issRetido:false, boleto:c.boleto!=='nao', modo:c.modoPadrao||'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true }));
+  }).map(c=>({ linha:null, ...c, issRetido:false, boleto:c.boleto!=='nao', modo:c.modoPadrao||'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true }))
+  .reduce((acc,c)=>{ // "X (renovação)" cobra junto com "X": uma linha só, valores somados (se os dois estão ativos no mês)
+    const m=/^(.*?)\s*\(renova[cç][aã]o\)\s*$/i.exec(c.hubItem||'');
+    if(m&&c.hubMod){ const base=acc.find(x=>x.hubMod===c.hubMod&&fNormNome(x.hubItem)===fNormNome(m[1])); if(base){ base.valor=(+base.valor||0)+(+c.valor||0); base.renovacaoSomada=true; return acc; } }
+    acc.push(c); return acc;
+  },[]);
 }
 // Grava na planilha "MGB Faturamento - Clientes" (ação incluir do Apps Script) cada contrato do hub, com o mês em que
 // começa a pagar e os meses do contrato. Idempotente: só reenvia quando valor/início/meses/cadastro mudam.
