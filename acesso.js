@@ -21,7 +21,7 @@
   var K_ULTIMO = 'mgb_ultimo_usuario';
 
   var TODAS = ['home', 'overview', 'custos', 'pessoal', 'contabilidade', 'operacional:contratos', 'operacional:estudio',
-    'relatorios', 'ferramentas', 'gerador', 'midiakit', 'apresmgb', 'sindicos', 'leads', 'propvaapty', 'radioops', 'planocaixa',
+    'relatorios', 'ferramentas', 'gerador', 'midiakit', 'apresmgb', 'sindicos', 'leads', 'propvaapty', 'planotaroba', 'radioops', 'planocaixa',
     'operacional:telavertical'];
 
   // extras: partes da tela que não são uma página
@@ -42,7 +42,7 @@
     'admin-meudia': {
       rotulo: 'Meu dia',
       // 11/10: Cobrança Mensal (aba Tela Vertical = relatório ao sócio) e Contratos voltam ao Meu dia.
-      paginas: ['home', 'leads', 'midiakit', 'apresmgb', 'sindicos', 'propvaapty', 'overview', 'custos',
+      paginas: ['home', 'leads', 'midiakit', 'apresmgb', 'sindicos', 'propvaapty', 'planotaroba', 'overview', 'custos',
         'contabilidade', 'operacional:contratos', 'operacional:telavertical', 'relatorios', 'radioops', 'planocaixa', 'pessoal'],
       extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao', 'novo']
     },
