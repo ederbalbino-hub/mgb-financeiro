@@ -7491,6 +7491,7 @@ function fLeoResetar(){
 }
 async function fLeoEnviarEmail(){
   let prontas=leoUnidades.filter(u=>u.status==='emitida'&&u.invoiceId);
+  let jaConfirmou=false; // o prompt de reenvio já serve de confirmação (o Chrome silencia diálogos em sequência)
   if(!prontas.length){
     const jaEnviadas=leoUnidades.filter(u=>u.status==='enviada'&&u.invoiceId);
     if(!jaEnviadas.length){ alert('Nenhuma nota emitida ainda pra mandar.'); return; }
@@ -7500,7 +7501,8 @@ async function fLeoEnviarEmail(){
     if(resp==null) return;
     const termos=norm(resp).split(',').map(x=>x.trim()).filter(Boolean);
     prontas = termos.includes('todas') ? jaEnviadas : jaEnviadas.filter(u=>termos.some(t=>norm(u.nome).includes(t)));
-    if(!prontas.length){ alert('Nenhuma unidade bateu com o que você digitou.'); return; }
+    if(!prontas.length){ document.getElementById('f-leo-status').innerHTML='<div class="ferr-info" style="color:var(--red)">Nenhuma unidade bateu com o que você digitou.</div>'; return; }
+    jaConfirmou=true;
   }
   const destino=document.getElementById('f-leo-email-destino').value.trim();
   if(!destino){ alert('Informe o e-mail de destino.'); return; }
@@ -7510,8 +7512,9 @@ async function fLeoEnviarEmail(){
   const pausa=ms=>new Promise(res=>setTimeout(res,ms));
   const nomeU=u=>u.nome.replace('Leo Cosméticos Ltda ','');
   const nLotes=Math.ceil(prontas.length/LOTE);
-  if(!confirm('Mandar até '+nLotes+' e-mail(s) pra '+destino+' com '+prontas.length+' nota(s) no total (até '+LOTE+' por e-mail, com pausa entre eles — leva alguns minutos)?')) return;
   const btn=document.getElementById('f-leo-btn-email'); const st=document.getElementById('f-leo-status');
+  if(!jaConfirmou && !confirm('Mandar até '+nLotes+' e-mail(s) pra '+destino+' com '+prontas.length+' nota(s) no total (até '+LOTE+' por e-mail, com pausa entre eles — leva alguns minutos)?')){ st.innerHTML='<div class="ferr-info">Envio cancelado (ou o navegador bloqueou a confirmação — atualize a página com Cmd+Shift+R e tente de novo).</div>'; return; }
+  st.innerHTML='<div class="ferr-info">Iniciando envio de '+prontas.length+' nota(s) em '+nLotes+' e-mail(s)…</div>';
   btn.disabled=true; btn.style.opacity='.6';
   let enviadas=0, pendentes=prontas.slice(), ultimoErro={}; let emails=0;
   try{
