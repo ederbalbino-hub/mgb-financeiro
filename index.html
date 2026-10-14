@@ -7500,25 +7500,33 @@ async function fLeoEnviarEmail(){
   if(!destino){ alert('Informe o e-mail de destino.'); return; }
   const ambiente=document.getElementById('f-leo-amb').value||'producao';
   const comp=document.getElementById('f-leo-comp').value||'';
-  if(!confirm('Mandar 1 e-mail pra '+destino+' com '+prontas.length+' nota(s) fiscal(is) anexada(s)?')) return;
+  const LOTE=8; // poucos PDFs por e-mail: evita estourar tempo/limite e mostra exatamente o que foi
+  const lotes=[]; for(let i=0;i<prontas.length;i+=LOTE) lotes.push(prontas.slice(i,i+LOTE));
+  if(!confirm('Mandar '+lotes.length+' e-mail(s) pra '+destino+' com '+prontas.length+' nota(s) no total (até '+LOTE+' por e-mail)?')) return;
   const btn=document.getElementById('f-leo-btn-email'); const st=document.getElementById('f-leo-status');
-  btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Baixando PDFs e enviando e-mail…</div>';
+  btn.disabled=true; btn.style.opacity='.6';
+  let enviadas=0; const falhasTot=[];
   try{
-    const r=await fetch(EMAIL_API_URL+'?action=enviar-notas', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
-      ambiente, para:destino, assunto:'Notas fiscais MGB Mídia — Léo Cosméticos — '+comp,
-      mensagem:'Seguem em anexo as notas fiscais referentes às unidades faturadas em '+comp+' ('+prontas.length+' nota(s)).',
-      notas: prontas.map(u=>({ invoiceId:u.invoiceId, nomeArquivo:'nota-'+u.id })),
-    })});
-    const j=await r.json();
-    if(!r.ok) throw new Error(j.error||('Erro '+r.status));
-    const falhas=(j.falharam||[]);
-    const idsFalha=new Set(falhas.map(f=>f.invoiceId));
-    prontas.forEach(u=>{ if(!idsFalha.has(u.invoiceId)) u.status='enviada'; }); // só marca as que realmente foram anexadas
-    try{ scheduleSave(); }catch(e){}
-    fLeoLista();
-    st.innerHTML='<div class="ferr-info" style="color:'+(falhas.length?'var(--red)':'var(--green)')+'">✓ E-mail enviado com '+j.enviados+' nota(s)'+(falhas.length?' — ⚠ '+falhas.length+' NÃO anexadas (continuam como "emitida"; clique em enviar de novo pra mandar só elas). Motivo: '+String(falhas[0].erro).replace(/</g,'&lt;')+'':'')+'.</div>';
-  }catch(e){
-    st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+'</div>';
+    for(let k=0;k<lotes.length;k++){
+      const lote=lotes[k];
+      st.innerHTML='<div class="ferr-info">Enviando e-mail '+(k+1)+'/'+lotes.length+'… ('+enviadas+' nota(s) já enviadas)</div>';
+      try{
+        const r=await fetch(EMAIL_API_URL+'?action=enviar-notas', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+          ambiente, para:destino, assunto:'Notas fiscais MGB Mídia — Léo Cosméticos — '+comp+(lotes.length>1?' ('+(k+1)+'/'+lotes.length+')':''),
+          mensagem:'Seguem em anexo as notas fiscais referentes às unidades faturadas em '+comp+(lotes.length>1?' (e-mail '+(k+1)+' de '+lotes.length+', '+lote.length+' nota(s)).':' ('+lote.length+' nota(s)).'),
+          notas: lote.map(u=>({ invoiceId:u.invoiceId, nomeArquivo:'nota-'+u.id })),
+        })});
+        const j=await r.json();
+        if(!r.ok) throw new Error(j.error||('Erro '+r.status));
+        const idsFalha=new Set((j.falharam||[]).map(f=>f.invoiceId));
+        lote.forEach(u=>{ if(!idsFalha.has(u.invoiceId)){ u.status='enviada'; enviadas++; } else falhasTot.push(u.nome.replace('Leo Cosméticos Ltda ','')+': '+(j.falharam.find(f=>f.invoiceId===u.invoiceId)||{}).erro); });
+      }catch(e){
+        lote.forEach(u=>falhasTot.push(u.nome.replace('Leo Cosméticos Ltda ','')+': '+e.message));
+      }
+      try{ scheduleSave(); }catch(e){}
+      fLeoLista();
+    }
+    st.innerHTML='<div class="ferr-info" style="color:'+(falhasTot.length?'var(--red)':'var(--green)')+'">✓ '+enviadas+' nota(s) enviada(s) em '+lotes.length+' e-mail(s)'+(falhasTot.length?'. ⚠ '+falhasTot.length+' NÃO enviadas (continuam como "emitida" — clique em enviar de novo pra mandar só elas):<br>'+falhasTot.map(x=>String(x).replace(/</g,'&lt;')).join('<br>'):'')+'</div>';
   }finally{ btn.disabled=false; btn.style.opacity='1'; }
 }
 
