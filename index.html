@@ -7962,7 +7962,7 @@ function fFatEnviarWhats(id){
   const r=fatLinhas.find(x=>x.id===id); if(!r||!r.boletoUrl) return;
   notaConfig.fatTel=notaConfig.fatTel||{};
   const info=(r.hubMod&&((clientesInfo||{})[r.hubMod]||{})[r.hubItem])||{};
-  let tel=String(notaConfig.fatTel[r.id]||r.whatsapp||r.telefone||info.whatsapp||info.telefone||info.celular||'').replace(/\D/g,'');
+  let tel=String(notaConfig.fatTel[r.id]||r.whatsapp||r.telefone||info.tel||info.whatsapp||info.telefone||info.celular||'').replace(/\D/g,'');
   if(tel.length<10){
     const v=prompt('WhatsApp de '+(r.apelido||r.cliente)+' (com DDD):','');
     if(v==null) return;
@@ -7974,7 +7974,10 @@ function fFatEnviarWhats(id){
   const comp=(document.getElementById('f-fat-comp')||{}).value||'';
   const compBr=comp?comp.slice(5,7)+'/'+comp.slice(0,4):'';
   const nome=r.apelido||r.cliente;
-  const msg='Olá, '+nome+'! 👋 Tudo bem?\n\nAqui é da *MGB Mídia*. Segue o boleto referente à veiculação da sua loja na *Rádio Interna do Mercadão da Prochet*.\n\n'
+  const txt=[r.cliente,r.apelido,r.hubItem,r.descricao].join(' ');
+  const servico=/mercad|prochet/i.test(txt)?'à veiculação da sua loja na *Rádio Interna do Mercadão da Prochet*'
+    :({'Rádio Interna':'à veiculação na *Rádio Interna*','TV Interna':'à veiculação na *TV Interna*','Vaapty':'ao serviço *TV Vaapty*','Elevadores':'à veiculação nas *telas dos elevadores*','Rádio Interna + TV':'à veiculação na *Rádio e TV Interna*'}[r.modulo]||'aos *serviços de mídia contratados*');
+  const msg='Olá, '+nome+'! 👋 Tudo bem?\n\nAqui é da *MGB Mídia*. Segue o boleto referente a '+servico+'.\n\n'
     +'📅 *Competência:* '+compBr+'\n💰 *Valor:* '+f(fFatBoleto(r))+'\n🗓️ *Vencimento:* '+fVencBoleto().br+'\n\n'
     +'🔗 *Acesse o boleto aqui:*\n'+r.boletoUrl+'\n\n'
     +'Na própria página você consegue copiar o código de barras e, se preferir, pagar por PIX.\n\n'
