@@ -7940,7 +7940,7 @@ function fFatLista(){
   if(!fatLinhas.length){ el.innerHTML='<div class="ferr-info">Clique em "Carregar planilha" pra ver os clientes ativos.</div>'; return; }
   const comp=(document.getElementById('f-fat-comp')||{}).value||'';
   const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
-  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th></tr>'+
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th><th style="text-align:left;padding:4px 6px">WhatsApp</th></tr>'+
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
@@ -7953,8 +7953,34 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.emitidoEm&&r.status!=='pendente'?' <span style="font-size:9px;color:var(--muted)">'+new Date(r.emitidoEm).toLocaleDateString('pt-BR')+(r.nfNumero?' · NF '+r.nfNumero:'')+'</span>':'')+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td></tr>';
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 enviar boleto</a>':'<span style="color:var(--muted)" title="Só aparece depois que o boleto é emitido">—</span>')+'</td></tr>';
     }).join('')+'</table>';
+}
+// Abre o WhatsApp com a mensagem do boleto pronta. Telefone: cadastro do cliente → último digitado (salvo por cliente).
+function fFatEnviarWhats(id){
+  const r=fatLinhas.find(x=>x.id===id); if(!r||!r.boletoUrl) return;
+  notaConfig.fatTel=notaConfig.fatTel||{};
+  const info=(r.hubMod&&((clientesInfo||{})[r.hubMod]||{})[r.hubItem])||{};
+  let tel=String(notaConfig.fatTel[r.id]||r.whatsapp||r.telefone||info.whatsapp||info.telefone||info.celular||'').replace(/\D/g,'');
+  if(tel.length<10){
+    const v=prompt('WhatsApp de '+(r.apelido||r.cliente)+' (com DDD):','');
+    if(v==null) return;
+    tel=String(v).replace(/\D/g,'');
+    if(tel.length<10){ alert('Número inválido — informe com DDD.'); return; }
+    notaConfig.fatTel[r.id]=tel; try{ scheduleSave(); }catch(e){}
+  }
+  if(tel.length<=11) tel='55'+tel;
+  const comp=(document.getElementById('f-fat-comp')||{}).value||'';
+  const compBr=comp?comp.slice(5,7)+'/'+comp.slice(0,4):'';
+  const nome=r.apelido||r.cliente;
+  const msg='Olá, '+nome+'! 👋 Tudo bem?\n\nAqui é da *MGB Mídia*. Segue o boleto referente à veiculação da sua loja na *Rádio Interna do Mercadão da Prochet*.\n\n'
+    +'📅 *Competência:* '+compBr+'\n💰 *Valor:* '+f(fFatBoleto(r))+'\n🗓️ *Vencimento:* '+fVencBoleto().br+'\n\n'
+    +'🔗 *Acesse o boleto aqui:*\n'+r.boletoUrl+'\n\n'
+    +'Na própria página você consegue copiar o código de barras e, se preferir, pagar por PIX.\n\n'
+    +'Após o pagamento, não precisa enviar comprovante, a baixa é automática. Qualquer dúvida, é só responder esta mensagem.\n\n'
+    +'Obrigado pela parceria! 🙌\n*MGB Mídia*';
+  window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
 }
 async function fFatEmitirUma(row){
   if(row.status==='aguardando-nota'||row.status==='emitida') return row.status; // já enviado neste mês
