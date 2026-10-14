@@ -7500,33 +7500,45 @@ async function fLeoEnviarEmail(){
   if(!destino){ alert('Informe o e-mail de destino.'); return; }
   const ambiente=document.getElementById('f-leo-amb').value||'producao';
   const comp=document.getElementById('f-leo-comp').value||'';
-  const LOTE=8; // poucos PDFs por e-mail: evita estourar tempo/limite e mostra exatamente o que foi
-  const lotes=[]; for(let i=0;i<prontas.length;i+=LOTE) lotes.push(prontas.slice(i,i+LOTE));
-  if(!confirm('Mandar '+lotes.length+' e-mail(s) pra '+destino+' com '+prontas.length+' nota(s) no total (até '+LOTE+' por e-mail)?')) return;
+  const LOTE=5; // poucos PDFs por e-mail + pausas: a Asaas devolve 403 se baixar muita coisa em rajada
+  const pausa=ms=>new Promise(res=>setTimeout(res,ms));
+  const nomeU=u=>u.nome.replace('Leo Cosméticos Ltda ','');
+  const nLotes=Math.ceil(prontas.length/LOTE);
+  if(!confirm('Mandar até '+nLotes+' e-mail(s) pra '+destino+' com '+prontas.length+' nota(s) no total (até '+LOTE+' por e-mail, com pausa entre eles — leva alguns minutos)?')) return;
   const btn=document.getElementById('f-leo-btn-email'); const st=document.getElementById('f-leo-status');
   btn.disabled=true; btn.style.opacity='.6';
-  let enviadas=0; const falhasTot=[];
+  let enviadas=0, pendentes=prontas.slice(), ultimoErro={}; let emails=0;
   try{
-    for(let k=0;k<lotes.length;k++){
-      const lote=lotes[k];
-      st.innerHTML='<div class="ferr-info">Enviando e-mail '+(k+1)+'/'+lotes.length+'… ('+enviadas+' nota(s) já enviadas)</div>';
-      try{
-        const r=await fetch(EMAIL_API_URL+'?action=enviar-notas', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
-          ambiente, para:destino, assunto:'Notas fiscais MGB Mídia — Léo Cosméticos — '+comp+(lotes.length>1?' ('+(k+1)+'/'+lotes.length+')':''),
-          mensagem:'Seguem em anexo as notas fiscais referentes às unidades faturadas em '+comp+(lotes.length>1?' (e-mail '+(k+1)+' de '+lotes.length+', '+lote.length+' nota(s)).':' ('+lote.length+' nota(s)).'),
-          notas: lote.map(u=>({ invoiceId:u.invoiceId, nomeArquivo:'nota-'+u.id })),
-        })});
-        const j=await r.json();
-        if(!r.ok) throw new Error(j.error||('Erro '+r.status));
-        const idsFalha=new Set((j.falharam||[]).map(f=>f.invoiceId));
-        lote.forEach(u=>{ if(!idsFalha.has(u.invoiceId)){ u.status='enviada'; enviadas++; } else falhasTot.push(u.nome.replace('Leo Cosméticos Ltda ','')+': '+(j.falharam.find(f=>f.invoiceId===u.invoiceId)||{}).erro); });
-      }catch(e){
-        lote.forEach(u=>falhasTot.push(u.nome.replace('Leo Cosméticos Ltda ','')+': '+e.message));
+    for(let rodada=1; rodada<=3 && pendentes.length; rodada++){
+      if(rodada>1){
+        for(let s=45;s>0;s--){ st.innerHTML='<div class="ferr-info">'+pendentes.length+' nota(s) a Asaas recusou — aguardando '+s+'s pra tentar de novo (tentativa '+rodada+'/3)… '+enviadas+' já enviadas</div>'; await pausa(1000); }
       }
-      try{ scheduleSave(); }catch(e){}
-      fLeoLista();
+      const lotes=[]; for(let i=0;i<pendentes.length;i+=LOTE) lotes.push(pendentes.slice(i,i+LOTE));
+      const falhou=[];
+      for(let k=0;k<lotes.length;k++){
+        const lote=lotes[k];
+        if(k>0) await pausa(8000);
+        st.innerHTML='<div class="ferr-info">Enviando lote '+(k+1)+'/'+lotes.length+(rodada>1?' (tentativa '+rodada+')':'')+'… '+enviadas+' nota(s) já enviadas</div>';
+        try{
+          const r=await fetch(EMAIL_API_URL+'?action=enviar-notas', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+            ambiente, para:destino, assunto:'Notas fiscais MGB Mídia — Léo Cosméticos — '+comp+' ('+(++emails)+')',
+            mensagem:'Seguem em anexo as notas fiscais referentes às unidades faturadas em '+comp+' ('+lote.length+' nota(s) neste e-mail).',
+            notas: lote.map(u=>({ invoiceId:u.invoiceId, nomeArquivo:'nota-'+u.id })),
+          })});
+          const j=await r.json();
+          if(!r.ok) throw new Error(j.error||('Erro '+r.status));
+          const falhaPor={}; (j.falharam||[]).forEach(f=>falhaPor[f.invoiceId]=f.erro);
+          lote.forEach(u=>{ if(falhaPor[u.invoiceId]===undefined){ u.status='enviada'; enviadas++; } else { falhou.push(u); ultimoErro[u.id]=falhaPor[u.invoiceId]; } });
+        }catch(e){
+          emails--; // esse e-mail não saiu
+          lote.forEach(u=>{ falhou.push(u); ultimoErro[u.id]=e.message; });
+        }
+        try{ scheduleSave(); }catch(e){}
+        fLeoLista();
+      }
+      pendentes=falhou;
     }
-    st.innerHTML='<div class="ferr-info" style="color:'+(falhasTot.length?'var(--red)':'var(--green)')+'">✓ '+enviadas+' nota(s) enviada(s) em '+lotes.length+' e-mail(s)'+(falhasTot.length?'. ⚠ '+falhasTot.length+' NÃO enviadas (continuam como "emitida" — clique em enviar de novo pra mandar só elas):<br>'+falhasTot.map(x=>String(x).replace(/</g,'&lt;')).join('<br>'):'')+'</div>';
+    st.innerHTML='<div class="ferr-info" style="color:'+(pendentes.length?'var(--red)':'var(--green)')+'">✓ '+enviadas+' nota(s) enviada(s) em '+emails+' e-mail(s)'+(pendentes.length?'. ⚠ '+pendentes.length+' NÃO enviadas (continuam como "emitida" — espere uns minutos e clique em enviar de novo):<br>'+pendentes.map(u=>nomeU(u)+': '+String(ultimoErro[u.id]).replace(/</g,'&lt;')).join('<br>'):'')+'</div>';
   }finally{ btn.disabled=false; btn.style.opacity='1'; }
 }
 

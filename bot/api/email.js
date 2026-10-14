@@ -60,7 +60,10 @@ export default async function handler(req, res) {
 
       const anexos = [];
       const falharam = [];
+      let primeira = true;
       for (const n of notas) {
+        if (!primeira) await new Promise((r) => setTimeout(r, 1200)); // espaça os pedidos: a Asaas passou a devolver 403 em rajada
+        primeira = false;
         let ultimoErro = null;
         for (let tentativa = 0; tentativa < 3; tentativa++) {
           try {
@@ -70,14 +73,14 @@ export default async function handler(req, res) {
             break;
           } catch (e) {
             ultimoErro = e;
-            await new Promise((r) => setTimeout(r, 800 * (tentativa + 1))); // rate limit / PDF ainda gerando
+            await new Promise((r) => setTimeout(r, 1000 * (tentativa + 1))); // bloqueio temporário / PDF ainda gerando
           }
         }
         if (ultimoErro) falharam.push({ invoiceId: n.invoiceId, erro: ultimoErro.message });
       }
 
       if (!anexos.length) {
-        return res.status(400).json({ error: "Nenhuma nota pôde ser baixada.", falharam });
+        return res.status(400).json({ error: "Nenhuma nota pôde ser baixada (" + falharam[0].erro + ").", falharam });
       }
 
       const de = process.env.RESEND_FROM || "MGB Mídia <financeiro@agenciamgb.com.br>";
