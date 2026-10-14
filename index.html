@@ -6699,6 +6699,12 @@ function copiarSpot() {
           <span id="f-fat-resumo" class="ferr-info"></span>
           <span id="f-fat-venc" class="ferr-info"></span>
         </div>
+        <details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--purple)">📋 Cadastrar lojas do módulo (telefone, CNPJ, pago)</summary>
+          <div class="ferr-d" style="margin-top:6px">Cole uma loja por linha: <b>Nome - telefone - CNPJ/CPF</b>. Pode escrever "pago" (marca pago na competência) e "nota e boleto" (senão é só boleto). O nome é encaixado nos clientes da Rádio Interna; CNPJ no formato 00.000.000/0000-00 e CPF 000.000.000-00. Rodar de novo só complementa/atualiza.</div>
+          <textarea id="f-fat-lojas-txt" class="ferr-in" rows="6" placeholder="Andreia Rocha - 43 99935-2023&#10;Café Odebrecht - 43 99935-2023 - 37.013.895/0001-09 - nota e boleto&#10;Candy Imports - 43 98429-7298 - pago"></textarea>
+          <button class="ferr-btn" style="margin-top:6px" onclick="fFatLojasCadastrar()">Cadastrar</button>
+          <div id="f-fat-lojas-res" style="margin-top:6px"></div>
+        </details>
         <div id="f-fat-status" style="margin-top:10px"></div>
         <details style="margin-top:12px" ontoggle="if(this.open) fFatProvRender()"><summary style="cursor:pointer;font-size:12px;font-weight:600">📅 Provisionado pelos contratos — próximos 12 meses</summary>
           <p style="font-size:11px;color:var(--muted);margin:6px 0">Cada contrato aparece em todos os meses em que vai ser cobrado, a partir do mês em que o cliente começa a pagar. É a mesma conta da Visão Receita; os clientes novos do hub entram sozinhos na lista do dia 5 de cada mês.</p>
@@ -7592,14 +7598,14 @@ function fFatContratosHub(rowsPlanilha){
   ['vaapty','radio','tv'].forEach(mid=>{
     const m=MODULES.find(x=>x.id===mid); if(!m) return;
     m.items.forEach(item=>{
-      const info=((clientesInfo||{})[mid]||{})[item]; if(!info||!info.leadId) return;              // só os criados pelo Novo cliente
+      const info=((clientesInfo||{})[mid]||{})[item]; if(!info||!(info.leadId||info.fatLote)) return;   // criados pelo Novo cliente OU lojas cadastradas pela caixa 'Cadastrar lojas'
       if(FAT_RX_TREINO.test(item)||FAT_RX_TREINO.test(info.razao||'')) return;                      // treino da equipe: nunca vai para o dia 5
       const ro=recObj(mid,item); if(!(ro.valor>0)||!ro.inicio) return;
       const modulo=modRot[mid]||m.label; const cod=codigoDe(mid==='vaapty'?'TV Interna':modulo);
       out.push({ id:'hub-'+mid+'-'+fNormNome(item), modulo, cliente:info.razao||item, cnpj:info.cnpj||'', email:info.email||'',
         logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'', bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
         valor:ro.valor, inicio:ro.inicio, meses:ro.meses||12, descricao:(REC_DESC[mid]||'Prestação de serviços de mídia — {item}').replace('{item}',item),
-        ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:info.notaFiscal===false?'nao':'sim', hubMod:mid, hubItem:item, apelido:item });
+        ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:info.notaFiscal===false?'nao':'sim', hubMod:mid, hubItem:item, apelido:item, soHub:!!(info.fatLote&&!info.leadId), modoPadrao:info.modoFat||'', tel:info.tel||'' });
     });
   });
   if(typeof MGBLancar!=='undefined') (receitasAvulsas||[]).filter(x=>x&&x.valor>0&&x.mes&&!FAT_RX_TREINO.test(x.cliente||'')).forEach(x=>{
@@ -7618,7 +7624,7 @@ function fFatClientesDoHub(rowsPlanilha){
     if(rowsPlanilha.some(r=>r.id===c.id)) return false;
     if(c.hubMod==='_avulsa') return !rowsPlanilha.some(r=>fSimNome(r.cliente,c.apelido)>=0.85&&Math.abs((+r.valor||0)-c.valor)<0.01);
     return !rowsPlanilha.some(r=>fSimNome(r.cliente,c.apelido)>=0.85||(c.cnpj&&String(r.cnpj).replace(/\D/g,'')===String(c.cnpj).replace(/\D/g,'')&&fSimNome(r.cliente,c.apelido)>=0.6));
-  }).map(c=>({ linha:null, ...c, issRetido:false, boleto:c.boleto!=='nao', modo:'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true }));
+  }).map(c=>({ linha:null, ...c, issRetido:false, boleto:c.boleto!=='nao', modo:c.modoPadrao||'ambos', selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null, doHub:true }));
 }
 // Grava na planilha "MGB Faturamento - Clientes" (ação incluir do Apps Script) cada contrato do hub, com o mês em que
 // começa a pagar e os meses do contrato. Idempotente: só reenvia quando valor/início/meses/cadastro mudam.
@@ -7626,6 +7632,7 @@ async function fFatPlanilhaSync(){
   if(!_cargaSheetsOk) return {enviados:0};
   notaConfig.fatPlanilha=notaConfig.fatPlanilha||{}; const feito=notaConfig.fatPlanilha; let enviados=0, erros=[];
   for(const c of fFatContratosHub([])){
+    if(c.soHub) continue; // lojas cadastradas na caixa 'Cadastrar lojas' ficam só no hub
     const campos={id:c.id,modulo:c.modulo,cliente:c.cliente,cnpj:c.cnpj,email:c.email,logradouro:c.logradouro,numero:c.numero,complemento:c.complemento,
       bairro:c.bairro,cidade:c.cidade,uf:c.uf,cep:c.cep,valor:String(c.valor),inicio:c.inicio,meses:String(c.meses),descricao:c.descricao,
       ctribnac:String(c.ctribnac||''),cnbs:String(c.cnbs||''),boleto:c.boleto};
@@ -7914,7 +7921,7 @@ async function fFatCarregar(){
     st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+' — se for erro de autorização, abra o link do script uma vez no navegador e clique em Permitir.</div>';
   }finally{ btn.disabled=false; btn.style.opacity='1'; }
 }
-function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)&&r.status!=='emitida'&&r.status!=='aguardando-nota') r.selecionado=true; }); fFatLista(); }
+function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)&&r.status!=='emitida'&&r.status!=='aguardando-nota'&&!fFatPagoManual(r)) r.selecionado=true; }); fFatLista(); }
 function fFatLimparSelecao(){ fatLinhas.forEach(r=>r.selecionado=false); fFatLista(); }
 // Boleto = valor da nota MENOS o ISS retido pelo cliente (só quem retém: Londrina). O Simples (DAS) é da MGB e não entra aqui.
 // SÓ BOLETO (sem nota) não tem ISS: o boleto sai pelo valor cheio.
@@ -7933,8 +7940,17 @@ function fFatResumo(){
 function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…','aguardando-nota':'🔄 aguardando nota','boleto-emitido':'🧾 só boleto emitido',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
 // Status de PAGAMENTO (diferente do status de emissão acima) — vem da planilha, atualizado pelo
 // webhook da Asaas (bot/api/asaas-webhook.js) assim que o cliente paga ou o boleto vence.
+function fFatPagoManual(r){
+  try{
+    if(!r.hubMod||!r.hubItem) return false;
+    const comp=(document.getElementById('f-fat-comp')||{}).value||''; const m=/^(\d{4})-(\d{2})$/.exec(comp); if(!m) return false;
+    const pg=((recPagamentos[r.hubMod]||{})[r.hubItem]||{})[recPagKey(+m[1],+m[2]-1)];
+    return !!(pg&&pg.pago);
+  }catch(e){ return false; }
+}
 function fFatBadgePagamento(r){
   const s=r.statusPagamento;
+  if(!r.paymentId&&fFatPagoManual(r)) return '<span style="color:var(--green)">🟢 pago</span>';
   if(!r.paymentId) return '<span style="color:var(--muted)">—</span>';
   const map={
     pago:{icone:'🟢',txt:'pago',cor:'var(--green)'},
@@ -7959,15 +7975,75 @@ function fFatLista(){
       return '<tr style="'+''+'"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<input type="checkbox" '+((r.status==='aguardando-nota'||r.status==='emitida')?'disabled title="Já enviado neste mês" ':'')+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+(manual?' <span title="valor digitado à mão, padrão só nota" style="font-size:9px;color:#B45309">✋ valor manual</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.cliente||'')+(r.doHub?' <span title="Cliente novo do hub (Novo cliente). Não está na planilha de faturamento: os dados vêm do cadastro." style="font-size:9px;color:#6C55DB;font-weight:700">✨ novo no hub</span>':'')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+(manual?'<input value="'+(r.valor?String(r.valor).replace('.',','):'')+'" placeholder="valor" onchange="fFatValor(\''+r.id+'\',this.value)" style="width:92px;text-align:right;font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">':f(r.valor||0))+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((manual||r.soHub)?'<input value="'+(r.valor?String(r.valor).replace('.',','):'')+'" placeholder="valor" onchange="fFatValor(\''+r.id+'\',this.value)" style="width:92px;text-align:right;font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">':f(r.valor||0))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((r.modo==='nota')?'—':f(fFatBoleto(r))+(r.issRetido&&r.modo!=='boleto'&&Number(notaConfig.aliquotaMes)>0?' <span title="valor da nota menos o ISS retido" style="font-size:9px;color:var(--muted)">líq.</span>':''))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.emitidoEm&&r.status!=='pendente'?' <span style="font-size:9px;color:var(--muted)">'+new Date(r.emitidoEm).toLocaleDateString('pt-BR')+(r.nfNumero?' · NF '+r.nfNumero:'')+'</span>':'')+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 enviar boleto</a>':'<span style="color:var(--muted)" title="Só aparece depois que o boleto é emitido">—</span>')+'</td></tr>';
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 boleto</a>':'<span style="color:var(--muted)" title="O botão do WhatsApp aparece depois que o boleto é emitido">—</span>')+(r.hubMod?' <a href="#" onclick="event.preventDefault();fFatRecibo(\''+r.id+'\')" title="Abre a aba Recibos já preenchida com este cliente" style="margin-left:6px">🧾 recibo</a>':'')+'</td></tr>';
     }).join('')+'</table>';
+}
+// Atalho: abre a aba Recibos já preenchida com o cliente/valor/competência da linha.
+function fFatRecibo(id){
+  const r=fatLinhas.find(x=>x.id===id); if(!r||!r.hubMod) return;
+  const tab=document.querySelector('#page-contabilidade .ferr-tab'); showContabTab('recibo',tab);
+  const comp=(document.getElementById('f-fat-comp')||{}).value||'';
+  const set=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v==null?'':v; };
+  set('f-rec-cli',r.hubMod+'|'+r.hubItem); const cli=document.getElementById('f-rec-cli'); if(cli) cli.dataset.livre='';
+  try{ if(_cpForm.rec) _cpForm.rec.definir(r.hubItem); }catch(e){}
+  fRecCliente(); if(comp) fRecCompSet(comp);
+  set('f-rec-valor',fRecNum(r.valor)); set('f-rec-forma',r.modo==='nota'?'pix':'boleto');
+  if(r.cnpj) set('f-rec-doc',r.cnpj);
+  fRecCompMudou(); fRecPreview();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+// Caixa "Cadastrar lojas": cola "Nome - telefone - (CNPJ/CPF) - (pago) - (nota e boleto)" e o hub encaixa nos clientes do módulo Rádio Interna.
+function fFatLojasParse(txt){
+  const out=[]; let cur=null;
+  const partes=String(txt||'').replace(/\u2011|\u2010|\u2013|\u2014/g,'-').split(/\s+-\s+|\s+-$|\s{3,}|\n+|;/).map(x=>x.replace(/^-+|-+$/g,'').trim()).filter(Boolean);
+  partes.forEach(tk=>{
+    const docM=tk.match(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b|\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/);
+    const rest=tk.replace(docM?docM[0]:'','');
+    const telM=rest.match(/\(?\d{2}\)?[\s.]*9?[\s.]*\d{4}[\s.-]*\d{4}/);
+    const so=(telM?rest.replace(telM[0],''):rest).replace(/\(.*?\)/g,m=>' '+m+' ').trim();
+    const semTexto=!/[a-zA-ZÀ-ú]/.test(so);
+    if(!telM&&!docM){ if(/[a-zA-ZÀ-ú]/.test(tk)&&!/^(nota|boleto|pago|pagou)/i.test(tk)){ cur={nome:tk.replace(/[()]/g,'').trim(),tel:'',doc:'',pago:false,ambos:false}; out.push(cur); } else if(cur){ if(/pag/i.test(tk)) cur.pago=true; if(/nota/i.test(tk)) cur.ambos=true; } return; }
+    // token com telefone/doc: se vier texto antes (ex.: "Andreia Rocha 4399..."), é o nome
+    const nomeInline=so.replace(/\(.*?\)/g,'').replace(/\b(nota|boleto|e|pago|pagou)\b.*$/i,'').trim();
+    if(!cur||(nomeInline&&/[a-zA-ZÀ-ú]{3,}/.test(nomeInline)&&!cur.nome)){ cur={nome:nomeInline,tel:'',doc:'',pago:false,ambos:false}; out.push(cur); }
+    if(telM){ let d=telM[0].replace(/\D/g,''); if(d.length===10&&/[6-9]/.test(d[2])) d=d.slice(0,2)+'9'+d.slice(2); cur.tel=d; }
+    if(docM) cur.doc=docM[0];
+    if(/pag/i.test(tk)) cur.pago=true;
+    if(/nota/i.test(tk)) cur.ambos=true;
+  });
+  return out.filter(x=>x.nome);
+}
+function fFatLojasCadastrar(){
+  const res=document.getElementById('f-fat-lojas-res'); const txt=(document.getElementById('f-fat-lojas-txt')||{}).value||'';
+  const lista=fFatLojasParse(txt);
+  if(!lista.length){ res.innerHTML='<div class="ferr-info" style="color:var(--red)">Não achei nenhuma loja no texto. Use: Nome - telefone - CNPJ.</div>'; return; }
+  const mod=MODULES.find(m=>m.id==='radio'); const itens=((mod&&mod.items)||[]).filter(i=>!/\(pago/i.test(i));
+  const comp=(document.getElementById('f-fat-comp')||{}).value||new Date().toISOString().slice(0,7);
+  const mm=/^(\d{4})-(\d{2})$/.exec(comp); const key=mm?recPagKey(+mm[1],+mm[2]-1):null;
+  clientesInfo.radio=clientesInfo.radio||{}; const linhas=[]; const naoAchei=[];
+  lista.forEach(L=>{
+    const n=fNormNome(L.nome); let best=null, ms=0;
+    itens.forEach(it=>{ const t=fNormNome(it); let sc=fSimNome(it,L.nome); if(n.length>=3&&t.length>=3&&(t.includes(n)||n.includes(t))) sc=Math.max(sc,0.95); if(sc>ms){ ms=sc; best=it; } });
+    if(!best||ms<0.6){ naoAchei.push(L.nome); return; }
+    const base=fNormNome(best); const alvos=itens.filter(it=>it===best||fNormNome(it).startsWith(base)); // pega "(renovação)" junto
+    alvos.forEach(it=>{
+      const atual=clientesInfo.radio[it]||{};
+      const novo={...atual, fatLote:true, fantasia:atual.fantasia||it};
+      if(L.tel) novo.tel=L.tel; if(L.doc) novo.cnpj=L.doc; if(L.ambos) novo.modoFat='ambos'; else if(!novo.modoFat) novo.modoFat='boleto';
+      clientesInfo.radio[it]=novo;
+      if(L.pago&&key){ const P=recPagamentos.radio||(recPagamentos.radio={}); const Q=P[it]||(P[it]={}); Q[key]={...(Q[key]||{}),pago:true,obs:(Q[key]&&Q[key].obs)||'Pago',fonte:'manual'}; }
+    });
+    linhas.push(L.nome+' → <b>'+alvos.join(' + ')+'</b>'+(L.tel?' · 📱 '+L.tel:' · sem telefone')+(L.doc?' · '+L.doc:' · sem CNPJ/CPF')+(L.pago?' · ✅ pago':'')+(L.ambos?' · nota+boleto':' · só boleto'));
+  });
+  try{ scheduleSave(); }catch(e){}
+  res.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+linhas.length+' loja(s) cadastrada(s):<br>'+linhas.join('<br>')+'</div>'+(naoAchei.length?'<div class="ferr-info" style="color:var(--red)">Não encontrei no módulo Rádio Interna: '+naoAchei.join(', ')+'</div>':'')+'<div class="ferr-info">Clique em <b>🔄 Carregar planilha</b> pra elas aparecerem na lista.</div>';
 }
 // Abre o WhatsApp com a mensagem do boleto pronta. Telefone: cadastro do cliente → último digitado (salvo por cliente).
 function fFatEnviarWhats(id){
@@ -7999,6 +8075,10 @@ function fFatEnviarWhats(id){
 }
 async function fFatEmitirUma(row){
   if(row.status==='aguardando-nota'||row.status==='emitida') return row.status; // já enviado neste mês
+  if(!row.paymentId&&fFatPagoManual(row)){ row.selecionado=false; return 'pago'; } // já consta como pago neste mês
+  if(row.soHub&&row.modo!=='nota'&&String(row.cnpj||'').replace(/\D/g,'').length<11){
+    row.status='erro'; row.erro='Falta CNPJ/CPF — cadastre na caixa "Cadastrar lojas" (Nome - CNPJ)'; fFatLista(); return 'erro';
+  }
   const ambiente=document.getElementById('f-fat-amb').value||'producao';
   const comp=document.getElementById('f-fat-comp').value||'';
   row.status='emitindo'; row.erro=null; fFatLista();
