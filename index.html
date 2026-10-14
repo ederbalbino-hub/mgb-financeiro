@@ -7496,8 +7496,7 @@ async function fLeoEnviarEmail(){
     const jaEnviadas=leoUnidades.filter(u=>u.status==='enviada'&&u.invoiceId);
     if(!jaEnviadas.length){ alert('Nenhuma nota emitida ainda pra mandar.'); return; }
     const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-    const padrao='Cantareira, Barigui, Tatuapé, Umuarama, Calçadão, Campo Largo, Mueller, West Plaza, Guarulhos, Av. Center, Santo Amaro';
-    const resp=prompt('Nenhuma nota pendente. Quais unidades REENVIAR? Digite parte do nome, separadas por vírgula (ou TODAS pras '+jaEnviadas.length+'):', padrao);
+    const resp=prompt('Nenhuma nota pendente. Quais unidades REENVIAR? Digite parte do nome, separadas por vírgula (ou TODAS pras '+jaEnviadas.length+'):', '');
     if(resp==null) return;
     const termos=norm(resp).split(',').map(x=>x.trim()).filter(Boolean);
     prontas = termos.includes('todas') ? jaEnviadas : jaEnviadas.filter(u=>termos.some(t=>norm(u.nome).includes(t)));
@@ -7509,24 +7508,25 @@ async function fLeoEnviarEmail(){
   const ambiente=document.getElementById('f-leo-amb').value||'producao';
   const comp=document.getElementById('f-leo-comp').value||'';
   const LOTE=5; // poucos PDFs por e-mail + pausas: a Asaas devolve 403 se baixar muita coisa em rajada
+  const INTERVALO=120; // segundos entre um e-mail e outro (mínimo 2 min)
   const pausa=ms=>new Promise(res=>setTimeout(res,ms));
   const nomeU=u=>u.nome.replace('Leo Cosméticos Ltda ','');
   const nLotes=Math.ceil(prontas.length/LOTE);
   const btn=document.getElementById('f-leo-btn-email'); const st=document.getElementById('f-leo-status');
-  if(!jaConfirmou && !confirm('Mandar até '+nLotes+' e-mail(s) pra '+destino+' com '+prontas.length+' nota(s) no total (até '+LOTE+' por e-mail, com pausa entre eles — leva alguns minutos)?')){ st.innerHTML='<div class="ferr-info">Envio cancelado (ou o navegador bloqueou a confirmação — atualize a página com Cmd+Shift+R e tente de novo).</div>'; return; }
+  if(!jaConfirmou && !confirm('Mandar até '+nLotes+' e-mail(s) pra '+destino+' com '+prontas.length+' nota(s) no total (até '+LOTE+' por e-mail, com intervalo de '+(INTERVALO/60)+' min entre eles — leva uns '+Math.round((nLotes-1)*INTERVALO/60)+' min; mantenha esta aba aberta)?')){ st.innerHTML='<div class="ferr-info">Envio cancelado (ou o navegador bloqueou a confirmação — atualize a página com Cmd+Shift+R e tente de novo).</div>'; return; }
   st.innerHTML='<div class="ferr-info">Iniciando envio de '+prontas.length+' nota(s) em '+nLotes+' e-mail(s)…</div>';
   btn.disabled=true; btn.style.opacity='.6';
   let enviadas=0, pendentes=prontas.slice(), ultimoErro={}; let emails=0;
   try{
     for(let rodada=1; rodada<=3 && pendentes.length; rodada++){
       if(rodada>1){
-        for(let s=45;s>0;s--){ st.innerHTML='<div class="ferr-info">'+pendentes.length+' nota(s) a Asaas recusou — aguardando '+s+'s pra tentar de novo (tentativa '+rodada+'/3)… '+enviadas+' já enviadas</div>'; await pausa(1000); }
+        for(let s=INTERVALO;s>0;s--){ st.innerHTML='<div class="ferr-info">'+pendentes.length+' nota(s) a Asaas recusou — aguardando '+s+'s pra tentar de novo (tentativa '+rodada+'/3)… '+enviadas+' já enviadas</div>'; await pausa(1000); }
       }
       const lotes=[]; for(let i=0;i<pendentes.length;i+=LOTE) lotes.push(pendentes.slice(i,i+LOTE));
       const falhou=[];
       for(let k=0;k<lotes.length;k++){
         const lote=lotes[k];
-        if(k>0) await pausa(8000);
+        if(k>0){ for(let s=INTERVALO;s>0;s--){ st.innerHTML='<div class="ferr-info">Próximo e-mail (lote '+(k+1)+'/'+lotes.length+') em '+s+'s… '+enviadas+' nota(s) já enviadas — não feche esta aba</div>'; await pausa(1000); } }
         st.innerHTML='<div class="ferr-info">Enviando lote '+(k+1)+'/'+lotes.length+(rodada>1?' (tentativa '+rodada+')':'')+'… '+enviadas+' nota(s) já enviadas</div>';
         try{
           const r=await fetch(EMAIL_API_URL+'?action=enviar-notas', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
