@@ -7493,8 +7493,14 @@ async function fLeoEnviarEmail(){
   let prontas=leoUnidades.filter(u=>u.status==='emitida'&&u.invoiceId);
   if(!prontas.length){
     const jaEnviadas=leoUnidades.filter(u=>u.status==='enviada'&&u.invoiceId);
-    if(jaEnviadas.length && confirm('Nenhuma nota pendente de envio. Reenviar TODAS as '+jaEnviadas.length+' já enviadas num e-mail novo?')) prontas=jaEnviadas;
-    else { if(!jaEnviadas.length) alert('Nenhuma nota emitida ainda pra mandar.'); return; }
+    if(!jaEnviadas.length){ alert('Nenhuma nota emitida ainda pra mandar.'); return; }
+    const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const padrao='Cantareira, Barigui, Tatuapé, Umuarama, Calçadão, Campo Largo, Mueller, West Plaza, Guarulhos, Av. Center, Santo Amaro';
+    const resp=prompt('Nenhuma nota pendente. Quais unidades REENVIAR? Digite parte do nome, separadas por vírgula (ou TODAS pras '+jaEnviadas.length+'):', padrao);
+    if(resp==null) return;
+    const termos=norm(resp).split(',').map(x=>x.trim()).filter(Boolean);
+    prontas = termos.includes('todas') ? jaEnviadas : jaEnviadas.filter(u=>termos.some(t=>norm(u.nome).includes(t)));
+    if(!prontas.length){ alert('Nenhuma unidade bateu com o que você digitou.'); return; }
   }
   const destino=document.getElementById('f-leo-email-destino').value.trim();
   if(!destino){ alert('Informe o e-mail de destino.'); return; }
