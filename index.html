@@ -7294,7 +7294,7 @@ function fNotaCliente(){
   const issEl=document.getElementById('f-nota-iss'); if(issEl && !issEl.value && notaConfig.aliquotaMes!=null) issEl.value=fRecNum(notaConfig.aliquotaMes);
   // Rádio Moinho (Bureau): a Nota MGB do mês já vem calculada sozinha no Rádio Ops (fee+comissão+Connectmix) — puxa automático
   const modEl=document.getElementById('f-nota-mod'), valorEl=document.getElementById('f-nota-valor');
-  if(mod==='radioops' && item==='Moinho Globo' && valorEl && !valorEl.value){
+  if(mod==='radioops' && item==='Famiglia Venturelli' && valorEl && !valorEl.value){
     const hoje=new Date(); const rf=(typeof ropsFinMes==='function')?ropsFinMes(hoje.getFullYear(),hoje.getMonth()):{receita:0};
     if(rf.receita>0){
       valorEl.value=fRecNum(rf.receita);
@@ -7740,7 +7740,7 @@ function avisosVirada(ano,mes){
   });
   try{
     const a=ropsFinMes(pa,pm), b=ropsFinMes(ano,mes);
-    if(!(b.receita>0) && a.receita>0){ pendKey.add('radioops|Moinho Globo'); out.pend.push({txt:'Rádio Ops · Moinho: comissões de '+out.mes+' ainda não lançadas', v:a.receita, dica:'A nota do Moinho e a comissão do Guina aparecem quando o Guina lançar o mês no Rádio Ops. Em '+out.ant+' a nota foi '+f(a.receita)+'.'}); }
+    if(!(b.receita>0) && a.receita>0){ pendKey.add('radioops|Famiglia Venturelli'); out.pend.push({txt:'Rádio Ops · Moinho: comissões de '+out.mes+' ainda não lançadas', v:a.receita, dica:'A nota do Moinho e a comissão do Guina aparecem quando o Guina lançar o mês no Rádio Ops. Em '+out.ant+' a nota foi '+f(a.receita)+'.'}); }
     if(/não sincronizado/i.test(b.guinaOrigem||'')) out.pend.push({txt:'Rádio Ops não sincronizado neste navegador', v:0, dica:'Receita do Moinho e comissão do Guina estão usando a agenda. Abra o Rádio Ops uma vez para sincronizar.'});
   }catch(e){}
   Object.keys(Object.assign({},rA,rB)).forEach(k=>{
@@ -7849,7 +7849,7 @@ function fSimNome(a,b){ // similaridade 0–1 (Levenshtein) — tolera grafias d
 // Liga uma linha da planilha (cobrança no Asaas) às linhas da Visão Receita do mês. Pode ligar a VÁRIAS
 // (ex.: "mb-gestao" R$ 3.500 = as 6 lojas Móveis Brasília). Ordem: vínculo do hub → vínculo salvo →
 // CNPJ + valor → CNPJ + soma por módulo → nome. Nome sozinho falhava ("Emagrecentro Zona Norte (Saul)").
-const FAT_VINCULOS_PADRAO={ 'venturelli-bureau':[{mod:'radioops',item:'Moinho Globo'}] };  // nota do Moinho sai em nome da Família Venturelli
+const FAT_VINCULOS_PADRAO={ 'venturelli-bureau':[{mod:'radioops',item:'Famiglia Venturelli'}] };  // nota do Moinho sai em nome da Família Venturelli
 function fFatDocDe(mod,item){
   const ci=((clientesInfo||{})[mod]||{})[item]||{}; let d=String(ci.cnpj||'').replace(/\D/g,'');
   if(d.length!==14&&d.length!==11){ try{ d=String(recDefault(mod,item).obs||'').replace(/\D/g,''); }catch(e){ d=''; } }
@@ -8897,7 +8897,7 @@ const MODULES=[
   {id:'taroba',label:'Tarobá',icon:'📡',color:'#0D9488',desc:'Rádio e TV Tarobá',agrupado:false,
    items:['Rádio Tarobá Londrina','Rádio Tarobá Cascavel','TV Tarobá Londrina','TV Tarobá Cascavel']},
   {id:'radioops',label:'Rádio Moinho (Bureau)',icon:'📻',color:'#4E38B2',desc:'Agência de rádio — Moinho Globo',agrupado:false,
-   items:['Moinho Globo']}
+   items:['Famiglia Venturelli']}
 ];
 const CATS=['Cabo','Aparelho/TV','Suporte','Instalação','Elétrica','Outros'];
 const CAT_COLORS=['#6C55DB','#189A66','#D6367F','#D97706','#2563EB','#94a3b8'];
@@ -8998,7 +8998,7 @@ function recOfMes(modId,item,ano,mes){
   }
   // Rádio Moinho (bureau): nota MGB do mês, sincronizada do MGB Rádio Ops
   if(modId==='radioops'){
-    return item==='Moinho Globo' ? ropsFinMes(ano,mes).receita : 0;
+    return item==='Famiglia Venturelli' ? ropsFinMes(ano,mes).receita : 0;
   }
   const ro=recObj(modId,item);
   if(!ro.valor||!ro.inicio) return 0;
@@ -10286,7 +10286,7 @@ function coletaDespesasMes(selAno,selMes){
   if(ropsFm.despesaCmx>0){
     out.push({
       m:MODULES.find(x=>x.id==='radioops'),
-      item:'Moinho Globo',
+      item:'Famiglia Venturelli',
       idx:'_connectmix',
       r:{d:'Connectmix — auditoria de veiculação ('+ropsFm.radios+' rádio(s))',f:'Connectmix'},
       vlrMes:ropsFm.despesaCmx,
@@ -10298,7 +10298,7 @@ function coletaDespesasMes(selAno,selMes){
   if(ropsFm.guina>0){
     out.push({
       m:MODULES.find(x=>x.id==='radioops'),
-      item:'Moinho Globo',
+      item:'Famiglia Venturelli',
       idx:'_guina',
       r:{d:'Comissão do Guina · '+ropsFm.guinaPct+'% de '+f(ropsFm.guinaBase)+' de comissão das rádios'+(ropsFm.guinaFontes.length?' ('+ropsFm.guinaFontes.join(' + ')+')':'')+' · '+ropsFm.guinaOrigem,f:'Guina'},
       vlrMes:ropsFm.guina,
@@ -13431,6 +13431,7 @@ function deserializeState(obj){
     });
   }
   if(obj.rec){
+    try{ const ro=obj.rec.radioops; if(ro&&ro['Moinho Globo']){ if(!ro['Famiglia Venturelli']) ro['Famiglia Venturelli']=ro['Moinho Globo']; delete ro['Moinho Globo']; } }catch(e){}
     MODULES.forEach(m=>{
       if(!obj.rec[m.id]) return;
       rec[m.id] = {};
@@ -13481,6 +13482,8 @@ function deserializeState(obj){
   }
   if(obj.recPagamentos && typeof obj.recPagamentos==='object'){
     recPagamentos=obj.recPagamentos;
+    // 15/10: item do Rádio Moinho (Bureau) renomeado de 'Moinho Globo' para 'Famiglia Venturelli' (quem paga a nota)
+    try{ const ro=recPagamentos.radioops; if(ro&&ro['Moinho Globo']){ ro['Famiglia Venturelli']=Object.assign({},ro['Moinho Globo'],ro['Famiglia Venturelli']||{}); delete ro['Moinho Globo']; } }catch(e){}
   }
   if(obj.empresaDespesas && Array.isArray(obj.empresaDespesas)){
     empresaDespesas=obj.empresaDespesas;
