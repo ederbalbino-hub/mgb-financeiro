@@ -1052,7 +1052,7 @@ body{-webkit-font-smoothing:antialiased}
           <div class="home-hub-card" style="--accent:#4E38B2" onclick="goPage('radioops')" id="home-rops-card">
             <div class="home-hub-ico">📻</div>
             <div class="home-hub-title">Rádio Ops</div>
-            <div class="home-hub-desc" id="home-rops-desc">Bureau de rádio — Moinho Globo: painel, pipeline e financeiro</div>
+            <div class="home-hub-desc" id="home-rops-desc">Bureau de rádio — Famiglia Venturelli: painel, pipeline e financeiro</div>
             <div class="home-hub-cta">Abrir →</div>
           </div>
           <div class="home-hub-card" style="--accent:#2A1760" onclick="drillMod(MODULES[0].id)">
@@ -6141,7 +6141,7 @@ function copiarSpot() {
       #page-radioops .rops-nf b{color:#065F46}
       @media(max-width:768px){#page-radioops .rops-frame{height:calc(100vh - 200px)}}
     </style>
-    <div class="page-hdr"><div><h2>📻 Rádio Ops — Moinho Globo</h2><p style="margin:4px 0 0;font-size:12.5px;color:rgba(29,20,48,.55)">O painel do bureau de rádio dentro do hub: pipeline, aprovações, Connectmix e financeiro — tudo aqui</p></div></div>
+    <div class="page-hdr"><div><h2>📻 Rádio Ops — Famiglia Venturelli</h2><p style="margin:4px 0 0;font-size:12.5px;color:rgba(29,20,48,.55)">O painel do bureau de rádio dentro do hub: pipeline, aprovações, Connectmix e financeiro — tudo aqui</p></div></div>
     <div class="rops-tabs" style="padding:0 22px">
       <span class="rops-tab on" id="rops-tab-painel" onclick="ropsSetTab('painel')">Painel</span>
       <span class="rops-tab" id="rops-tab-resumo" onclick="ropsSetTab('resumo')">Resumo financeiro</span>
@@ -8896,7 +8896,7 @@ const MODULES=[
    items:['Cliente Piloto','Expansão']},
   {id:'taroba',label:'Tarobá',icon:'📡',color:'#0D9488',desc:'Rádio e TV Tarobá',agrupado:false,
    items:['Rádio Tarobá Londrina','Rádio Tarobá Cascavel','TV Tarobá Londrina','TV Tarobá Cascavel']},
-  {id:'radioops',label:'Rádio Moinho (Bureau)',icon:'📻',color:'#4E38B2',desc:'Agência de rádio — Moinho Globo',agrupado:false,
+  {id:'radioops',label:'Rádio Moinho (Bureau)',icon:'📻',color:'#4E38B2',desc:'Agência de rádio — Famiglia Venturelli',agrupado:false,
    items:['Famiglia Venturelli']}
 ];
 const CATS=['Cabo','Aparelho/TV','Suporte','Instalação','Elétrica','Outros'];
@@ -15298,7 +15298,7 @@ function ropsRenderAlertas(data){
   var texto=pend.map(function(r){ return '<b>💰 Dinheiro entrando:</b> relatório de <b>'+rot(r.mes)+'</b> aprovado'+(r.aprovadoNome?' por '+r.aprovadoNome:'')+' em '+fd(r.aceiteEm)+(valor(r.mes)?' — nota MGB <b>'+valor(r.mes)+'</b>':'')+' · <u>emitir a nota</u>'; }).join('<br>');
   var ha=document.getElementById('home-rops-alert'); if(ha){ ha.style.display=pend.length?'block':'none'; ha.innerHTML=texto+(pend.length?'<div style="font-size:11.5px;margin-top:4px;opacity:.8">Clique pra abrir o Rádio Ops e marcar a nota como emitida.</div>':''); }
   var pa=document.getElementById('rops-nf-alert'); if(pa){ pa.style.display=pend.length?'block':'none'; pa.innerHTML=texto+(pend.length?'<div style="font-size:11.5px;margin-top:4px;opacity:.8">No painel abaixo (Início) o card verde tem o botão ✔ Nota emitida.</div>':''); }
-  var hd=document.getElementById('home-rops-desc'); if(hd){ hd.textContent=pend.length?('💰 '+pend.length+' nota(s) pra emitir'+(dec?' · '+dec+' decisão(ões) aguardando':'')):(dec?dec+' decisão(ões) aguardando você':'Bureau de rádio — Moinho Globo: painel, pipeline e financeiro'); }
+  var hd=document.getElementById('home-rops-desc'); if(hd){ hd.textContent=pend.length?('💰 '+pend.length+' nota(s) pra emitir'+(dec?' · '+dec+' decisão(ões) aguardando':'')):(dec?dec+' decisão(ões) aguardando você':'Bureau de rádio — Famiglia Venturelli: painel, pipeline e financeiro'); }
   var nb=document.getElementById('nav-rops-badge'); if(nb) nb.style.display=pend.length?'inline-block':'none';
 }
 function ropsAutoSync(){ // na abertura do hub: mostra o cache e, se estiver velho (>3h) e houver chave salva, busca de novo em silêncio
