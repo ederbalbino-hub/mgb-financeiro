@@ -165,7 +165,7 @@
       '<div id="mgb-ass-msgs"></div>' +
       '<form id="mgb-ass-form"><textarea id="mgb-ass-in" placeholder="Pergunte para a Zuma…" rows="1"></textarea><button type="submit" id="mgb-ass-send">Enviar</button></form>';
     document.body.appendChild(p); document.body.appendChild(b);
-    addMsg('a', 'Oi! Eu sou a Zuma 👋 Tiro suas dúvidas sobre o hub e mostro o caminho de cada tarefa. Eu só oriento, quem executa é você. Pode perguntar! 💬');
+    addMsg('a', 'Oi, eu sou a Zuma! 😉 Vamos lá, no que posso ajudar? Eu tiro dúvidas do hub e mostro o caminho de cada tarefa, mas quem executa é você.');
     var sg = document.createElement('div'); sg.className = 'mgb-ass-sug'; sg.id = 'mgb-ass-sug';
     ['O que ainda falta receber este mês?', 'Como emito nota e boleto do mês?', 'Como marco um pagamento recebido fora do Asaas?', 'Por que a receita do próximo mês aparece menor?'].forEach(function (q) {
       var x = document.createElement('button'); x.type = 'button'; x.textContent = q; x.onclick = function () { enviar(q); }; sg.appendChild(x);
