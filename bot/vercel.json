@@ -11,6 +11,9 @@
     },
     "api/email.js": {
       "maxDuration": 60
+    },
+    "api/assistente.js": {
+      "maxDuration": 30
     }
   }
 }
