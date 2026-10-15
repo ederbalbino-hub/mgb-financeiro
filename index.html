@@ -8041,8 +8041,10 @@ function fFatLista(){
   fFatResumo();
   if(!fatLinhas.length){ el.innerHTML='<div class="ferr-info">Clique em "Carregar planilha" pra ver os clientes ativos.</div>'; return; }
   const comp=(document.getElementById('f-fat-comp')||{}).value||'';
+  // guarda a rolagem (da tabela e da página): marcar um cliente redesenha a lista, e ela não pode voltar ao topo
+  const _box=el.querySelector('.fat-scroll'), _st=_box?_box.scrollTop:0, _sl=_box?_box.scrollLeft:0, _wy=window.scrollY;
   const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
-  el.innerHTML='<style>.fat-tb th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}</style><div style="overflow:auto;max-height:68vh;padding-bottom:12px"><table class="fat-tb" style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:1180px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Dia venc.</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th><th style="text-align:left;padding:4px 6px">WhatsApp</th></tr>'+
+  el.innerHTML='<style>.fat-tb th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}</style><div class="fat-scroll" style="overflow:auto;max-height:68vh;padding-bottom:12px"><table class="fat-tb" style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:1180px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Dia venc.</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th><th style="text-align:left;padding:4px 6px">WhatsApp</th></tr>'+
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
@@ -8059,6 +8061,8 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 boleto</a>':'<span style="color:var(--muted)" title="O botão do WhatsApp aparece depois que o boleto é emitido">—</span>')+(r.hubMod?' <a href="#" onclick="event.preventDefault();fFatRecibo(\''+r.id+'\')" title="Abre a aba Recibos já preenchida com este cliente" style="margin-left:6px">🧾 recibo</a>':'')+'</td></tr>';
     }).join('')+'</table></div><div style="height:70px"></div>';
+  const _nb=el.querySelector('.fat-scroll'); if(_nb){ _nb.scrollTop=_st; _nb.scrollLeft=_sl; }
+  if(window.scrollY!==_wy) window.scrollTo(0,_wy);
 }
 // Atalho: abre a aba Recibos já preenchida com o cliente/valor/competência da linha.
 function fFatRecibo(id){
