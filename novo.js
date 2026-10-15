@@ -590,6 +590,10 @@
   // Guarda os campos nv-* em clientesInfo._rascunhos[acao|lead] (vai para o Sheets com o resto) e recarrega ao reabrir.
   var acaoAtual = '';
   function chaveRascunho() { return acaoAtual + '|' + (leadAtual ? leadAtual.id : ''); }
+  // Ao cadastrar/gerar o contrato, já inclui o cliente (com endereço) na planilha de faturamento.
+  function lancarNaPlanilha() {
+    try { setTimeout(function () { var f = window.fFatPlanilhaSync || (window.parent && window.parent.fFatPlanilhaSync); if (f) f(); }, 2000); } catch (e) {} // eslint-disable-line
+  }
   function rascunhos() { try { clientesInfo._rascunhos = clientesInfo._rascunhos || {}; return clientesInfo._rascunhos; } catch (e) { return {}; } } // eslint-disable-line no-undef
   function camposForm() { return Array.prototype.slice.call(doc.querySelectorAll('#mgb-novo input[id^="nv-"], #mgb-novo select[id^="nv-"], #mgb-novo textarea[id^="nv-"]')).filter(function (e) { return !e.readOnly && e.type !== 'button'; }); }
   function ligarRascunho(acao) {
@@ -767,7 +771,7 @@
 
     // 3. lead do CRM
     if (leadAtual) {
-      leadAtual.itemCriado = d.nome;
+      leadAtual.itemCriado = d.nome; lancarNaPlanilha();
       marcar(3, 'ok', 'Lead <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado.');
     } else {
       marcar(3, 'ok', 'Sem lead do CRM para marcar.');
@@ -998,7 +1002,7 @@
     } else marcar(2, 'ok', 'Sem custo mensal para lançar.');
 
     // 3. lead do CRM
-    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
+    if (leadAtual) { leadAtual.itemCriado = d.nome; lancarNaPlanilha(); marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
     try { scheduleSave(); } catch (e) {}                         // eslint-disable-line no-undef
     try { global.buildSidebar(); } catch (e) {}
     try { global.buildHome(); } catch (e) {}
@@ -1164,7 +1168,7 @@
     }
 
     // 3. lead do CRM (antes do envio, para não cadastrar duas vezes se a rede cair)
-    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Lead <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado.'); }
+    if (leadAtual) { leadAtual.itemCriado = d.nome; lancarNaPlanilha(); marcar(3, 'ok', 'Lead <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado.'); }
     else marcar(3, 'ok', 'Sem lead do CRM para marcar.');
     try { scheduleSave(); } catch (e) {}                               // eslint-disable-line no-undef
     try { global.buildHome(); } catch (e) {}
@@ -1342,7 +1346,7 @@
     }
 
     // 3. lead
-    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
+    if (leadAtual) { leadAtual.itemCriado = d.nome; lancarNaPlanilha(); marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
     try { scheduleSave(); } catch (e) {}                         // eslint-disable-line no-undef
     try { global.buildHome(); } catch (e) {}
 
@@ -1498,7 +1502,7 @@
         registrarJornada('vaapty', d.nome, 'Custo de envio do box lançado: R$ ' + envio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       }
     } catch (e) { console.warn('cadastro vaapty', e); }
-    if (leadAtual) { leadAtual.itemCriado = d.nome; marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
+    if (leadAtual) { leadAtual.itemCriado = d.nome; lancarNaPlanilha(); marcar(3, 'ok', 'Cliente <b>' + esc(leadAtual.nome) + '</b> marcado como cadastrado no CRM.'); }
     try { scheduleSave(); } catch (e) {}                         // eslint-disable-line no-undef
     try { global.buildSidebar(); } catch (e) {}
     try { global.buildHome(); } catch (e) {}

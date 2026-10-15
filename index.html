@@ -7308,6 +7308,19 @@ function fVencBoleto(){
   const d=new Date(h.getFullYear(),h.getMonth()+(h.getDate()>15?1:0),15), mm=String(d.getMonth()+1).padStart(2,'0');
   return { iso:d.getFullYear()+'-'+mm+'-15', br:'15/'+mm+'/'+d.getFullYear() };
 }
+// Vencimento por cliente (padrão dia 15; o Eder concentra os vencimentos negociando dia a dia): notaConfig.fatVencDia[id] = dia do mês.
+function fFatVencDia(r){ const d=parseInt(((notaConfig.fatVencDia||{})[r&&r.id]),10); return (d>=1&&d<=28)?d:15; }
+function fFatVenc(r){
+  const d=fFatVencDia(r);
+  const h=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  const dt=new Date(h.getFullYear(), h.getMonth()+(d<h.getDate()?1:0), d), mm=String(dt.getMonth()+1).padStart(2,'0'), dd=String(d).padStart(2,'0');
+  return { iso:dt.getFullYear()+'-'+mm+'-'+dd, br:dd+'/'+mm+'/'+dt.getFullYear() };
+}
+function fFatSetVencDia(id,v){
+  const d=parseInt(v,10); notaConfig.fatVencDia=notaConfig.fatVencDia||{};
+  if(d>=1&&d<=28) notaConfig.fatVencDia[id]=d; else delete notaConfig.fatVencDia[id];
+  try{ scheduleSave(); }catch(e){} fFatLista();
+}
 function fVencAtualizar(){
   const v=fVencBoleto();
   const a=document.getElementById('f-nota-venc'); if(a) a.innerHTML='📅 Vencimento do boleto: <b>'+v.br+'</b> (todo dia 15)';
@@ -7989,7 +8002,7 @@ function fFatLista(){
   if(!fatLinhas.length){ el.innerHTML='<div class="ferr-info">Clique em "Carregar planilha" pra ver os clientes ativos.</div>'; return; }
   const comp=(document.getElementById('f-fat-comp')||{}).value||'';
   const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
-  el.innerHTML='<style>.fat-tb th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}</style><div style="overflow:auto;max-height:68vh;padding-bottom:12px"><table class="fat-tb" style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:1100px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th><th style="text-align:left;padding:4px 6px">WhatsApp</th></tr>'+
+  el.innerHTML='<style>.fat-tb th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}</style><div style="overflow:auto;max-height:68vh;padding-bottom:12px"><table class="fat-tb" style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:1180px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Dia venc.</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th><th style="text-align:left;padding:4px 6px">WhatsApp</th></tr>'+
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
@@ -7999,6 +8012,7 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((manual||r.soHub)?'<input value="'+(r.valor?String(r.valor).replace('.',','):'')+'" placeholder="valor" onchange="fFatValor(\''+r.id+'\',this.value)" style="width:92px;text-align:right;font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">':f(r.valor||0))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((r.modo==='nota')?'—':f(fFatBoleto(r))+(r.issRetido&&r.modo!=='boleto'&&Number(notaConfig.aliquotaMes)>0?' <span title="valor da nota menos o ISS retido" style="font-size:9px;color:var(--muted)">líq.</span>':''))+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+((r.modo==='nota')?'—':'<input type="number" min="1" max="28" value="'+fFatVencDia(r)+'" onchange="fFatSetVencDia(\''+r.id+'\',this.value)" title="Dia do vencimento do boleto deste cliente (1–28)" style="width:44px;text-align:center;font-size:11px;padding:3px 4px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.emitidoEm&&r.status!=='pendente'?' <span style="font-size:9px;color:var(--muted)">'+new Date(r.emitidoEm).toLocaleDateString('pt-BR')+(r.nfNumero?' · NF '+r.nfNumero:'')+'</span>':'')+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
@@ -8087,7 +8101,7 @@ function fFatEnviarWhats(id){
   const servico=/mercad|prochet/i.test(txt)?'à veiculação da sua loja na *Rádio Interna do Mercadão da Prochet*'
     :({'Rádio Interna':'à veiculação na *Rádio Interna*','TV Interna':'à veiculação na *TV Interna*','Vaapty':'ao serviço *TV Vaapty*','Elevadores':'à veiculação nas *telas dos elevadores*','Rádio Interna + TV':'à veiculação na *Rádio e TV Interna*'}[r.modulo]||'aos *serviços de mídia contratados*');
   const msg='Olá, '+nome+'! 👋 Tudo bem?\n\nAqui é da *MGB Mídia*. Segue o boleto referente a '+servico+'.\n\n'
-    +'📅 *Competência:* '+compBr+'\n💰 *Valor:* '+f(fFatBoleto(r))+'\n🗓️ *Vencimento:* '+fVencBoleto().br+'\n\n'
+    +'📅 *Competência:* '+compBr+'\n💰 *Valor:* '+f(fFatBoleto(r))+'\n🗓️ *Vencimento:* '+fFatVenc(r).br+'\n\n'
     +'🔗 *Acesse o boleto aqui:*\n'+r.boletoUrl+'\n\n'
     +'Na própria página você consegue copiar o código de barras e, se preferir, pagar por PIX.\n\n'
     +'Após o pagamento, não precisa enviar comprovante, a baixa é automática. Qualquer dúvida, é só responder esta mensagem.\n\n'
@@ -8107,7 +8121,7 @@ async function fFatEmitirUma(row){
     tomador:{ nome:row.cliente, cnpj:row.cnpj, email:row.email, endereco:{ cep:row.cep, logradouro:row.logradouro, numero:row.numero, complemento:row.complemento, bairro:row.bairro } },
     servico:{ codigo:String(row.ctribnac||''), descricao:(row.modulo==='Tarobá'?row.descricao:(row.descricao||'Prestação de serviços de mídia')+' — competência '+comp) },
     valores:{ total:row.valor, cobranca:fFatBoleto(row), aliquotaIss:notaConfig.aliquotaMes||undefined, retemIss:!!row.issRetido },
-    vencimento:fVencBoleto().iso,
+    vencimento:fFatVenc(row).iso,
     referencia:row.id+'-'+comp, // mesmo cliente + mês nunca gera 2 boletos/2 notas, nem recarregando a página
   };
   if(row.modo==='nota') payload.semCobranca=true;   // só nota fiscal, sem boleto (cliente paga fora, ex.: Léo)
