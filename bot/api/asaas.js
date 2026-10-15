@@ -246,6 +246,43 @@ export default async function handler(req, res) {
       });
     }
 
+    // ── cancela o que o hub emitiu (boleto e/ou nota) para poder emitir de novo — ex.: faltou reter o ISS ──
+    // Nunca mexe em cobrança já paga. Nota autorizada pode exigir cancelamento na prefeitura (o Asaas responde).
+    if (action === "cancelar") {
+      if (req.method !== "POST") return res.status(405).json({ error: "Use POST." });
+      const { paymentId, invoiceId } = req.body || {};
+      if (!paymentId && !invoiceId) return res.status(400).json({ error: "Informe paymentId e/ou invoiceId." });
+      const out = { ambiente, invoice: null, payment: null };
+      if (paymentId) {
+        const p = await asaas(ambiente, "GET", `/payments/${encodeURIComponent(paymentId)}`);
+        if (["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"].includes(p.status)) {
+          return res.status(409).json({ error: "Esse boleto já está pago — não dá para cancelar por aqui." });
+        }
+      }
+      if (invoiceId) {
+        try {
+          const n = await asaas(ambiente, "POST", `/invoices/${encodeURIComponent(invoiceId)}/cancel`);
+          out.invoice = { ok: true, status: n.status || "CANCELED" };
+        } catch (e) {
+          out.invoice = { ok: false, erro: e.message };
+        }
+      }
+      if (paymentId) {
+        if (invoiceId && out.invoice && !out.invoice.ok) {
+          out.payment = { ok: false, erro: "Não excluí o boleto porque a nota não foi cancelada (" + out.invoice.erro + ")." };
+        } else {
+          try {
+            await asaas(ambiente, "DELETE", `/payments/${encodeURIComponent(paymentId)}`);
+            out.payment = { ok: true };
+          } catch (e) {
+            out.payment = { ok: false, erro: e.message };
+          }
+        }
+      }
+      const ok = (!invoiceId || (out.invoice && out.invoice.ok)) && (!paymentId || (out.payment && out.payment.ok));
+      return res.status(ok ? 200 : 409).json({ ok, ...out });
+    }
+
     // ── sincronização: tudo que o Hub já emitiu no Asaas, por referência "<id>-<AAAA-MM>" (só leitura) ──
     if (action === "sincronizar") {
       const [pagos, notas] = await Promise.all([listarPaginado(ambiente, "/payments"), listarPaginado(ambiente, "/invoices")]);
@@ -287,7 +324,7 @@ export default async function handler(req, res) {
       return res.status(200).json(out);
     }
 
-    return res.status(400).json({ error: `Ação desconhecida: '${action}'. Use emitir | status.` });
+    return res.status(400).json({ error: `Ação desconhecida: '${action}'. Use emitir | status | sincronizar | cancelar.` });
   } catch (e) {
     console.error("asaas.js:", e);
     return res.status(e.status || 500).json({ error: String(e.message || e) });

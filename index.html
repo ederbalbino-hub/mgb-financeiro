@@ -8066,7 +8066,7 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.emitidoEm&&r.status!=='pendente'?' <span style="font-size:9px;color:var(--muted)">'+new Date(r.emitidoEm).toLocaleDateString('pt-BR')+(r.nfNumero?' · NF '+r.nfNumero:'')+'</span>':'')+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 boleto</a>':'<span style="color:var(--muted)" title="O botão do WhatsApp aparece depois que o boleto é emitido">—</span>')+(r.hubMod?' <a href="#" onclick="event.preventDefault();fFatRecibo(\''+r.id+'\')" title="Abre a aba Recibos já preenchida com este cliente" style="margin-left:6px">🧾 recibo</a>':'')+'</td></tr>';
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 boleto</a>':'<span style="color:var(--muted)" title="O botão do WhatsApp aparece depois que o boleto é emitido">—</span>')+(r.hubMod?' <a href="#" onclick="event.preventDefault();fFatRecibo(\''+r.id+'\')" title="Abre a aba Recibos já preenchida com este cliente" style="margin-left:6px">🧾 recibo</a>':'')+((r.paymentId||r.invoiceId)&&r.statusPagamento!=='pago'?' <a href="#" onclick="event.preventDefault();fFatCancelar(\''+r.id+'\')" title="Cancela o boleto e a nota deste mês no Asaas para emitir de novo (não funciona em boleto pago)" style="margin-left:6px;color:var(--red)">↩ cancelar</a>':'')+'</td></tr>';
     }).join('')+'</table></div><div style="height:70px"></div>';
   const _nb=el.querySelector('.fat-scroll'); if(_nb){ _nb.scrollTop=_st; _nb.scrollLeft=_sl; }
   if(window.scrollY!==_wy) window.scrollTo(0,_wy);
@@ -8159,6 +8159,32 @@ function fFatEnviarWhats(id){
     +'Após o pagamento, não precisa enviar comprovante, a baixa é automática. Qualquer dúvida, é só responder esta mensagem.\n\n'
     +'Obrigado pela parceria! 🙌\n*MGB Mídia*';
   window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
+}
+// Cancela no Asaas o boleto e a nota emitidos neste mês para o cliente (ex.: faltou reter o ISS) e deixa a linha pronta
+// para emitir de novo. Nunca em boleto pago.
+async function fFatCancelar(id){
+  const r=fatLinhas.find(x=>x.id===id); if(!r||!(r.paymentId||r.invoiceId)) return;
+  if(r.statusPagamento==='pago'){ alert('Esse boleto já está pago — não dá para cancelar.'); return; }
+  const comp=(document.getElementById('f-fat-comp')||{}).value||'';
+  if(!confirm('Cancelar no Asaas a cobrança de '+(r.apelido||r.cliente)+' ('+comp+')?\n\n• O boleto'+(r.invoiceId?' e a nota fiscal':'')+' serão cancelados/excluídos.\n• O cliente pode já ter recebido o e-mail do boleto: avise-o que sairá um novo.\n• Depois é só marcar a linha e emitir de novo.')) return;
+  const ambiente=document.getElementById('f-fat-amb').value||'producao';
+  const st=document.getElementById('f-fat-status');
+  if(st) st.innerHTML='<div class="ferr-info">Cancelando no Asaas…</div>';
+  try{
+    const resp=await fetch(NOTA_API_URL+'?action=cancelar&ambiente='+ambiente,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentId:r.paymentId||undefined,invoiceId:r.invoiceId||undefined})});
+    const j=await resp.json();
+    if(!resp.ok||!j.ok){
+      const det=[(j.invoice&&!j.invoice.ok)?'nota: '+j.invoice.erro:'',(j.payment&&!j.payment.ok)?'boleto: '+j.payment.erro:'',j.error||''].filter(Boolean).join(' · ');
+      throw new Error(det||('Asaas respondeu '+resp.status));
+    }
+    delete fatEmissoes[fFatKey(r)];
+    Object.assign(r,{status:'pendente',paymentId:null,invoiceId:null,boletoUrl:null,statusPagamento:null,statusPagamentoEm:null,erro:null,emitidoEm:null,nfNumero:null,selecionado:false});
+    try{ scheduleSave(); }catch(e){}
+    if(st) st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+(r.apelido||r.cliente)+': cobrança cancelada no Asaas. Marque a linha e emita de novo.</div>';
+  }catch(e){
+    if(st) st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ Não consegui cancelar '+(r.apelido||r.cliente)+': '+e.message+'</div>';
+  }
+  fFatLista();
 }
 async function fFatEmitirUma(row){
   if(row.status==='aguardando-nota'||row.status==='emitida') return row.status; // já enviado neste mês
