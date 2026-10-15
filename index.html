@@ -3031,6 +3031,7 @@ async function eEnviarAssinatura(){
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
     eAssDocId=j.docId;
+    try{ window.parent.mgbContratoEnviado('elev', nome, j.docId); }catch(e){}
     st.innerHTML='✅ Enviado! Assinatura pendente — &lt;a href=&quot;#&quot; onclick=&quot;event.preventDefault();eCheckAssinatura()&quot;&gt;verificar status&lt;/a&gt;';
   }catch(err){ st.innerHTML='&lt;span style=&quot;color:var(--error)&quot;&gt;⚠ '+err.message+'&lt;/span&gt;'; }
   finally{ btn.disabled=false; btn.style.opacity='1'; }
@@ -3692,6 +3693,7 @@ async function vEnviarAssinatura(){
     const j = await r.json();
     if(j.erro) throw new Error(j.erro);
     vAssDocId = j.docId;
+    try{ window.parent.mgbContratoEnviado('vaapty', vUltimoPayload.nome, j.docId); }catch(e){}
     st.innerHTML = '✅ Enviado! Assinatura pendente — <a href=&quot;#&quot; onclick=&quot;event.preventDefault();vCheckAssinatura()&quot;>verificar status</a>';
   }catch(err){ st.innerHTML = '<span style=&quot;color:#EF4444&quot;>⚠ '+err.message+'</span>'; }
   finally{ btn.disabled=false; btn.style.opacity='1'; }
@@ -4336,6 +4338,34 @@ vCalc();
 const PK='mgb_pasta_v2';
 function load(){try{return JSON.parse(localStorage.getItem(PK))||{mercadao:[],elevador:[],vaapty:[]};}catch(e){return{mercadao:[],elevador:[],vaapty:[]};}}
 function save(d){try{localStorage.setItem(PK,JSON.stringify(d));}catch(e){}}
+// ── Assinatura: o hub guarda o documento da Assinafy de cada cliente e confere quando todos assinam ──
+const MGB_ASSINAFY_URL='https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec';
+window.mgbContratoEnviado=function(mod,nome,docId){
+  try{
+    clientesInfo[mod]=clientesInfo[mod]||{}; const alvo=fNormNome(nome);
+    let key=Object.keys(clientesInfo[mod]).find(k=>fNormNome(k)===alvo)
+      ||Object.keys(clientesInfo[mod]).find(k=>{ const i=clientesInfo[mod][k]||{}; return fNormNome(i.razao||'')===alvo||fNormNome(i.fantasia||'')===alvo; });
+    if(!key){ key=nome; clientesInfo[mod][key]={fantasia:nome}; }
+    const info=clientesInfo[mod][key]; info.assinafyDocId=docId; info.assinadoEm=null;
+    (info.jornada=info.jornada||[]).push({em:new Date().toISOString(),texto:'Contrato enviado para assinatura (Assinafy)'});
+    scheduleSave(); try{ buildLeads(); }catch(e){}
+  }catch(e){ console.warn('mgbContratoEnviado',e); }
+};
+async function mgbConferirAssinaturas(){
+  let n=0; const nomes=[];
+  for(const mod of Object.keys(clientesInfo||{})){
+    if(mod.charAt(0)==='_') continue;
+    for(const nome of Object.keys(clientesInfo[mod]||{})){
+      const info=clientesInfo[mod][nome]; if(!info||!info.assinafyDocId||info.assinadoEm) continue;
+      try{
+        const r=await fetch(MGB_ASSINAFY_URL+'?action=status&docId='+encodeURIComponent(info.assinafyDocId)); const j=await r.json();
+        if(j&&j.assinado){ info.assinadoEm=new Date().toISOString(); (info.jornada=info.jornada||[]).push({em:info.assinadoEm,texto:'Contrato assinado por todos ✅'}); n++; nomes.push(nome); }
+      }catch(e){}
+    }
+  }
+  if(n){ try{ scheduleSave(); }catch(e){} try{ buildLeads(); }catch(e){} try{ leadToast('✅ Contrato assinado: '+nomes.join(', ')); }catch(e){} }
+  return n;
+}
 window.mgbSalvarContrato=function(tipo,dados){
   const d=load();if(!d[tipo])d[tipo]=[];
   dados._id=Date.now();
@@ -13081,6 +13111,7 @@ function leadCardHtml(l){
     ${l.responsavel?`<div style="font-size:10.5px;color:var(--muted);margin-top:-1px">👤 ${l.responsavel}${l.funcao?' · '+l.funcao:''}</div>`:''}
     ${l.origem?`<div style="font-size:9.5px;color:var(--hint);margin-top:-2px;margin-bottom:2px">via ${l.origem}</div>`:''}
     ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês</div>`:''}
+    ${(()=>{ const inf=(((typeof clientesInfo!=='undefined'?clientesInfo:{})[l.produto]||{})[l.itemCriado])||null; if(!inf) return ''; if(inf.assinadoEm) return '<div style="font-size:10.5px;color:var(--green);font-weight:700;margin-top:2px">✅ contrato assinado '+new Date(inf.assinadoEm).toLocaleDateString('pt-BR')+'</div>'; if(inf.assinafyDocId) return '<div style="font-size:10.5px;color:var(--muted);margin-top:2px">✍️ aguardando assinatura</div>'; return ''; })()}
     ${(l.estagio==='fechado'&&!String(l.email||'').trim())?`<div style="font-size:10.5px;color:var(--red);font-weight:700;margin-top:2px" title="Sem e-mail o contrato não pode ser enviado pra assinatura">⚠ sem e-mail — contrato não pode ser enviado</div>`:''}
     ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${leadFmtLembrete(l)}${l.calEventId?' <span title="Sincronizado com o Google Agenda">📅</span>':''}</div>`:''}
     <div class="lead-card-row">
@@ -13558,6 +13589,7 @@ async function loadFromSheets(){
           deserializeState(obj);
           _baseBytes = text.length;
           _cargaSheetsOk = true; // só migra/salva se o estado REAL veio do servidor (nunca sobre o estado default/offline)
+          setTimeout(()=>{ try{ mgbConferirAssinaturas(); }catch(e){} }, 6000);
           syncFinanceiro();
           setSyncStatus('saved');
           setTimeout(()=>setSyncStatus('idle'), 2000);

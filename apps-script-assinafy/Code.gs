@@ -48,6 +48,7 @@ function ASSINAFY_ACCOUNT_ID_() {
   return v;
 }
 const EDER_EMAIL = 'ederbalbino@gmail.com';
+const FINANCEIRO_TV_EMAIL = 'financeiro@telaverticalmidia.com.br'; // recebe cópia do contrato assinado (só contratos Tela Vertical)
 const MGB_TELEFONE = '(43) 99696-0078';
 // Pasta "MGB contratos" no Drive do Eder (MGB Mídia / MGB contratos)
 const PASTA_CONTRATOS_ID = '1CrMJzTHlssDm0yK-lP9vUeGIZ80pirsx';
@@ -276,8 +277,11 @@ function reenviarAssinado_(docId, meta) {
 
   const emails = (meta.signatarios || []).map(s => s.email).filter(Boolean);
   if (emails.length) {
+    const ehTelaVertical = /tela vertical/i.test((meta.nomeDoc || '') + ' ' + (meta.pasta || ''));
+    const cc = (ehTelaVertical && emails.map(function (x) { return x.toLowerCase(); }).indexOf(FINANCEIRO_TV_EMAIL) === -1) ? FINANCEIRO_TV_EMAIL : '';
     MailApp.sendEmail({
       to: emails.join(','),
+      cc: cc,
       name: MGB_RAZAO,
       replyTo: EDER_EMAIL,
       subject: meta.nomeDoc + ' — assinado por todos ✅',
