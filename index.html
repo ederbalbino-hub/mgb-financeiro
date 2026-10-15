@@ -13421,6 +13421,8 @@ function deserializeState(obj){
   if(obj.moduleItems){
     MODULES.forEach(m=>{
       if(obj.moduleItems[m.id]) m.items = obj.moduleItems[m.id];
+      // 15/10: o item do Rádio Moinho (Bureau) mudou de 'Moinho Globo' para 'Famiglia Venturelli'; a lista salva ainda traz o nome antigo
+      if(m.id==='radioops') m.items = m.items.map(i=>i==='Moinho Globo'?'Famiglia Venturelli':i);
     });
   }
   if(obj.db){
