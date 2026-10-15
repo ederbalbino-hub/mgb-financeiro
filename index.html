@@ -7613,8 +7613,13 @@ function fFatContratosHub(rowsPlanilha){
   (typeof anunciantes!=='undefined'?anunciantes:[]).forEach(an=>{
     const lead=(typeof leads!=='undefined'?leads:[]).find(l=>l&&l.itemCriado===an.nome); if(!lead) return;
     if(FAT_RX_TREINO.test(an.nome)||!(an.valor>0)||!an.inicio) return;
-    const info=((clientesInfo||{}).elev||{})[an.nome]||{}; const cod=codigoDe('Elevadores');
-    out.push({ id:'hub-elev-'+fNormNome(an.nome), modulo:'Elevadores', cliente:info.razao||an.nome, cnpj:info.cnpj||lead.cnpj||'', email:info.email||lead.email||'',
+    const info0=((clientesInfo||{}).elev||{})[an.nome]||{}; const cod=codigoDe('Elevadores');
+    // endereço/razão/e-mail do formulário do Novo cliente (rascunho) quando o cadastro do módulo ainda não os tem
+    const rv=(((clientesInfo||{})._rascunhos||{})['anunciante|'+lead.id]||{}).valores||{};
+    const info={...info0, razao:info0.razao||rv['nv-razao']||'', logradouro:info0.logradouro||rv['nv-logradouro']||'', numero:info0.numero||rv['nv-numero']||'',
+      complemento:info0.complemento||rv['nv-complemento']||'', bairro:info0.bairro||rv['nv-bairro']||'', cidade:info0.cidade||rv['nv-cidade']||'', uf:info0.uf||rv['nv-uf']||'', cep:info0.cep||rv['nv-cep']||''};
+    const emails=[...new Set([info0.email,rv['nv-email'],lead.email].map(x=>String(x||'').trim()).filter(Boolean))].join(', ');
+    out.push({ id:'hub-elev-'+fNormNome(an.nome), modulo:'Elevadores', cliente:info.razao||an.nome, cnpj:info.cnpj||lead.cnpj||'', email:emails,
       logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'', bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
       valor:an.valor, inicio:an.inicio, meses:an.meses||12, descricao:'Veiculação de mídia em elevadores — '+an.nome,
       ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:'sim', hubMod:'elev', hubItem:an.nome, apelido:an.nome, tel:info.tel||lead.tel||'' });
