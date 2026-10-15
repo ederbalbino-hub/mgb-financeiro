@@ -28,7 +28,31 @@ export default async function handler(req, res) {
 
   try {
     if (action === "telas") {
-      const data = await proxyJson(TELAS_URL);
+      // Preferido: consulta a API do 4YouSee direto, com o token na variável de ambiente FOURYOUSEE_TOKEN
+      // (o token NUNCA vai pro repositório/index.html). Sem a variável, cai no painel PHP antigo.
+      const token = process.env.FOURYOUSEE_TOKEN;
+      if (token) {
+        const players = [];
+        let pagina = 1, totalPaginas = 1;
+        do {
+          const r = await fetch(`https://api.4yousee.com.br/v1/players?limit=100&page=${pagina}`, { headers: { "Secret-Token": token } });
+          if (!r.ok) return res.status(200).json({ success: false, error: `4YouSee respondeu ${r.status}` });
+          const j = await r.json();
+          totalPaginas = j.totalPages || 1;
+          (j.results || []).forEach((p) => {
+            const min = p.lastContactInMinutes;
+            const tempo = min == null ? "—" : min < 60 ? `${min} min` : min < 1440 ? `${Math.round(min / 60)} h` : `${Math.round(min / 1440)} d`;
+            players.push({
+              id: p.id, name: p.name, description: p.description || "", platform: p.platform || "",
+              group: (p.group && p.group.name) || "", statusName: (p.playerStatus && p.playerStatus.name) || "",
+              lastContactInMinutes: min, tempoFormatado: tempo, lastLogReceived: p.lastLogReceived || "", tags: p.tags || [],
+            });
+          });
+          pagina++;
+        } while (pagina <= totalPaginas && pagina <= 10);
+        return res.status(200).json({ success: true, players });
+      }
+      const data = await proxyJson(process.env.TELAS_URL || TELAS_URL);
       return res.status(200).json(data);
     }
 
