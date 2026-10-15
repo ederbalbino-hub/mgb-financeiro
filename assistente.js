@@ -80,6 +80,48 @@
     box.appendChild(d); box.scrollTop = box.scrollHeight; return d;
   }
 
+  // Feedback 👍/👎: guardado no estado do hub (notaConfig.assistFeedback) — o admin vê pelo botão 📋 no topo do chat
+  function guardarFeedback(reg) {
+    try {
+      notaConfig.assistFeedback = notaConfig.assistFeedback || [];
+      notaConfig.assistFeedback.push(reg);
+      if (notaConfig.assistFeedback.length > 300) notaConfig.assistFeedback = notaConfig.assistFeedback.slice(-300);
+      if (typeof scheduleSave === 'function') scheduleSave();
+    } catch (e) {}
+  }
+  function barraFeedback(elResposta, pergunta, resposta) {
+    var bar = document.createElement('div');
+    bar.style.cssText = 'align-self:flex-start;display:flex;gap:6px;align-items:center;font-size:12px;color:#7a7390;margin-top:-4px';
+    bar.innerHTML = '<span>Isso ajudou?</span>';
+    function voto(v) {
+      var obs = '';
+      if (v === 'ruim') { obs = prompt('O que estava errado ou faltando? (opcional)', '') || ''; }
+      var u = (global.MGBAcesso && MGBAcesso.usuario && MGBAcesso.usuario()) || {};
+      guardarFeedback({ em: new Date().toISOString(), quem: u.nome || u.login || '', voto: v, pergunta: pergunta, resposta: resposta.slice(0, 1500), obs: obs });
+      bar.innerHTML = '<span>' + (v === 'bom' ? 'Obrigada! 💜' : 'Valeu, vou melhorar com isso 🙏') + '</span>';
+    }
+    ['bom', 'ruim'].forEach(function (v) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = v === 'bom' ? '👍' : '👎';
+      b.style.cssText = 'border:1px solid #d6d0e6;background:#fff;border-radius:8px;padding:2px 8px;cursor:pointer;font-size:13px';
+      b.onclick = function () { voto(v); }; bar.appendChild(b);
+    });
+    elResposta.parentNode.insertBefore(bar, elResposta.nextSibling);
+    var box = document.getElementById('mgb-ass-msgs'); box.scrollTop = box.scrollHeight;
+  }
+  function verFeedback() {
+    var L = (typeof notaConfig !== 'undefined' && notaConfig.assistFeedback) || [];
+    var box = document.getElementById('mgb-ass-msgs');
+    var d = document.createElement('div'); d.className = 'mgb-ass-m a';
+    var ruins = L.filter(function (x) { return x.voto === 'ruim'; });
+    d.innerHTML = '<b>📋 Feedback: ' + L.length + ' voto(s), ' + ruins.length + ' 👎</b><br>' +
+      (L.slice(-15).reverse().map(function (x) {
+        return (x.voto === 'bom' ? '👍' : '👎') + ' <i>' + esc(x.quem || '') + '</i> · ' + esc(String(x.em).slice(0, 10)) + '<br><b>P:</b> ' + esc(x.pergunta) +
+          (x.voto === 'ruim' ? '<br><b>Zuma:</b> ' + esc((x.resposta || '').slice(0, 300)) + (x.obs ? '<br><b>Correção:</b> ' + esc(x.obs) : '') : '');
+      }).join('<hr style="border:0;border-top:1px solid #e4dff0;margin:6px 0">') || 'Ainda sem votos.');
+    d.style.maxWidth = '100%';
+    box.appendChild(d); box.scrollTop = box.scrollHeight;
+  }
+
   function enviar(texto) {
     texto = String(texto || '').trim();
     if (!texto || ocupado) return;
@@ -97,7 +139,7 @@
       .then(function (x) {
         var t = x.ok ? x.j.resposta : (x.j.error || 'Não consegui responder agora.');
         esp.textContent = t;
-        if (x.ok) historico.push({ role: 'assistant', content: t }); else historico.pop();
+        if (x.ok) { historico.push({ role: 'assistant', content: t }); barraFeedback(esp, texto, t); } else historico.pop();
       })
       .catch(function () { esp.textContent = 'Sem conexão com o servidor. Tente de novo.'; historico.pop(); })
       .then(function () {
@@ -109,13 +151,13 @@
   function montar() {
     if (document.getElementById('mgb-ass-btn')) return;
     estilos();
-    var b = document.createElement('button'); b.id = 'mgb-ass-btn'; b.type = 'button'; b.textContent = '💬 Dúvidas';
+    var b = document.createElement('button'); b.id = 'mgb-ass-btn'; b.type = 'button'; b.textContent = '💬 Zuma';
     var p = document.createElement('div'); p.id = 'mgb-ass';
-    p.innerHTML = '<header><span>Assistente do Hub</span><button type="button" id="mgb-ass-x" aria-label="Fechar">×</button></header>' +
+    p.innerHTML = '<header><span>Zuma · assistente do Hub</span><span><button type="button" id="mgb-ass-fb" title="Ver feedback" style="display:none">📋</button><button type="button" id="mgb-ass-x" aria-label="Fechar">×</button></span></header>' +
       '<div id="mgb-ass-msgs"></div>' +
-      '<form id="mgb-ass-form"><textarea id="mgb-ass-in" placeholder="Pergunte o que quiser sobre o hub…" rows="1"></textarea><button type="submit" id="mgb-ass-send">Enviar</button></form>';
+      '<form id="mgb-ass-form"><textarea id="mgb-ass-in" placeholder="Pergunte para a Zuma…" rows="1"></textarea><button type="submit" id="mgb-ass-send">Enviar</button></form>';
     document.body.appendChild(p); document.body.appendChild(b);
-    addMsg('a', 'Oi! Eu tiro dúvidas sobre o hub e mostro o caminho de cada tarefa. Eu só oriento — quem executa é você.');
+    addMsg('a', 'Oi! Eu sou a Zuma 👋 Tiro suas dúvidas sobre o hub e mostro o caminho de cada tarefa. Eu só oriento, quem executa é você. Pode perguntar! 💬');
     var sg = document.createElement('div'); sg.className = 'mgb-ass-sug'; sg.id = 'mgb-ass-sug';
     ['O que ainda falta receber este mês?', 'Como emito nota e boleto do mês?', 'Como marco um pagamento recebido fora do Asaas?', 'Por que a receita do próximo mês aparece menor?'].forEach(function (q) {
       var x = document.createElement('button'); x.type = 'button'; x.textContent = q; x.onclick = function () { enviar(q); }; sg.appendChild(x);
@@ -123,6 +165,8 @@
     document.getElementById('mgb-ass-msgs').appendChild(sg);
     function alternar() { aberto = !aberto; p.classList.toggle('on', aberto); if (aberto) document.getElementById('mgb-ass-in').focus(); }
     b.onclick = alternar; document.getElementById('mgb-ass-x').onclick = alternar;
+    var fb = document.getElementById('mgb-ass-fb'); fb.onclick = verFeedback;
+    try { var uu = sessao() && sessao().usuario; if (uu && uu.papel === 'admin') fb.style.display = ''; } catch (e) {}
     document.getElementById('mgb-ass-form').onsubmit = function (e) {
       e.preventDefault(); var t = document.getElementById('mgb-ass-in'); var v = t.value; t.value = ''; enviar(v);
     };
