@@ -7971,6 +7971,16 @@ async function fFatCarregar(){
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
     fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:((row.boleto===false||fFatEhManual(row.modulo))?'nota':'ambos'), descricao:(row.modulo==='Tarobá'?FAT_DESC_TAROBA:row.descricao), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
+    // Tarobá: a comissão é digitada mês a mês no módulo Tarobá — o valor da competência vem de lá (a planilha fica com 0)
+    try{
+      const mt=/^(\d{4})-(\d{2})$/.exec(compSel);
+      if(mt) fatLinhas.forEach(r=>{
+        if(r.modulo!=='Tarobá') return;
+        const item=/cascavel/i.test(r.id+' '+r.cliente)?'Rádio Tarobá Cascavel':'Rádio Tarobá Londrina';
+        const v=recTarobaGetMes(item,+mt[1],+mt[2]-1);
+        if(v>0){ r.valor=v; r.valorDoModulo=true; r.hubMod='taroba'; r.hubItem=item; }
+      });
+    }catch(e){}
     // linhas que o hub incluiu na planilha (id "hub-…"): religa ao cliente do hub e completa o código de serviço
     const ref=(j.rows||[]).find(x=>x.modulo==='TV Interna'&&x.ctribnac);
     if(ref&&(notaConfig.fatCtribnac!==ref.ctribnac||notaConfig.fatCnbs!==ref.cnbs)){ notaConfig.fatCtribnac=ref.ctribnac; notaConfig.fatCnbs=ref.cnbs; }
