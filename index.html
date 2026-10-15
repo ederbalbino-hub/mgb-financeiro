@@ -7942,7 +7942,9 @@ async function fFatSincronizarAsaas(manual){
       }
       let novo=null;
       if(inv){ if(inv.status==='AUTHORIZED') novo='emitida'; else if(inv.status==='ERROR') novo='erro'; else if(inv.status!=='CANCELED') novo='aguardando-nota'; }
-      else if(pay){ novo=(row.modo==='boleto')?'emitida':'boleto-emitido'; row.modo='boleto'; } // boleto no Asaas e nenhuma nota = foi emitido SÓ BOLETO
+      // boleto no Asaas e nenhuma nota: se o cliente é "só boleto" está completo; se era nota + boleto, a NOTA falhou/falta
+      // (15/10: antes o modo virava "boleto" e a 2ª conferência travava a linha como 'emitida', sem como emitir a nota).
+      else if(pay){ novo=(row.modo==='boleto')?'emitida':'boleto-emitido'; }
       if(!novo) return;
       if(hist && hist.status===novo && (hist.nf||'')===String((inv&&inv.numero)||'')) return; // já está igual
       row.status=novo; row.paymentId=(pay&&pay.id)||row.paymentId||null; row.invoiceId=(inv&&inv.id)||row.invoiceId||null;
@@ -8005,13 +8007,13 @@ function fFatBoleto(r){
 }
 function fFatValor(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.valor=fRecParseValor(v); fFatLista(); } }
 function fFatModo(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.modo=v; fFatLista(); } } // redesenha: a coluna Boleto muda com o modo (só boleto = valor cheio)
-function fFatToggle(id){ const r=fatLinhas.find(x=>x.id===id); if(r) r.selecionado=!r.selecionado; fFatLista(); }
+function fFatToggle(id){ const r=fatLinhas.find(x=>x.id===id); if(r) r.selecionado=!r.selecionado; fFatResumo(); } // sem redesenhar: o checkbox já mudou sozinho e a tela não se mexe
 function fFatResumo(){
   const el=document.getElementById('f-fat-resumo'); if(!el) return;
   const sel=fatLinhas.filter(r=>r.selecionado).length;
   el.textContent = fatLinhas.length ? (sel+' selecionado(s) de '+fatLinhas.length) : '';
 }
-function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…','aguardando-nota':'🔄 aguardando nota','boleto-emitido':'🧾 só boleto emitido',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
+function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…','aguardando-nota':'🔄 aguardando nota','boleto-emitido':'🧾 boleto emitido — falta a nota',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
 // Status de PAGAMENTO (diferente do status de emissão acima) — vem da planilha, atualizado pelo
 // webhook da Asaas (bot/api/asaas-webhook.js) assim que o cliente paga ou o boleto vence.
 function fFatPagoManual(r){
@@ -8043,6 +8045,7 @@ function fFatLista(){
   const comp=(document.getElementById('f-fat-comp')||{}).value||'';
   // guarda a rolagem (da tabela e da página): marcar um cliente redesenha a lista, e ela não pode voltar ao topo
   const _box=el.querySelector('.fat-scroll'), _st=_box?_box.scrollTop:0, _sl=_box?_box.scrollLeft:0, _wy=window.scrollY;
+  const _anc=[]; for(let n=el.parentElement;n;n=n.parentElement){ if(n.scrollHeight>n.clientHeight+1&&n.scrollTop>0) _anc.push([n,n.scrollTop]); }
   const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
   el.innerHTML='<style>.fat-tb th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}</style><div class="fat-scroll" style="overflow:auto;max-height:68vh;padding-bottom:12px"><table class="fat-tb" style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:1180px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Dia venc.</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th><th style="text-align:left;padding:4px 6px">WhatsApp</th></tr>'+
     lst.map(r=>{
@@ -8063,6 +8066,7 @@ function fFatLista(){
     }).join('')+'</table></div><div style="height:70px"></div>';
   const _nb=el.querySelector('.fat-scroll'); if(_nb){ _nb.scrollTop=_st; _nb.scrollLeft=_sl; }
   if(window.scrollY!==_wy) window.scrollTo(0,_wy);
+  _anc.forEach(([n,t])=>{ if(n.scrollTop!==t) n.scrollTop=t; });  // o hub rola dentro de um container, não só na janela
 }
 // Atalho: abre a aba Recibos já preenchida com o cliente/valor/competência da linha.
 function fFatRecibo(id){
