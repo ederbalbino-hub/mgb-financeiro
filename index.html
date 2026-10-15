@@ -7990,6 +7990,10 @@ async function fFatCarregar(){
     fatLinhas.forEach(r=>{ const c=doHubPorId[r.id]; if(!c) return; r.hubMod=c.hubMod; r.hubItem=c.hubItem; r.doHub=true;
       if(!r.ctribnac){ r.ctribnac=c.ctribnac; r.cnbs=c.cnbs; } });
     const novos=fFatClientesDoHub(j.rows||[]); fatLinhas=fatLinhas.concat(novos);
+    // Retenção de ISS automática: cliente de Londrina retém (regra da planilha). Linhas criadas pelo hub não trazem a coluna
+    // preenchida; sem isto o DM Auto Center saiu sem retenção. Só vale para o que ainda não foi emitido (boleto/nota já
+    // criados ficam como estão, para o valor do boleto continuar batendo com a nota).
+    fatLinhas.forEach(r=>{ if(!r.issRetido&&/^\s*londrina\s*$/i.test(r.cidade||'')&&!r.paymentId&&!fatEmissoes[fFatKey(r)]) r.issRetido=true; });
     st.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+fatLinhas.length+' cliente(s) ativo(s) carregado(s).</div>';
     fFatAplicarHistorico();
     fFatSincronizarAsaas(false); // confere com o Asaas o que já foi emitido (não trava a tela)
