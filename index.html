@@ -8230,7 +8230,10 @@ async function fFatEmitirSelecionados(){
   if(notaConfig.aliquotaMes==null){ alert('Configure a alíquota ISS do mês na aba Nota Fiscal antes de emitir.'); return; }
   const ambiente=document.getElementById('f-fat-amb').value||'producao';
   const nAmbos=selecionados.filter(r=>(r.modo||'ambos')==='ambos').length, nNota=selecionados.filter(r=>r.modo==='nota').length, nBol=selecionados.filter(r=>r.modo==='boleto').length;
-  if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' pra '+selecionados.length+' cliente(s):\n• '+nAmbos+' nota + boleto (vence '+fVencBoleto().br+')\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nTotal em boletos: '+f(selecionados.filter(r=>r.modo!=='nota').reduce((a,r)=>a+fFatBoleto(r),0))+' (líquido do ISS retido, só nos que têm nota)\n\nConfirma?')) return;
+  // vencimento de CADA cliente (dia próprio na coluna "Dia venc."), não o 15 padrão
+  const _vc={}; selecionados.filter(r=>r.modo!=='nota').forEach(r=>{ const v=fFatVenc(r).br; (_vc[v]=_vc[v]||[]).push(r.apelido||r.cliente); });
+  const _vtxt=Object.keys(_vc).length?Object.keys(_vc).map(v=>'   · '+v+': '+_vc[v].join(', ')).join('\n'):'   · (nenhum boleto)';
+  if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' pra '+selecionados.length+' cliente(s):\n• '+nAmbos+' nota + boleto\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nVencimentos:\n'+_vtxt+'\n\nTotal em boletos: '+f(selecionados.filter(r=>r.modo!=='nota').reduce((a,r)=>a+fFatBoleto(r),0))+' (líquido do ISS retido, só nos que têm nota)\n\nConfirma?')) return;
   const btn=document.getElementById('f-fat-btn-emitir'); const st=document.getElementById('f-fat-status');
   btn.disabled=true; btn.style.opacity='.6';
   let ok=0, falhas=0;
