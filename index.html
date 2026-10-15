@@ -7608,6 +7608,17 @@ function fFatContratosHub(rowsPlanilha){
         ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:info.notaFiscal===false?'nao':'sim', hubMod:mid, hubItem:item, apelido:item, soHub:!!(info.fatLote&&!info.leadId), modoPadrao:info.modoFat||'', tel:info.tel||'' });
     });
   });
+  // Elevadores: anunciantes fechados pelo CRM (lead com itemCriado = nome do anunciante) entram no lote.
+  // Os que já estão na planilha (Arfix, LMK…) não têm lead, então não duplicam.
+  (typeof anunciantes!=='undefined'?anunciantes:[]).forEach(an=>{
+    const lead=(typeof leads!=='undefined'?leads:[]).find(l=>l&&l.itemCriado===an.nome); if(!lead) return;
+    if(FAT_RX_TREINO.test(an.nome)||!(an.valor>0)||!an.inicio) return;
+    const info=((clientesInfo||{}).elev||{})[an.nome]||{}; const cod=codigoDe('Elevadores');
+    out.push({ id:'hub-elev-'+fNormNome(an.nome), modulo:'Elevadores', cliente:info.razao||an.nome, cnpj:info.cnpj||lead.cnpj||'', email:info.email||lead.email||'',
+      logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'', bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
+      valor:an.valor, inicio:an.inicio, meses:an.meses||12, descricao:'Veiculação de mídia em elevadores — '+an.nome,
+      ctribnac:cod.ctribnac, cnbs:cod.cnbs, boleto:'sim', hubMod:'elev', hubItem:an.nome, apelido:an.nome, tel:info.tel||lead.tel||'' });
+  });
   if(typeof MGBLancar!=='undefined') (receitasAvulsas||[]).filter(x=>x&&x.valor>0&&x.mes&&!FAT_RX_TREINO.test(x.cliente||'')).forEach(x=>{
     const ci=x.clienteInfo||{}, cod=codigoDe('TV Interna');
     out.push({ id:'hub-avulsa-'+x.id, modulo:'Avulsa', cliente:ci.razao||x.cliente, cnpj:ci.cnpj||'', email:ci.email||'',
