@@ -170,7 +170,7 @@ export default async function handler(req, res) {
     // ── cria cliente + cobrança (boleto/PIX) + nota fiscal vinculada, numa tacada ──
     if (action === "emitir") {
       if (req.method !== "POST") return res.status(405).json({ error: "Use POST." });
-      const { tomador, servico, valores, vencimento, semCobranca, semNota, referencia } = req.body || {};
+      const { tomador, servico, valores, vencimento, semCobranca, semNota, referencia, cobrancaDescricao } = req.body || {};
       // valores.cobranca = valor do BOLETO (líquido do ISS retido pelo cliente); valores.total = valor cheio da NOTA.
       const valorCobranca = valores?.cobranca != null ? Number(valores.cobranca) : valores?.total;
       if (!(valorCobranca > 0) || valorCobranca > Number(valores?.total) + 0.001) {
@@ -197,7 +197,7 @@ export default async function handler(req, res) {
             billingType: "BOLETO",
             value: valorCobranca,
             dueDate,
-            description: servico.descricao,
+            description: cobrancaDescricao || servico.descricao, // só o boleto; a nota segue com servico.descricao
             externalReference: ref || "mgb-" + Date.now(),
           });
         }

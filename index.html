@@ -8164,6 +8164,16 @@ async function fFatEmitirUma(row){
     vencimento:fFatVenc(row).iso,
     referencia:row.id+'-'+comp, // mesmo cliente + mês nunca gera 2 boletos/2 notas, nem recarregando a página
   };
+  // Mercadão da Prochet (lojas cadastradas + a própria Prochet): o boleto leva o marcador na descrição e o webhook
+  // do Asaas manda o recibo por e-mail sozinho quando pagarem (bot/api/asaas-webhook.js). A nota fiscal não muda.
+  try{
+    const infoL=(row.hubMod&&((clientesInfo||{})[row.hubMod]||{})[row.hubItem])||{};
+    const ehMerc=/mercad|prochet/i.test([row.cliente,row.apelido,row.hubItem,row.descricao].join(' '))||(row.hubMod==='radio'&&infoL.fatLote);
+    if(ehMerc){
+      const loja=row.apelido||row.hubItem||row.cliente;
+      payload.cobrancaDescricao='Veiculação na Rádio Interna do Mercadão da Prochet'+(/mercad|prochet/i.test(loja)?'':' — '+loja)+' — competência '+comp;
+    }
+  }catch(e){}
   if(row.modo==='nota') payload.semCobranca=true;   // só nota fiscal, sem boleto (cliente paga fora, ex.: Léo)
   if(row.modo==='boleto') payload.semNota=true;     // só boleto, sem nota fiscal
   try{
