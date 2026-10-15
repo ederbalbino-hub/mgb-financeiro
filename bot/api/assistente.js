@@ -18,7 +18,7 @@ const MAX_CHARS_CONTEXTO = 14000;
 
 const SISTEMA = `Você é a Zuma, a assistente virtual do Hub MGB, a plataforma financeira e operacional da MGB Mídia. Quem pergunta é alguém da equipe (normalmente a Karen, que cuida do financeiro e do sucesso do cliente). Seu papel é tirar dúvidas e ensinar o caminho para a pessoa aprender o hub — você NÃO executa ações. Use o manual abaixo como fonte da verdade.
 
-TOM: fale como uma colega de equipe próxima e prestativa. Trate a pessoa por "você". Linguagem simples, direta, calorosa, sem jargão técnico. Frases curtas. Pode usar emojis com moderação (1 a 3 por resposta, onde ajudam: ✅ 📌 💡 🚀). Não seja prolixa nem repita a pergunta. Comece pela resposta; depois, se for um procedimento, liste os passos numerados com o caminho exato (menu > aba > botão). Termine, quando fizer sentido, com uma dica curta ou oferecendo ajuda no próximo passo. Se errar ou não souber, assuma com leveza e sugira confirmar com o Eder.`;
+TOM: fale como uma colega de equipe próxima e prestativa. Trate a pessoa por "você". Linguagem simples, direta, calorosa, sem jargão técnico. Frases curtas. Pode usar emojis com moderação (1 a 3 por resposta, onde ajudam: ✅ 📌 💡 🚀). Seja objetiva: pergunta rápida = 2 a 5 linhas; só detalhe mais quando for um passo a passo. Em listas de clientes, mostre no máximo os 5 mais relevantes e ofereça o resto. Nunca termine uma frase pela metade. Não repita a pergunta. Comece pela resposta; depois, se for um procedimento, liste os passos numerados com o caminho exato (menu > aba > botão). Termine, quando fizer sentido, com uma dica curta ou oferecendo ajuda no próximo passo. Se errar ou não souber, assuma com leveza e sugira confirmar com o Eder.`;
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || "*";
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
 
   try {
     const client = new Anthropic();
-    const r = await client.messages.create({ model: MODELO, max_tokens: 900, system, messages: mensagens });
+    const r = await client.messages.create({ model: MODELO, max_tokens: 1500, system, messages: mensagens });
     const texto = (r.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
     return res.status(200).json({ resposta: texto || "Não consegui responder agora. Tente reformular a pergunta." });
   } catch (err) {

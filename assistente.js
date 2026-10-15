@@ -11,6 +11,14 @@
     try { return JSON.parse(localStorage.getItem('mgb_sessao') || 'null'); } catch (e) { return null; }
   }
   function brl(v) { return 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  // Markdown mínimo e seguro: **negrito**, listas "- " e quebras de linha (texto escapado antes)
+  function md(s) {
+    var t = esc(s).replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>').replace(/(^|\s)\*([^*\n]+)\*(?=\s|[.,;:!?]|$)/g, '$1<i>$2</i>');
+    return t.split('\n').map(function (l) {
+      var m = /^\s*[-•]\s+(.*)$/.exec(l);
+      return m ? '<div style="padding-left:14px;text-indent:-10px">• ' + m[1] + '</div>' : (l.trim() ? '<div>' + l + '</div>' : '<div style="height:6px"></div>');
+    }).join('');
+  }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   // Resumo do mês corrente (somente leitura): receita por módulo, quem ainda não pagou, despesas, faturamento emitido.
@@ -62,7 +70,7 @@
       '#mgb-ass header{padding:12px 14px;background:#4E38B2;color:#fff;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px}' +
       '#mgb-ass header button{background:none;border:0;color:#fff;font-size:18px;cursor:pointer}' +
       '#mgb-ass-msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg,#f6f4fb)}' +
-      '.mgb-ass-m{max-width:88%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}' +
+      '.mgb-ass-m{max-width:88%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.5;word-wrap:break-word}' +
       '.mgb-ass-m.u{align-self:flex-end;background:#4E38B2;color:#fff;border-bottom-right-radius:3px}' +
       '.mgb-ass-m.a{align-self:flex-start;background:var(--surface,#fff);color:var(--text,#1d1430);border:1px solid var(--border,#e4dff0);border-bottom-left-radius:3px}' +
       '.mgb-ass-sug{display:flex;flex-wrap:wrap;gap:6px}' +
@@ -76,7 +84,7 @@
 
   function addMsg(tipo, texto) {
     var box = document.getElementById('mgb-ass-msgs');
-    var d = document.createElement('div'); d.className = 'mgb-ass-m ' + tipo; d.innerHTML = esc(texto);
+    var d = document.createElement('div'); d.className = 'mgb-ass-m ' + tipo; if (tipo === 'a') d.innerHTML = md(texto); else d.textContent = texto;
     box.appendChild(d); box.scrollTop = box.scrollHeight; return d;
   }
 
@@ -138,7 +146,7 @@
     }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (x) {
         var t = x.ok ? x.j.resposta : (x.j.error || 'Não consegui responder agora.');
-        esp.textContent = t;
+        esp.innerHTML = x.ok ? md(t) : esc(t);
         if (x.ok) { historico.push({ role: 'assistant', content: t }); barraFeedback(esp, texto, t); } else historico.pop();
       })
       .catch(function () { esp.textContent = 'Sem conexão com o servidor. Tente de novo.'; historico.pop(); })
