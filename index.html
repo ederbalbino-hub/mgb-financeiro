@@ -5829,7 +5829,7 @@ function copiarSpot() {
           <button onclick="closeLeadModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" autocomplete="off" style="width:100%"></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" autocomplete="off" list="lead-nome-l" oninput="leadNomeEscolhido()" onchange="leadNomeEscolhido()" style="width:100%"><datalist id="lead-nome-l"></datalist></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl" id="lead-estagio-lbl">Estágio do lead</label><div id="lead-estagio-chips" role="radiogroup" aria-labelledby="lead-estagio-lbl" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">WhatsApp (DDD + número)</label><input class="anunc-form-inp" id="lead-tel" name="telefone" type="tel" placeholder="43999998888" inputmode="numeric" autocomplete="tel" style="width:100%"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -13376,6 +13376,7 @@ function openLeadModal(mode,id){
   const modal=g('lead-modal');
   modal.classList.remove('hidden'); modal.classList.add('open');
   modal.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(3px)';
+  leadNomesPopular();
   setTimeout(()=>g('lead-nome').focus(),60);
   _leadEscAviso=0; setTimeout(()=>{ _leadSnap=leadFormSnap(); },80);
 }
@@ -13428,10 +13429,45 @@ function addLeadNota(){
   renderLeadHistorico(l.historico);
   scheduleSave();
 }
+// ── Nome do cliente com sugestão: digitou, aparece quem já está cadastrado; escolher preenche os dados e reaproveita o cadastro em outro produto ──
+function leadNomesIndex(){
+  const mapa=new Map();   // nome normalizado → {nome, dados, onde:Set}
+  const add=(nome,dados,onde)=>{ nome=String(nome||'').trim(); if(!nome) return; const k=fNormNome(nome); if(!k) return;
+    const e=mapa.get(k)||{nome,dados:{},onde:new Set()};
+    ['tel','responsavel','funcao','cnpj','email'].forEach(c=>{ if(!e.dados[c]&&dados&&dados[c]) e.dados[c]=dados[c]; });
+    if(onde) e.onde.add(onde); mapa.set(k,e); };
+  (leads||[]).forEach(l=>{ if(l&&l.estagio!=='perdido') add(l.nome,l,(leadProdutos().find(m=>m.id===l.produto)||{label:''}).label.replace(/^\S+\s*/,'')||null); });
+  MODULES.forEach(m=>m.items.forEach(it=>{ if(FAT_RX_TREINO.test(it)) return; const i=((clientesInfo||{})[m.id]||{})[it]||{};
+    add(it,{tel:i.tel,responsavel:i.responsavel,funcao:i.cargo,cnpj:i.cnpj,email:i.email},m.label); }));
+  return mapa;
+}
+function leadNomesPopular(){
+  const dl=g('lead-nome-l'); if(!dl) return;
+  dl.innerHTML=[...leadNomesIndex().values()].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}))
+    .map(e=>'<option value="'+e.nome.replace(/"/g,'&quot;')+'">'+[...e.onde].join(' · ').replace(/</g,'')+'</option>').join('');
+}
+function leadNomeEscolhido(){
+  const nome=g('lead-nome').value.trim(); if(!nome) return;
+  const e=leadNomesIndex().get(fNormNome(nome)); if(!e) return;
+  const mapaCampos={tel:'lead-tel',responsavel:'lead-responsavel',funcao:'lead-funcao',cnpj:'lead-cnpj',email:'lead-email'}; let n=0;
+  Object.keys(mapaCampos).forEach(c=>{ const el=g(mapaCampos[c]); if(el&&!el.value.trim()&&e.dados[c]){ el.value=e.dados[c]; n++; } });
+  if(n) leadToast('✓ Cadastro de "'+e.nome+'" reaproveitado ('+n+' campo'+(n>1?'s':'')+'). Escolha o produto.');
+}
+// Mesmo cliente em produtos diferentes pode; no mesmo produto, não.
+function leadJaCadastradoNoProduto(nome,produto){
+  const k=fNormNome(nome); if(!k||!produto) return null;
+  const outro=(leads||[]).find(l=>l&&l.id!==curLeadId&&l.produto===produto&&l.estagio!=='perdido'&&fNormNome(l.nome)===k);
+  if(outro) return 'lead no CRM';
+  const m=MODULES.find(x=>x.id===produto);
+  const atual=curLeadId!=null?(leads.find(x=>x.id===curLeadId)||{}):{};
+  if(m&&m.items.some(it=>fNormNome(it)===k&&it!==atual.itemCriado)) return 'unidade no módulo '+m.label.replace(/^\S+\s*/,'');
+  return null;
+}
 function saveLeadModal(){
   const nome=g('lead-nome').value.trim();
   if(!nome){ g('lead-nome').focus(); return; }
   if(!_leadProdutoSel){ leadToast('⚠ Escolha o produto de interesse'); return; }
+  { const ja=leadJaCadastradoNoProduto(nome,_leadProdutoSel); if(ja){ leadToast('⚠ "'+nome+'" já está cadastrado para este produto ('+ja+'). Para outro produto, tudo bem — escolha o produto certo.'); return; } }
   const tel=g('lead-tel').value.trim();
   const responsavel=g('lead-responsavel').value.trim();
   const funcao=g('lead-funcao').value.trim();
@@ -13807,6 +13843,26 @@ function vaaptyLicencas(){
   });
   migracoes.vaaptyLicencas_20261012=true;
   if(n){ try{ scheduleSave(); }catch(e){} console.log('vaaptyLicencas: '+n); }
+}
+// 19/10: JK com dois nomes e cadastro com outro ("Vaapty - JK"). Unifica nos dois produtos como "Vaapty JK - Londrina",
+// move receita/despesas/pagamentos junto e liga os leads fechados (27 e 28) às unidades já existentes.
+function renomearJK(){
+  if(!_cargaSheetsOk || migracoes.jkRenome_20261019) return;
+  const NOVO='Vaapty JK - Londrina'; let n=0;
+  [['vaapty','Vaapty JK Londrina',27],['radio','Vaapty JK',28]].forEach(([mid,velho,leadId])=>{
+    const m=MODULES.find(x=>x.id===mid); if(!m) return;
+    const i=m.items.indexOf(velho); if(i<0||m.items.includes(NOVO)) return;
+    m.items[i]=NOVO;
+    [db,rec,recPagamentos,despPagamentos].forEach(o=>{ if(o&&o[mid]&&Object.prototype.hasOwnProperty.call(o[mid],velho)){ o[mid][NOVO]=o[mid][velho]; delete o[mid][velho]; } });
+    ((db[mid]||{})[NOVO]||[]).forEach(e=>{ if(e&&e.cc===velho) e.cc=NOVO; });
+    clientesInfo[mid]=clientesInfo[mid]||{};
+    const cad=clientesInfo[mid]['Vaapty - JK']||{}; delete clientesInfo[mid]['Vaapty - JK'];
+    clientesInfo[mid][NOVO]={...cad,...(clientesInfo[mid][velho]||{}),fantasia:NOVO,leadId:leadId}; delete clientesInfo[mid][velho];
+    const l=leads.find(x=>x.id===leadId); if(l&&/jk/i.test(l.nome)){ l.nome=NOVO; l.itemCriado=NOVO; }
+    n++;
+  });
+  migracoes.jkRenome_20261019=true;
+  if(n){ try{ buildAll(); }catch(e){} try{ scheduleSave(); }catch(e){} console.log('renomearJK: '+n); }
 }
 function custosPelaNota(){
   if(!_cargaSheetsOk || migracoes.custosNota_202610) return;
@@ -15304,7 +15360,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{renomearJK();}catch(e){console.error('renomearJK',e);} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
