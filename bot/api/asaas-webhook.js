@@ -29,7 +29,19 @@ async function asaasGet(path) {
   return r.json();
 }
 
-// Recibo automático por e-mail (Resend) para as lojas do Mercadão da Prochet quando pagam.
+// Cobrança só com boleto = não tem nota fiscal vinculada ao pagamento (quando é nota + boleto, a nota nasce junto do
+// boleto e a própria nota já é o documento). Se a consulta falhar, NÃO manda recibo (melhor faltar que mandar errado).
+async function boletoSemNota(paymentId) {
+  try {
+    const j = await asaasGet(`/invoices?payment=${encodeURIComponent(paymentId)}&limit=1`);
+    return Array.isArray(j.data) && j.data.length === 0;
+  } catch (e) {
+    console.error("asaas-webhook: não consegui checar a nota do pagamento", paymentId, e.message || e);
+    return false;
+  }
+}
+
+// Recibo automático por e-mail (Resend) quando um boleto sem nota fiscal (ou do Mercadão) é pago.
 async function enviarReciboMercadao(payment) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey || !process.env.ASAAS_API_KEY) return console.log("asaas-webhook: recibo ignorado — faltam RESEND_API_KEY/ASAAS_API_KEY");
@@ -112,9 +124,9 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Recibo automático: só lojas do Mercadão da Prochet (marcador na descrição da cobrança). Falha aqui não
-    // impede a atualização de status na planilha.
-    if (EVENTOS_RECIBO.has(evento) && ehMercadao(req.body?.payment?.description)) {
+    // Recibo automático: lojas do Mercadão da Prochet (marcador na descrição) e qualquer cliente cobrado só com
+    // boleto (sem nota fiscal). Falha aqui não impede a atualização de status na planilha.
+    if (EVENTOS_RECIBO.has(evento) && (ehMercadao(req.body?.payment?.description) || await boletoSemNota(paymentId))) {
       try { await enviarReciboMercadao(req.body.payment); } catch (e) { console.error("asaas-webhook: recibo falhou:", e.message || e); }
     }
 
