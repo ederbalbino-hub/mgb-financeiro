@@ -7634,6 +7634,11 @@ function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).valu
 // inicio = mês em que começa a pagar; meses = duração. Base do Faturamento e do "incluir" na planilha.
 // Simulação de treino (13/10): clientes com nome começando em "TREINO" nunca vão para a planilha nem para o Faturamento.
 const FAT_RX_TREINO=/^\s*treino\b/i;
+// Léo Cosméticos tem aba própria (Nota Fiscal › Léo, 31 unidades, só nota): nunca entra na lista do Faturamento.
+const FAT_RX_LEO=/\bl[eé]o\s+cosm[eé]ticos|^\s*leo[-\s]\d/i;
+function fFatEhLeo(r){ return [r.id,r.cliente,r.apelido,r.hubItem].some(x=>FAT_RX_LEO.test(String(x||''))); }
+// Cliente criado pelo Novo cliente (com ou sem lead do CRM): a jornada registra "Unidade criada no Novo cliente".
+function fFatCriadoNoNovo(info){ return !!(info&&(info.leadId||info.fatLote||(info.jornada||[]).some(j=>/criada no Novo cliente/i.test((j&&j.texto)||'')))); }
 function fFatContratosHub(rowsPlanilha){
   rowsPlanilha=rowsPlanilha||[]; const out=[];
   const modRot={vaapty:'Vaapty',radio:'Rádio Interna',tv:'TV Interna'};
@@ -7641,7 +7646,7 @@ function fFatContratosHub(rowsPlanilha){
   ['vaapty','radio','tv'].forEach(mid=>{
     const m=MODULES.find(x=>x.id===mid); if(!m) return;
     m.items.forEach(item=>{
-      const info=((clientesInfo||{})[mid]||{})[item]; if(!info||!(info.leadId||info.fatLote)) return;   // criados pelo Novo cliente OU lojas cadastradas pela caixa 'Cadastrar lojas'
+      const info=((clientesInfo||{})[mid]||{})[item]; if(!fFatCriadoNoNovo(info)) return;   // criados pelo Novo cliente OU lojas cadastradas pela caixa 'Cadastrar lojas'
       if(FAT_RX_TREINO.test(item)||FAT_RX_TREINO.test(info.razao||'')) return;                      // treino da equipe: nunca vai para o dia 5
       const ro=recObj(mid,item); if(!(ro.valor>0)||!ro.inicio) return;
       const modulo=modRot[mid]||m.label; const cod=codigoDe(mid==='vaapty'?'TV Interna':modulo);
@@ -7990,6 +7995,7 @@ async function fFatCarregar(){
     fatLinhas.forEach(r=>{ const c=doHubPorId[r.id]; if(!c) return; r.hubMod=c.hubMod; r.hubItem=c.hubItem; r.doHub=true;
       if(!r.ctribnac){ r.ctribnac=c.ctribnac; r.cnbs=c.cnbs; } });
     const novos=fFatClientesDoHub(j.rows||[]); fatLinhas=fatLinhas.concat(novos);
+    fatLinhas=fatLinhas.filter(r=>!fFatEhLeo(r));   // Léo tem aba própria
     // Retenção de ISS automática: cliente de Londrina retém (regra da planilha). Linhas criadas pelo hub não trazem a coluna
     // preenchida; sem isto o DM Auto Center saiu sem retenção. Só vale para o que ainda não foi emitido (boleto/nota já
     // criados ficam como estão, para o valor do boleto continuar batendo com a nota).
