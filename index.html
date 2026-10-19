@@ -6729,6 +6729,17 @@ function copiarSpot() {
           <span id="f-fat-resumo" class="ferr-info"></span>
           <span id="f-fat-venc" class="ferr-info"></span>
         </div>
+        <details style="margin-top:10px" ontoggle="if(this.open) fFatIncInit()"><summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--purple)">➕ Incluir cliente do hub no Faturamento (e definir o tempo do contrato)</summary>
+          <div class="ferr-d" style="margin-top:6px">Para clientes já cadastrados nos módulos (Vaapty, Rádio Interna, TV Interna) que não aparecem na lista. Escolha o cliente e confira <b>valor</b>, <b>mês de início</b> e <b>duração do contrato (meses)</b> — ele só entra na lista nos meses em que o contrato está vigente. Cliente com cadastro nos dois módulos (ex.: JK) você inclui duas vezes, uma em cada.</div>
+          <div class="ferr-grid" style="margin-top:6px">
+            <div><label class="ferr-lbl">Cliente</label><select id="f-inc-cli" class="ferr-in" onchange="fFatIncPreencher()"></select></div>
+            <div><label class="ferr-lbl">Valor mensal (R$)</label><input id="f-inc-valor" class="ferr-in" inputmode="decimal"></div>
+            <div><label class="ferr-lbl">Começa a pagar em</label><input id="f-inc-inicio" class="ferr-in" type="month"></div>
+            <div><label class="ferr-lbl">Duração (meses)</label><input id="f-inc-meses" class="ferr-in" type="number" min="1" max="60"></div>
+          </div>
+          <button class="ferr-btn" style="margin-top:6px" onclick="fFatIncSalvar()">Incluir no Faturamento</button>
+          <div id="f-inc-res" style="margin-top:6px"></div>
+        </details>
         <details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--purple)">📋 Cadastrar lojas do módulo (telefone, CNPJ, pago)</summary>
           <div class="ferr-d" style="margin-top:6px">Cole uma loja por linha: <b>Nome - telefone - CNPJ/CPF</b>. Pode escrever "pago" (marca pago na competência) e "nota e boleto" (senão é só boleto). O nome é encaixado nos clientes da Rádio Interna; CNPJ no formato 00.000.000/0000-00 e CPF 000.000.000-00. Rodar de novo só complementa/atualiza.</div>
           <textarea id="f-fat-lojas-txt" class="ferr-in" rows="6" placeholder="Andreia Rocha - 43 99935-2023&#10;Café Odebrecht - 43 99935-2023 - 37.013.895/0001-09 - nota e boleto&#10;Candy Imports - 43 98429-7298 - pago"></textarea>
@@ -7635,6 +7646,7 @@ function fFatKey(r){ const comp=(document.getElementById('f-fat-comp')||{}).valu
 // Simulação de treino (13/10): clientes com nome começando em "TREINO" nunca vão para a planilha nem para o Faturamento.
 const FAT_RX_TREINO=/^\s*treino\b/i;
 // Léo Cosméticos tem aba própria (Nota Fiscal › Léo, 31 unidades, só nota): nunca entra na lista do Faturamento.
+let fatOrd='modulo';
 const FAT_RX_LEO=/\bl[eé]o\s+cosm[eé]ticos|^\s*leo[-\s]\d/i;
 function fFatEhLeo(r){ return [r.id,r.cliente,r.apelido,r.hubItem].some(x=>FAT_RX_LEO.test(String(x||''))); }
 // Cliente criado pelo Novo cliente (com ou sem lead do CRM): a jornada registra "Unidade criada no Novo cliente".
@@ -8056,8 +8068,8 @@ function fFatLista(){
   // guarda a rolagem (da tabela e da página): marcar um cliente redesenha a lista, e ela não pode voltar ao topo
   const _box=el.querySelector('.fat-scroll'), _st=_box?_box.scrollTop:0, _sl=_box?_box.scrollLeft:0, _wy=window.scrollY;
   const _anc=[]; for(let n=el.parentElement;n;n=n.parentElement){ if(n.scrollHeight>n.clientHeight+1&&n.scrollTop>0) _anc.push([n,n.scrollTop]); }
-  const lst=[...fatLinhas].sort((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||''));
-  el.innerHTML='<style>.fat-tb th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}</style><div class="fat-scroll" style="overflow:auto;max-height:68vh;padding-bottom:12px"><table class="fat-tb" style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:1180px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px">Módulo</th><th style="text-align:left;padding:4px 6px">Cliente</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Dia venc.</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th><th style="text-align:left;padding:4px 6px">WhatsApp</th></tr>'+
+  const lst=[...fatLinhas].sort(fatOrd==='cliente'?((a,b)=>(a.cliente||'').localeCompare(b.cliente||'','pt-BR',{sensitivity:'base'})):((a,b)=>(a.modulo||'').localeCompare(b.modulo||'')||(a.cliente||'').localeCompare(b.cliente||'','pt-BR',{sensitivity:'base'})));
+  el.innerHTML='<style>.fat-tb th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}</style><div class="fat-scroll" style="overflow:auto;max-height:68vh;padding-bottom:12px"><table class="fat-tb" style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:1180px"><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th></th><th style="text-align:left;padding:4px 6px;cursor:pointer;text-decoration:underline dotted" title="Agrupar por módulo" onclick="fatOrd=\'modulo\';fFatLista()">Módulo'+(fatOrd!=='cliente'?' ▾':'')+'</th><th style="text-align:left;padding:4px 6px;cursor:pointer;text-decoration:underline dotted" title="Ordenar A–Z pelo nome do cliente" onclick="fatOrd=\'cliente\';fFatLista()">Cliente'+(fatOrd==='cliente'?' ▾ A–Z':'')+'</th><th style="text-align:right;padding:4px 6px">Valor</th><th style="text-align:left;padding:4px 6px">Emitir</th><th style="text-align:right;padding:4px 6px">Boleto</th><th style="text-align:center;padding:4px 6px">Dia venc.</th><th style="text-align:center;padding:4px 6px">Retém ISS</th><th style="text-align:left;padding:4px 6px">Último mês faturado</th><th style="text-align:left;padding:4px 6px">Status</th><th style="text-align:left;padding:4px 6px">Pagamento</th><th style="text-align:left;padding:4px 6px">WhatsApp</th></tr>'+
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
@@ -8077,6 +8089,41 @@ function fFatLista(){
   const _nb=el.querySelector('.fat-scroll'); if(_nb){ _nb.scrollTop=_st; _nb.scrollLeft=_sl; }
   if(window.scrollY!==_wy) window.scrollTo(0,_wy);
   _anc.forEach(([n,t])=>{ if(n.scrollTop!==t) n.scrollTop=t; });  // o hub rola dentro de um container, não só na janela
+}
+// ── Incluir cliente do hub (cadastrado no módulo, sem passar pelo Novo cliente) + tempo do contrato ──
+const FAT_INC_MODS=[['vaapty','Vaapty'],['radio','Rádio Interna'],['tv','TV Interna']];
+function fFatIncInit(){
+  const sel=document.getElementById('f-inc-cli'); if(!sel||sel.options.length) return;
+  let h='<option value="">— escolha —</option>';
+  FAT_INC_MODS.forEach(([mid,rot])=>{ const m=MODULES.find(x=>x.id===mid); if(!m) return;
+    const itens=m.items.filter(it=>!/^leo\s*cosm/i.test(it)&&!FAT_RX_TREINO.test(it)).sort((x,y)=>x.localeCompare(y));
+    h+='<optgroup label="'+rot+'">'+itens.map(it=>'<option value="'+mid+'|'+it.replace(/"/g,'&quot;')+'">'+it+'</option>').join('')+'</optgroup>'; });
+  sel.innerHTML=h;
+}
+function fFatIncPreencher(){
+  const v=(document.getElementById('f-inc-cli')||{}).value||''; const i=v.indexOf('|'); if(i<0) return;
+  const ro=recObj(v.slice(0,i),v.slice(i+1));
+  document.getElementById('f-inc-valor').value=ro.valor?String(ro.valor).replace('.',','):'';
+  document.getElementById('f-inc-inicio').value=ro.inicio||'';
+  document.getElementById('f-inc-meses').value=ro.meses||12;
+}
+function fFatIncSalvar(){
+  const res=document.getElementById('f-inc-res');
+  const v=(document.getElementById('f-inc-cli')||{}).value||''; const i=v.indexOf('|');
+  if(i<0){ res.innerHTML='<div class="ferr-info" style="color:var(--red)">Escolha o cliente.</div>'; return; }
+  const mid=v.slice(0,i), item=v.slice(i+1);
+  const valor=fRecParseValor(document.getElementById('f-inc-valor').value), inicio=document.getElementById('f-inc-inicio').value, meses=parseInt(document.getElementById('f-inc-meses').value,10)||12;
+  if(!(valor>0)||!/^\d{4}-\d{2}$/.test(inicio)){ res.innerHTML='<div class="ferr-info" style="color:var(--red)">Informe valor e mês de início.</div>'; return; }
+  rec[mid]=rec[mid]||{}; rec[mid][item]={...(rec[mid][item]||{}),valor,inicio,meses};
+  // o cadastro às vezes tem outro nome (ex.: "Vaapty - JK" × "Vaapty JK"): puxa CNPJ/e-mail/telefone do parecido
+  clientesInfo[mid]=clientesInfo[mid]||{}; const atual=clientesInfo[mid][item]||{}; const n=fNormNome(item);
+  const kp=Object.keys(clientesInfo[mid]).find(k=>k!==item&&(fNormNome(k)===n||(n.length>=5&&(fNormNome(k).includes(n)||n.includes(fNormNome(k)))&&fNormNome(k).length>=5)));
+  const par=kp?clientesInfo[mid][kp]:{};
+  clientesInfo[mid][item]={...par,...atual,fatLote:true,fantasia:atual.fantasia||par.fantasia||item};
+  try{ scheduleSave(); }catch(e){}
+  const info=clientesInfo[mid][item]; const falta=[!info.cnpj&&'CNPJ',!info.email&&'e-mail',!(info.cidade||info.endereco)&&'endereço (para a nota)'].filter(Boolean);
+  res.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+item+' incluído: '+f(valor)+'/mês, '+meses+' meses a partir de '+inicio.split('-').reverse().join('/')+'. Clique em "Carregar planilha" para ver na lista.'+(falta.length?' <span style="color:#B45309">Falta no cadastro: '+falta.join(', ')+'.</span>':'')+'</div>';
+  fFatCarregar();
 }
 // Atalho: abre a aba Recibos já preenchida com o cliente/valor/competência da linha.
 function fFatRecibo(id){
