@@ -48,6 +48,7 @@ function ASSINAFY_ACCOUNT_ID_() {
   return v;
 }
 const EDER_EMAIL = 'ederbalbino@gmail.com';
+const FINANCEIRO_EMAIL = 'financeiro@agenciamgb.com.br'; // respostas dos clientes ao contrato assinado vão para o financeiro (Karen), não para o Gmail do Eder
 const FINANCEIRO_TV_EMAIL = 'financeiro@telaverticalmidia.com.br'; // recebe cópia do contrato assinado (só contratos Tela Vertical)
 const MGB_TELEFONE = '(43) 99696-0078';
 // Pasta "MGB contratos" no Drive do Eder (MGB Mídia / MGB contratos)
@@ -283,7 +284,7 @@ function reenviarAssinado_(docId, meta) {
       to: emails.join(','),
       cc: cc,
       name: MGB_RAZAO,
-      replyTo: EDER_EMAIL,
+      replyTo: FINANCEIRO_EMAIL,
       subject: meta.nomeDoc + ' — assinado por todos ✅',
       body: 'Olá!\n\nSegue em anexo o contrato "' + meta.nomeDoc + '", assinado eletronicamente por todas as partes.\n\nQualquer dúvida, é só responder este e-mail.\n\nEder Balbino\n' + MGB_RAZAO + ' · ' + MGB_TELEFONE,
       attachments: [pdfBlob]
