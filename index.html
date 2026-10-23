@@ -13897,6 +13897,33 @@ function contratosSemFim(){
   (anunciantes||[]).forEach(a=>{ if(a.valor&&!FAT_RX_TREINO.test(a.nome)&&vivo(a)){ a.meses=SEM; n++; } });
   migracoes.semFim_20261019=true; try{ buildAll(); }catch(e){} try{ scheduleSave(); }catch(e){}
 }
+function limparTreino(){
+  if(!_cargaSheetsOk || migracoes.limparTreino_20261023) return;
+  const T=/treino/i; let n=0;
+  // despesas lançadas no treino (desfaz o efeito no fin antes de apagar)
+  Object.keys(db).forEach(mid=>Object.keys(db[mid]||{}).forEach(item=>{
+    if(!T.test(item)) return;
+    (db[mid][item]||[]).forEach(r=>{ try{ applyToFin(r,-1); }catch(e){} });
+    delete db[mid][item]; n++;
+  }));
+  [rec,recPagamentos,despPagamentos,clientesInfo].forEach(o=>Object.keys(o||{}).forEach(mid=>{
+    const m=o[mid]; if(!m||typeof m!=='object') return;
+    Object.keys(m).forEach(k=>{ if(T.test(k)){ delete m[k]; n++; } });
+  }));
+  for(let i=anunciantes.length-1;i>=0;i--) if(T.test(anunciantes[i].nome||'')){ anunciantes.splice(i,1); n++; }
+  for(let i=leads.length-1;i>=0;i--) if(T.test(leads[i].nome||'')||T.test(leads[i].itemCriado||'')){ leads.splice(i,1); n++; }
+  for(let i=recibos.length-1;i>=0;i--) if(T.test(recibos[i].cliente||'')||T.test(recibos[i].pagador||'')){ recibos.splice(i,1); n++; }
+  for(let i=receitasAvulsas.length-1;i>=0;i--) if(T.test(receitasAvulsas[i].cliente||'')){ receitasAvulsas.splice(i,1); n++; }
+  for(let i=empresaAvulsas.length-1;i>=0;i--) if(T.test(empresaAvulsas[i].desc||'')){
+    const id=empresaAvulsas[i].id;
+    try{ delete despPagamentos._empresa.Empresa['_av_'+id]; }catch(e){}
+    empresaAvulsas.splice(i,1); n++;
+  }
+  MODULES.forEach(m=>{ const k=m.items.length; m.items=m.items.filter(x=>!T.test(x)); n+=k-m.items.length; });
+  migracoes.limparTreino_20261023=true;
+  try{ buildAll(); }catch(e){} try{ scheduleSave(); }catch(e){}
+  console.log('limparTreino: removidos',n);
+}
 function custosPelaNota(){
   if(!_cargaSheetsOk || migracoes.custosNota_202610) return;
   const log=[];
@@ -15393,7 +15420,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{renomearJK();}catch(e){console.error('renomearJK',e);} try{ajustarValorJK();}catch(e){console.error('ajustarValorJK',e);} try{ajustarPrazosContratos();}catch(e){console.error('ajustarPrazosContratos',e);} try{contratosSemFim();}catch(e){console.error('contratosSemFim',e);} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{renomearJK();}catch(e){console.error('renomearJK',e);} try{ajustarValorJK();}catch(e){console.error('ajustarValorJK',e);} try{ajustarPrazosContratos();}catch(e){console.error('ajustarPrazosContratos',e);} try{contratosSemFim();}catch(e){console.error('contratosSemFim',e);} try{limparTreino();}catch(e){console.error('limparTreino',e);} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
