@@ -9205,7 +9205,7 @@ function ropsFinMes(ano,mes){
     else if(!cache){ fontes=GUINA_AGENDA_SEM_CACHE.filter(x=>key>=x.de&&key<=x.ate); base=fontes.reduce((a,x)=>a+x.valor,0); origem='agenda (Rádio Ops não sincronizado)'; }
   }
   const guina=Math.round(base*pct)/100;
-  return {receita:d?(d.notaMGB||0):0, despesaCmx:d?(d.connectmix||0):0, radios:d?(d.radios||0):0,
+  return {receita:d?(d.notaMGB||0):0, despesaCmx:d?(d.connectmix||0):0, radios:d?(d.radios||0):0, radiosCmx:d?(d.radiosCmx!=null?d.radiosCmx:(d.radios||0)):0,
     guina:guina, guinaPct:pct, guinaBase:base, guinaBaseRops:d?(d.comissoes||0):0, guinaFontes:fontes.map(x=>x.nome), guinaOrigem:origem};
 }
 // Despesa do mês = mesma fonte que Visão Despesas (db + despesas compartilhadas)
@@ -10392,7 +10392,7 @@ function coletaDespesasMes(selAno,selMes){
       m:MODULES.find(x=>x.id==='radioops'),
       item:'Famiglia Venturelli',
       idx:'_connectmix',
-      r:{d:'Connectmix — auditoria de veiculação ('+ropsFm.radios+' rádio(s))',f:'Connectmix'},
+      r:{d:'Connectmix — auditoria de veiculação ('+(ropsFm.radiosCmx!=null?ropsFm.radiosCmx:ropsFm.radios)+' rádio(s) × R$ 200)',f:'Connectmix'},
       vlrMes:ropsFm.despesaCmx,
       tipoLbl:'Auditoria',
       mes:selMes,ano:selAno
@@ -15518,10 +15518,25 @@ function ropsRenderAlertas(data){
   var fd=function(s){ try{ return new Date(s).toLocaleDateString('pt-BR'); }catch(e){ return ''; } };
   var valor=function(m){ var x=(data.meses||[]).find(function(y){ return y.mes===m; }); return x?ropsMoeda(x.notaMGB):''; };
   var texto=pend.map(function(r){ return '<b>💰 Dinheiro entrando:</b> relatório de <b>'+rot(r.mes)+'</b> aprovado'+(r.aprovadoNome?' por '+r.aprovadoNome:'')+' em '+fd(r.aceiteEm)+(valor(r.mes)?' — nota MGB <b>'+valor(r.mes)+'</b>':'')+' · <u>emitir a nota</u>'; }).join('<br>');
-  var ha=document.getElementById('home-rops-alert'); if(ha){ ha.style.display=pend.length?'block':'none'; ha.innerHTML=texto+(pend.length?'<div style="font-size:11.5px;margin-top:4px;opacity:.8">Clique pra abrir o Rádio Ops e marcar a nota como emitida.</div>':''); }
-  var pa=document.getElementById('rops-nf-alert'); if(pa){ pa.style.display=pend.length?'block':'none'; pa.innerHTML=texto+(pend.length?'<div style="font-size:11.5px;margin-top:4px;opacity:.8">No painel abaixo (Início) o card verde tem o botão ✔ Nota emitida.</div>':''); }
-  var hd=document.getElementById('home-rops-desc'); if(hd){ hd.textContent=pend.length?('💰 '+pend.length+' nota(s) pra emitir'+(dec?' · '+dec+' decisão(ões) aguardando':'')):(dec?dec+' decisão(ões) aguardando você':'Bureau de rádio — Famiglia Venturelli: painel, pipeline e financeiro'); }
-  var nb=document.getElementById('nav-rops-badge'); if(nb) nb.style.display=pend.length?'inline-block':'none';
+  // 📬 pós-venda mensal (semi-automático): Rádio Ops prepara no dia 1º com os dados da Connectmix; o envio ao cliente só sai com o seu clique
+  var pv=data&&data.posVendaMensal, pvPend=!!(pv&&pv.mes&&!pv.enviadoEm);
+  var escH=function(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;'); };
+  var pvTxt=pvPend?('<b>📬 Pós-venda de '+rot(pv.mes)+' pronto pra aprovar:</b> '+pv.nOk+' rádio(s) ok'+(pv.nAlerta?' · <b>⚠️ '+pv.nAlerta+' com alerta</b> ('+escH((pv.alertas||[]).join('; '))+')':'')+' <button onclick="ropsAprovarPosVenda(\''+pv.mes+'\',event)" style="margin-left:6px;padding:4px 12px;border-radius:8px;border:none;background:#118A5D;color:#fff;font-weight:700;cursor:pointer;font-size:12px">✓ Aprovar e enviar ao cliente</button>'):'';
+  if(pvPend) texto=(pvTxt+(texto?'<br>':''))+texto;
+  var temAlerta=pend.length||pvPend;
+  var ha=document.getElementById('home-rops-alert'); if(ha){ ha.style.display=temAlerta?'block':'none'; ha.innerHTML=texto+(pend.length?'<div style="font-size:11.5px;margin-top:4px;opacity:.8">Clique pra abrir o Rádio Ops e marcar a nota como emitida.</div>':''); }
+  var pa=document.getElementById('rops-nf-alert'); if(pa){ pa.style.display=temAlerta?'block':'none'; pa.innerHTML=texto+(pend.length?'<div style="font-size:11.5px;margin-top:4px;opacity:.8">No painel abaixo (Início) o card verde tem o botão ✔ Nota emitida.</div>':''); }
+  var hd=document.getElementById('home-rops-desc'); if(hd){ hd.textContent=temAlerta?((pend.length?'💰 '+pend.length+' nota(s) pra emitir':'')+(pvPend?(pend.length?' · ':'')+'📬 pós-venda '+rot(pv.mes)+' pra aprovar':'')+(dec?' · '+dec+' decisão(ões) aguardando':'')):(dec?dec+' decisão(ões) aguardando você':'Bureau de rádio — Famiglia Venturelli: painel, pipeline e financeiro'); }
+  var nb=document.getElementById('nav-rops-badge'); if(nb) nb.style.display=temAlerta?'inline-block':'none';
+}
+function ropsAprovarPosVenda(mes,ev){
+  if(ev&&ev.stopPropagation) ev.stopPropagation();
+  if(!confirm('Enviar o pós-venda de '+mes+' ao cliente agora?\n\nO relatório do mês vai com a auditoria da Connectmix por rádio.')) return;
+  var k=ropsChave(); if(!k) return;
+  fetch(ROPS_EXEC+'?aprovarposvenda='+encodeURIComponent(mes)+'&chave='+encodeURIComponent(k)+'&t='+Date.now(),{credentials:'omit',redirect:'follow'})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(j&&j.ok){ mostrarToast('✅ Pós-venda de '+mes+' enviado ao cliente'); ropsBuscarJson(k,new Date().getFullYear()); } else mostrarToast('Não enviou: '+((j&&j.erro)||'erro desconhecido')); })
+    .catch(function(){ mostrarToast('Não consegui falar com o Rádio Ops — tente de novo.'); });
 }
 function ropsAutoSync(){ // na abertura do hub: mostra o cache e, se estiver velho (>3h) e houver chave salva, busca de novo em silêncio
   var cache=null; try{ cache=JSON.parse(localStorage.getItem('rops_cache')||'null'); }catch(e){}
