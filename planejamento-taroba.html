@@ -247,12 +247,13 @@ const nl2br = s => esc(s).replace(/\n/g,'<br>');
 
 function periodo(){
   const a = new Date(S.per.ini+'T12:00:00'), b = new Date(S.per.fim+'T12:00:00');
-  if(isNaN(a)||isNaN(b)||b<a) return {du:0,sem:0,meses:1,txt:'',ano:2026};
+  if(isNaN(a)||isNaN(b)||b<a) return {du:0,sem:0,meses:1,txt:'',long:'',ano:2026};
   let du = 0; for(let d=new Date(a); d<=b; d.setDate(d.getDate()+1)){ const w=d.getDay(); if(w>0&&w<6) du++; }
   const dias = Math.round((b-a)/864e5)+1;
   const meses = (b.getFullYear()-a.getFullYear())*12 + b.getMonth()-a.getMonth() + 1;
   const txt = a.getMonth()===b.getMonth() && a.getFullYear()===b.getFullYear() ? MES[a.getMonth()]+' de '+a.getFullYear() : MES[a.getMonth()]+' a '+MES[b.getMonth()];
-  return {du, sem:Math.floor(dias/7), meses, txt, ano:b.getFullYear()};
+  const long = a.getMonth()===b.getMonth() && a.getFullYear()===b.getFullYear() ? txt : (a.getFullYear()===b.getFullYear() ? txt+' de '+b.getFullYear() : MES[a.getMonth()]+' de '+a.getFullYear()+' a '+MES[b.getMonth()]+' de '+b.getFullYear());
+  return {du, sem:Math.floor(dias/7), meses, txt, long, ano:b.getFullYear()};
 }
 
 /* ─── cálculo ─── */
@@ -347,13 +348,14 @@ function textosAuto(){
   const g = frentesSel(), sp = periodo(), seg = S.cli.segmento.trim(), fr = frasesFrentes(g);
   const praças = ativas().length===2 ? 'Londrina e Cascavel' : PR[ativas()[0]];
   let h, d;
-  if(g.has('operacoes')){ h = C+' no ar e na loja:\nda tela à gôndola, toda semana.'; d = 'da tela à gôndola'; }
-  else if(g.has('radio')){ h = C+' no ar todos os dias:\na marca que o Paraná ouve.'; d = 'todos os dias'; }
-  else if(g.has('projetos')){ h = C+' dentro dos maiores\nprojetos do Grupo Tarobá.'; d = 'projetos do Grupo Tarobá'; }
-  else { h = C+'\ncom a força do Grupo Tarobá.'; d = 'Grupo Tarobá'; }
+  /* título de venda: período + o que o público faz com a marca (vê = TV/projetos, ouve = rádio, prova = gôndola) */
+  const verbos = [g.has('projetos')?'vê':'', (g.has('radio')||g.has('projetos'))?'ouve':'', g.has('operacoes')?'prova':''].filter(Boolean);
+  const vtxt = verbos.length>1 ? verbos.slice(0,-1).join(', ')+' e '+verbos[verbos.length-1] : (verbos[0]||'lembra');
+  const quando = sp.txt ? (sp.meses>1 ? 'De '+sp.txt+',' : 'Em '+sp.txt+',') : 'Todos os dias,';
+  h = quando+'\n'+C+' é a marca\nque o interior '+vtxt+'.'; d = 'que o interior '+vtxt+'.';
   const novo_ = {
     headline:h, destaque:d,
-    sub:(sp.txt?'De '+sp.txt+', ':'')+C+' presente '+(fr.length?fr.join(', '):'na TV, no rádio e no digital')+' — em '+praças+'.',
+    sub:(sp.long?'De '+sp.long+', ':'')+C+' presente '+(fr.length?fr.join(', '):'na TV, no rádio e no digital')+' — em '+praças+'.',
     pa_titulo:(seg?seg.charAt(0).toUpperCase()+seg.slice(1)+': a escolha se decide':'A escolha se decide')+'\nna frente da prateleira.',
     pa_p1:'O mercado'+(seg?' de '+seg.toLowerCase():'')+' está cada vez mais disputado: o consumidor decide em segundos, no caminho até o mercado e diante da prateleira. Quem aparece com frequência na rotina da região é quem é lembrado na hora da escolha.',
     pa_p2:C+' tem o que oferecer. O que falta é presença: ser vista, ouvida e provada onde o consumidor já está. É o que este plano entrega'+(sp.txt?', de '+sp.txt:'')+(fr.length?': '+fr.join(', ')+'.':'.')
@@ -372,12 +374,12 @@ function promptIA(){
   return 'Você é redator comercial e pesquisador do Grupo Tarobá (TV afiliada Band em Londrina e Cascavel, Rádio Tarobá FM 101.7 e portal Tarobá News; a TV Tarobá integra o Grupo Muffato — Super Muffato e Max Atacadista — desde 1982). '
     + 'Vou apresentar uma proposta comercial a este cliente. PESQUISE NA INTERNET e escreva a abertura da proposta.\n\n'
     + 'Cliente: '+(c.nome||'(preencher)')+'\nSegmento: '+(c.segmento||'(não informado — descubra pelo nome/site)')+'\nSite/Instagram/informações: '+(c.site||'(não informado — pesquise o nome do cliente)')+'\n'
-    + 'Praças: '+praças+'\nPeríodo: '+(sp.txt||'(não informado)')+(sp.meses>1?' de '+sp.ano+' ('+sp.meses+' meses: o plano cobre o PERÍODO INTEIRO — não escreva como se fosse um mês ou uma data só, e não destaque dezembro/fim de ano a menos que seja o foco do cliente)':'')+'\nFrentes do plano: '+(frasesFrentes(g).join('; ')||'TV, rádio e digital')+'\n\n'
+    + 'Praças: '+praças+'\nPeríodo: '+(sp.long||'(não informado)')+(sp.meses>1?' de '+sp.ano+' ('+sp.meses+' meses: o plano cobre o PERÍODO INTEIRO — não escreva como se fosse um mês ou uma data só, e não destaque dezembro/fim de ano a menos que seja o foco do cliente)':'')+'\nFrentes do plano: '+(frasesFrentes(g).join('; ')||'TV, rádio e digital')+'\n\n'
     + 'REGRAS:\n1) Dados de mercado do SETOR do cliente: busque fontes confiáveis e recentes (IBGE, associações do setor, Sebrae, NIQ, Kantar, ABRAS/APRAS, ABIA, PwC, McKinsey etc.), de preferência Paraná ou Brasil, dos últimos 2 anos. Cada número precisa de fonte com nome e ano.\n'
     + '2) NÃO invente números. Se não encontrar um dado verificável, deixe aquele item com texto vazio.\n'
     + '3) Use informações reais da empresa (site/redes) quando existirem.\n\n'
     + 'Responda SOMENTE com um JSON neste formato:\n'
-    + '{"headline":"título de capa, até 12 palavras (use \\n para quebrar linha)","destaque":"trecho EXATO do headline, sem quebra de linha, para destacar em dourado","sub":"1 parágrafo de gancho, até 45 palavras",'
+    + '{"headline":"título de capa de VENDAS, até 14 palavras: promessa forte e concreta para o cliente, citando o PERÍODO ('+(sp.long||'o período do plano')+') e o resultado (marca vista, ouvida e provada); nada genérico, nada de clichê (use \\n para quebrar linha)","destaque":"trecho EXATO do headline, sem quebra de linha, para destacar em dourado","sub":"1 parágrafo de gancho, até 45 palavras",'
     + '"pa_titulo":"título da tela Por que agora, 2 linhas separadas por \\n","pa_p1":"parágrafo sobre o mercado/categoria do cliente, até 70 palavras","pa_p2":"parágrafo sobre o que falta (presença de marca) e como o plano entrega, até 70 palavras",'
     + '"mercado":{"titulo":"título da tela de dados do setor, até 10 palavras","lead":"frase de abertura citando a fonte principal, até 40 palavras",'
     + '"destaques":[{"num":"+00%","texto":"descreva o que o número significa","fonte":"Instituição · ano"},{"num":"","texto":"","fonte":""},{"num":"","texto":"","fonte":""}],'
@@ -706,7 +708,7 @@ function buildDoc(forPrint){
   { h1 = nl2br(cv('headline')); const d = esc(((S.cli.headline.trim()&&!isModelo(S.cli.headline))?S.cli.destaque:AU.destaque).trim()); if(d && h1.indexOf(d)>=0) h1 = h1.replace(d,'<span class="gold">'+d+'</span>'); }
   const sub = esc(cv('sub'));
   slides.push('<div class="cover"><div class="cover-top"><div class="cover-logo-tar"><img src="'+LOGO+'" alt="Grupo Tarobá"></div><div class="cover-id">Proposta Comercial · '+sp.ano+'<br><strong>'+esc(C)+'</strong></div></div>'
-    + '<div class="cover-center"><div class="cover-center-text"><div class="cover-eyebrow">Grupo Tarobá × '+esc(C)+'</div><h1>'+h1+'</h1><p class="cover-sub">'+sub+'</p></div>'
+    + '<div class="cover-center"><div class="cover-center-text"><div class="cover-eyebrow">Grupo Tarobá × '+esc(C)+'</div>'+(sp.long?'<div class="cover-per">'+esc(sp.long)+' · '+esc(praçasTxt)+'</div>':'')+'<h1>'+h1+'</h1><p class="cover-sub">'+sub+'</p></div>'
     + (S.cli.logo?'<div class="cover-client-logo"><img src="'+S.cli.logo+'" alt="'+esc(C)+'"></div>':'')+coverPh()+'</div>'
     + '<div class="cover-bottom"><div><div class="cover-stat-num">197</div><div class="cover-stat-lbl">Municípios cobertos</div></div><div><div class="cover-stat-num">4,5<span class="unit">M</span></div><div class="cover-stat-lbl">Pessoas alcançadas</div></div><div><div class="cover-stat-num">620<span class="unit">mil</span></div><div class="cover-stat-lbl">Seguidores nas redes</div></div><div><div class="cover-stat-num">'+A.length+'</div><div class="cover-stat-lbl">'+(A.length===2?'Praças · Londrina + Cascavel':'Praça · '+PR[A[0]])+'</div></div></div></div>');
 
@@ -870,7 +872,8 @@ function buildDoc(forPrint){
     + (wa?'<a class="cta-btn" href="https://wa.me/'+wa+'" target="_blank" rel="noopener">Chamar no WhatsApp</a>':'')+'</div></div>'
     + '<footer><div class="meta">Grupo Tarobá · Proposta '+esc(C)+' · '+sp.ano+'</div><div class="meta">'+esc(S.contato.nome)+' · '+esc(S.contato.fone)+' · '+esc(S.contato.email)+'</div></footer>');
 
-  const extra = '.ph-band{display:grid;grid-template-rows:minmax(0,1fr);gap:12px;margin-top:28px;margin-bottom:56px;overflow:hidden;flex:none}.ph-band img,.cover-ph img{width:100%;height:100%;object-fit:cover;border-radius:6px;box-shadow:0 12px 30px rgba(0,0,0,.28)}.cover-ph{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:430px}.cover-ph img{height:150px}'
+  const extra = '.cover-per{display:inline-block;margin:0 0 18px;padding:7px 16px;border:1px solid var(--gold);border-radius:999px;color:var(--gold-light);font:700 13px/1 Barlow,sans-serif;letter-spacing:.14em;text-transform:uppercase}'
+    + '.ph-band{display:grid;grid-template-rows:minmax(0,1fr);gap:12px;margin-top:28px;margin-bottom:56px;overflow:hidden;flex:none}.ph-band img,.cover-ph img{width:100%;height:100%;object-fit:cover;border-radius:6px;box-shadow:0 12px 30px rgba(0,0,0,.28)}.cover-ph{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:430px}.cover-ph img{height:150px}'
     + '.invest-row .val .old{display:block;font-size:.8rem;color:var(--gray);text-decoration:line-through;font-weight:600;letter-spacing:0}'
     + '.invest-row .val .pct{display:inline-block;background:var(--gold);color:var(--wine-deep);font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:20px;margin-top:4px;letter-spacing:.04em;font-family:Barlow,sans-serif}'
     + '.invest-row.sub .name strong{font-size:12px;color:var(--gray);text-transform:uppercase;letter-spacing:.08em}.invest-row.sub .val{font-size:1.15rem;color:var(--gray)}.invest-row.sub .val.old2{text-decoration:line-through}'
