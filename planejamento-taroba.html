@@ -82,6 +82,7 @@ details.mais .menu button:hover{background:#F4F1EE}
 .thumb img{height:84px;width:auto;border-radius:6px;border:1px solid var(--line);display:block}
 .thumb button{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px}
 .fotos.drag{outline:2px dashed var(--gold)}
+.thumb.vazio{display:flex;align-items:center;justify-content:center;border:2px dashed var(--gold);border-radius:6px;color:var(--gold);font-size:26px;cursor:pointer;width:126px;height:84px;opacity:.7}.thumb.vazio:hover{opacity:1}
 table.mkt{min-width:0}
 table.mkt td input{width:100%}
 button.add.pri{background:var(--wine);color:#fff;border:1.5px solid var(--wine)}
@@ -247,13 +248,14 @@ const nl2br = s => esc(s).replace(/\n/g,'<br>');
 
 function periodo(){
   const a = new Date(S.per.ini+'T12:00:00'), b = new Date(S.per.fim+'T12:00:00');
-  if(isNaN(a)||isNaN(b)||b<a) return {du:0,sem:0,meses:1,txt:'',long:'',ano:2026};
+  if(isNaN(a)||isNaN(b)||b<a) return {du:0,sem:0,meses:1,txt:'',long:'',fimAno:false,ano:2026};
   let du = 0; for(let d=new Date(a); d<=b; d.setDate(d.getDate()+1)){ const w=d.getDay(); if(w>0&&w<6) du++; }
   const dias = Math.round((b-a)/864e5)+1;
   const meses = (b.getFullYear()-a.getFullYear())*12 + b.getMonth()-a.getMonth() + 1;
   const txt = a.getMonth()===b.getMonth() && a.getFullYear()===b.getFullYear() ? MES[a.getMonth()]+' de '+a.getFullYear() : MES[a.getMonth()]+' a '+MES[b.getMonth()];
   const long = a.getMonth()===b.getMonth() && a.getFullYear()===b.getFullYear() ? txt : (a.getFullYear()===b.getFullYear() ? txt+' de '+b.getFullYear() : MES[a.getMonth()]+' de '+a.getFullYear()+' a '+MES[b.getMonth()]+' de '+b.getFullYear());
-  return {du, sem:Math.floor(dias/7), meses, txt, long, ano:b.getFullYear()};
+  const fimAno = a.getFullYear()===b.getFullYear() && a.getMonth()>=9; // período só em out/nov/dez
+  return {du, sem:Math.floor(dias/7), meses, txt, long, fimAno, ano:b.getFullYear()};
 }
 
 /* ─── cálculo ─── */
@@ -378,7 +380,7 @@ function promptIA(){
     + 'REGRAS:\n1) Dados de mercado do SETOR do cliente: busque fontes confiáveis e recentes (IBGE, associações do setor, Sebrae, NIQ, Kantar, ABRAS/APRAS, ABIA, PwC, McKinsey etc.), de preferência Paraná ou Brasil, dos últimos 2 anos. Cada número precisa de fonte com nome e ano.\n'
     + '2) NÃO invente números. Se não encontrar um dado verificável, deixe aquele item com texto vazio.\n'
     + '3) Use informações reais da empresa (site/redes) quando existirem.\n'
-    + (sp.meses>=6 ? '4) TOM INSTITUCIONAL E PERENE: é um planejamento anual de construção de marca. É PROIBIDO enquadrar em sazonalidade (fim de ano, Natal, brinde, férias, "últimos meses", datas comemorativas) ou citar mês/estação específicos. "Por que agora" fala de constância, frequência e lembrança de marca ao longo do ano — nunca de uma data.\n\n' : '4) Se o período for curto, pode usar a sazonalidade real do período, sem exagero.\n\n')
+    + (!sp.fimAno ? '4) TOM INSTITUCIONAL E PERENE: é um planejamento de construção de marca. É PROIBIDO falar de fim de ano, Natal, brinde, festas, férias, "últimos meses" ou qualquer sazonalidade, e citar mês/estação específicos. "Por que agora" fala de constância, frequência e lembrança de marca — nunca de uma data.\n\n' : '4) O período é só outubro–dezembro: AQUI pode usar o contexto de fim de ano (brinde, ceia, presentes), com bom senso.\n\n')
     + 'Responda SOMENTE com um JSON neste formato:\n'
     + '{"headline":"título de capa de VENDAS, até 14 palavras: promessa forte e concreta para o cliente, citando o PERÍODO ('+(sp.long||'o período do plano')+') e o resultado (marca vista, ouvida e provada); nada genérico, nada de clichê (use \\n para quebrar linha)","destaque":"trecho EXATO do headline, sem quebra de linha, para destacar em dourado","sub":"1 parágrafo de gancho, até 45 palavras",'
     + '"pa_titulo":"título da tela Por que agora, 2 linhas separadas por \\n","pa_p1":"parágrafo sobre o mercado/categoria do cliente, até 70 palavras","pa_p2":"parágrafo sobre o que falta (presença de marca) e como o plano entrega, até 70 palavras",'
@@ -440,7 +442,7 @@ function secCliente(){
   + '</div>'
   + '<div class="w2 ia fotos" id="dropFotos"><b>📷 Fotos do cliente</b> <span class="hint">— arraste aqui, cole (Ctrl+V) ou escolha os arquivos. Dá para salvar do Instagram. São espalhadas pelos slides da proposta, onde houver espaço (até 8; podem repetir).</span>'
   + '<div class="chips"><label class="add" style="margin:0;cursor:pointer">＋ Escolher imagens<input type="file" id="fotosFile" accept="image/*" multiple hidden></label></div>'
-  + (c.fotos.length?'<div class="thumbs">'+c.fotos.map((f,i)=>'<div class="thumb"><img src="'+f+'"><button type="button" data-act="rmfoto" data-i="'+i+'" title="Remover">✕</button></div>').join('')+'</div>':'')
+  + '<div class="thumbs">'+c.fotos.map((f,i)=>'<div class="thumb"><img src="'+f+'"><button type="button" data-act="rmfoto" data-i="'+i+'" title="Remover">✕</button></div>').join('')+Array.from({length:Math.max(0,8-c.fotos.length)},()=>'<label class="thumb vazio" for="fotosFile" title="Adicionar foto">＋</label>').join('')+'</div><span class="hint">'+c.fotos.length+' de 8 fotos</span>'
   + '</div>'
   + '<details class="sub w2" id="mktBox"'+(mktTem()?' open':'')+'><summary>📊 Dados de mercado do setor <span class="hint">'+(mktTem()?'(preenchido)':'— obrigatório nas propostas · use 🤖 Gerar com IA para pesquisar')+'</span></summary><div class="grid2">'
   + '<label class="w2">Título da tela<input data-b="mkt" data-f="titulo" value="'+esc(c.mkt.titulo)+'" placeholder="Ex.: O brasileiro está comendo mais massa fresca"></label>'
