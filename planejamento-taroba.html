@@ -182,7 +182,7 @@ function mktVazio(){ return {titulo:'',lead:'',d:[0,1,2].map(()=>({num:'',txt:''
 function novo(){
   return {
     cli:{nome:'',segmento:'',site:'',headline:'',destaque:'',sub:'',logo:'',pa_titulo:'',pa_p1:'',pa_p2:'',fotos:[],fotosTitulo:'',fotosTexto:'',mkt:mktVazio()},
-    per:{ini:'2026-09-01',fim:'2026-12-31'},
+    per:(function(){ const h=new Date(), y=h.getMonth()>=8?h.getFullYear()+1:h.getFullYear(); return {ini:y+'-01-01',fim:y+'-12-31'}; })(),
     pracas:{ldb:true,cvl:true},
     tela:{quem:true,radio:true,fotos:true},
     sel:{}, radio:[], pacote:{ldb:'',cvl:''},
@@ -374,10 +374,11 @@ function promptIA(){
   return 'Você é redator comercial e pesquisador do Grupo Tarobá (TV afiliada Band em Londrina e Cascavel, Rádio Tarobá FM 101.7 e portal Tarobá News; a TV Tarobá integra o Grupo Muffato — Super Muffato e Max Atacadista — desde 1982). '
     + 'Vou apresentar uma proposta comercial a este cliente. PESQUISE NA INTERNET e escreva a abertura da proposta.\n\n'
     + 'Cliente: '+(c.nome||'(preencher)')+'\nSegmento: '+(c.segmento||'(não informado — descubra pelo nome/site)')+'\nSite/Instagram/informações: '+(c.site||'(não informado — pesquise o nome do cliente)')+'\n'
-    + 'Praças: '+praças+'\nPeríodo: '+(sp.long||'(não informado)')+(sp.meses>1?' de '+sp.ano+' ('+sp.meses+' meses: o plano cobre o PERÍODO INTEIRO — não escreva como se fosse um mês ou uma data só, e não destaque dezembro/fim de ano a menos que seja o foco do cliente)':'')+'\nFrentes do plano: '+(frasesFrentes(g).join('; ')||'TV, rádio e digital')+'\n\n'
+    + 'Praças: '+praças+'\nPeríodo: '+(sp.long||'(não informado)')+(sp.meses>=6?' ('+sp.meses+' meses: PLANEJAMENTO ANUAL INSTITUCIONAL — construção de marca ao longo do ano inteiro)':(sp.meses>1?' ('+sp.meses+' meses: o plano cobre o PERÍODO INTEIRO, não um mês só)':''))+'\nFrentes do plano: '+(frasesFrentes(g).join('; ')||'TV, rádio e digital')+'\n\n'
     + 'REGRAS:\n1) Dados de mercado do SETOR do cliente: busque fontes confiáveis e recentes (IBGE, associações do setor, Sebrae, NIQ, Kantar, ABRAS/APRAS, ABIA, PwC, McKinsey etc.), de preferência Paraná ou Brasil, dos últimos 2 anos. Cada número precisa de fonte com nome e ano.\n'
     + '2) NÃO invente números. Se não encontrar um dado verificável, deixe aquele item com texto vazio.\n'
-    + '3) Use informações reais da empresa (site/redes) quando existirem.\n\n'
+    + '3) Use informações reais da empresa (site/redes) quando existirem.\n'
+    + (sp.meses>=6 ? '4) TOM INSTITUCIONAL E PERENE: é um planejamento anual de construção de marca. É PROIBIDO enquadrar em sazonalidade (fim de ano, Natal, brinde, férias, "últimos meses", datas comemorativas) ou citar mês/estação específicos. "Por que agora" fala de constância, frequência e lembrança de marca ao longo do ano — nunca de uma data.\n\n' : '4) Se o período for curto, pode usar a sazonalidade real do período, sem exagero.\n\n')
     + 'Responda SOMENTE com um JSON neste formato:\n'
     + '{"headline":"título de capa de VENDAS, até 14 palavras: promessa forte e concreta para o cliente, citando o PERÍODO ('+(sp.long||'o período do plano')+') e o resultado (marca vista, ouvida e provada); nada genérico, nada de clichê (use \\n para quebrar linha)","destaque":"trecho EXATO do headline, sem quebra de linha, para destacar em dourado","sub":"1 parágrafo de gancho, até 45 palavras",'
     + '"pa_titulo":"título da tela Por que agora, 2 linhas separadas por \\n","pa_p1":"parágrafo sobre o mercado/categoria do cliente, até 70 palavras","pa_p2":"parágrafo sobre o que falta (presença de marca) e como o plano entrega, até 70 palavras",'
