@@ -30,7 +30,8 @@
       { id: 'dampezzo',    hub: 'Ampezzo',            nome: "Resid. D'Ampezzo",   bairro: 'Centro',                zona: 'Centro', tipo: 'residencial', pessoas: 200,   telas: 1, torres: 1 },
       { id: 'itamaraty',   hub: 'Itamaraty',          nome: 'Ed. Itamaraty',      bairro: 'Centro',                zona: 'Centro', tipo: 'comercial',   pessoas: 11000, telas: 1, torres: 1 },
       { id: 'liberty',     hub: 'Liberty',            nome: 'Liberty Residence',  bairro: 'Nossa Sra. de Lourdes', zona: 'Centro', tipo: 'residencial', pessoas: 78,    telas: 1, torres: 1, breve: true },
-      { id: 'villasolare', hub: 'Villa Solare',       nome: 'Villa Solare',       bairro: 'Gleba Palhano',         zona: 'Sul',    tipo: 'residencial', pessoas: 234,   telas: 2, torres: 2 }
+      { id: 'villasolare', hub: 'Villa Solare',       nome: 'Villa Solare',       bairro: 'Gleba Palhano',         zona: 'Sul',    tipo: 'residencial', pessoas: 234,   telas: 2, torres: 2 },
+      { id: 'neoville', hub: 'Neo Ville', nome: 'Neo Ville', bairro: 'Parque Jamaica', zona: 'Oeste', tipo: 'residencial', pessoas: 450, telas: 4, torres: 2 }
     ]
   };
 

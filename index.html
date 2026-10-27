@@ -8991,7 +8991,7 @@ const MODULES=[
   {id:'mb',    label:'MB — Móveis Brasília',icon:'🏪',color:'#6C55DB',desc:'Painel de telas — unidades',agrupado:true,
    items:['Benjamin','Saul Elkind','Santa Catarina','Calçadão','Rolândia','Cornélio Procópio']},
   {id:'elev',  label:'Tela Vertical',icon:'🛗',color:'#16294F',desc:'Mídia em elevadores · sócio Jadson',agrupado:false,
-   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Tay','Uptown','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2','Ever','Ampezzo','Itamaraty','Liberty','Villa Solare']},
+   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Tay','Uptown','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2','Ever','Ampezzo','Itamaraty','Liberty','Villa Solare','Neo Ville']},
   {id:'vaapty',label:'Vaapty',icon:'🚗',color:'#D6367F',desc:'TV Vaapty — franqueados',agrupado:false,
    items:['Franqueado Piloto','Expansão']},
   {id:'radio', label:'Rádio Interna',icon:'📻',color:'#D97706',desc:'Rádio interna — clientes',agrupado:false,
@@ -14060,6 +14060,7 @@ function elevMigrarCondos(){
 // lançamento em elevInvestimentos (flag migracoes['elevInvest:<item>']), substitui a planilha Excel de CC Jadson × CC Eder.
 const ELEV_NOVOS=[
   {item:'Villa Solare', ini:'2026-09', telas:2},
+  {item:'Neo Ville', ini:'2026-10', telas:4, semCusto:true},
   // <novos>
 ];
 function elevMigrarNovos(){
@@ -14075,7 +14076,7 @@ function elevMigrarNovos(){
       if(!db.elev[c.item]) db.elev[c.item]=[];
       if(rec.elev[c.item]===undefined) rec.elev[c.item]={valor:0,inicio:'',meses:12};
       const tem=db.elev[c.item].some(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
-      if(!tem){
+      if(!tem && !c.semCusto){
         const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:c.telas||1,u:ELEV_CUSTO_TV,cc:c.item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:c.ini};
         applyToFin(e,+1);
         db.elev[c.item].push(e);
