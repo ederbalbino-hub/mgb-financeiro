@@ -640,7 +640,7 @@ body.has-logo .mock-nome{font-size:17px}
         <div class="skpi"><span class="l">Custo por pessoa/mês</span><span class="v" id="s-cpp">—</span></div>
         <div class="skpi"><span class="l">Investimento/semana<span id="s-neg-badge"></span></span><span class="v" id="s-sem">R$ 0</span></div>
         <div class="skpi big"><span class="l">Total · <span id="s-per-lbl">4 semanas</span></span><span class="v" id="s-total">R$ 0</span></div>
-        <div class="sim-note">Valores de tabela cheia. Descontos e condições especiais conforme volume e prazo — solicite proposta. Produção do material não inclusa.</div>
+        <div class="sim-note" id="sim-note">Valores de tabela cheia. Descontos e condições especiais conforme volume e prazo — solicite proposta. Produção do material não inclusa.</div>
         <div class="sim-cta no-print">
           <a class="btn btn-wa" id="btn-wa-sim" target="_blank" rel="noopener" onclick="mgbLembretePdf()">💬 Envie esta campanha pelo Whats</a>
           <button class="btn btn-pdf" onclick="mgbSmartPrint()">⬇ Baixar esta simulação em PDF</button>
@@ -995,6 +995,8 @@ function setPer(w){state.semanas=w;buildPeriodos();render();persist();}
 
 /* ═══════ RENDER ═══════ */
 function render(){
+  (function(){const n=document.getElementById('sim-note'); if(!n) return;
+    n.textContent=(state.precoMode==='neg'&&state.negVal>0)?'Valor bruto negociado — Produção do material não inclusa.':'Valores de tabela cheia. Descontos e condições especiais conforme volume e prazo — solicite proposta. Produção do material não inclusa.';})();
   /* hero */
   const totTelas=CONDOS.reduce((a,c)=>a+c.telas,0);
   $('h-telas').textContent=totTelas+' telas';
