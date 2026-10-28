@@ -1037,6 +1037,8 @@ function render(){
   const negOn=state.precoMode==='neg'&&state.negVal>0&&invSem!==invSemTab;
   const invMes=invSem*SEM_POR_MES;
   const total=invSem*state.semanas;
+  { const sl=sel.length?sel:CONDOS, tl=sl.reduce((a,c)=>a+c.telas,0), is=sel.length?invSem:tl*PRECO_TELA_SEMANA;
+    window.__mgbLead={valor:Math.round(is*SEM_POR_MES*100)/100,total:is*state.semanas,telas:tl,conds:sel.length?sel.map(c=>c.nome):[]}; }
   /* metodologia OOH: OTS = público × exposições/dia × 30 dias */
   const ots=Math.round(sel.reduce((a,c)=>a+impactosDe(c),0)); // residencial ×126 · comercial ×2 (ver impactosDe)
   const insMes=telas*INSERCOES_DIA*30;
@@ -1158,7 +1160,7 @@ $('in-negbase').value=state.negBase;
 render();
 
 /* Lembrete: WhatsApp não deixa anexar arquivo via link — o PDF precisa ser anexado à mão */
-function mgbLembretePdf(){
+function mgbLembretePdf(){ mgbLeadKit('whatsapp');
   document.querySelectorAll('.mgb-toast').forEach(t=>t.remove());
   const t=document.createElement('div');
   t.className='mgb-toast';
@@ -1171,7 +1173,7 @@ function mgbLembretePdf(){
 /* iOS Safari: window.print() dentro de iframe embutido na plataforma imprime a
    pagina de FORA inteira (bug do motor). Se estivermos num iframe, sai pra
    pagina isolada antes de imprimir (o estado salvo em localStorage acompanha). */
-function mgbSmartPrint(){
+function mgbSmartPrint(){ mgbLeadKit('pdf',window.self!==window.top);
   if(window.self!==window.top){
     var url=location.pathname.split('/').pop()+location.search;
     var sep=url.indexOf('?')>=0?'&':'?';
@@ -1200,6 +1202,25 @@ function mgbWaitImagesThenPrint(){
   function check(){ remaining--; if(remaining<=0) go(); }
   pending.forEach(function(im){ im.addEventListener('load',check); im.addEventListener('error',check); });
   setTimeout(go,4000);
+}
+</script>
+<script>
+/* Proposta gerada/enviada -> lead novo no CRM do hub (fila em localStorage; o hub processa) */
+function mgbLeadFila(d,soFila){
+  try{
+    d.ts=Date.now();
+    var f=JSON.parse(localStorage.getItem('mgb_lead_fila')||'[]'); f.push(d);
+    localStorage.setItem('mgb_lead_fila',JSON.stringify(f));
+    if(!soFila&&window.parent&&window.parent!==window&&window.parent.leadFilaProcessar) window.parent.leadFilaProcessar();
+  }catch(e){}
+}
+function mgbLeadKit(acao,soFila){
+  try{
+    if(!state.cliente||state.instit) return;
+    var L=window.__mgbLead||{};
+    mgbLeadFila({cliente:state.cliente,produto:'elev',valor:L.valor||0,acao:acao,
+      obs:'Mídia kit · '+(L.conds&&L.conds.length?L.conds.join(', '):'rede completa')+' · '+(L.telas||0)+' telas · '+state.semanas+' semanas · total R$ '+(L.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})+(state.seg&&state.seg!=='generico'?' · segmento: '+state.seg:'')},soFila);
+  }catch(e){}
 }
 </script>
 <a id="mgb-home-btn" href="index.html" style="display:none;position:fixed;left:18px;bottom:18px;z-index:2147483000;align-items:center;gap:8px;background:#16294F;color:#fff;font:700 14px/1 Helvetica,Arial,sans-serif;padding:13px 20px;border-radius:999px;text-decoration:none;box-shadow:0 10px 28px rgba(0,0,0,.3)">← Voltar ao hub</a>

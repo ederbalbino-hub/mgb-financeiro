@@ -448,6 +448,10 @@ h2{font-size:clamp(1.8rem,3.5vw,3rem);font-weight:900;line-height:1;margin-botto
         <span class="vp-badge" id="vp-badge"></span>
       </div>
       <div class="vp-input-row no-print">
+        <label for="vp-nome">Nome da loja / franqueado (registra o lead no CRM ao gerar a proposta)</label>
+        <div class="vp-inp-wrap"><input type="text" id="vp-nome" placeholder="Ex.: Auto Center Norte" style="width:100%"></div>
+      </div>
+      <div class="vp-input-row no-print">
         <label for="vp-negval">Valor negociado (deixe em branco pra manter a tabela)</label>
         <div class="vp-inp-wrap"><span>R$</span><input type="number" id="vp-negval" min="0" step="1" placeholder="339,00" oninput="vpCalc()"></div>
       </div>
@@ -488,7 +492,7 @@ function vpCalc(){
   }
   try{ localStorage.setItem('mgb_vp_negval', raw||''); }catch(e){}
 }
-function vpEnviarCliente(){
+function vpEnviarCliente(){ vpLead('whatsapp');
   var final = document.getElementById('vp-final').textContent;
   var msg = 'Olá! Segue a proposta da Gestão Online TV Vaapty — investimento mensal de '+final+'. Qualquer dúvida é só chamar!';
   document.getElementById('vp-wa-btn').href = 'https://wa.me/?text='+encodeURIComponent(msg);
@@ -498,7 +502,7 @@ function vpEnviarCliente(){
   requestAnimationFrame(function(){ t.classList.add('show'); });
   setTimeout(function(){ t.classList.remove('show'); },5500);
 }
-function vpSmartPrint(){
+function vpSmartPrint(){ vpLead('pdf',window.self!==window.top);
   if(window.self!==window.top){
     var url=location.pathname.split('/').pop()+location.search;
     var sep=url.indexOf('?')>=0?'&':'?';
@@ -519,6 +523,24 @@ if(/[?&]autoprint=1/.test(location.search)){
 })();
 </script>
 
+<script>
+/* Proposta gerada/enviada -> lead novo no CRM do hub (fila em localStorage; o hub processa) */
+function mgbLeadFila(d,soFila){
+  try{
+    d.ts=Date.now();
+    var f=JSON.parse(localStorage.getItem('mgb_lead_fila')||'[]'); f.push(d);
+    localStorage.setItem('mgb_lead_fila',JSON.stringify(f));
+    if(!soFila&&window.parent&&window.parent!==window&&window.parent.leadFilaProcessar) window.parent.leadFilaProcessar();
+  }catch(e){}
+}
+function vpLead(acao,soFila){
+  try{
+    var n=(document.getElementById('vp-nome')||{}).value; n=(n||'').trim(); if(!n) return;
+    var raw=parseFloat((document.getElementById('vp-negval')||{}).value)||0;
+    mgbLeadFila({cliente:n,produto:'vaapty',valor:raw>0?raw:VP_TABELA,acao:acao,obs:'Proposta Gestão Online TV Vaapty · '+(raw>0&&raw!==VP_TABELA?'valor negociado':'valor de tabela')},soFila);
+  }catch(e){}
+}
+</script>
 <a id="mgb-home-btn" href="index.html" style="display:none;position:fixed;left:18px;bottom:18px;z-index:2147483000;align-items:center;gap:8px;background:#16294F;color:#fff;font:700 14px/1 Helvetica,Arial,sans-serif;padding:13px 20px;border-radius:999px;text-decoration:none;box-shadow:0 10px 28px rgba(0,0,0,.3)">← Voltar ao hub</a>
 <style>@media print{#mgb-home-btn{display:none!important}}</style>
 <script>try{if(window.self===window.top){document.getElementById("mgb-home-btn").style.display="flex";}}catch(e){}</script>

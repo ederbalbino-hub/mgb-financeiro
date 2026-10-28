@@ -425,7 +425,7 @@ body.pdf-mode .toolbar{display:none}
   <div class="footbar"><span><b>Tela Vertical</b> · Mídia em Elevadores — uma empresa do Grupo Predial</span><span>Proposta comercial · <span data-campo="cliente">[[CLIENTE]]</span></span><span>Londrina – PR</span></div>
 </section>
 
-<div class="toolbar"><a class="wa" id="tb-wa" href="#" target="_blank" rel="noopener">📤 Enviar ao cliente</a><button class="pdf" onclick="window.print()">⬇ PDF</button></div>
+<div class="toolbar"><a class="wa" id="tb-wa" onclick="mgbLeadAnunc('whatsapp')" href="#" target="_blank" rel="noopener">📤 Enviar ao cliente</a><button class="pdf" onclick="mgbLeadAnunc('pdf');window.print()">⬇ PDF</button></div>
 
 <script>
 /* ═══════ DADOS DA REDE (fonte: mídia kit MGB, set/2026) ═══════ */
@@ -507,6 +507,25 @@ function render(){
 }
 render();
 if(navigator.webdriver||/[?&]pdf=1/.test(location.search)) document.body.classList.add('pdf-mode');
+</script>
+<script>
+/* Proposta gerada/enviada -> lead novo no CRM do hub (fila em localStorage; o hub processa) */
+function mgbLeadFila(d,soFila){
+  try{
+    d.ts=Date.now();
+    var f=JSON.parse(localStorage.getItem('mgb_lead_fila')||'[]'); f.push(d);
+    localStorage.setItem('mgb_lead_fila',JSON.stringify(f));
+    if(!soFila&&window.parent&&window.parent!==window&&window.parent.leadFilaProcessar) window.parent.leadFilaProcessar();
+  }catch(e){}
+}
+function mgbLeadAnunc(acao){
+  try{
+    var d=(typeof DADOS!=='undefined')?DADOS:{}; if(!d.cliente||/\[\[/.test(d.cliente)) return;
+    var P=PLANOS[d.plano]||PLANOS.tabela;
+    mgbLeadFila({cliente:d.cliente,produto:'elev',valor:d.valor||0,acao:acao,
+      obs:'Proposta ao anunciante · '+P.nome+(d.segmento?' · '+String(d.segmento).replace(/&amp;/g,'&'):'')+(d.periodo?' · '+d.periodo:'')+(d.contato?' · contato: '+d.contato:'')});
+  }catch(e){}
+}
 </script>
 <a id="mgb-home-btn" href="../../index.html" style="display:none;position:fixed;left:18px;bottom:18px;z-index:2147483000;align-items:center;gap:8px;background:#16294F;color:#fff;font:700 14px/1 Helvetica,Arial,sans-serif;padding:13px 20px;border-radius:999px;text-decoration:none;box-shadow:0 10px 28px rgba(0,0,0,.3)">← Voltar ao hub</a>
 <style>@media print{#mgb-home-btn{display:none!important}}</style>

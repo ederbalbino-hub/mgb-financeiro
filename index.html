@@ -13463,6 +13463,39 @@ function leadJaCadastradoNoProduto(nome,produto){
   if(m&&m.items.some(it=>fNormNome(it)===k&&it!==atual.itemCriado)) return 'unidade no módulo '+m.label.replace(/^\S+\s*/,'');
   return null;
 }
+// ── Proposta gerada/enviada pelas páginas de proposta → lead novo no CRM ──
+// As propostas (mídia kit, proposta ao anunciante, Vaapty) gravam em localStorage 'mgb_lead_fila'; aqui a fila vira lead.
+const LEAD_ACOES={pdf:'Proposta gerada (PDF)', whatsapp:'Proposta enviada pelo WhatsApp'};
+function leadFilaProcessar(){
+  if(!_cargaSheetsOk) return;              // sem a carga do Sheets não mexe em nada (a fila espera)
+  let fila; try{ fila=JSON.parse(localStorage.getItem('mgb_lead_fila')||'[]'); }catch(e){ return; }
+  if(!Array.isArray(fila)||!fila.length) return;
+  try{ localStorage.removeItem('mgb_lead_fila'); }catch(e){}
+  const agora=new Date(), dataTxt=agora.toLocaleDateString('pt-BR')+' '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let criados=0, atualizados=0;
+  fila.forEach(d=>{
+    const nome=String((d&&d.cliente)||'').trim(); if(!nome||!leadModPor(d.produto)) return;
+    const k=fNormNome(nome), acao=LEAD_ACOES[d.acao]||'Proposta gerada';
+    const texto=acao+(d.valor?' · R$ '+Number(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})+'/mês':'')+(d.obs?' — '+d.obs:'');
+    const l=leads.find(x=>x&&x.produto===d.produto&&x.estagio!=='perdido'&&fNormNome(x.nome)===k);
+    if(l){
+      const ult=(l.historico||[]).slice(-1)[0];
+      if(!ult||ult.texto!==texto) (l.historico=l.historico||[]).push({data:dataTxt,texto});
+      if(d.valor) l.valor=d.valor;
+      atualizados++; return;
+    }
+    const m=MODULES.find(x=>x.id===d.produto);
+    if(m&&m.items.some(it=>fNormNome(it)===k)) return;     // já é cliente (unidade no módulo): não vira lead
+    leads.push({id:leadNextId++, nome, tel:'', responsavel:'', funcao:'', cnpj:'', email:'', produto:d.produto, origem:'Outro', valor:d.valor||0, lembrete:'', obs:d.obs||'', estagio:'novo', historico:[{data:dataTxt,texto}], itemCriado:null, calEventId:null, criado:leadHoje()});
+    criados++;
+  });
+  if(!criados&&!atualizados) return;
+  try{ buildLeads(); }catch(e){} try{ scheduleSave(); }catch(e){}
+  try{ leadToast(criados?('✓ '+criados+' lead(s) novo(s) no CRM (proposta gerada)'):'✓ Proposta registrada no histórico do lead'); }catch(e){}
+}
+window.addEventListener('storage',function(e){ if(e.key==='mgb_lead_fila') leadFilaProcessar(); });
+window.addEventListener('focus',function(){ leadFilaProcessar(); });
+document.addEventListener('visibilitychange',function(){ if(!document.hidden) leadFilaProcessar(); });
 function saveLeadModal(){
   const nome=g('lead-nome').value.trim();
   if(!nome){ g('lead-nome').focus(); return; }
@@ -15421,7 +15454,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{renomearJK();}catch(e){console.error('renomearJK',e);} try{ajustarValorJK();}catch(e){console.error('ajustarValorJK',e);} try{ajustarPrazosContratos();}catch(e){console.error('ajustarPrazosContratos',e);} try{contratosSemFim();}catch(e){console.error('contratosSemFim',e);} try{limparTreino();}catch(e){console.error('limparTreino',e);} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{renomearJK();}catch(e){console.error('renomearJK',e);} try{ajustarValorJK();}catch(e){console.error('ajustarValorJK',e);} try{leadFilaProcessar();}catch(e){console.error('leadFilaProcessar',e);} try{ajustarPrazosContratos();}catch(e){console.error('ajustarPrazosContratos',e);} try{contratosSemFim();}catch(e){console.error('contratosSemFim',e);} try{limparTreino();}catch(e){console.error('limparTreino',e);} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->
