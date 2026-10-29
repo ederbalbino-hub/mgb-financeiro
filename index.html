@@ -6686,7 +6686,7 @@ function copiarSpot() {
           <textarea id="f-nota-desc" class="ferr-in" rows="2"></textarea>
           <label style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12.5px;color:var(--purple);cursor:pointer;font-weight:600;background:#F5F0FF;border:1px solid #DFD1FF;border-radius:8px;padding:8px 10px"><input type="checkbox" id="f-nota-sem-nota" onchange="fNotaToggleSemNota()"> Só boleto — sem nota fiscal (cliente não quer nota, ex.: Mercadão)</label>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-            <div id="f-nota-cod-wrap"><label class="ferr-lbl">Código de serviço</label><input id="f-nota-cod" class="ferr-in" placeholder="confirmar c/ contador"></div>
+            <div id="f-nota-cod-wrap"><label class="ferr-lbl">Código de serviço</label><input id="f-nota-cod" class="ferr-in" value="1710" placeholder="1710"></div>
             <div><label class="ferr-lbl">Valor total (R$)</label><input id="f-nota-valor" class="ferr-in" inputmode="decimal" placeholder="ex.: 1.250,00"></div>
             <div id="f-nota-iss-wrap"><label class="ferr-lbl">Alíquota ISS (%)</label><input id="f-nota-iss" class="ferr-in" inputmode="decimal" placeholder="preenche pela config acima"></div>
           </div>
@@ -7293,6 +7293,7 @@ function fNotaInit(){
   }
   sel.innerHTML=html; if(atual) sel.value=atual;
   try{ mgbSeletorNoForm('nota'); mgbNotaAvulsasChips(); }catch(e){ console.error('seletor nota',e); }
+  const codEl=document.getElementById('f-nota-cod'); if(codEl&&!codEl.value) codEl.value=NOTA_COD_PADRAO;   // 1710 sempre sugerido, mas editável
   fNotaLista();
 }
 function fNotaAliqInfo(){
@@ -7362,12 +7363,34 @@ function fNotaCliente(){
     }
   }
 }
+const NOTA_COD_PADRAO='1710';
+// Digitou/colou um CNPJ completo na nota: busca na Receita (publica.cnpj.ws) e preenche razão social (e e-mail, se estiver vazio).
+let _notaCnpjUlt='', _notaCnpjTimer=null;
+function fNotaBuscarCnpj(){
+  const docEl=document.getElementById('f-nota-tom-doc'); if(!docEl) return;
+  const raw=docEl.value.replace(/\D/g,''); if(raw.length!==14||raw===_notaCnpjUlt) return;
+  _notaCnpjUlt=raw;
+  const info=document.getElementById('f-nota-mod'); if(info) info.innerHTML='<span style="color:var(--muted)">🔎 Buscando CNPJ na Receita…</span>';
+  fetch('https://publica.cnpj.ws/cnpj/'+raw).then(r=>r.ok?r.json():Promise.reject()).then(d=>{
+    if((docEl.value.replace(/\D/g,''))!==raw) return;           // mudou o CNPJ enquanto buscava
+    const razao=d.razao_social||'', fant=(d.estabelecimento&&d.estabelecimento.nome_fantasia)||'', mail=(d.estabelecimento&&d.estabelecimento.email)||'';
+    const nome=document.getElementById('f-nota-tom-nome'), em=document.getElementById('f-nota-tom-email'), desc=document.getElementById('f-nota-desc');
+    const antigo=nome.value.trim();
+    if(razao) nome.value=razao;
+    if(em&&!em.value.trim()&&mail) em.value=String(mail).toLowerCase();
+    const sel=document.getElementById('f-nota-cli');
+    if(desc&&razao&&!desc.value.trim()) desc.value='Prestação de serviços de mídia — '+(fant||razao);   // descrição já escrita (ex.: nome fantasia que o Eder digitou) não é trocada
+    if(info) info.innerHTML='<span style="color:var(--green)">✓ Receita Federal: '+razao.replace(/</g,'')+(fant?' ('+fant.replace(/</g,'')+')':'')+(mail?'':' · sem e-mail no cadastro — preencha abaixo')+'</span>';
+  }).catch(()=>{ _notaCnpjUlt=''; if(info) info.innerHTML='<span style="color:#B45309">⚠ Não consegui consultar a Receita agora — preencha o nome à mão.</span>'; });
+}
+document.addEventListener('input',function(e){ if(e.target&&e.target.id==='f-nota-tom-doc'){ clearTimeout(_notaCnpjTimer); _notaCnpjTimer=setTimeout(fNotaBuscarCnpj,500); } });
 function fNotaLimpar(){
   // não apaga f-nota-aliq-mes: é a configuração do mês, fica valendo pra próxima nota
   ['f-nota-tom-nome','f-nota-tom-doc','f-nota-tom-email','f-nota-desc','f-nota-cod','f-nota-valor','f-nota-iss'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   try{ const s=document.getElementById('f-nota-cli'); if(s) s.dataset.livre=''; if(_cpForm.nota) _cpForm.nota.limpar(); }catch(e){}
   document.getElementById('f-nota-cli').value=''; document.getElementById('f-nota-mod').textContent=''; document.getElementById('f-nota-status').innerHTML=''; document.getElementById('f-nota-retem').checked=false;
   document.getElementById('f-nota-sem-nota').checked=false; fNotaToggleSemNota();
+  _notaCnpjUlt=''; const ce=document.getElementById('f-nota-cod'); if(ce) ce.value=NOTA_COD_PADRAO;
 }
 function fNotaToggleSemNota(){
   const semNota=document.getElementById('f-nota-sem-nota').checked;
