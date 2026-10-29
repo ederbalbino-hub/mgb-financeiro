@@ -38,11 +38,30 @@ Serve para emitir nota fiscal e boleto do mês, em lote, via Asaas.
 - O e-mail consolidado com os PDFs sai em lotes de 5 notas, com 120 s de intervalo (a aba precisa ficar aberta). Só marca "enviada" o que foi anexado e lista as falhas com o motivo.
 - No reenvio o hub pergunta quais unidades reenviar (campo vazio e "TODAS" para tudo).
 
-## Contratos e CRM
+## CRM — o CRM é a ÚNICA porta de entrada (cliente E condomínio)
+- Tudo que entra no sistema começa num lead do CRM (menu CRM / Leads): Novo → … → Fechado. Pelo CRM também se marcam lembretes (vão para o Google Agenda).
+- Lead de anunciante: escolha o produto (Tela Vertical, Vaapty etc.). Ao fechar, o hub guarda os dados do cliente; a unidade/receita só é lançada quando o contrato é gerado.
+- LEAD DE CONDOMÍNIO (produto "🏢 Condomínio (entra na rede)"): serve para cadastrar um condomínio novo da rede de elevadores (Tela Vertical). Preencha nome, contato do síndico e o bloco "Dados do condomínio": endereço, bairro, zona, tipo (residencial/comercial), torres, telas, moradores (ou nº de apartamentos — o hub multiplica por 2,79), mês em que o custo do sistema começa e a 📷 foto da fachada (JPG/PNG; o hub reduz para 800×600).
+- Ao mover o lead do condomínio para FECHADO o hub faz sozinho: (1) cria a unidade no módulo Tela Vertical (Elevadores), já pronta para a Karen lançar receitas/despesas; (2) lança o custo fixo mensal do Sistema TV (telas × R$ 39,56, sem data de fim) a partir do mês escolhido (dá para desmarcar); (3) coloca o condomínio na rede: aparece sozinho nos mídia kits, na proposta ao anunciante, no gerador de apresentação, na apresentação de síndicos e no site (leva até ~1 minuto para atualizar). Sem nº de telas o hub NÃO deixa fechar.
+- Depois de fechado dá para abrir o lead de novo e corrigir moradores, telas ou trocar a foto: o hub atualiza a unidade e o custo. Se faltar a foto, os materiais mostram uma imagem padrão até a foto subir.
+- Condomínio NÃO gera lucro direto (a receita vem dos anunciantes que anunciam nele); ele gera a despesa fixa do sistema. Por isso o lead não tem valor de venda.
+- PDFs já gerados e textos soltos (descrição do Google, PDF antigo) NÃO se atualizam sozinhos: é preciso gerar o PDF de novo.
+- Proposta gerada vira lead sozinha: ao clicar em "Gerar PDF" ou "Enviar ao cliente/WhatsApp" nos mídia kits, na proposta ao anunciante da Tela Vertical e na proposta Vaapty, o hub cria um lead NOVO com o valor e o resumo (se o lead já existir, só acrescenta no histórico). Precisa do nome do cliente preenchido (no Vaapty, o campo "Nome da loja / franqueado"). Se a proposta abriu fora do hub, o lead entra quando o hub for aberto de novo.
+- Nas propostas há o botão flutuante "← Voltar ao hub".
+- Mídia kit: no simulador, em "negociado" com valor manual, o texto muda para "Valor bruto negociado — produção do material não inclusa". Todas as apresentações mostram CNPJ, "valores brutos" e "tabela válida até Junho/2027".
+
+## Contratos
 - CRM (funil de leads): Novo → … → Fechado. Cliente fechado sem e-mail aparece com "⚠ sem e-mail".
 - Contratos: envia o contrato para assinatura (Assinafy). O hub confere ao abrir se foi assinado e registra "assinado" na jornada e no card do CRM.
 - Para reenviar contrato de cliente já fechado: Contratos > contrato do módulo > "Cliente já fechado no CRM?" > escolha o cliente > confira o e-mail > envie.
 - Novo cliente: o botão "Novo cliente" da Home cadastra o cliente e já lança na planilha de faturamento (com endereço).
+
+## Léo Cosméticos — baixa do recebimento
+- O Léo é nota fiscal SEM boleto (ele paga PIX fora do sistema). Em Contabilidade > Nota Fiscal > aba Léo: "Emitir as 31 notas", "🔄 Conferir status" (serve só para as NOTAS: confere se a prefeitura já autorizou; NÃO confere pagamento) e "Enviar e-mail consolidado".
+- Para dar baixa no recebimento: na mesma aba Léo, card "💰 Recebimento do Léo (baixa)": escolha o mês, confira a situação (aguardando/recebido) e clique em "Dar baixa" quando o PIX entrar. Dá para "Desfazer baixa". Isso marca a receita "Leo Cosméticos" daquele mês como recebida na Visão Receita.
+
+## Contratos (prazos)
+- Contratos de clientes mensais ficam "sem fim" (repetem todo mês) até alguém encerrar; só a Tarobá é digitada mês a mês.
 
 ## Recibos
 Aba Recibos (Contabilidade): gera o recibo do cliente. Pelo Faturamento, o botão 🧾 já abre o recibo preenchido.

@@ -88,11 +88,10 @@
     var REDE = window.TV_REDE || { telas: 38, pessoas: 80000, condominios: 16 };
     var state = { sel: {}, rede: false };
 
-    simList.innerHTML = window.TV_CONDOS.map(function(c){
+    function simItemHtml(c){
       return '<label class="sim-item" data-id="' + c.id + '"><input type="checkbox" aria-label="' + c.nome + '"><span><b>' + c.nome + '</b><small>' + c.bairro + ' · ' + (c.tipo === 'comercial' ? 'comercial' : 'residencial') + '</small></span><span class="n"><b>' + c.telas + ' telas</b><br>' + fmtN(c.pessoas) + (c.tipo === 'comercial' ? ' pessoas/mês' : ' moradores') + '</span></label>';
-    }).join('');
-
-    simList.querySelectorAll('.sim-item').forEach(function(item){
+    }
+    function simBind(item){
       var cb = item.querySelector('input');
       cb.addEventListener('change', function(){
         state.rede = false;
@@ -101,7 +100,18 @@
         var all = $('sim-all'); if (all) all.classList.remove('on');
         calc();
       });
-    });
+    }
+    simList.innerHTML = window.TV_CONDOS.map(simItemHtml).join('');
+    simList.querySelectorAll('.sim-item').forEach(simBind);
+    /* Rede ao vivo (rede-viva.js): condomínio fechado no CRM entra no simulador sozinho */
+    window.TVSIM_ADD = function(list){
+      list.forEach(function(c){
+        window.TV_CONDOS.push(c);
+        var t = document.createElement('div'); t.innerHTML = simItemHtml(c);
+        var el = t.firstChild; simList.appendChild(el); simBind(el);
+        REDE.telas += c.telas; REDE.pessoas += c.pessoas; REDE.condominios += 1;
+      });
+    };
     var btnAll = $('sim-all'), btnNone = $('sim-none');
     if (btnAll) btnAll.addEventListener('click', function(){
       state.rede = true; // rede completa usa os números oficiais (38 telas · +80 mil pessoas)

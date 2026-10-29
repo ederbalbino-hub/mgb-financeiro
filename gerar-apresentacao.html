@@ -175,7 +175,6 @@ const CONDOS={
   'itamaraty':{nome:'Ed. Itamaraty',bairro:'Centro · comercial',moradores:11000,telas:1,img:'assets/itamaraty.jpg'},
   // 'liberty' (Liberty Residence, Nossa Sra. de Lourdes, 78 moradores, 1 tela, img assets/liberty.jpg) entra aqui na instalação — Out/2026
   'villa-solare':{nome:'Villa Solare',bairro:'Gleba Palhano · Zona Sul',moradores:234,telas:2,img:'assets/villa-solare.jpg'},
-  'neoville':{nome:'Neo Ville',bairro:'Parque Jamaica · Zona Oeste',moradores:450,telas:4,img:'assets/neoville.jpg'},
 };
 const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
 const slug=s=>norm(s).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'local';
@@ -360,6 +359,15 @@ document.querySelectorAll('.sidebar a[href^="index.html#"]').forEach(function(a)
     '<div style="height:1px;background:rgba(76,45,142,.16);margin:5px 0"></div>'+
     '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:9px;color:rgba(29,20,48,.45)">Lucro mês</span><span style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:'+(d.lucroColor||'#118A5D')+'">'+(d.lucro||'')+'</span></div>';
 })();
+</script>
+<script>
+/* Rede ao vivo: condomínio fechado no CRM do hub aparece aqui sozinho (rede-viva.js; se falhar, fica a lista da página). */
+(function(){ var s=document.createElement("script"); s.src="https://ederbalbino-hub.github.io/mgb-financeiro/rede-viva.js"; s.async=true;
+  s.onload=function(){ if(typeof mgbRedeViva!=="function") return;
+    mgbRedeViva(Object.keys(CONDOS).map(function(k){return CONDOS[k].nome;}), function(novos){
+      novos.forEach(function(c){ CONDOS[c.id]={nome:c.nome,bairro:(c.bairro||"")+(c.zona?" · Zona "+c.zona:""),moradores:c.pessoas,telas:c.telas,img:c.foto}; });
+      renderCondos(); updateSummary(); });
+  }; document.head.appendChild(s); })();
 </script>
 </body>
 </html>

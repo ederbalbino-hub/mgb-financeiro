@@ -5853,6 +5853,14 @@ function copiarSpot() {
               <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Moradores</label><input class="anunc-form-inp" id="lc-moradores" type="number" min="0" style="width:100%"></div>
               <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Apartamentos (opcional)</label><input class="anunc-form-inp" id="lc-unidades" type="number" min="0" placeholder="× 2,79 se sem moradores" style="width:100%"></div>
             </div>
+            <div class="anunc-form-field"><label class="anunc-form-lbl">📷 Foto da fachada (vai para os kits, propostas e site)</label>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <img id="lc-foto-prev" alt="" style="display:none;width:96px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border2)">
+                <input type="file" id="lc-foto" accept="image/*" onchange="leadCondoFotoEscolhida(this)" style="font-size:11.5px">
+                <button type="button" id="lc-foto-x" class="anunc-btn" style="display:none" onclick="leadCondoFotoLimpar()">remover</button>
+              </div>
+              <div style="font-size:10.5px;color:var(--hint);margin-top:3px">JPG ou PNG, de preferência na horizontal e sem carro/fio na frente. O hub reduz sozinho para 800×600. Sem foto, os materiais usam uma imagem padrão.</div>
+            </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
               <div class="anunc-form-field" style="flex:1;min-width:160px"><label class="anunc-form-lbl">Custo do sistema começa em</label><input class="anunc-form-inp" id="lc-ini" type="month" style="width:100%;color-scheme:light"></div>
               <label style="flex:1;min-width:200px;font-size:11.5px;display:flex;gap:6px;align-items:center;padding-bottom:10px"><input type="checkbox" id="lc-custo" checked> Lançar custo fixo (telas × R$ 39,56/mês)</label>
@@ -6724,6 +6732,15 @@ function copiarSpot() {
         </div>
         <div id="f-leo-status" style="margin-top:10px"></div>
       </div>
+      <div class="ferr-card" style="margin-top:14px" id="f-leo-baixa-card">
+        <div class="ferr-t">💰 Recebimento do Léo (baixa)</div>
+        <div class="ferr-d">O Léo paga por PIX fora do sistema (não tem boleto no Asaas), então a baixa é manual: quando o dinheiro entrar, escolha o mês e clique em <b>Dar baixa</b>. Isso marca a receita "Leo Cosméticos" como recebida na Visão Receita.</div>
+        <div style="display:flex;gap:10px;margin-top:10px;align-items:flex-end;flex-wrap:wrap">
+          <div><label class="ferr-lbl">Mês do recebimento</label><input id="f-leo-baixa-mes" type="month" class="ferr-in" onchange="fLeoBaixaRender()" style="color-scheme:light"></div>
+          <button class="ferr-btn" id="f-leo-baixa-btn" style="background:#16A34A" onclick="fLeoBaixa()">💰 Dar baixa</button>
+          <span id="f-leo-baixa-info" class="ferr-info"></span>
+        </div>
+      </div>
       <div class="ferr-card" style="margin-top:14px">
         <div class="ferr-t">Unidades</div><div class="ferr-d">Valor e e-mail são editáveis por unidade (clique em "editar"). Retém ISS calculado automaticamente pela cidade.</div>
         <div id="f-leo-lista" style="margin-top:10px;overflow-x:auto"></div>
@@ -7486,7 +7503,29 @@ function fLeoInit(){
   if(compEl && !compEl.value){ const d=new Date(); compEl.value=MESES[d.getMonth()]+'/'+d.getFullYear(); }
   const aliqEl=document.getElementById('f-leo-aliq');
   if(aliqEl && !aliqEl.value && notaConfig.aliquotaMes!=null) aliqEl.value=fRecNum(notaConfig.aliquotaMes);
-  fLeoLista();
+  fLeoLista(); try{ fLeoBaixaRender(); }catch(e){}
+}
+// Baixa do recebimento do Léo (PIX fora do sistema): marca a receita "Leo Cosméticos" do mês como recebida (mesmo registro da "baixa manual" da Visão Receita).
+function fLeoItem(){ for(const m of MODULES){ const it=m.items.find(x=>/^leo cosm/i.test(x)); if(it) return {modId:m.id,item:it}; } return null; }
+function fLeoBaixaRender(){
+  const inp=g('f-leo-baixa-mes'), info=g('f-leo-baixa-info'), btn=g('f-leo-baixa-btn'); if(!inp||!info) return;
+  if(!inp.value) inp.value=new Date().toISOString().slice(0,7);
+  const li=fLeoItem(); if(!li){ info.textContent='Item "Leo Cosméticos" não encontrado nos módulos.'; if(btn) btn.disabled=true; return; }
+  const [a,m]=inp.value.split('-').map(Number), key=recPagKey(a,m-1);
+  const pg=((recPagamentos[li.modId]||{})[li.item]||{})[key];
+  const valor=((rec[li.modId]||{})[li.item]||{}).valor||0;
+  const rec_=pg&&pg.pago;
+  info.innerHTML=rec_?('<b style="color:var(--green)">✓ Recebido</b>'+(pg.baixaEm?' · baixa em '+new Date(pg.baixaEm).toLocaleDateString('pt-BR'):'')+(pg.baixaPor?' por '+pg.baixaPor:'')):('<b style="color:var(--amber)">⏳ Aguardando recebimento</b>'+(valor?' · previsto '+f(valor):''));
+  if(btn){ btn.disabled=false; btn.textContent=rec_?'↩ Desfazer baixa':'💰 Dar baixa'; btn.style.background=rec_?'#6b7280':'#16A34A'; }
+}
+function fLeoBaixa(){
+  const inp=g('f-leo-baixa-mes'); const li=fLeoItem(); if(!inp||!inp.value||!li) return;
+  const [a,m]=inp.value.split('-').map(Number), key=recPagKey(a,m-1);
+  const P=recPagamentos[li.modId]||(recPagamentos[li.modId]={}), Q=P[li.item]||(P[li.item]={}); const pg=Q[key]||{pago:false,obs:''};
+  const mesTxt=String(m).padStart(2,'0')+'/'+a;
+  if(pg.pago){ if(!confirm('Desfazer a baixa do Léo de '+mesTxt+'?')) return; Q[key]={...pg,pago:false,fonte:pg.asaas?'asaas':null}; }
+  else { if(!confirm('Confirmar que o PIX do Léo de '+mesTxt+' entrou?')) return; Q[key]={...pg,pago:true,fonte:'manual',baixaEm:new Date().toISOString(),baixaPor:(window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||''}; }
+  fLeoBaixaRender(); try{ buildLancRec(); }catch(e){} scheduleSave();
 }
 function fLeoResumo(){
   const el=document.getElementById('f-leo-resumo'); if(!el) return;
@@ -9010,7 +9049,7 @@ const MODULES=[
   {id:'mb',    label:'MB — Móveis Brasília',icon:'🏪',color:'#6C55DB',desc:'Painel de telas — unidades',agrupado:true,
    items:['Benjamin','Saul Elkind','Santa Catarina','Calçadão','Rolândia','Cornélio Procópio']},
   {id:'elev',  label:'Tela Vertical',icon:'🛗',color:'#16294F',desc:'Mídia em elevadores · sócio Jadson',agrupado:false,
-   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Tay','Uptown','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2','Ever','Ampezzo','Itamaraty','Liberty','Villa Solare','Neo Ville']},
+   items:['Lagoa Dourada','Lake Portinari','Spazio Louvre','Terra Parque','Residencial Málaga','Spot','Resid. Bella Fiori','Tay','Uptown','Ed. Ayrton Senna 1','Ed. Ayrton Senna 2','Ever','Ampezzo','Itamaraty','Liberty','Villa Solare']},
   {id:'vaapty',label:'Vaapty',icon:'🚗',color:'#D6367F',desc:'TV Vaapty — franqueados',agrupado:false,
    items:['Franqueado Piloto','Expansão']},
   {id:'radio', label:'Rádio Interna',icon:'📻',color:'#D97706',desc:'Rádio interna — clientes',agrupado:false,
@@ -13341,6 +13380,7 @@ function leadCondoFechar(l){
   const moradores=c.moradores||(c.unidades?Math.round(c.unidades*2.79):0);
   clientesInfo.elev[item]=Object.assign({},clientesInfo.elev[item]||{},{cnpj:l.cnpj||'',fantasia:l.nome||'',responsavel:l.responsavel||'',cargo:l.funcao||'',tel:l.tel||'',email:l.email||'',
     endereco:c.endereco||'',bairro:c.bairro||'',zona:c.zona||'',tipo:c.tipo||'residencial',torres:c.torres||0,telas:c.telas||0,moradores,unidades:c.unidades||0});
+  if(c.foto){ clientesInfo.elev[item].foto=c.foto; delete c.foto; }   // a foto mora no cadastro da unidade (não duplica no lead)
   let custo='';
   const tem=db.elev[item].some(x=>x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||'')));
   if(c.custo!==false && !tem && c.telas){
@@ -13354,6 +13394,18 @@ function leadCondoFechar(l){
   const ag=new Date(); l.historico.push({data:ag.toLocaleDateString('pt-BR')+' '+ag.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), texto:(jaTinha?'Unidade já existia no módulo Elevadores — dados completados':'Unidade criada no módulo Elevadores')+custo});
   try{ if(curMod==='elev') buildAll(); }catch(e){}
   leadToast('✅ "'+item+'" entrou no módulo Elevadores'+custo+'. A Karen já pode lançar despesas.');
+}
+// Lead de condomínio JÁ fechado e editado depois (corrigir moradores, trocar/colocar a foto…): atualiza o cadastro da unidade e o nº de telas do custo.
+function leadCondoSync(l){
+  if(!l||l.produto!=='condo'||!l.itemCriado||!l.condo) return;
+  const item=l.itemCriado, c=l.condo, inf=(clientesInfo.elev=clientesInfo.elev||{});
+  const moradores=c.moradores||(c.unidades?Math.round(c.unidades*2.79):0);
+  inf[item]=Object.assign({},inf[item]||{},{endereco:c.endereco||'',bairro:c.bairro||'',zona:c.zona||'',tipo:c.tipo||'residencial',torres:c.torres||0,telas:c.telas||0,moradores,unidades:c.unidades||0,
+    cnpj:l.cnpj||(inf[item]||{}).cnpj||'',responsavel:l.responsavel||(inf[item]||{}).responsavel||'',cargo:l.funcao||(inf[item]||{}).cargo||'',tel:l.tel||(inf[item]||{}).tel||'',email:l.email||(inf[item]||{}).email||''});
+  if(c.foto){ inf[item].foto=c.foto; } delete c.foto;
+  const r=((db.elev||{})[item]||[]).find(x=>x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||'')));
+  if(r && c.telas && r.q!==c.telas){ applyToFin(r,-1); r.q=c.telas; applyToFin(r,+1); }
+  try{ if(curMod==='elev') buildAll(); }catch(e){}
 }
 // Ao fechar um lead, NÃO cria unidade no módulo (isso só acontece quando o contrato é
 // gerado de verdade, via mgbCriarUnidadeModulo). Aqui só guarda os dados do cliente
@@ -13420,7 +13472,7 @@ function openLeadModal(mode,id){
   g('lead-del-btn').style.display = mode==='edit' ? '' : 'none';
   g('lead-historico-wrap').style.display = mode==='edit' ? '' : 'none';
   renderLeadProdutoChips(l ? l.produto : '');
-  leadCondoPreencher(l ? l.condo : null); leadCondoBoxToggle();
+  leadCondoPreencher(l ? l.condo : null, l ? l.itemCriado : null); leadCondoBoxToggle();
   renderLeadEstagioChips(l ? (l.estagio||'novo') : 'novo');
   renderLeadHistorico(l ? (l.historico||[]) : []);
   const modal=g('lead-modal');
@@ -13459,8 +13511,32 @@ function closeLeadModal(){
 let _leadProdutoSel='';
 const LC_IDS={endereco:'lc-endereco',bairro:'lc-bairro',zona:'lc-zona',tipo:'lc-tipo',torres:'lc-torres',telas:'lc-telas',moradores:'lc-moradores',unidades:'lc-unidades',ini:'lc-ini'};
 function leadCondoBoxToggle(){ const b=g('lead-condo-box'); if(b) b.style.display=_leadProdutoSel==='condo'?'':'none'; }
-function leadCondoPreencher(c){
+let _leadCondoFoto='';
+function leadCondoFotoMostrar(){
+  const im=g('lc-foto-prev'), x=g('lc-foto-x'); if(!im) return;
+  im.style.display=_leadCondoFoto?'':'none'; if(_leadCondoFoto) im.src=_leadCondoFoto; if(x) x.style.display=_leadCondoFoto?'':'none';
+}
+function leadCondoFotoLimpar(){ _leadCondoFoto=''; const i=g('lc-foto'); if(i) i.value=''; leadCondoFotoMostrar(); }
+function leadCondoFotoEscolhida(inp){
+  const file=inp.files&&inp.files[0]; if(!file) return;
+  const fr=new FileReader();
+  fr.onerror=()=>leadToast('⚠ Não consegui ler a foto');
+  fr.onload=()=>{
+    const im=new Image();
+    im.onerror=()=>{ leadToast('⚠ Esse formato de foto não abre aqui — use JPG ou PNG'); inp.value=''; };
+    im.onload=()=>{
+      const W=800,H=600, c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d');
+      const k=Math.max(W/im.width,H/im.height), w=im.width*k, h=im.height*k;      // corta no centro, proporção 4:3
+      x.fillStyle='#fff'; x.fillRect(0,0,W,H); x.drawImage(im,(W-w)/2,(H-h)/2,w,h);
+      _leadCondoFoto=c.toDataURL('image/jpeg',0.82); leadCondoFotoMostrar();
+    };
+    im.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+function leadCondoPreencher(c,itemCriado){
   c=c||{};
+  _leadCondoFoto=c.foto||((itemCriado&&((clientesInfo.elev||{})[itemCriado]||{}).foto)||''); const fi=g('lc-foto'); if(fi) fi.value=''; leadCondoFotoMostrar();
   Object.keys(LC_IDS).forEach(k=>{ const el=g(LC_IDS[k]); if(el) el.value=c[k]!=null?c[k]:(k==='tipo'?'residencial':(k==='ini'?leadHoje().slice(0,7):'')); });
   const ck=g('lc-custo'); if(ck) ck.checked=c.custo!==false;
 }
@@ -13468,6 +13544,7 @@ function leadCondoLer(){
   const c={}; Object.keys(LC_IDS).forEach(k=>{ const el=g(LC_IDS[k]); c[k]=el?String(el.value||'').trim():''; });
   ['torres','telas','moradores','unidades'].forEach(k=>c[k]=parseInt(c[k],10)||0);
   c.custo=!!(g('lc-custo')||{}).checked;
+  c.foto=_leadCondoFoto;
   return c;
 }
 function renderLeadProdutoChips(sel){
@@ -13580,7 +13657,7 @@ function saveLeadModal(){
   const estagio=_leadEstagioSel||'novo';
   if(curLeadId!=null){
     l=leads.find(x=>x.id===curLeadId);
-    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; if(condo) l.condo=condo; }
+    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; if(condo){ l.condo=condo; leadCondoSync(l); } }
   } else {
     l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, email, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
     if(condo) l.condo=condo;
@@ -14023,6 +14100,26 @@ function limparTreino(){
   try{ buildAll(); }catch(e){} try{ scheduleSave(); }catch(e){}
   console.log('limparTreino: removidos',n);
 }
+// 29/10 (Eder): Neo Ville sai do sistema para ser relançado do zero pelo fluxo novo (CRM → lead Condomínio → Fechado), junto com a Karen.
+// One-shot. Só remove se a unidade estiver vazia (sem lançamentos além de linha de custo) — nunca apaga dado financeiro de verdade.
+function removerNeoVille(){
+  if(!_cargaSheetsOk || migracoes.removerNeoVille_20261029) return;
+  const NV='Neo Ville'; const m=MODULES.find(x=>x.id==='elev'); if(!m) return;
+  const rows=(db.elev&&db.elev[NV])||[];
+  const real=rows.filter(r=>!(r.t==='Recorrente'&&/sistema tv|4 ?you ?see/i.test((r.d||'')+(r.f||''))));
+  if(real.length){ console.warn('removerNeoVille: há lançamentos reais, não removi'); migracoes.removerNeoVille_20261029=true; scheduleSave(); return; }
+  rows.forEach(r=>{ try{ applyToFin(r,-1); }catch(e){} });
+  m.items=m.items.filter(x=>x!==NV);
+  if(db.elev) delete db.elev[NV];
+  if(rec.elev) delete rec.elev[NV];
+  if(clientesInfo.elev) delete clientesInfo.elev[NV];
+  try{ if(recPagamentos.elev) delete recPagamentos.elev[NV]; }catch(e){}
+  try{ (anunciantes||[]).forEach(a=>{ if(Array.isArray(a.telas)) a.telas=a.telas.filter(t=>t!==NV&&(!t||t.item!==NV)); }); }catch(e){}
+  delete migracoes['elevNovo:Neo Ville'];
+  migracoes.removerNeoVille_20261029=true;
+  try{ if(curMod==='elev'){ curItem=m.items[0]; buildAll(); } }catch(e){}
+  scheduleSave();
+}
 function custosPelaNota(){
   if(!_cargaSheetsOk || migracoes.custosNota_202610) return;
   const log=[];
@@ -14159,7 +14256,6 @@ function elevMigrarCondos(){
 // lançamento em elevInvestimentos (flag migracoes['elevInvest:<item>']), substitui a planilha Excel de CC Jadson × CC Eder.
 const ELEV_NOVOS=[
   {item:'Villa Solare', ini:'2026-09', telas:2},
-  {item:'Neo Ville', ini:'2026-10', telas:4, semCusto:true},
   // <novos>
 ];
 function elevMigrarNovos(){
@@ -14175,7 +14271,7 @@ function elevMigrarNovos(){
       if(!db.elev[c.item]) db.elev[c.item]=[];
       if(rec.elev[c.item]===undefined) rec.elev[c.item]={valor:0,inicio:'',meses:12};
       const tem=db.elev[c.item].some(x=>x.t==='Recorrente' && (/sistema tv|4 ?you ?see/i.test(x.d||'') || /4 ?you ?see/i.test(x.f||'')));
-      if(!tem && !c.semCusto){
+      if(!tem){
         const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:c.telas||1,u:ELEV_CUSTO_TV,cc:c.item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:c.ini};
         applyToFin(e,+1);
         db.elev[c.item].push(e);
@@ -15520,7 +15616,7 @@ document.getElementById('mod-tabs').style.display='none';
 document.getElementById('nav-home').classList.add('on');
 curPage='home';
 buildSidebar(); buildModTabs(); buildHome();
-loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{renomearJK();}catch(e){console.error('renomearJK',e);} try{ajustarValorJK();}catch(e){console.error('ajustarValorJK',e);} try{leadFilaProcessar();}catch(e){console.error('leadFilaProcessar',e);} try{ajustarPrazosContratos();}catch(e){console.error('ajustarPrazosContratos',e);} try{contratosSemFim();}catch(e){console.error('contratosSemFim',e);} try{limparTreino();}catch(e){console.error('limparTreino',e);} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
+loadFromSheets().then(function(){ try{pesMigrarCompetencia();}catch(e){} try{renomearJK();}catch(e){console.error('renomearJK',e);} try{ajustarValorJK();}catch(e){console.error('ajustarValorJK',e);} try{leadFilaProcessar();}catch(e){console.error('leadFilaProcessar',e);} try{ajustarPrazosContratos();}catch(e){console.error('ajustarPrazosContratos',e);} try{contratosSemFim();}catch(e){console.error('contratosSemFim',e);} try{limparTreino();}catch(e){console.error('limparTreino',e);} try{removerNeoVille();}catch(e){console.error('removerNeoVille',e);} try{leoCorrigirBairros();}catch(e){} try{empresaMigrarFixas();}catch(e){console.error('empresaMigrarFixas',e);} try{elevMigrarCondos();}catch(e){console.error('elevMigrarCondos',e);} try{elevMigrarNovos();}catch(e){console.error('elevMigrarNovos',e);} try{elevMigrarHistoricoInvest();}catch(e){console.error('elevMigrarHistoricoInvest',e);} try{elevMigrarInvest38Telas();}catch(e){console.error('elevMigrarInvest38Telas',e);} try{elevAjustarPorTela();}catch(e){console.error('elevAjustarPorTela',e);} try{elevReajustarOperador();}catch(e){console.error('elevReajustarOperador',e);} try{empresaCleitonRateio();}catch(e){console.error('empresaCleitonRateio',e);} try{custosPelaNota();}catch(e){console.error('custosPelaNota',e);} try{mbInstalacaoPaga();}catch(e){console.error('mbInstalacaoPaga',e);} try{vaaptyLicencas();}catch(e){console.error('vaaptyLicencas',e);}try{karenDesdeNovembro();}catch(e){console.error("karenDesdeNovembro",e);} setTimeout(function(){ try{fFatPlanilhaSync();}catch(e){} },4000); buildSidebar(); buildModTabs(); goPage(curPage); setTimeout(function(){ try{avisoAbrir(false);}catch(e){} },1200); setTimeout(function(){ fFatRotinaAuto(); },6000); /* puxarStatusEmpresaDoPlanoDeCaixa() desligada: ler resposta cross-origin do Apps Script exige fetch() em modo cors, que o Google bloqueia por falta de cabeçalho Access-Control-Allow-Origin — sem solução só no navegador. */ }).catch(function(){});
 </script>
 
 <!-- Bottom nav mobile (usa o CSS .mobile-bottom-nav já existente) -->

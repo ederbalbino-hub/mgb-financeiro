@@ -291,7 +291,7 @@ section{position:relative}
       <div class="hero-rule"></div>
       <p class="hero-sub">Mídia digital indoor com audiência própria e projetos de comunicação corporativa sob medida. Da tela do elevador ao ponto de venda, a MGB coloca a mensagem certa na frente das pessoas certas — todos os dias.</p>
       <div class="hero-stats">
-        <div class="hstat"><div class="l">Tela Vertical · elevadores</div><div class="v">16 condomínios · 42 telas</div></div>
+        <div class="hstat"><div class="l">Tela Vertical · elevadores</div><div class="v"><span data-rede="condos">15</span> condomínios · <span data-rede="telas">38</span> telas</div></div>
         <div class="hstat"><div class="l">Alcance da rede</div><div class="v">+1 milhão de impactos/mês</div></div>
         <div class="hstat"><div class="l">Rádio & TV indoor</div><div class="v">Projetos corporativos</div></div>
       </div>
@@ -336,7 +336,7 @@ section{position:relative}
         <h2>Mídia em Elevadores</h2>
         <p class="sec-sub" style="margin-bottom:18px">Operada pela <b>Tela Vertical</b>, a empresa de mídia em elevadores da MGB. O único ambiente onde o público está parado, atento e sem distração. Telas digitais em condomínios de médio e alto padrão e em edifícios corporativos de Londrina — uma rede única, do residencial ao comercial, com conteúdo editorial + anúncios de 10 segundos.</p>
         <div class="prod-kpis">
-          <div class="tile"><div class="n">42</div><div class="l">Telas · 16 condomínios</div></div>
+          <div class="tile"><div class="n"><span data-rede="telas">38</span></div><div class="l">Telas · <span data-rede="condos">15</span> condomínios</div></div>
           <div class="tile"><div class="n">+1 mi</div><div class="l">Impactos por mês na rede</div></div>
           <div class="tile"><div class="n">8,5 mi</div><div class="l">Impactos/mês (OTS)</div></div>
         </div>
@@ -550,5 +550,12 @@ function mgbWaitImagesThenPrint(){
 <a id="mgb-home-btn" href="index.html" style="display:none;position:fixed;left:18px;bottom:18px;z-index:2147483000;align-items:center;gap:8px;background:#16294F;color:#fff;font:700 14px/1 Helvetica,Arial,sans-serif;padding:13px 20px;border-radius:999px;text-decoration:none;box-shadow:0 10px 28px rgba(0,0,0,.3)">← Voltar ao hub</a>
 <style>@media print{#mgb-home-btn{display:none!important}}</style>
 <script>try{if(window.self===window.top){document.getElementById("mgb-home-btn").style.display="flex";}}catch(e){}</script>
+<script>
+/* Rede ao vivo: condomínio fechado no CRM do hub aparece aqui sozinho (rede-viva.js; se falhar, fica a lista da página). */
+(function(){ var s=document.createElement("script"); s.src="https://ederbalbino-hub.github.io/mgb-financeiro/rede-viva.js"; s.async=true;
+  s.onload=function(){ if(typeof mgbRedeViva!=="function") return;
+    mgbRedeViva(["Lagoa Dourada","Spazio Louvre","Lake Portinari","Residencial Málaga","Terra Parque","Bella Fiori","Spot","Ayrton Senna","Tay","Uptown","Ever","Ampezzo","Itamaraty","Villa Solare"],function(){});
+  }; document.head.appendChild(s); })();
+</script>
 </body>
 </html>

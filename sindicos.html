@@ -297,7 +297,7 @@ section{position:relative}
         <h2>Condomínios que já contam com a MGB</h2>
         <p class="sec-sub" style="margin-bottom:16px">A rede MGB está presente em condomínios de referência de Londrina — das torres da Gleba Palhano aos residenciais do Aquaville, do Centro à Zona Norte — sempre com o mesmo padrão de cuidado com a cabine e com os moradores.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <span class="chip">Lagoa Dourada</span><span class="chip">Spazio Louvre</span><span class="chip">Lake Portinari</span><span class="chip">Residencial Málaga</span><span class="chip">Terra Parque</span><span class="chip">Bella Fiori</span><span class="chip">Spot</span><span class="chip">Cond. Tay</span><span class="chip">Cond. Uptown</span><span class="chip">Cond. Ever</span><span class="chip">Resid. D'Ampezzo</span><span class="chip">Villa Solare</span><span class="chip">Neo Ville</span><span class="chip">Ed. Ayrton Senna 1 e 2</span><span class="chip">Ed. Itamaraty</span>
+          <span class="chip">Lagoa Dourada</span><span class="chip">Spazio Louvre</span><span class="chip">Lake Portinari</span><span class="chip">Residencial Málaga</span><span class="chip">Terra Parque</span><span class="chip">Bella Fiori</span><span class="chip">Spot</span><span class="chip">Cond. Tay</span><span class="chip">Cond. Uptown</span><span class="chip">Cond. Ever</span><span class="chip">Resid. D'Ampezzo</span><span class="chip">Villa Solare</span><span class="chip">Ed. Ayrton Senna 1 e 2</span><span class="chip">Ed. Itamaraty</span>
         </div>
         <div class="prod-feats" style="margin-top:20px">
           <div class="feat">Relacionamento direto com síndicos e administradoras</div>
@@ -331,7 +331,7 @@ section{position:relative}
   <h2>Vamos modernizar<br>o seu condomínio?</h2>
   <p>Chame a MGB no WhatsApp — levamos a apresentação ao seu conselho e cuidamos de tudo.</p>
   <a class="btn btn-wa" style="font-size:15px;padding:15px 30px" href="https://wa.me/5543996960078?text=Ol%C3%A1!%20Sou%20s%C3%ADndico(a)%20e%20quero%20saber%20mais%20sobre%20a%20tela%20digital%20da%20MGB%20no%20meu%20condom%C3%ADnio." target="_blank" rel="noopener">💬 WhatsApp (43) 99696-0078</a>
-  <div class="meta">comercial@agenciamgb.com.br · www.agenciamgb.com.br<br>MGB Mídia Comunicação LTDA · CNPJ 23.770.170/0001-50 · Londrina – PR</div>
+  <div class="meta">comercial@agenciamgb.com.br · www.agenciamgb.com.br<br>MGB Comunicação e Marketing Ltda. · CNPJ 23.770.170/0001-50 · Londrina – PR</div>
 </section>
 
 <div class="footer no-print"><span><b>MGB Mídia</b></span><span>Apresentação para Síndicos</span><span>Londrina – PR</span></div>
@@ -387,5 +387,15 @@ function mgbWaitImagesThenPrint(){
 <a id="mgb-home-btn" href="index.html" style="display:none;position:fixed;left:18px;bottom:18px;z-index:2147483000;align-items:center;gap:8px;background:#16294F;color:#fff;font:700 14px/1 Helvetica,Arial,sans-serif;padding:13px 20px;border-radius:999px;text-decoration:none;box-shadow:0 10px 28px rgba(0,0,0,.3)">← Voltar ao hub</a>
 <style>@media print{#mgb-home-btn{display:none!important}}</style>
 <script>try{if(window.self===window.top){document.getElementById("mgb-home-btn").style.display="flex";}}catch(e){}</script>
+<script>
+/* Rede ao vivo: condomínio fechado no CRM do hub aparece aqui sozinho (rede-viva.js; se falhar, fica a lista da página). */
+(function(){ var s=document.createElement("script"); s.src="https://ederbalbino-hub.github.io/mgb-financeiro/rede-viva.js"; s.async=true;
+  s.onload=function(){ if(typeof mgbRedeViva!=="function") return;
+    var chips=[].slice.call(document.querySelectorAll(".chip")); if(!chips.length) return;
+    mgbRedeViva(chips.map(function(c){return c.textContent;}), function(novos){
+      var last=chips[chips.length-1];
+      novos.forEach(function(c){ var e=document.createElement("span"); e.className="chip"; e.textContent=c.nome; last.parentNode.insertBefore(e,last.nextSibling); last=e; }); });
+  }; document.head.appendChild(s); })();
+</script>
 </body>
 </html>
