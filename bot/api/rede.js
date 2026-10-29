@@ -5,7 +5,15 @@
 //   GET /api/rede            -> { ok, condos:[{id,hub,nome,bairro,zona,tipo,torres,telas,pessoas,foto}] }
 //   GET /api/rede?foto=<id>  -> imagem JPEG do condomínio (guardada no hub, em clientesInfo.elev[item].foto)
 
-import { loadState } from "../lib/sheets.js";
+// Mesmo Apps Script que o hub usa (URL já pública no index.html); APPS_SCRIPT_URL no Vercel tem prioridade, se existir.
+const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwD9L4gj8zr9vwOBZxn4-71khw5yhoXwJTFfsWizP-okmZZQWlumQs93seg-H2USa8D/exec";
+
+async function loadState() {
+  const res = await fetch(`${APPS_SCRIPT_URL}?t=${Date.now()}`, { method: "GET", redirect: "follow" });
+  const text = await res.text();
+  if (!text.trim().startsWith("{")) return {};
+  return JSON.parse(text);
+}
 
 let cache = { ts: 0, state: null };
 async function estado() {
