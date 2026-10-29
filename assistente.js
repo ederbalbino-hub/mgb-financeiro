@@ -45,28 +45,28 @@
     return out;
   }
   function contexto() {
-    var out = [];
+    // Ordem importa: o servidor corta o texto no limite, então o que é mais barato e mais pedido (resumos de todos os meses) vem primeiro e o detalhe de clientes vai por último.
+    var head = [], meses = [], det = [];
     var hoje = new Date(), ano = hoje.getFullYear(), mes = hoje.getMonth();
-    try { out = out.concat(['== MÊS ATUAL (detalhe) =='], resumoMes(ano, mes, true)); } catch (e) { out.push('(não consegui montar o resumo de receita)'); }
+    try { var cur = resumoMes(ano, mes, true); head.push('== MÊS ATUAL =='); head = head.concat(cur.slice(0, 2)); det.push('', '== MÊS ATUAL — detalhe de clientes =='); det = det.concat(cur.slice(2)); } catch (e) { head.push('(não consegui montar o resumo de receita)'); }
     try {
       var c = new Date(), key = c.getFullYear() + '-' + String(c.getMonth() + 1).padStart(2, '0');
       var emitidas = Object.keys(fatEmissoes || {}).filter(function (k) { return k.slice(-7) === key && (fatEmissoes[k].status === 'emitida' || fatEmissoes[k].status === 'aguardando-nota'); });
-      out.push('Faturamento ' + key + ': ' + emitidas.length + ' cliente(s) com nota/boleto emitidos pelo hub.');
+      head.push('Faturamento ' + key + ': ' + emitidas.length + ' cliente(s) com nota/boleto emitidos pelo hub.');
     } catch (e) {}
     try {
-      var p = new Date(ano, mes + 1, 1);
-      out.push('', '== PRÓXIMO MÊS (detalhe) ==');
-      out = out.concat(resumoMes(p.getFullYear(), p.getMonth(), true));
-    } catch (e) {}
-    try {
-      out.push('', '== OUTROS MESES (previsão do hub: contratos + despesas lançadas; meses futuros ainda sem recebimento) ==');
+      meses.push('', '== PREVISÃO POR MÊS (do hub: contratos + despesas lançadas; mês futuro tem "já recebido" zero) ==');
       for (var i = -3; i <= 8; i++) {
-        if (i === 0 || i === 1) continue;
+        if (i === 0) continue;
         var d = new Date(ano, mes + i, 1);
-        out.push(resumoMes(d.getFullYear(), d.getMonth(), false).join(' || '));
+        meses.push(resumoMes(d.getFullYear(), d.getMonth(), false).join(' || '));
       }
     } catch (e) {}
-    return out.join('\n');
+    try {
+      var p = new Date(ano, mes + 1, 1), nx = resumoMes(p.getFullYear(), p.getMonth(), true);
+      det.push('', '== PRÓXIMO MÊS — detalhe de clientes =='); det = det.concat(nx.slice(2));
+    } catch (e) {}
+    return head.concat(meses, det).join('\n');
   }
 
   function telaAtual() {
