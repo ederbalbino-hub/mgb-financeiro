@@ -5839,6 +5839,25 @@ function copiarSpot() {
           <div class="anunc-form-field"><label class="anunc-form-lbl">CNPJ (opcional — usado pra preencher o contrato depois)</label><input class="anunc-form-inp" id="lead-cnpj" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off" oninput="leadMaskCNPJ(this)" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">E-mail (recebe contrato, nota e boleto)</label><input class="anunc-form-inp" id="lead-email" type="email" placeholder="financeiro@cliente.com.br" autocomplete="off" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Produto de interesse</label><div id="lead-produto-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+          <div id="lead-condo-box" style="display:none;border:1.5px dashed #0E7490;border-radius:10px;padding:10px;margin-bottom:10px;background:rgba(14,116,144,.06)">
+            <div style="font-size:11.5px;font-weight:700;color:#0E7490;margin-bottom:8px">🏢 Dados do condomínio — ao marcar <b>Fechado</b> ele vira unidade do módulo Elevadores, com o custo fixo do sistema e pronto para a Karen lançar despesas</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div class="anunc-form-field" style="flex:2;min-width:200px"><label class="anunc-form-lbl">Endereço</label><input class="anunc-form-inp" id="lc-endereco" placeholder="Rua, nº" autocomplete="off" style="width:100%"></div>
+              <div class="anunc-form-field" style="flex:1;min-width:130px"><label class="anunc-form-lbl">Bairro</label><input class="anunc-form-inp" id="lc-bairro" autocomplete="off" style="width:100%"></div>
+              <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Zona</label><select class="anunc-form-inp" id="lc-zona" style="width:100%"><option value="">—</option><option>Norte</option><option>Sul</option><option>Leste</option><option>Oeste</option><option>Centro</option></select></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Tipo</label><select class="anunc-form-inp" id="lc-tipo" style="width:100%"><option value="residencial">Residencial</option><option value="comercial">Comercial</option></select></div>
+              <div class="anunc-form-field" style="flex:1;min-width:90px"><label class="anunc-form-lbl">Torres</label><input class="anunc-form-inp" id="lc-torres" type="number" min="0" style="width:100%"></div>
+              <div class="anunc-form-field" style="flex:1;min-width:90px"><label class="anunc-form-lbl">Telas</label><input class="anunc-form-inp" id="lc-telas" type="number" min="0" style="width:100%"></div>
+              <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Moradores</label><input class="anunc-form-inp" id="lc-moradores" type="number" min="0" style="width:100%"></div>
+              <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Apartamentos (opcional)</label><input class="anunc-form-inp" id="lc-unidades" type="number" min="0" placeholder="× 2,79 se sem moradores" style="width:100%"></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+              <div class="anunc-form-field" style="flex:1;min-width:160px"><label class="anunc-form-lbl">Custo do sistema começa em</label><input class="anunc-form-inp" id="lc-ini" type="month" style="width:100%;color-scheme:light"></div>
+              <label style="flex:1;min-width:200px;font-size:11.5px;display:flex;gap:6px;align-items:center;padding-bottom:10px"><input type="checkbox" id="lc-custo" checked> Lançar custo fixo (telas × R$ 39,56/mês)</label>
+            </div>
+          </div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">De onde veio esse lead?</label><select class="anunc-form-inp" id="lead-origem" style="width:100%"></select></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Valor mensal estimado (R$)</label><input class="anunc-form-inp" id="lead-valor" type="number" step="0.01" min="0" placeholder="0,00" autocomplete="off" style="width:100%"></div>
@@ -13083,7 +13102,7 @@ function leadsPendentes(){
 }
 // Produtos do CRM que não são módulo do financeiro (13/10): Rádio Mercadão é cadastrado pelo Novo cliente
 // e cobrado pela Cobrança Mensal, sem unidade própria. extra:true = não cria cadastro em clientesInfo ao fechar.
-const LEAD_PRODUTOS_EXTRA=[{id:'mercadao', label:'Rádio Mercadão', icon:'🛒', color:'#C2410C', extra:true}];
+const LEAD_PRODUTOS_EXTRA=[{id:'mercadao', label:'Rádio Mercadão', icon:'🛒', color:'#C2410C', extra:true},{id:'condo', label:'Condomínio (entra na rede)', icon:'🏢', color:'#0E7490', extra:true}];
 function leadProdutos(){ return MODULES.concat(LEAD_PRODUTOS_EXTRA); }
 function leadModPor(id){ return leadProdutos().find(m=>m.id===id); }
 function leadStage(id){ return LEAD_STAGES.find(s=>s.id===id)||LEAD_STAGES[0]; }
@@ -13251,6 +13270,7 @@ function leadChangeStage(id,novoEstagio){
   const l=leads.find(x=>x.id===id); if(!l) return;
   const antigo=l.estagio;
   if(antigo===novoEstagio) return;
+  if(l.produto==='condo' && novoEstagio==='fechado' && !(l.condo&&l.condo.telas)){ leadToast('⚠ Abra o lead e preencha os dados do condomínio (telas, moradores…) antes de fechar'); buildLeads(); return; }
   l.estagio=novoEstagio;
   const agora=new Date(); if(!l.historico) l.historico=[];
   l.historico.push({data:agora.toLocaleDateString('pt-BR')+' '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), texto:'Estágio: '+leadStage(antigo).label+' → '+leadStage(novoEstagio).label});
@@ -13307,11 +13327,40 @@ window.mgbCriarAnunciante=function(nome,valor,meses,inicio,telas,cliente){
   return nome;
 };
 
+// Condomínio fechado no CRM → unidade no módulo Elevadores + custo fixo do Sistema TV + dados da rede (clientesInfo.elev).
+// Idempotente: se a unidade já existe só completa os dados; a linha de custo só é criada se ainda não houver uma.
+function leadCondoFechar(l){
+  const m=MODULES.find(x=>x.id==='elev'); if(!m){ return; }
+  const c=l.condo||{}; const item=String(l.nome||'').replace(/'/g,'').trim(); if(!item) return;
+  const jaTinha=m.items.includes(item);
+  if(!jaTinha) m.items.push(item);
+  if(!db.elev) db.elev={}; if(!rec.elev) rec.elev={};
+  if(!db.elev[item]) db.elev[item]=[];
+  if(rec.elev[item]===undefined) rec.elev[item]={valor:0,inicio:'',meses:12};
+  if(!clientesInfo.elev) clientesInfo.elev={};
+  const moradores=c.moradores||(c.unidades?Math.round(c.unidades*2.79):0);
+  clientesInfo.elev[item]=Object.assign({},clientesInfo.elev[item]||{},{cnpj:l.cnpj||'',fantasia:l.nome||'',responsavel:l.responsavel||'',cargo:l.funcao||'',tel:l.tel||'',email:l.email||'',
+    endereco:c.endereco||'',bairro:c.bairro||'',zona:c.zona||'',tipo:c.tipo||'residencial',torres:c.torres||0,telas:c.telas||0,moradores,unidades:c.unidades||0});
+  let custo='';
+  const tem=db.elev[item].some(x=>x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||'')));
+  if(c.custo!==false && !tem && c.telas){
+    const ini=c.ini||leadHoje().slice(0,7);
+    const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:c.telas,u:ELEV_CUSTO_TV,cc:item,venc:'',pago:false,dataPago:'',mesesRec:120,dataInicio:ini};
+    applyToFin(e,+1); db.elev[item].push(e);
+    custo=' · custo '+f(c.telas*ELEV_CUSTO_TV)+'/mês desde '+fmtMes(ini);
+  }
+  l.itemCriado=item;
+  if(!l.historico) l.historico=[];
+  const ag=new Date(); l.historico.push({data:ag.toLocaleDateString('pt-BR')+' '+ag.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), texto:(jaTinha?'Unidade já existia no módulo Elevadores — dados completados':'Unidade criada no módulo Elevadores')+custo});
+  try{ if(curMod==='elev') buildAll(); }catch(e){}
+  leadToast('✅ "'+item+'" entrou no módulo Elevadores'+custo+'. A Karen já pode lançar despesas.');
+}
 // Ao fechar um lead, NÃO cria unidade no módulo (isso só acontece quando o contrato é
 // gerado de verdade, via mgbCriarUnidadeModulo). Aqui só guarda os dados do cliente
 // (CNPJ/responsável/etc) em clientesInfo, pra alimentar o seletor "Cliente já fechado
 // no CRM?" dentro dos contratos — assim não duplica lançamento no financeiro.
 function leadFecharRegistrarCliente(l){
+  if(l.produto==='condo'){ leadCondoFechar(l); return; }
   const m=leadModPor(l.produto);
   if(!m||m.extra){ leadToast(`✅ "${l.nome}" fechado! Cadastre pelo Novo cliente${m?' ('+m.label+')':''}.`); return; }
   if(!clientesInfo[m.id]) clientesInfo[m.id]={};
@@ -13371,6 +13420,7 @@ function openLeadModal(mode,id){
   g('lead-del-btn').style.display = mode==='edit' ? '' : 'none';
   g('lead-historico-wrap').style.display = mode==='edit' ? '' : 'none';
   renderLeadProdutoChips(l ? l.produto : '');
+  leadCondoPreencher(l ? l.condo : null); leadCondoBoxToggle();
   renderLeadEstagioChips(l ? (l.estagio||'novo') : 'novo');
   renderLeadHistorico(l ? (l.historico||[]) : []);
   const modal=g('lead-modal');
@@ -13390,7 +13440,7 @@ function renderLeadEstagioChips(sel){
 // Esc fecha o formulário do lead. Com alteração não salva, o 1º Esc avisa e o 2º descarta.
 let _leadSnap='', _leadEscAviso=0;
 function leadFormSnap(){
-  return JSON.stringify(['lead-nome','lead-tel','lead-responsavel','lead-funcao','lead-cnpj','lead-origem','lead-valor','lead-lembrete','lead-obs'].map(i=>(g(i)||{}).value||'').concat([_leadProdutoSel,_leadEstagioSel]));
+  return JSON.stringify(['lead-nome','lead-tel','lead-responsavel','lead-funcao','lead-cnpj','lead-origem','lead-valor','lead-lembrete','lead-obs'].concat(Object.values(LC_IDS)).map(i=>(g(i)||{}).value||'').concat([_leadProdutoSel,_leadEstagioSel]));
 }
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape') return;
@@ -13407,12 +13457,25 @@ function closeLeadModal(){
   curLeadId=null;
 }
 let _leadProdutoSel='';
+const LC_IDS={endereco:'lc-endereco',bairro:'lc-bairro',zona:'lc-zona',tipo:'lc-tipo',torres:'lc-torres',telas:'lc-telas',moradores:'lc-moradores',unidades:'lc-unidades',ini:'lc-ini'};
+function leadCondoBoxToggle(){ const b=g('lead-condo-box'); if(b) b.style.display=_leadProdutoSel==='condo'?'':'none'; }
+function leadCondoPreencher(c){
+  c=c||{};
+  Object.keys(LC_IDS).forEach(k=>{ const el=g(LC_IDS[k]); if(el) el.value=c[k]!=null?c[k]:(k==='tipo'?'residencial':(k==='ini'?leadHoje().slice(0,7):'')); });
+  const ck=g('lc-custo'); if(ck) ck.checked=c.custo!==false;
+}
+function leadCondoLer(){
+  const c={}; Object.keys(LC_IDS).forEach(k=>{ const el=g(LC_IDS[k]); c[k]=el?String(el.value||'').trim():''; });
+  ['torres','telas','moradores','unidades'].forEach(k=>c[k]=parseInt(c[k],10)||0);
+  c.custo=!!(g('lc-custo')||{}).checked;
+  return c;
+}
 function renderLeadProdutoChips(sel){
   _leadProdutoSel = sel||'';
   const box=g('lead-produto-chips');
   box.innerHTML = leadProdutos().map(m=>`<div class="lead-produto-chip${m.id===_leadProdutoSel?' on':''}" style="${m.id===_leadProdutoSel?`background:${m.color};`:''}" onclick="leadPickProduto('${m.id}')">${m.icon} ${m.label.split('—')[0].trim()}</div>`).join('');
 }
-function leadPickProduto(id){ renderLeadProdutoChips(id===_leadProdutoSel?'':id); }
+function leadPickProduto(id){ renderLeadProdutoChips(id===_leadProdutoSel?'':id); leadCondoBoxToggle(); }
 function renderLeadHistorico(hist){
   const box=g('lead-historico-list');
   if(!box) return;
@@ -13458,7 +13521,7 @@ function leadJaCadastradoNoProduto(nome,produto){
   const k=fNormNome(nome); if(!k||!produto) return null;
   const outro=(leads||[]).find(l=>l&&l.id!==curLeadId&&l.produto===produto&&l.estagio!=='perdido'&&fNormNome(l.nome)===k);
   if(outro) return 'lead no CRM';
-  const m=MODULES.find(x=>x.id===produto);
+  const m=MODULES.find(x=>x.id===(produto==='condo'?'elev':produto));
   const atual=curLeadId!=null?(leads.find(x=>x.id===curLeadId)||{}):{};
   if(m&&m.items.some(it=>fNormNome(it)===k&&it!==atual.itemCriado)) return 'unidade no módulo '+m.label.replace(/^\S+\s*/,'');
   return null;
@@ -13511,13 +13574,16 @@ function saveLeadModal(){
   const valor=parseFloat(g('lead-valor').value)||0;
   const lembrete=g('lead-lembrete').value||'';
   const obs=g('lead-obs').value.trim();
+  const condo=_leadProdutoSel==='condo'?leadCondoLer():null;
+  if(condo && _leadEstagioSel==='fechado' && !condo.telas){ leadToast('⚠ Informe o nº de telas do condomínio para fechar'); g('lc-telas').focus(); return; }
   let l;
   const estagio=_leadEstagioSel||'novo';
   if(curLeadId!=null){
     l=leads.find(x=>x.id===curLeadId);
-    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; }
+    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; if(condo) l.condo=condo; }
   } else {
     l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, email, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
+    if(condo) l.condo=condo;
     leads.push(l);
   }
   closeLeadModal();

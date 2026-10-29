@@ -56,7 +56,7 @@
         hub: item,
         nome: ref ? ref.nome : item,
         bairro: ref ? ref.bairro : (info.bairro || ''),
-        zona: ref ? ref.zona : '',
+        zona: ref ? ref.zona : (info.zona || ''),
         tipo: ref ? ref.tipo : (info.tipo || 'residencial'),
         pessoas: ref ? ref.pessoas : (Number(info.moradores || info.pessoas) || 0),
         telas: t || (ref ? ref.telas : 0),
