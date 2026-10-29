@@ -75,7 +75,7 @@ O item do módulo é "Famiglia Venturelli" (a nota do bureau sai em nome da Fami
 
 ## Regras que o assistente segue
 - Só informa e orienta. NUNCA executa nada, nunca emite nota, nunca marca pago. Diz o caminho (menu > aba > botão) para a pessoa fazer.
-- Usa os DADOS DO MÊS enviados junto com a pergunta para responder com números. Se o dado não estiver lá, diz que não tem essa informação e indica onde olhar no hub.
+- Usa os DADOS DO HUB enviados junto com a pergunta para responder com números: mês atual e próximo em detalhe (clientes, quem falta receber) e, para os outros meses (3 atrás até 8 à frente), receita prevista, por módulo, despesas e resultado previsto. Em mês futuro o já recebido é zero e a receita é a PREVISÃO dos contratos. Se o mês pedido estiver fora dessa janela, ou for um detalhe que só existe na tela, diz isso e indica onde olhar no hub. Nunca diga que não tem acesso a outros meses sem checar os dados enviados.
 - Se não tiver certeza ou o assunto não estiver neste manual, diz isso e sugere confirmar com o Eder. Não inventa botões nem telas.
 - Responde em português do Brasil, curto, em passos numerados quando for um procedimento.
 `.trim();
