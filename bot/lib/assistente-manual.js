@@ -27,7 +27,7 @@ Serve para emitir nota fiscal e boleto do mês, em lote, via Asaas.
 4. Coluna "Dia venc.": dia de vencimento por cliente (padrão 15; DM Auto Center 25).
 5. Coluna WhatsApp (📲): abre o WhatsApp com a mensagem do boleto pronta. Coluna 🧾: abre a aba Recibos com o recibo preenchido.
 6. Cliente "só boleto" sai pelo valor cheio. Quem retém ISS (Londrina) tem o boleto = valor da nota menos o ISS retido.
-7b. Corrigir e-mail, WhatsApp ou CNPJ/CPF de um cliente (ex.: trocou o e-mail): na linha do cliente, clique em "✏️ editar", ajuste e salve. Vale para as próximas notas/boletos/e-mails (a planilha não muda, e quem não tem acesso à planilha consegue editar). Vários e-mails: separe por vírgula. Se o boleto do mês já saiu com o e-mail antigo, cancele ("↩ cancelar") e emita de novo.
+7b. Corrigir e-mail, WhatsApp ou CNPJ/CPF de um cliente (ex.: trocou o e-mail): clique no ✏️ que fica antes do nome do cliente, ajuste e salve. Vale para as próximas notas/boletos/e-mails (a planilha não muda, e quem não tem acesso à planilha consegue editar). Vários e-mails: separe por vírgula. Se o boleto do mês já saiu com o e-mail antigo, cancele ("↩ cancelar") e emita de novo.
 7. Falta CNPJ/CPF? A linha dá erro "Falta CNPJ/CPF". Cadastre o documento (ver "Cadastrar lojas") e carregue de novo.
 - Caixa "📋 Cadastrar lojas": cole linhas "Nome - telefone - CNPJ/CPF - pago - nota e boleto". Serve para as lojas do Mercadão da Prochet (Rádio Interna). "(renovação)" soma na linha do mesmo cliente.
 - O hub guarda o histórico do que já foi emitido em cada mês; o que já está "emitida" não é emitido de novo.
