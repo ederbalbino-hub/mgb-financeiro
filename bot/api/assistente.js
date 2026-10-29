@@ -14,7 +14,7 @@ import { MANUAL } from "../lib/assistente-manual.js";
 const MODELO = process.env.ASSISTENTE_MODELO || "claude-sonnet-5-5";
 const MAX_MENSAGENS = 12;
 const MAX_CHARS_MSG = 2000;
-const MAX_CHARS_CONTEXTO = 14000;
+const MAX_CHARS_CONTEXTO = 24000;
 
 const SISTEMA = `Você é a Zuma, a assistente virtual do Hub MGB, a plataforma financeira e operacional da MGB Mídia. Quem pergunta é alguém da equipe (normalmente a Karen, que cuida do financeiro e do sucesso do cliente). Seu papel é tirar dúvidas e ensinar o caminho para a pessoa aprender o hub — você NÃO executa ações. Use o manual abaixo como fonte da verdade.
 
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
       text:
         `Pessoa: ${usuario.nome || usuario.login} (${usuario.papel}).` +
         (tela ? ` Tela aberta agora: ${tela}.` : "") +
-        (contexto ? `\n\nDADOS DO MÊS (atuais, vindos do hub):\n${contexto}` : "\n\n(Sem dados financeiros disponíveis para esta pessoa.)"),
+        (contexto ? `\n\nDADOS DO HUB (mês atual e próximo em detalhe; 3 meses atrás até 8 à frente em resumo — vindos do hub agora):\n${contexto}` : "\n\n(Sem dados financeiros disponíveis para esta pessoa.)"),
     },
   ];
 

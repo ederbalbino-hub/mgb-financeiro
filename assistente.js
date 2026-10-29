@@ -21,17 +21,19 @@
   }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-  // Resumo do mês corrente (somente leitura): receita por módulo, quem ainda não pagou, despesas, faturamento emitido.
-  function contexto() {
+  // Resumo somente leitura: mês corrente em detalhe (receita por módulo, quem não pagou, despesas, faturamento),
+  // o mês seguinte também com a lista de clientes, e uma linha por mês de 3 meses atrás até 8 à frente (para "e novembro? e dezembro?").
+  function resumoMes(ano, mes, detalhe) {
     var out = [];
-    try {
-      var hoje = new Date(), ano = hoje.getFullYear(), mes = hoje.getMonth();
-      var nomeMes = (typeof MESES !== 'undefined' ? MESES[mes] : (mes + 1)) + '/' + ano;
-      var L = coletaClientesMes(ano, mes);
-      var tot = 0, pago = 0, porMod = {};
-      L.forEach(function (l) { tot += l.valor; if (l.pago) pago += l.valor; porMod[l.modLabel] = (porMod[l.modLabel] || 0) + l.valor; });
-      out.push('Mês: ' + nomeMes + ' | Receita prevista: ' + brl(tot) + ' | Já recebido: ' + brl(pago) + ' | A receber: ' + brl(tot - pago));
-      out.push('Receita por módulo: ' + Object.keys(porMod).map(function (k) { return k + ' ' + brl(porMod[k]); }).join('; '));
+    var nomeMes = (typeof MESES !== 'undefined' ? MESES[mes] : (mes + 1)) + '/' + ano;
+    var L = coletaClientesMes(ano, mes);
+    var tot = 0, pago = 0, porMod = {};
+    L.forEach(function (l) { tot += l.valor; if (l.pago) pago += l.valor; porMod[l.modLabel] = (porMod[l.modLabel] || 0) + l.valor; });
+    var desp = 0, nd = 0;
+    try { var D = coletaDespesasMes(ano, mes); nd = D.length; desp = D.reduce(function (s, d) { return s + (Number(d.vlrMes) || 0); }, 0); } catch (e) {}
+    out.push('Mês: ' + nomeMes + ' | Receita prevista: ' + brl(tot) + ' | Já recebido: ' + brl(pago) + ' | A receber: ' + brl(tot - pago) + ' | Despesas: ' + brl(desp) + ' (' + nd + ' lançamentos) | Resultado previsto: ' + brl(tot - desp));
+    out.push('Receita por módulo: ' + Object.keys(porMod).map(function (k) { return k + ' ' + brl(porMod[k]); }).join('; '));
+    if (detalhe) {
       var abertos = L.filter(function (l) { return !l.pago; });
       if (abertos.length) {
         out.push('Ainda NÃO recebidos (' + abertos.length + '):');
@@ -39,17 +41,30 @@
       }
       var rec = L.filter(function (l) { return l.pago; });
       if (rec.length) out.push('Já recebidos: ' + rec.slice(0, 60).map(function (l) { return l.item + ' ' + brl(l.valor); }).join('; '));
-    } catch (e) { out.push('(não consegui montar o resumo de receita)'); }
-    try {
-      var h = new Date();
-      var D = coletaDespesasMes(h.getFullYear(), h.getMonth());
-      var td = D.reduce(function (s, d) { return s + (Number(d.vlrMes) || 0); }, 0);
-      out.push('Despesas do mês: ' + brl(td) + ' em ' + D.length + ' lançamento(s).');
-    } catch (e) {}
+    }
+    return out;
+  }
+  function contexto() {
+    var out = [];
+    var hoje = new Date(), ano = hoje.getFullYear(), mes = hoje.getMonth();
+    try { out = out.concat(['== MÊS ATUAL (detalhe) =='], resumoMes(ano, mes, true)); } catch (e) { out.push('(não consegui montar o resumo de receita)'); }
     try {
       var c = new Date(), key = c.getFullYear() + '-' + String(c.getMonth() + 1).padStart(2, '0');
       var emitidas = Object.keys(fatEmissoes || {}).filter(function (k) { return k.slice(-7) === key && (fatEmissoes[k].status === 'emitida' || fatEmissoes[k].status === 'aguardando-nota'); });
       out.push('Faturamento ' + key + ': ' + emitidas.length + ' cliente(s) com nota/boleto emitidos pelo hub.');
+    } catch (e) {}
+    try {
+      var p = new Date(ano, mes + 1, 1);
+      out.push('', '== PRÓXIMO MÊS (detalhe) ==');
+      out = out.concat(resumoMes(p.getFullYear(), p.getMonth(), true));
+    } catch (e) {}
+    try {
+      out.push('', '== OUTROS MESES (previsão do hub: contratos + despesas lançadas; meses futuros ainda sem recebimento) ==');
+      for (var i = -3; i <= 8; i++) {
+        if (i === 0 || i === 1) continue;
+        var d = new Date(ano, mes + i, 1);
+        out.push(resumoMes(d.getFullYear(), d.getMonth(), false).join(' || '));
+      }
     } catch (e) {}
     return out.join('\n');
   }
