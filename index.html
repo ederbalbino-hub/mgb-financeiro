@@ -8066,6 +8066,7 @@ async function fFatCarregar(){
       if(!r.ctribnac){ r.ctribnac=c.ctribnac; r.cnbs=c.cnbs; } });
     const novos=fFatClientesDoHub(j.rows||[]); fatLinhas=fatLinhas.concat(novos);
     fatLinhas=fatLinhas.filter(r=>!fFatEhLeo(r));   // Léo tem aba própria
+    fFatAplicarEdicoes();
     // Retenção de ISS automática: cliente de Londrina retém (regra da planilha). Linhas criadas pelo hub não trazem a coluna
     // preenchida; sem isto o DM Auto Center saiu sem retenção. Só vale para o que ainda não foi emitido (boleto/nota já
     // criados ficam como estão, para o valor do boleto continuar batendo com a nota).
@@ -8142,7 +8143,7 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.emitidoEm&&r.status!=='pendente'?' <span style="font-size:9px;color:var(--muted)">'+new Date(r.emitidoEm).toLocaleDateString('pt-BR')+(r.nfNumero?' · NF '+r.nfNumero:'')+'</span>':'')+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 boleto</a>':'<span style="color:var(--muted)" title="O botão do WhatsApp aparece depois que o boleto é emitido">—</span>')+(r.hubMod?' <a href="#" onclick="event.preventDefault();fFatRecibo(\''+r.id+'\')" title="Abre a aba Recibos já preenchida com este cliente" style="margin-left:6px">🧾 recibo</a>':'')+((r.paymentId||r.invoiceId)&&r.statusPagamento!=='pago'?' <a href="#" onclick="event.preventDefault();fFatCancelar(\''+r.id+'\')" title="Cancela o boleto e a nota deste mês no Asaas para emitir de novo (não funciona em boleto pago)" style="margin-left:6px;color:var(--red)">↩ cancelar</a>':'')+'</td></tr>';
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 boleto</a>':'<span style="color:var(--muted)" title="O botão do WhatsApp aparece depois que o boleto é emitido">—</span>')+(r.hubMod?' <a href="#" onclick="event.preventDefault();fFatRecibo(\''+r.id+'\')" title="Abre a aba Recibos já preenchida com este cliente" style="margin-left:6px">🧾 recibo</a>':'')+' <a href="#" onclick="event.preventDefault();fFatEditar(\''+r.id+'\')" title="Corrigir e-mail, WhatsApp e CNPJ/CPF deste cliente (vale para as próximas emissões)" style="margin-left:6px">✏️ editar</a>'+((r.paymentId||r.invoiceId)&&r.statusPagamento!=='pago'?' <a href="#" onclick="event.preventDefault();fFatCancelar(\''+r.id+'\')" title="Cancela o boleto e a nota deste mês no Asaas para emitir de novo (não funciona em boleto pago)" style="margin-left:6px;color:var(--red)">↩ cancelar</a>':'')+'</td></tr>';
     }).join('')+'</table></div><div style="height:70px"></div>';
   const _nb=el.querySelector('.fat-scroll'); if(_nb){ _nb.scrollTop=_st; _nb.scrollLeft=_sl; }
   if(window.scrollY!==_wy) window.scrollTo(0,_wy);
@@ -8242,6 +8243,44 @@ function fFatLojasCadastrar(){
   });
   try{ scheduleSave(); }catch(e){}
   res.innerHTML='<div class="ferr-info" style="color:var(--green)">✓ '+linhas.length+' loja(s) cadastrada(s):<br>'+linhas.join('<br>')+'</div>'+(naoAchei.length?'<div class="ferr-info" style="color:var(--red)">Não encontrei no módulo Rádio Interna: '+naoAchei.join(', ')+'</div>':'')+'<div class="ferr-info">Clique em <b>🔄 Carregar planilha</b> pra elas aparecerem na lista.</div>';
+}
+// ✏️ Editar cliente no Faturamento (29/10): corrige e-mail / WhatsApp / CNPJ-CPF sem mexer na planilha (a Karen não tem acesso a ela).
+// A correção fica em notaConfig.fatEdicoes[id] e vale por cima da planilha em todo carregamento; se o cliente é do hub, também atualiza o cadastro dele.
+function fFatAplicarEdicoes(){
+  const E=(notaConfig&&notaConfig.fatEdicoes)||{};
+  fatLinhas.forEach(r=>{ const e=E[r.id]; if(!e) return; if(e.email) r.email=e.email; if(e.cnpj) r.cnpj=e.cnpj; if(e.tel) r.whatsapp=e.tel; r.editado=true; });
+}
+function fFatEditar(id){
+  const r=fatLinhas.find(x=>x.id===id); if(!r) return;
+  const E=((notaConfig.fatEdicoes=notaConfig.fatEdicoes||{})[id]||{});
+  let m=document.getElementById('f-fat-edit-modal'); if(m) m.remove();
+  m=document.createElement('div'); m.id='f-fat-edit-modal';
+  m.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55)';
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  m.innerHTML='<div style="background:var(--bg,#fff);color:var(--text,#222);border-radius:14px;padding:18px;width:min(460px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.4)">'+
+    '<div style="font:800 16px Syne,sans-serif;margin-bottom:2px">✏️ '+esc(r.apelido||r.cliente)+'</div>'+
+    '<div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">A correção vale para as próximas notas, boletos e e-mails deste cliente. A planilha não é alterada.</div>'+
+    '<label class="ferr-lbl">E-mail (mais de um: separe por vírgula)</label><input id="fe-email" class="ferr-in" value="'+esc(E.email||r.email)+'" style="width:100%">'+
+    '<label class="ferr-lbl" style="margin-top:8px">WhatsApp (DDD + número)</label><input id="fe-tel" class="ferr-in" value="'+esc(E.tel||r.whatsapp||r.tel||'')+'" inputmode="numeric" style="width:100%">'+
+    '<label class="ferr-lbl" style="margin-top:8px">CNPJ / CPF</label><input id="fe-cnpj" class="ferr-in" value="'+esc(E.cnpj||r.cnpj)+'" style="width:100%">'+
+    '<div id="fe-erro" style="color:var(--red);font-size:11.5px;margin-top:6px"></div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="document.getElementById(\'f-fat-edit-modal\').remove()">Cancelar</button><button class="ferr-btn" onclick="fFatEditarSalvar(\''+id+'\')">Salvar</button></div></div>';
+  document.body.appendChild(m); setTimeout(()=>{ const i=document.getElementById('fe-email'); if(i) i.focus(); },50);
+}
+function fFatEditarSalvar(id){
+  const r=fatLinhas.find(x=>x.id===id); if(!r) return;
+  const email=document.getElementById('fe-email').value.trim(), tel=document.getElementById('fe-tel').value.replace(/\D/g,''), cnpj=document.getElementById('fe-cnpj').value.trim();
+  const erro=document.getElementById('fe-erro');
+  if(email && !email.split(/[,;]\s*/).every(x=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x.trim()))){ erro.textContent='O e-mail parece incompleto.'; return; }
+  if(tel && (tel.length<10||tel.length>13)){ erro.textContent='WhatsApp: informe DDD + número.'; return; }
+  const ed=notaConfig.fatEdicoes[id]={...(notaConfig.fatEdicoes[id]||{}), email, tel, cnpj, em:new Date().toISOString()};
+  if(r.hubMod && r.hubItem && r.hubMod!=='_avulsa'){            // cliente do hub: atualiza o cadastro dele também
+    const ci=(clientesInfo[r.hubMod]=clientesInfo[r.hubMod]||{}); const inf=(ci[r.hubItem]=ci[r.hubItem]||{});
+    if(email) inf.email=email; if(tel) inf.tel=tel; if(cnpj) inf.cnpj=cnpj;
+  }
+  fFatAplicarEdicoes();
+  document.getElementById('f-fat-edit-modal').remove();
+  fFatLista(); try{ scheduleSave(); }catch(e){}
 }
 // Abre o WhatsApp com a mensagem do boleto pronta. Telefone: cadastro do cliente → último digitado (salvo por cliente).
 function fFatEnviarWhats(id){
