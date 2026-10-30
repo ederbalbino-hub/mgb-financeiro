@@ -64,6 +64,12 @@ Serve para emitir nota fiscal e boleto do mês, em lote, via Asaas.
 ## Contratos (prazos)
 - Contratos de clientes mensais ficam "sem fim" (repetem todo mês) até alguém encerrar; só a Tarobá é digitada mês a mês.
 
+## Contabilidade > Nota Fiscal (nota + boleto avulsos)
+- Escolha o cliente (busca por nome ou CNPJ). Digitou um CNPJ completo? O hub consulta a Receita e preenche a razão social (e o e-mail, se estiver vazio). O código de serviço vem 1710, mas dá para trocar.
+- Caixa "Essa cobrança é…": AVULSA (só desta vez; entra na receita só do mês) ou MENSAL (repete: o cliente entra no Faturamento com contrato; escolha o módulo e por quantos meses). Se o cliente já tem contrato mensal ativo naquele mês, nada é duplicado.
+- Depois de emitir, a cobrança aparece sozinha em Financeiro MGB > Visão Receita (avulsa) e o status do boleto (aguardando/pago/vencido) vem do Asaas ao conferir. 
+- Na lista do Faturamento, a coluna Pagamento mostra a situação do último mês faturado quando o mês escolhido ainda não foi emitido (ex.: "pago · 10/26").
+
 ## Recibos
 Aba Recibos (Contabilidade): gera o recibo do cliente. Pelo Faturamento, o botão 🧾 já abre o recibo preenchido.
 
