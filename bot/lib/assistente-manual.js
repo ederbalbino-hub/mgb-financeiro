@@ -65,6 +65,10 @@ Serve para emitir nota fiscal e boleto do mês, em lote, via Asaas.
 ## Contratos (prazos)
 - Contratos de clientes mensais ficam "sem fim" (repetem todo mês) até alguém encerrar; só a Tarobá é digitada mês a mês.
 
+## Repasses mensais (avisos na Home)
+- Do dia 25 ao dia 10 a Home mostra dois cards enquanto o relatório do mês não foi enviado: "Repasse Vaapty" (15% do vendido) e "Repasse Mercadão" (20% das cotas da grade Blocos Rádio, valor por cota R$ 100 por padrão).
+- Clique no card: abre o relatório já no mês certo (Relatórios > Mercadão ou Vaapty). Gere o PDF, envie, e clique em "✓ Marcar como enviado" para o card sumir. O valor do aviso é uma estimativa: confira anunciantes e valores no relatório antes de enviar.
+
 ## Contabilidade > Nota Fiscal (nota + boleto avulsos)
 - Escolha o cliente (busca por nome ou CNPJ). Digitou um CNPJ completo? O hub consulta a Receita e preenche a razão social (e o e-mail, se estiver vazio). O código de serviço vem 1710, mas dá para trocar.
 - Caixa "Essa cobrança é…": AVULSA (só desta vez; entra na receita só do mês) ou MENSAL (repete: o cliente entra no Faturamento com contrato; escolha o módulo e por quantos meses). Se o cliente já tem contrato mensal ativo naquele mês, nada é duplicado.

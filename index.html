@@ -962,6 +962,7 @@ body{-webkit-font-smoothing:antialiased}
 
         <!-- 💰 aviso do Rádio Ops: relatório aprovado pelo cliente, nota pra emitir (vem do rops_cache) -->
         <div id="home-crm-pend" style="display:none;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#ECFDF5,#F0FDFA);border:2px solid #0D9488;color:#134E4A;font-size:13.5px;line-height:1.5"></div>
+        <div id="home-merc-alert" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);border:2px solid #C2410C;color:#7C2D12;font-size:13.5px;line-height:1.5"></div>
         <div id="home-vaapty-alert" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#FDF2F8,#F5F3FF);border:2px solid #D6367F;color:#831843;font-size:13.5px;line-height:1.5"></div>
         <div id="home-rops-alert" onclick="goPage('radioops')" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#ECFDF5,#F0FDF4 60%,#FFFBEB);border:2px solid #118A5D;box-shadow:0 8px 30px rgba(17,138,93,.18);color:#065F46;font-size:13.5px;line-height:1.5"></div>
         <!-- Hubs principais -->
@@ -5660,15 +5661,15 @@ function copiarSpot() {
         <div id="rel-form-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px">
           <div>
             <label class="anunc-form-lbl">📅 Mês de referência</label>
-            <input class="anunc-form-inp" id="rel-mes" type="month" style="color-scheme:dark;width:100%">
+            <input class="anunc-form-inp" id="rel-mes" type="month" style="color-scheme:dark;width:100%" onchange="relEnviadoStatus()">
           </div>
           <div>
             <label class="anunc-form-lbl">💰 Valor por cota (R$)</label>
-            <input class="anunc-form-inp" id="rel-cota" type="number" min="0" step="0.01" value="100" style="width:100%">
+            <input class="anunc-form-inp" id="rel-cota" type="number" min="0" step="0.01" value="100" style="width:100%" onchange="mercCfgSalvar()">
           </div>
           <div>
             <label class="anunc-form-lbl">↩ Repasse Mercadão (%)</label>
-            <input class="anunc-form-inp" id="rel-repasse" type="number" min="0" max="100" step="1" value="20" style="width:100%">
+            <input class="anunc-form-inp" id="rel-repasse" type="number" min="0" max="100" step="1" value="20" style="width:100%" onchange="mercCfgSalvar()">
           </div>
           <div>
             <label class="anunc-form-lbl">📻 Inserções/dia por cota</label>
@@ -5698,6 +5699,8 @@ function copiarSpot() {
 
         <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div style="font-size:12px;color:var(--muted)" id="rel-resumo">—</div>
+          <span id="rel-enviado" style="font-size:11.5px;color:var(--green);font-weight:600"></span>
+          <button onclick="relMarcarEnviado()" style="background:transparent;border:1px solid var(--green);color:var(--green);padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:12.5px" title="Depois de mandar o relatório ao Mercadão: tira o aviso da home">✓ Marcar como enviado</button>
           <button onclick="relGerar()" style="background:linear-gradient(135deg,#E879B0,#9B72CF);border:none;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">✨ Gerar Relatório</button>
         </div>
       </div>
@@ -14636,6 +14639,7 @@ function togglePrivate(){
 function buildHome(){
   try{ vaaptyAvisoHome(); }catch(e){}
   try{ crmPendentesHome(); }catch(e){ console.error('crmPendentesHome',e); }
+  try{ mercadaoAvisoHome(); }catch(e){ console.error('mercadaoAvisoHome',e); }
   const now=new Date();
   g('home-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 
@@ -15143,10 +15147,10 @@ function togglePesDespPago(id){
 }
 
 // ── RELATÓRIO RÁDIO MERCADÃO ──────────────────────────────────────────────
-function relLerBlocos(){
-  // Lê localStorage mgb_blocos_v4 e agrupa clientes por nome (lowercase) com contagem de cotas
-  let d={};
-  try{ d=JSON.parse(localStorage.getItem('mgb_blocos_v4'))||{}; }catch(e){}
+function relLerBlocos(dados){
+  // Lê localStorage mgb_blocos_v4 (ou os dados passados) e agrupa clientes por nome (lowercase) com contagem de cotas
+  let d=dados||{};
+  if(!dados){ try{ d=JSON.parse(localStorage.getItem('mgb_blocos_v4'))||{}; }catch(e){} }
   const mapa={}; // nome lowercase → {nome:string, cotas:N, tel:string}
   for(let b=1;b<=8;b++) for(let s=1;s<=3;s++){
     const k=`b${b}s${s}`;
@@ -15582,6 +15586,45 @@ function relvMarcarEnviado(){
   try{ vaaptyAvisoHome(); }catch(e){}
 }
 // Aviso na Home do dia 25 ao dia 10: relatório de repasse do mês ainda não enviado
+// ── Repasse Mercadão: aviso na Home (mesma janela do Vaapty: do dia 25 ao dia 10) até marcar o relatório do mês como enviado ──
+function mercCfg(){ notaConfig.mercadao=notaConfig.mercadao||{cota:100,pct:20,enviado:{}}; const c=notaConfig.mercadao; if(c.cota==null) c.cota=100; if(c.pct==null) c.pct=20; c.enviado=c.enviado||{}; return c; }
+function mercCfgSalvar(){ const c=mercCfg(), a=g('rel-cota'), b=g('rel-repasse'); if(a) c.cota=parseFloat(a.value)||0; if(b) c.pct=parseFloat(b.value)||0; try{ scheduleSave(); }catch(e){} try{ mercadaoAvisoHome(); }catch(e){} }
+function mercCfgAplicar(){ const c=mercCfg(), a=g('rel-cota'), b=g('rel-repasse'); if(a&&document.activeElement!==a) a.value=c.cota; if(b&&document.activeElement!==b) b.value=c.pct; }
+async function mercBlocosDados(){
+  let d=null;
+  try{ const r=await fetch('https://agenciamgb.com.br/contratos/api_blocos.php?action=ler&t='+Date.now()); const j=await r.json(); if(j&&j.ok&&j.dados&&Object.keys(j.dados).length){ d=j.dados; try{ if(!localStorage.getItem('mgb_blocos_v4')) localStorage.setItem('mgb_blocos_v4',JSON.stringify(d)); }catch(e){} } }catch(e){}
+  if(!d){ try{ d=JSON.parse(localStorage.getItem('mgb_blocos_v4')||'null'); }catch(e){} }
+  return d||{};
+}
+function mercRepasseCalc(dados){
+  relAjustesInit(); const c=mercCfg();
+  const lista=relLerBlocos(dados).map(x=>Object.assign({},x,{manual:false})).concat(relAjustes.man.map(m=>({nome:m.nome||'',cotas:0,manual:true,valorFixo:parseFloat(m.valor)||0})));
+  let base=0;
+  lista.forEach(x=>{ if(x.manual) base+=parseFloat(x.valorFixo)||0; else { const k=(x.nome||'').toLowerCase(); base+=(relAjustes.ov[k]!=null&&relAjustes.ov[k]!=='')?(parseFloat(relAjustes.ov[k])||0):(x.cotas||0)*c.cota; } });
+  return {base, pct:c.pct, valor:Math.round(base*c.pct)/100, n:lista.length};
+}
+function relEnviadoStatus(){
+  const iso=(g('rel-mes')||{}).value||new Date().toISOString().slice(0,7), el=g('rel-enviado'); if(!el) return;
+  const d=mercCfg().enviado[iso]; el.textContent=d?'✓ '+iso.split('-').reverse().join('/')+' enviado em '+d:'';
+}
+function relMarcarEnviado(){
+  const iso=(g('rel-mes')||{}).value||new Date().toISOString().slice(0,7);
+  mercCfg().enviado[iso]=new Date().toLocaleDateString('pt-BR'); try{ scheduleSave(); }catch(e){}
+  relEnviadoStatus(); try{ mercadaoAvisoHome(); }catch(e){}
+}
+async function mercadaoAvisoHome(){
+  const box=g('home-merc-alert'); if(!box) return;
+  mercCfgAplicar();
+  const h=new Date(); let ano=h.getFullYear(), mes=h.getMonth();
+  if(h.getDate()<=10){ mes--; if(mes<0){ mes=11; ano--; } } else if(h.getDate()<25){ box.style.display='none'; return; }
+  const k=ano+'-'+String(mes+1).padStart(2,'0'); if(mercCfg().enviado[k]){ box.style.display='none'; return; }
+  const r=mercRepasseCalc(await mercBlocosDados());
+  if(!r.base){ box.style.display='none'; return; }
+  const fm=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  box.style.display='block';
+  box.innerHTML='<b>📤 Repasse Mercadão de '+MESES[mes]+'/'+ano+':</b> '+fm(r.valor)+' ('+r.pct+'% de '+fm(r.base)+') · gerar e enviar o relatório ao Mercadão<div style="font-size:11.5px;margin-top:4px;opacity:.8">Clique para abrir o relatório já no mês certo. Depois de enviar, use "Marcar como enviado" para sumir daqui.</div>';
+  box.onclick=()=>{ goPage('relatorios'); setTimeout(()=>{ try{ showRelTab('mercadao',document.querySelector('#page-relatorios .rel-tab:nth-child(1)')); g('rel-mes').value=k; relRefresh(); relEnviadoStatus(); }catch(e){} },120); };
+}
 // Home: clientes que o CRM fechou e ainda esperam cadastro (a Karen vê na rotina, sem abrir "Novo cliente").
 function crmPendentesHome(){
   const box=g('home-crm-pend'); if(!box) return;
