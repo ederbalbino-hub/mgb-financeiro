@@ -612,6 +612,7 @@
     });
     var salvo = rascunhos()[chaveRascunho()];
     if (salvo && salvo.valores) {
+      Object.keys(salvo.valores).forEach(function (id) { var m = /^nv-instval-(\d+)$/.exec(id); if (m && typeof addLinhaInst === 'function') addLinhaInst(+m[1]); });   // recria as linhas extras de despesa
       Object.keys(salvo.valores).forEach(function (id) { var e = doc.getElementById(id); if (e && !e.readOnly && salvo.valores[id] !== '') { e.value = salvo.valores[id]; e.dispatchEvent(new Event('input', { bubbles: true })); } });
       st.textContent = 'Rascunho de ' + new Date(salvo.em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' carregado. Confira e crie quando estiver pronto.';
     }
@@ -683,7 +684,9 @@
       campo('instval', 'Custo da instalação (R$)', '', 'number', ' min="0" step="0.01"') +
       '<label class="f" for="nv-instpor">Pago por<select id="nv-instpor"><option value="eder">Eder</option><option value="jadson">Jadson</option></select></label>' +
       campo('instdesc', 'Descrição', '', 'text', ' placeholder="ex: telas, cabos e kits"') + '</div>' +
-      '<p class="sub">Entra no investimento dos sócios da Tela Vertical. Outras despesas deste condomínio você lança depois em Tela Vertical › Condomínios.</p></section></main>' +
+      '<div id="nv-inst-extra"></div>' +
+      '<button type="button" class="b" id="nv-inst-add" style="margin-top:8px">＋ Adicionar despesa</button>' +
+      '<p class="sub">Cada despesa entra como um lançamento no investimento dos sócios da Tela Vertical (quem pagou, valor e descrição). Despesas que aparecerem depois você lança em Tela Vertical › Condomínios.</p></section></main>' +
       '<aside><section class="card"><div class="sec">Conta do mês</div>' +
       '<div class="conta"><span>Condomínio paga</span><b>R$ 0</b></div>' +
       '<div class="conta"><span id="nv-custo-rot">Custo · 1 tela × ' + brl(CUSTO_POR_TORRE) + '</span><b id="nv-custo" style="color:#a33a1a">' + brl(CUSTO_POR_TORRE) + '/mês</b></div>' +
@@ -709,6 +712,7 @@
     torres.addEventListener('input', function () { mexeuTelas = true; });
     nTorres.addEventListener('input', function () { if (!mexeuTelas) { torres.value = nTorres.value; atualizarConta(); } });
     el.querySelector('#nv-criar').addEventListener('click', criarCondominio);
+    el.querySelector('#nv-inst-add').addEventListener('click', function () { addLinhaInst(); });
     ligarRascunho('condominio');
     completarPorCNPJ(L.cnpj, { end: 'endereco', bairro: 'bairro', email: 'email', wpp: 'tel' });
     var foco = el.querySelector('#nv-torres'); if (foco) foco.focus();
@@ -722,6 +726,29 @@
     if (n === 1 && estado === 'ok') apagarRascunho();
     p.querySelector('i').textContent = estado === 'ok' ? '✓' : estado === 'erro' ? '!' : n;
     if (texto) p.querySelector('span').innerHTML = texto;
+  }
+
+  // Despesas de instalação: a 1ª linha é fixa (nv-instval/instpor/instdesc); "＋ Adicionar despesa" cria as demais (nv-instval-2, -3…).
+  function addLinhaInst(n) {
+    var box = doc.getElementById('nv-inst-extra'); if (!box) return null;
+    if (!n) { n = 2; while (doc.getElementById('nv-instval-' + n)) n++; }
+    if (doc.getElementById('nv-instval-' + n)) return n;
+    var w = doc.createElement('div'); w.className = 'campos'; w.id = 'nv-inst-row-' + n; w.style.marginTop = '10px';
+    w.innerHTML = '<label class="f" for="nv-instval-' + n + '">Custo (R$)<input id="nv-instval-' + n + '" type="number" min="0" step="0.01"></label>' +
+      '<label class="f" for="nv-instpor-' + n + '">Pago por<select id="nv-instpor-' + n + '"><option value="eder">Eder</option><option value="jadson">Jadson</option></select></label>' +
+      '<label class="f" for="nv-instdesc-' + n + '">Descrição<input id="nv-instdesc-' + n + '" type="text" placeholder="ex: mão de obra, deslocamento"></label>' +
+      '<button type="button" class="b" data-rm="' + n + '" title="Remover esta despesa" style="align-self:end">🗑 Remover</button>';
+    box.appendChild(w);
+    w.querySelector('[data-rm]').addEventListener('click', function () { w.remove(); });
+    return n;
+  }
+  function despesasInstalacao() {
+    var out = [{ valor: numero(val('instval')), por: (doc.getElementById('nv-instpor') || {}).value || 'eder', desc: val('instdesc') }];
+    Array.prototype.slice.call(doc.querySelectorAll('#nv-inst-extra input[id^="nv-instval-"]')).forEach(function (e) {
+      var n = e.id.replace('nv-instval-', '');
+      out.push({ valor: numero(e.value), por: (doc.getElementById('nv-instpor-' + n) || {}).value || 'eder', desc: String((doc.getElementById('nv-instdesc-' + n) || {}).value || '').trim() });
+    });
+    return out.filter(function (x) { return x.valor > 0; });
   }
 
   function criarCondominio() {
@@ -758,12 +785,16 @@
       if (!db.elev[d.nome]) db.elev[d.nome] = [];             // eslint-disable-line no-undef
       db.elev[d.nome].push(desp);                             // eslint-disable-line no-undef
       marcar(2, 'ok', 'Despesa de <b>' + brl(custoCondominio(d.telas || d.torres)) + '/mês</b> lançada por ' + desp.mesesRec + ' meses a partir de ' + desp.dataInicio.split('-').reverse().join('/') + '.');
-      var inst = numero(d.instval);
-      if (inst > 0 && typeof elevInvestimentos !== 'undefined') {                       // eslint-disable-line no-undef
-        elevInvestimentos.push({ id: elevInvestId++, item: d.nome, descricao: d.instdesc || ('Instalação ' + d.nome), valor: inst, // eslint-disable-line no-undef
-          pagoPor: d.instpor, data: new Date().toISOString().slice(0, 10), criadoEm: new Date().toISOString() });
+      var insts = despesasInstalacao();
+      if (insts.length && typeof elevInvestimentos !== 'undefined') {                    // eslint-disable-line no-undef
+        var totalInst = 0;
+        insts.forEach(function (x) {
+          elevInvestimentos.push({ id: elevInvestId++, item: d.nome, descricao: x.desc || ('Instalação ' + d.nome), valor: x.valor, // eslint-disable-line no-undef
+            pagoPor: x.por, data: new Date().toISOString().slice(0, 10), criadoEm: new Date().toISOString() });
+          totalInst += x.valor;
+        });
         var p2 = doc.querySelector('#nv-p2 span');
-        if (p2) p2.innerHTML += ' Instalação de <b>' + brl(inst) + '</b> lançada no investimento dos sócios.';
+        if (p2) p2.innerHTML += ' ' + (insts.length > 1 ? insts.length + ' despesas de instalação' : 'Instalação') + ' (<b>' + brl(totalInst) + '</b>) lançada' + (insts.length > 1 ? 's' : '') + ' no investimento dos sócios.';
       }
     } catch (e) {
       marcar(2, 'erro', 'A tela foi criada, mas a despesa não: ' + esc(e.message) + '. Lance a licença à mão na Tela Vertical.');
