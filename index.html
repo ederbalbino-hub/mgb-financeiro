@@ -961,6 +961,7 @@ body{-webkit-font-smoothing:antialiased}
         </button>
 
         <!-- 💰 aviso do Rádio Ops: relatório aprovado pelo cliente, nota pra emitir (vem do rops_cache) -->
+        <div id="home-crm-pend" style="display:none;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#ECFDF5,#F0FDFA);border:2px solid #0D9488;color:#134E4A;font-size:13.5px;line-height:1.5"></div>
         <div id="home-vaapty-alert" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#FDF2F8,#F5F3FF);border:2px solid #D6367F;color:#831843;font-size:13.5px;line-height:1.5"></div>
         <div id="home-rops-alert" onclick="goPage('radioops')" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#ECFDF5,#F0FDF4 60%,#FFFBEB);border:2px solid #118A5D;box-shadow:0 8px 30px rgba(17,138,93,.18);color:#065F46;font-size:13.5px;line-height:1.5"></div>
         <!-- Hubs principais -->
@@ -14634,6 +14635,7 @@ function togglePrivate(){
 
 function buildHome(){
   try{ vaaptyAvisoHome(); }catch(e){}
+  try{ crmPendentesHome(); }catch(e){ console.error('crmPendentesHome',e); }
   const now=new Date();
   g('home-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 
@@ -15580,6 +15582,17 @@ function relvMarcarEnviado(){
   try{ vaaptyAvisoHome(); }catch(e){}
 }
 // Aviso na Home do dia 25 ao dia 10: relatório de repasse do mês ainda não enviado
+// Home: clientes que o CRM fechou e ainda esperam cadastro (a Karen vê na rotina, sem abrir "Novo cliente").
+function crmPendentesHome(){
+  const box=g('home-crm-pend'); if(!box) return;
+  const N=window.MGBNovo; const lista=(N&&N.pendentesCadastro&&!document.body.classList.contains('mgb-sem-novo'))?N.pendentesCadastro():[];
+  if(!lista.length){ box.style.display='none'; box.innerHTML=''; return; }
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  box.style.display='block';
+  box.innerHTML='<div style="font-weight:800;font-size:14.5px;margin-bottom:6px">🆕 '+lista.length+' cliente'+(lista.length>1?'s':'')+' fechado'+(lista.length>1?'s':'')+' no CRM esperando cadastro</div>'+
+    lista.slice(0,6).map(l=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid rgba(13,148,136,.25)"><div><b>'+esc(l.nome)+'</b><div style="font-size:11.5px;opacity:.8">'+esc(l.produto)+(l.cnpj?' · CNPJ '+esc(l.cnpj):'')+'</div></div><button type="button" onclick="MGBNovo.abrirLead(\''+String(l.id).replace(/'/g,'')+'\')" style="border:0;border-radius:10px;padding:8px 14px;background:#0D9488;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap">Cadastrar →</button></div>').join('')+
+    (lista.length>6?'<div style="font-size:11.5px;margin-top:6px;opacity:.8">+ '+(lista.length-6)+' outro(s) — clique em Novo cliente para ver todos</div>':'');
+}
 function vaaptyAvisoHome(){
   const box=g('home-vaapty-alert'); if(!box) return;
   const h=new Date(); let ano=h.getFullYear(), mes=h.getMonth();
@@ -15972,7 +15985,7 @@ function renderRadioOps(data){
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
 <script src="lancar.js"></script>
-<script src="novo.js"></script>
+<script src="novo.js?v=20261030"></script>
 <script src="acesso.js"></script>
 <script src="assistente.js?v=20261029b"></script>
 </body>

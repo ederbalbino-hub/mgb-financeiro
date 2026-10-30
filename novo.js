@@ -1571,7 +1571,20 @@
     });
   }
 
-  global.MGBNovo = Object.assign(api, { abrir: abrir, escolher: escolherLead, logosEmbutidas: logosEmbutidas });
+  // Home: avisos de "fechado no CRM, esperando cadastro" — abre direto o cadastro certo do cliente (ou a tela de produtos, se o lead admite mais de um).
+  function abrirLead(id) {
+    var l = leadPorId(id); if (!l) return abrir();
+    var acoes = ACOES_DO_LEAD[l.produto] || [];
+    if (acoes.length === 1) return abrirForm(acoes[0], l);
+    return abrir();
+  }
+  function pendentesCadastro() {
+    return leadsPendentes(listaLeads()).map(function (l) {
+      var m = modulo(l.produto);
+      return { id: l.id, nome: l.nome, produto: m ? m.label.split('—')[0].trim() : (l.produto === 'mercadao' ? 'Rádio Mercadão' : ''), cnpj: l.cnpj || '' };
+    });
+  }
+  global.MGBNovo = Object.assign(api, { abrir: abrir, abrirLead: abrirLead, pendentesCadastro: pendentesCadastro, escolher: escolherLead, logosEmbutidas: logosEmbutidas });
   function iniciar() { injetarEstilos(); inserirBotaoHome(); carregarLogo(); }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })(typeof window !== 'undefined' ? window : globalThis);

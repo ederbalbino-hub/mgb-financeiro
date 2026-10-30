@@ -48,6 +48,7 @@ Serve para emitir nota fiscal e boleto do mês, em lote, via Asaas.
 - Condomínio NÃO gera lucro direto (a receita vem dos anunciantes que anunciam nele); ele gera a despesa fixa do sistema. Por isso o lead não tem valor de venda.
 - PDFs já gerados e textos soltos (descrição do Google, PDF antigo) NÃO se atualizam sozinhos: é preciso gerar o PDF de novo.
 - Proposta gerada vira lead sozinha: ao clicar em "Gerar PDF" ou "Enviar ao cliente/WhatsApp" nos mídia kits, na proposta ao anunciante da Tela Vertical e na proposta Vaapty, o hub cria um lead NOVO com o valor e o resumo (se o lead já existir, só acrescenta no histórico). Precisa do nome do cliente preenchido (no Vaapty, o campo "Nome da loja / franqueado"). Se a proposta abriu fora do hub, o lead entra quando o hub for aberto de novo.
+- Cliente fechado no CRM que ainda não foi cadastrado aparece na HOME num card verde "clientes fechados no CRM esperando cadastro", com o botão "Cadastrar →" (abre o cadastro já preenchido). Some quando o cadastro é feito.
 - Nas propostas há o botão flutuante "← Voltar ao hub".
 - Mídia kit: no simulador, em "negociado" com valor manual, o texto muda para "Valor bruto negociado — produção do material não inclusa". Todas as apresentações mostram CNPJ, "valores brutos" e "tabela válida até Junho/2027".
 
