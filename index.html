@@ -15162,7 +15162,8 @@ function relLerBlocos(dados){
     mapa[key].cotas+=1;
     if(tel && !mapa[key].tel) mapa[key].tel=tel;
   }
-  return Object.values(mapa).sort((a,b)=>b.cotas-a.cotas || a.nome.localeCompare(b.nome));
+  // Vagas institucionais do próprio Mercadão ("MERCADAO TEM TUDO 01…") não são anunciantes: ficam fora do relatório e do repasse.
+  return Object.values(mapa).filter(c=>!/^\s*mercad[aã]o\s+tem\s+tudo/i.test(c.nome)).sort((a,b)=>b.cotas-a.cotas || a.nome.localeCompare(b.nome));
 }
 // ── Ajustes do relatório: valor editável por cliente + lançamentos manuais ──
 function relAjustesInit(){ if(!relAjustes||typeof relAjustes!=='object')relAjustes={ov:{},man:[]}; if(!relAjustes.ov)relAjustes.ov={}; if(!relAjustes.man)relAjustes.man=[]; }
