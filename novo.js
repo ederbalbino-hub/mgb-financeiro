@@ -570,6 +570,7 @@
   // mapa: campo do formulário (nv-<id>) → campo do CNPJ
   function completarPorCNPJ(cnpj, mapa) {
     vigiarCNPJ(mapa);
+    preencherDoFiscalDoLead(mapa);
     var st = doc.getElementById('nv-cnpj-st');
     if (!String(cnpj || '').replace(/\D/g, '')) { if (st) st.textContent = 'Sem CNPJ no CRM: digite o CNPJ que o hub busca e preenche o resto sozinho.'; return Promise.resolve(null); }
     if (st) st.textContent = 'Buscando os dados do CNPJ…';
@@ -583,6 +584,21 @@
       });
       if (st) st.textContent = n ? 'Dados do CNPJ preenchidos (' + n + ' campos). Confira.' : 'CNPJ conferido.';
       return r;
+    });
+  }
+
+  // 🧾 do lead (CRM, 03/11): o endereço digitado no lead entra no formulário antes da busca de CNPJ,
+  // no mesmo formato de normalizarCNPJ — campos já preenchidos não são tocados.
+  function preencherDoFiscalDoLead(mapa) {
+    var f = leadAtual && leadAtual.fiscal; if (!f || !mapa) return;
+    var r = {};
+    Object.keys(f).forEach(function (k) { r[k] = String(f[k] || '').trim(); });
+    r.endereco = [r.logradouro, r.numero ? 'nº ' + r.numero : '', r.complemento, r.bairro, r.cidade ? r.cidade + (r.uf ? '/' + r.uf : '') : '',
+      r.cep ? 'CEP ' + r.cep : ''].filter(Boolean).join(', ');
+    Object.keys(mapa).forEach(function (id) {
+      var el = doc.getElementById('nv-' + id);
+      var v = r[mapa[id]] || '';
+      if (el && v && !String(el.value).trim()) { el.value = v; el.classList.add('crm'); el.dispatchEvent(new Event('input')); }
     });
   }
 

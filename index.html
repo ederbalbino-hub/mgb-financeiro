@@ -5842,6 +5842,28 @@ function copiarSpot() {
           </div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">CNPJ (opcional — usado pra preencher o contrato depois)</label><input class="anunc-form-inp" id="lead-cnpj" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off" oninput="leadMaskCNPJ(this)" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">E-mail (recebe contrato, nota e boleto)</label><input class="anunc-form-inp" id="lead-email" type="email" placeholder="financeiro@cliente.com.br" autocomplete="off" style="width:100%"></div>
+          <!-- Dados da nota fiscal (03/11, pedido do Eder: a NFS-e exige razão social + endereço completo — caso Eletran) -->
+          <details id="lead-fiscal-box" style="border:1.5px dashed #B45309;border-radius:10px;padding:8px 10px;background:rgba(180,83,9,.05)">
+            <summary style="cursor:pointer;font-size:11.5px;font-weight:700;color:#B45309">🧾 Dados para a nota fiscal — obrigatórios para fechar (o 🔍 preenche pelo CNPJ)</summary>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+              <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+                <div class="anunc-form-field" style="flex:1;min-width:190px"><label class="anunc-form-lbl">Razão social (como sai na nota)</label><input class="anunc-form-inp" id="lead-razao" autocomplete="off" style="width:100%"></div>
+                <button type="button" class="anunc-btn" style="margin-bottom:10px" onclick="leadFiscalBuscaCNPJ()" title="Busca razão social e endereço nos dados públicos da Receita a partir do CNPJ preenchido acima">🔍 Buscar pelo CNPJ</button>
+              </div>
+              <div id="lead-fiscal-hint" style="font-size:10.5px;color:var(--hint);margin-top:-6px" aria-live="polite"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <div class="anunc-form-field" style="width:104px"><label class="anunc-form-lbl">CEP</label><input class="anunc-form-inp" id="lead-cep" placeholder="86000-000" maxlength="9" autocomplete="off" onblur="leadFiscalCEP()" style="width:100%"></div>
+                <div class="anunc-form-field" style="flex:2;min-width:170px"><label class="anunc-form-lbl">Logradouro</label><input class="anunc-form-inp" id="lead-logradouro" placeholder="Rua, Avenida..." autocomplete="off" style="width:100%"></div>
+                <div class="anunc-form-field" style="width:76px"><label class="anunc-form-lbl">Número</label><input class="anunc-form-inp" id="lead-numero" autocomplete="off" style="width:100%"></div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Complemento</label><input class="anunc-form-inp" id="lead-complemento" placeholder="Sala, loja..." autocomplete="off" style="width:100%"></div>
+                <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Bairro</label><input class="anunc-form-inp" id="lead-bairro" autocomplete="off" style="width:100%"></div>
+                <div class="anunc-form-field" style="flex:1;min-width:110px"><label class="anunc-form-lbl">Cidade</label><input class="anunc-form-inp" id="lead-cidade" autocomplete="off" style="width:100%"></div>
+                <div class="anunc-form-field" style="width:56px"><label class="anunc-form-lbl">UF</label><input class="anunc-form-inp" id="lead-uf" maxlength="2" placeholder="PR" autocomplete="off" style="width:100%;text-transform:uppercase"></div>
+              </div>
+            </div>
+          </details>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Produto de interesse</label><div id="lead-produto-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
           <div id="lead-condo-box" style="display:none;border:1.5px dashed #0E7490;border-radius:10px;padding:10px;margin-bottom:10px;background:rgba(14,116,144,.06)">
             <div style="font-size:11.5px;font-weight:700;color:#0E7490;margin-bottom:8px">🏢 Dados do condomínio — ao marcar <b>Fechado</b> ele vira unidade do módulo Elevadores, com o custo fixo do sistema e pronto para a Karen lançar despesas</div>
@@ -7854,10 +7876,11 @@ function fFatContratosHub(rowsPlanilha){
     const lead=(typeof leads!=='undefined'?leads:[]).find(l=>l&&l.itemCriado===an.nome); if(!lead) return;
     if(FAT_RX_TREINO.test(an.nome)||!(an.valor>0)||!an.inicio) return;
     const info0=((clientesInfo||{}).elev||{})[an.nome]||{}; const cod=codigoDe('Elevadores');
-    // endereço/razão/e-mail do formulário do Novo cliente (rascunho) quando o cadastro do módulo ainda não os tem
+    // endereço/razão/e-mail do formulário do Novo cliente (rascunho) ou do 🧾 do lead, quando o cadastro do módulo ainda não os tem
     const rv=(((clientesInfo||{})._rascunhos||{})['anunciante|'+lead.id]||{}).valores||{};
-    const info={...info0, razao:info0.razao||rv['nv-razao']||'', logradouro:info0.logradouro||rv['nv-logradouro']||'', numero:info0.numero||rv['nv-numero']||'',
-      complemento:info0.complemento||rv['nv-complemento']||'', bairro:info0.bairro||rv['nv-bairro']||'', cidade:info0.cidade||rv['nv-cidade']||'', uf:info0.uf||rv['nv-uf']||'', cep:info0.cep||rv['nv-cep']||''};
+    const lf=lead.fiscal||{};
+    const info={...info0, razao:info0.razao||rv['nv-razao']||lf.razao||'', logradouro:info0.logradouro||rv['nv-logradouro']||lf.logradouro||'', numero:info0.numero||rv['nv-numero']||lf.numero||'',
+      complemento:info0.complemento||rv['nv-complemento']||lf.complemento||'', bairro:info0.bairro||rv['nv-bairro']||lf.bairro||'', cidade:info0.cidade||rv['nv-cidade']||lf.cidade||'', uf:info0.uf||rv['nv-uf']||lf.uf||'', cep:info0.cep||rv['nv-cep']||lf.cep||''};
     const emails=[...new Set([info0.email,rv['nv-email'],lead.email].map(x=>String(x||'').trim()).filter(Boolean))].join(', ');
     out.push({ id:'hub-elev-'+fNormNome(an.nome), modulo:'Elevadores', cliente:info.razao||an.nome, cnpj:info.cnpj||lead.cnpj||'', email:emails,
       logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'', bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
@@ -13479,6 +13502,7 @@ function leadCardHtml(l){
     ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês</div>`:''}
     ${(()=>{ const inf=(((typeof clientesInfo!=='undefined'?clientesInfo:{})[l.produto]||{})[l.itemCriado])||null; if(!inf) return ''; if(inf.assinadoEm) return '<div style="font-size:10.5px;color:var(--green);font-weight:700;margin-top:2px">✅ contrato assinado '+new Date(inf.assinadoEm).toLocaleDateString('pt-BR')+'</div>'; if(inf.assinafyDocId) return '<div style="font-size:10.5px;color:var(--muted);margin-top:2px">✍️ aguardando assinatura</div>'; return ''; })()}
     ${(l.estagio==='fechado'&&!String(l.email||'').trim())?`<div style="font-size:10.5px;color:var(--red);font-weight:700;margin-top:2px" title="Sem e-mail o contrato não pode ser enviado pra assinatura">⚠ sem e-mail — contrato não pode ser enviado</div>`:''}
+    ${(l.estagio==='fechado'&&l.produto!=='condo'&&(l.criado||'')>='2026-11-03'&&!leadFiscalCompleto(l))?`<div style="font-size:10.5px;color:var(--red);font-weight:700;margin-top:2px" title="A NFS-e precisa da razão social e do endereço completo">🧾 endereço da nota incompleto</div>`:''}
     ${l.lembrete?`<div style="font-size:10.5px;color:${overdue?'var(--red)':'var(--hint)'};margin-top:2px">⏰ ${leadFmtLembrete(l)}${l.calEventId?' <span title="Sincronizado com o Google Agenda">📅</span>':''}</div>`:''}
     <div class="lead-card-row">
       <select class="lead-card-sel" onclick="event.stopPropagation()" onchange="leadChangeStage(${l.id},this.value)">${stageOpts}</select>
@@ -13504,6 +13528,7 @@ function leadChangeStage(id,novoEstagio){
   const antigo=l.estagio;
   if(antigo===novoEstagio) return;
   if(l.produto==='condo' && novoEstagio==='fechado' && !(l.condo&&l.condo.telas)){ leadToast('⚠ Abra o lead e preencha os dados do condomínio (telas, moradores…) antes de fechar'); buildLeads(); return; }
+  if(l.produto!=='condo' && novoEstagio==='fechado' && !leadFiscalCompleto(l)){ leadToast('⚠ Abra o lead e complete os 🧾 Dados para a nota fiscal (o 🔍 busca pelo CNPJ) antes de fechar — sem endereço a NFS-e não sai'); buildLeads(); return; }
   l.estagio=novoEstagio;
   const agora=new Date(); if(!l.historico) l.historico=[];
   l.historico.push({data:agora.toLocaleDateString('pt-BR')+' '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), texto:'Estágio: '+leadStage(antigo).label+' → '+leadStage(novoEstagio).label});
@@ -13536,7 +13561,9 @@ window.mgbCriarUnidadeModulo=function(modId,nome,opts){
   }
   if(opts.cliente){
     if(!clientesInfo[modId]) clientesInfo[modId]={};
-    clientesInfo[modId][nome]=opts.cliente;
+    // Mescla em vez de substituir: campo vazio do contrato não apaga razão/endereço que vieram do CRM (nota precisa deles)
+    const novo={...opts.cliente}; Object.keys(novo).forEach(k=>{ if(novo[k]==null||novo[k]==='') delete novo[k]; });
+    clientesInfo[modId][nome]={...(clientesInfo[modId][nome]||{}),...novo};
   }
   try{ if(curMod===modId) buildAll(); }catch(e){}
   scheduleSave();
@@ -13610,7 +13637,9 @@ function leadFecharRegistrarCliente(l){
   const m=leadModPor(l.produto);
   if(!m||m.extra){ leadToast(`✅ "${l.nome}" fechado! Cadastre pelo Novo cliente${m?' ('+m.label+')':''}.`); return; }
   if(!clientesInfo[m.id]) clientesInfo[m.id]={};
-  clientesInfo[m.id][l.nome]={cnpj:l.cnpj||'', fantasia:l.nome||'', responsavel:l.responsavel||'', cargo:l.funcao||'', tel:l.tel||'', email:l.email||''};
+  const _f=l.fiscal||{};  // razão social + endereço do lead → cadastro → planilha de faturamento (a nota precisa deles)
+  clientesInfo[m.id][l.nome]={cnpj:l.cnpj||'', fantasia:l.nome||'', responsavel:l.responsavel||'', cargo:l.funcao||'', tel:l.tel||'', email:l.email||'',
+    razao:_f.razao||'', logradouro:_f.logradouro||'', numero:_f.numero||'', complemento:_f.complemento||'', bairro:_f.bairro||'', cidade:_f.cidade||'', uf:_f.uf||'', cep:_f.cep||''};
   leadToast(`✅ "${l.nome}" fechado! Gere o contrato em ${m.label.split('—')[0].trim()} pra lançar no financeiro.`);
 }
 
@@ -13663,6 +13692,7 @@ function openLeadModal(mode,id){
   g('lead-valor').value = l && l.valor ? l.valor : '';
   g('lead-lembrete').value = l ? leadNormalizaLembreteInput(l.lembrete) : '';
   g('lead-obs').value = l ? (l.obs||'') : '';
+  leadFiscalPreencher(l ? l.fiscal : null);
   g('lead-del-btn').style.display = mode==='edit' ? '' : 'none';
   g('lead-historico-wrap').style.display = mode==='edit' ? '' : 'none';
   renderLeadProdutoChips(l ? l.produto : '');
@@ -13686,7 +13716,7 @@ function renderLeadEstagioChips(sel){
 // Esc fecha o formulário do lead. Com alteração não salva, o 1º Esc avisa e o 2º descarta.
 let _leadSnap='', _leadEscAviso=0;
 function leadFormSnap(){
-  return JSON.stringify(['lead-nome','lead-tel','lead-responsavel','lead-funcao','lead-cnpj','lead-origem','lead-valor','lead-lembrete','lead-obs'].concat(Object.values(LC_IDS)).map(i=>(g(i)||{}).value||'').concat([_leadProdutoSel,_leadEstagioSel]));
+  return JSON.stringify(['lead-nome','lead-tel','lead-responsavel','lead-funcao','lead-cnpj','lead-origem','lead-valor','lead-lembrete','lead-obs'].concat(Object.values(LC_IDS)).concat(Object.values(LEAD_FISCAL_IDS)).map(i=>(g(i)||{}).value||'').concat([_leadProdutoSel,_leadEstagioSel]));
 }
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape') return;
@@ -13703,6 +13733,62 @@ function closeLeadModal(){
   curLeadId=null;
 }
 let _leadProdutoSel='';
+// ── Dados da nota fiscal no lead (03/11, caso Eletran: a NFS-e exige razão social + endereço completo) ──
+// Ficam em l.fiscal e, ao fechar, vão para clientesInfo → planilha "MGB Faturamento - Clientes".
+const LEAD_FISCAL_IDS={razao:'lead-razao',cep:'lead-cep',logradouro:'lead-logradouro',numero:'lead-numero',complemento:'lead-complemento',bairro:'lead-bairro',cidade:'lead-cidade',uf:'lead-uf'};
+function leadFiscalLer(){ const o={}; Object.keys(LEAD_FISCAL_IDS).forEach(k=>o[k]=((g(LEAD_FISCAL_IDS[k])||{}).value||'').trim()); o.uf=o.uf.toUpperCase(); return o; }
+function leadFiscalPreencher(fi){
+  fi=fi||{};
+  Object.keys(LEAD_FISCAL_IDS).forEach(k=>{ const el=g(LEAD_FISCAL_IDS[k]); if(el) el.value=fi[k]||''; });
+  const h=g('lead-fiscal-hint'); if(h){ h.textContent=''; }
+  const d=g('lead-fiscal-box'); if(d) d.open=!!(fi.logradouro||fi.razao);
+}
+// Endereço completo o suficiente pra NFS-e sair (razão cai no nome do lead se vazia)
+function leadFiscalCompleto(l){
+  const ok=o=>!!(o&&o.logradouro&&o.numero&&o.bairro&&o.cidade&&o.uf&&o.cep);
+  if(ok((l&&l.fiscal)||{})) return true;
+  const mid=l.produto==='condo'?'elev':l.produto;
+  return ok((((typeof clientesInfo!=='undefined'?clientesInfo:{})[mid])||{})[l.itemCriado||l.nome]);
+}
+// Lead editado depois de fechado: leva o endereço novo pro cadastro (clientesInfo), de onde o Faturamento sincroniza a planilha
+function leadFiscalSyncInfo(l){
+  if(!l||l.estagio!=='fechado') return;
+  const f=l.fiscal||{}; if(!Object.values(f).some(Boolean)) return;
+  const mid=l.produto==='condo'?'elev':l.produto;
+  const alvo=(((typeof clientesInfo!=='undefined'?clientesInfo:{})[mid])||{})[l.itemCriado||l.nome]; if(!alvo) return;
+  Object.keys(LEAD_FISCAL_IDS).forEach(k=>{ if(f[k]) alvo[k]=f[k]; });
+}
+async function leadFiscalBuscaCNPJ(){
+  const hint=g('lead-fiscal-hint');
+  const diz=(t,c)=>{ if(hint){ hint.textContent=t; hint.style.color=c||'var(--hint)'; } };
+  const cnpj=((g('lead-cnpj')||{}).value||'').replace(/\D/g,'');
+  if(cnpj.length!==14){ diz('⚠ Preencha o CNPJ (14 dígitos) no campo ali em cima primeiro','var(--red)'); (g('lead-cnpj')||{focus(){}}).focus(); return; }
+  diz('Buscando os dados do CNPJ…');
+  const tentativas=[
+    ()=>fetch('https://publica.cnpj.ws/cnpj/'+cnpj).then(r=>r.ok?r.json():Promise.reject()).then(d=>{ const e=d.estabelecimento||{}; return {razao:d.razao_social||'',logradouro:[e.tipo_logradouro,e.logradouro].filter(Boolean).join(' '),numero:e.numero||'',complemento:e.complemento||'',bairro:e.bairro||'',cidade:(e.cidade||{}).nome||'',uf:(e.estado||{}).sigla||'',cep:String(e.cep||'').replace(/\D/g,''),email:(e.email||'').toLowerCase(),tel:e.ddd1&&e.telefone1?e.ddd1+e.telefone1:''}; }),
+    ()=>fetch('https://brasilapi.com.br/api/cnpj/v1/'+cnpj).then(r=>r.ok?r.json():Promise.reject()).then(d=>({razao:d.razao_social||'',logradouro:d.logradouro||'',numero:d.numero||'',complemento:d.complemento||'',bairro:d.bairro||'',cidade:d.municipio||'',uf:d.uf||'',cep:String(d.cep||'').replace(/\D/g,''),email:(d.email||'').toLowerCase(),tel:d.ddd_telefone_1||''}))
+  ];
+  for(const t of tentativas){
+    try{
+      const d=await t(); if(!d.razao) continue;
+      if(d.cep) d.cep=d.cep.replace(/^(\d{5})(\d{3})$/,'$1-$2');
+      Object.keys(LEAD_FISCAL_IDS).forEach(k=>{ const el=g(LEAD_FISCAL_IDS[k]); if(el&&d[k]!=null&&d[k]!=='') el.value=d[k]; });
+      const em=g('lead-email'); if(em&&!em.value.trim()&&d.email) em.value=d.email;
+      const tl=g('lead-tel'); if(tl&&!tl.value.trim()&&d.tel) tl.value=d.tel;
+      diz('✅ Dados da Receita preenchidos. Confira o número e o complemento.','var(--green)');
+      return;
+    }catch(e){}
+  }
+  diz('⚠ Não achei esse CNPJ nas bases públicas — preencha à mão (o CEP busca o endereço).','var(--red)');
+}
+async function leadFiscalCEP(){
+  const cep=((g('lead-cep')||{}).value||'').replace(/\D/g,''); if(cep.length!==8) return;
+  try{
+    const d=await fetch('https://viacep.com.br/ws/'+cep+'/json/').then(r=>r.json()); if(d.erro) return;
+    [['lead-logradouro',d.logradouro],['lead-bairro',d.bairro],['lead-cidade',d.localidade],['lead-uf',d.uf]].forEach(([id,v])=>{ const el=g(id); if(el&&!el.value.trim()&&v) el.value=v; });
+    const h=g('lead-fiscal-hint'); if(h){ h.textContent='✅ Endereço do CEP preenchido — falta o número.'; h.style.color='var(--green)'; }
+  }catch(e){}
+}
 const LC_IDS={endereco:'lc-endereco',bairro:'lc-bairro',zona:'lc-zona',tipo:'lc-tipo',torres:'lc-torres',telas:'lc-telas',moradores:'lc-moradores',unidades:'lc-unidades',ini:'lc-ini'};
 function leadCondoBoxToggle(){ const b=g('lead-condo-box'); if(b) b.style.display=_leadProdutoSel==='condo'?'':'none'; }
 let _leadCondoFoto='';
@@ -13847,13 +13933,19 @@ function saveLeadModal(){
   const obs=g('lead-obs').value.trim();
   const condo=_leadProdutoSel==='condo'?leadCondoLer():null;
   if(condo && _leadEstagioSel==='fechado' && !condo.telas){ leadToast('⚠ Informe o nº de telas do condomínio para fechar'); g('lc-telas').focus(); return; }
+  const fiscal=leadFiscalLer();
+  // Fechar exige o endereço da nota (03/11, caso Eletran): sem ele a NFS-e não sai e o cliente trava no Faturamento.
+  if(_leadEstagioSel==='fechado' && _leadProdutoSel!=='condo' && !(fiscal.logradouro&&fiscal.numero&&fiscal.bairro&&fiscal.cidade&&fiscal.uf&&fiscal.cep)){
+    const estAtual=curLeadId!=null?((leads.find(x=>x.id===curLeadId)||{}).estagio):'novo';
+    if(estAtual!=='fechado'){ const d=g('lead-fiscal-box'); if(d) d.open=true; leadToast('⚠ Complete os 🧾 Dados para a nota fiscal antes de fechar — o botão 🔍 preenche tudo pelo CNPJ'); return; }
+  }
   let l;
   const estagio=_leadEstagioSel||'novo';
   if(curLeadId!=null){
     l=leads.find(x=>x.id===curLeadId);
-    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; if(condo){ l.condo=condo; leadCondoSync(l); } }
+    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; l.fiscal=fiscal; if(condo){ l.condo=condo; leadCondoSync(l); } leadFiscalSyncInfo(l); }
   } else {
-    l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, email, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
+    l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, email, fiscal, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
     if(condo) l.condo=condo;
     leads.push(l);
   }
@@ -16029,7 +16121,7 @@ function renderRadioOps(data){
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
 <script src="lancar.js"></script>
-<script src="novo.js?v=20261030b"></script>
+<script src="novo.js?v=20261103"></script>
 <script src="acesso.js"></script>
 <script src="assistente.js?v=20261029b"></script>
 </body>
