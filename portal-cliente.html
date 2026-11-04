@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal do cliente — MGB Mídia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ Tokens ============ */
+:root{
+  --tinta:#2D1B69;        /* base do cabeçalho */
+  --amora:#C2185B;        /* fim do gradiente */
+  --rosa:#E91E8C;         /* acento de marca */
+  --verde:#2E7D32;        /* EXCLUSIVO: valores e status positivos */
+  --verde-bg:#E6F2E7;
+  --papel:#F6F4FA;        /* fundo do corpo */
+  --grafite:#241A38;      /* texto principal */
+  --roxo-dado:#6C55DB;    /* marcas de gráfico (série única) */
+  --muted:#5C5470;
+  --hint:#8B8499;
+  --card:#FFFFFF;
+  --linha:#E7E2F0;
+  --ambar:#B45309; --ambar-bg:#FDF2E3;
+  --cinza-status:#6B6B76; --cinza-bg:#EEEDF2;
+  --verm:#C62828; --verm-bg:#FCE9E9;
+  --radius:14px;
+  --sombra-alta:0 18px 40px -18px rgba(45,27,105,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--papel);color:var(--grafite);
+  font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.num{font-family:'Sora','Inter',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--rosa);outline-offset:2px;border-radius:6px}
+select{font-family:inherit}
+
+/* ============ Cabeçalho fixo ============ */
+.topo{
+  position:sticky;top:0;z-index:50;
+  background:var(--tinta);
+  color:#fff;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+.topo-in{
+  max-width:1440px;margin:0 auto;padding:10px 28px;
+  display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+}
+.marca{display:flex;align-items:center;gap:14px;min-width:0}
+.marca-img{height:40px;width:auto;display:block;flex:none}
+.marca-sub{font-size:12px;color:rgba(255,255,255,.65);padding-left:14px;border-left:1px solid rgba(255,255,255,.2);white-space:nowrap}
+.topo-cliente{font-size:13px;color:rgba(255,255,255,.8);padding-left:16px;border-left:1px solid rgba(255,255,255,.2)}
+.topo-kpis{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.kpi{
+  display:flex;flex-direction:column;align-items:flex-start;
+  padding:7px 14px;border-radius:10px;text-align:left;
+  background:rgba(255,255,255,.07);
+  transition:background .15s;
+}
+.kpi:hover{background:rgba(255,255,255,.14)}
+.kpi small{font-size:11.5px;color:rgba(255,255,255,.68);line-height:1.3}
+.kpi b{font-family:'Sora';font-size:16px;line-height:1.3;font-weight:600}
+.kpi.quente{background:var(--rosa);box-shadow:0 4px 14px -4px rgba(233,30,140,.55)}
+.kpi.quente small{color:rgba(255,255,255,.85)}
+.kpi.silencio b{color:rgba(255,255,255,.55);font-weight:400;font-size:13.5px;padding-top:2px}
+
+/* ============ Faixa de abertura ============ */
+.faixa{
+  background:linear-gradient(120deg,var(--tinta) 20%,#5A1E63 62%,var(--amora));
+  color:#fff;
+  padding:44px 28px 120px; /* reserva o espaço da sobreposição dos cards */
+}
+.faixa-in{max-width:1440px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:48px}
+.faixa h1{font-size:clamp(24px,3vw,32px);font-weight:700;letter-spacing:-.01em}
+.faixa .sub{color:rgba(255,255,255,.75);margin-top:6px;font-size:14px}
+.frase-pub{max-width:460px;text-align:right;flex:none}
+.frase-pub p{font-family:'Sora','Inter',sans-serif;font-size:19px;font-weight:600;line-height:1.45;color:rgba(255,255,255,.94)}
+.frase-pub p::before{content:'“';color:var(--rosa);font-size:26px;margin-right:2px}
+.frase-pub p::after{content:'”';color:var(--rosa);font-size:26px;margin-left:2px}
+.frase-pub small{display:block;margin-top:8px;font-size:12.5px;color:rgba(255,255,255,.6)}
+@media(max-width:1023px){.frase-pub{display:none}}
+
+/* Cards de entrada — sobreposição deliberada e consistente (-84px os dois) */
+.entrada{
+  max-width:1440px;margin:-84px auto 0;padding:0 28px;
+  display:grid;grid-template-columns:1.15fr .85fr;gap:24px;
+  position:relative;z-index:5;
+}
+.card-entrada{
+  background:var(--card);border-radius:var(--radius);
+  box-shadow:var(--sombra-alta);
+  padding:26px 28px;
+}
+.card-entrada h2{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+
+.sel-mes{
+  appearance:none;-webkit-appearance:none;
+  border:1.5px solid var(--linha);border-radius:10px;
+  padding:8px 36px 8px 14px;font-size:14px;font-weight:600;color:var(--grafite);
+  background:#FBFAFE url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235C5470' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 13px center;
+  cursor:pointer;
+}
+.sel-mes:hover{border-color:var(--roxo-dado)}
+
+.resumo-mes{display:flex;gap:36px;flex-wrap:wrap;margin-top:4px}
+.resumo-mes .num{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.resumo-mes .num.verde{color:var(--verde)}
+.mini-radios{margin-top:18px;border-top:1px solid var(--linha);padding-top:4px}
+.mini-r{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #F1EEF6;font-size:13px;flex-wrap:wrap}
+.mini-r:last-child{border-bottom:none}
+.mini-r>b{flex:1;min-width:140px}
+.mini-r>b small{display:block;font-weight:400;color:var(--hint);font-size:11.5px}
+.mini-r .num{font-weight:600}
+.mini-mais{font-size:12px;color:var(--hint);padding-top:8px}
+.resumo-mes small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+
+/* fila aguardando */
+.fila{display:flex;flex-direction:column;gap:10px}
+.fila-item{
+  display:flex;align-items:center;gap:14px;
+  border:1px solid #F3D9A4;background:#FDF8EC;
+  border-radius:11px;padding:12px 16px;
+}
+.fila-item .fi-txt{flex:1;min-width:0}
+.fila-item b{font-size:14px;display:block}
+.fila-item small{color:var(--muted);font-size:12.5px}
+.btn-acao{
+  flex:none;background:var(--grafite);color:#fff;
+  padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;
+  transition:background .15s;
+}
+.btn-acao:hover{background:var(--tinta)}
+.fila-vazia{color:var(--muted);font-size:14px;padding:14px 4px;line-height:1.6}
+/* pós-venda */
+.pv-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;color:var(--grafite)}
+.pv-toggle h2{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.pv-sub{display:block;color:var(--muted);font-size:13.5px;margin-top:2px}
+.pv-chev{color:var(--hint);flex:none;transition:transform .2s}
+.pv-toggle[aria-expanded="true"] .pv-chev{transform:rotate(180deg)}
+#pv-lista{margin-top:8px}
+.pv-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-top:1px solid var(--linha);flex-wrap:wrap}
+.pv-row b{font-size:14px;font-weight:600}
+.pv-dir{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.fila-vazia b{color:var(--verde)}
+.badge-fila{
+  display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 7px;
+  border-radius:12px;background:var(--rosa);color:#fff;
+  font-size:13px;font-weight:700;font-family:'Sora';vertical-align:2px;margin-left:8px;
+}
+
+/* ============ Seções ============ */
+main{max-width:1440px;margin:0 auto;padding:8px 28px 40px}
+.secao{margin-top:44px}
+.secao>h2{font-size:21px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px}
+.secao>.desc{color:var(--muted);font-size:14px;margin-bottom:18px}
+
+/* campanhas do mês */
+.camp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px}
+.camp-card{
+  background:var(--card);border-radius:var(--radius);
+  border:1px solid var(--linha);border-left:4px solid var(--roxo-dado);
+  padding:20px 22px;text-align:left;width:100%;
+  transition:border-color .15s, box-shadow .15s;
+  display:flex;flex-direction:column;gap:10px;
+}
+.camp-card:hover{box-shadow:0 8px 24px -14px rgba(45,27,105,.3)}
+.camp-card.sel{border-color:var(--roxo-dado);box-shadow:0 0 0 2px var(--roxo-dado), 0 8px 24px -14px rgba(45,27,105,.3)}
+.camp-card h3{font-size:16.5px;font-weight:700;line-height:1.3}
+.camp-meta{color:var(--muted);font-size:13px;display:flex;gap:14px;flex-wrap:wrap}
+.camp-rodape{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px}
+.camp-rodape .num{font-size:19px;font-weight:700}
+.link-ver{color:var(--amora);font-weight:600;font-size:13.5px}
+.camp-card:hover .link-ver{text-decoration:underline}
+
+/* chips de status — nunca só cor: sinal + rótulo sempre */
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;border-radius:20px;padding:4px 12px 4px 9px;width:max-content}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+.chip.on{color:var(--verde);background:var(--verde-bg)}
+.chip.on::before{box-shadow:0 0 0 3px rgba(46,125,50,.18)}
+.chip.prog{color:var(--ambar);background:var(--ambar-bg)}
+.chip.fim{color:var(--cinza-status);background:var(--cinza-bg)}
+.chip.pend{color:var(--verm);background:var(--verm-bg)}
+
+.vazio{
+  background:var(--card);border:1.5px dashed var(--linha);border-radius:var(--radius);
+  padding:34px 28px;color:var(--muted);font-size:14.5px;line-height:1.7;
+}
+
+/* ============ Mídias da campanha ============ */
+.midias-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--linha);overflow:hidden}
+.midias-head{padding:18px 24px 4px;display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.midias-head h3{font-size:16px;font-weight:700}
+.midias-head small{color:var(--muted)}
+.mid-row{
+  display:grid;grid-template-columns:2.1fr 1.4fr 1.5fr 1.3fr 1.5fr;
+  gap:14px;align-items:center;
+  padding:14px 24px;border-top:1px solid var(--linha);
+}
+.mid-row.cab{border-top:none;padding-top:14px;padding-bottom:6px;color:var(--hint);font-size:12.5px;font-weight:600}
+.mid-emissora b{display:block;font-size:14.5px}
+.mid-emissora small{color:var(--muted);font-size:12.5px}
+.mid-col{font-size:13.5px;color:var(--grafite)}
+.mid-col small{display:block;color:var(--hint);font-size:12px}
+.mid-ins .num{font-weight:600;font-size:14px}
+.mid-ins .de{color:var(--hint);font-weight:400}
+.barra-ins{height:5px;border-radius:3px;background:var(--cinza-bg);margin-top:5px;max-width:130px;overflow:hidden}
+.barra-ins i{display:block;height:100%;border-radius:3px;background:var(--verde)}
+
+/* documentos da campanha */
+.docs-head{
+  padding:16px 24px 6px;border-top:1px solid var(--linha);background:#FBFAFE;
+  font-size:14px;font-weight:700;
+}
+.docs-head small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+.doc-row{
+  display:grid;grid-template-columns:2.4fr 1.6fr auto;gap:14px;align-items:center;
+  padding:12px 24px;border-top:1px solid var(--linha);background:#FBFAFE;
+}
+.doc-row small{display:block;color:var(--hint);font-size:11.5px}
+.doc-row b{font-size:13.5px;font-weight:600}
+.link-doc{color:var(--amora);font-weight:600;font-size:13px;white-space:nowrap}
+.link-doc:hover{text-decoration:underline}
+
+/* ============ Resultado anual (DRE) ============ */
+.secao-anual{
+  background:linear-gradient(180deg,#EFEAF7,var(--papel) 340px);
+  border-radius:20px;padding:32px 28px;margin-top:52px;
+}
+.anual-head{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+.anual-head h2{font-size:21px;font-weight:700}
+.chips-ano{display:flex;gap:8px}
+.chip-ano{
+  padding:6px 18px;border-radius:20px;font-weight:600;font-size:14px;
+  background:#fff;border:1.5px solid var(--linha);color:var(--muted);
+}
+.chip-ano.sel{background:var(--tinta);border-color:var(--tinta);color:#fff}
+.anual-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin-top:20px}
+.stat{background:#fff;border:1px solid var(--linha);border-radius:var(--radius);padding:18px 22px;min-width:0}
+.stat small{color:var(--muted);font-size:13px;display:block}
+.stat .num{font-size:26px;font-weight:700;letter-spacing:-.02em;display:block;margin-top:3px}
+.stat.principal{border-left:4px solid var(--roxo-dado)}
+.stat.principal .num{font-size:32px}
+.stat .delta{display:block;margin-top:2px}
+.anual-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:22px;margin-top:20px}
+.anual-grid>div{min-width:0}
+.bloco{background:var(--card);border-radius:var(--radius);border:1px solid var(--linha);padding:22px 24px;min-width:0}
+.bloco h3{font-size:15.5px;font-weight:700;margin-bottom:2px}
+.bloco .bdesc{color:var(--muted);font-size:13px;margin-bottom:16px}
+.bloco .num-hero{font-size:34px;font-weight:700;letter-spacing:-.02em}
+.delta{font-size:13.5px;font-weight:600}
+.delta.up{color:var(--verde)}
+.delta.down{color:var(--verm)}
+
+/* gráfico de colunas (SVG) */
+.graf-wrap{position:relative}
+.graf-tip{
+  position:absolute;pointer-events:none;background:var(--grafite);color:#fff;
+  font-size:12.5px;padding:6px 10px;border-radius:8px;white-space:nowrap;
+  transform:translate(-50%,-115%);opacity:0;transition:opacity .12s;
+}
+.graf-tip b{font-family:'Sora'}
+
+/* ranking de cidades */
+.rank-item{padding:11px 0;border-top:1px solid var(--linha)}
+.rank-item:first-of-type{border-top:none}
+.rank-l1{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.rank-l1 b{font-size:14px}
+.rank-l1 .num{font-weight:600;font-size:14px}
+.rank-l2{display:flex;justify-content:space-between;color:var(--hint);font-size:12.5px;margin-top:1px}
+.rank-bar{height:6px;border-radius:3px;background:var(--cinza-bg);margin-top:7px;overflow:hidden}
+.rank-bar i{display:block;height:100%;border-radius:3px;background:var(--roxo-dado)}
+
+/* destaque + impacto */
+.destaque{
+  background:linear-gradient(135deg,var(--tinta),#4A2580);color:#fff;border:none;
+}
+.destaque h3{color:#fff}
+.destaque .bdesc{color:rgba(255,255,255,.72)}
+.destaque .num-hero{color:#fff}
+.destaque .motivo{font-size:13.5px;color:rgba(255,255,255,.85);line-height:1.6;margin-top:10px}
+.impacto .num-hero{color:var(--verde)}
+.formula{
+  margin-top:14px;padding:12px 14px;border-radius:10px;background:#F4F2F9;
+  color:var(--muted);font-size:12.8px;line-height:1.6;
+}
+.imp-cidades{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.imp-cid{display:flex;justify-content:space-between;font-size:13.5px}
+.imp-cid span{color:var(--muted)}
+.imp-cid b{font-weight:600}
+
+/* tabela exportável */
+.tab-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.btns-exp{display:flex;gap:10px}
+.btn-exp{
+  border:1.5px solid var(--linha);background:#fff;border-radius:9px;
+  padding:8px 16px;font-size:13.5px;font-weight:600;color:var(--grafite);
+  transition:border-color .15s;
+}
+.btn-exp:hover{border-color:var(--roxo-dado);color:var(--roxo-dado)}
+.tab-scroll{overflow-x:auto;border:1px solid var(--linha);border-radius:12px;background:#fff}
+.tab-scroll.recolhida{display:none}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:13.5px}
+th{
+  text-align:left;color:var(--hint);font-weight:600;font-size:12.5px;
+  padding:12px 16px;border-bottom:1px solid var(--linha);background:#FBFAFE;
+}
+td{padding:11px 16px;border-bottom:1px solid #F1EEF7}
+tr:last-child td{border-bottom:none}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+td .verde{color:var(--verde);font-weight:600}
+
+/* rodapé */
+footer{border-top:1px solid var(--linha);margin-top:56px;padding:28px;background:#fff}
+.foot-in{max-width:1440px;margin:0 auto;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;color:var(--muted);font-size:13.5px;line-height:1.7}
+.foot-in b{color:var(--grafite)}
+
+/* toast */
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:var(--grafite);color:#fff;padding:12px 22px;border-radius:12px;
+  font-size:14px;box-shadow:0 12px 30px -10px rgba(0,0,0,.4);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:99;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ Responsivo ============ */
+@media(max-width:1023px){
+  .entrada{grid-template-columns:1fr}
+  .anual-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .topo-in{padding:10px 16px;gap:10px}
+  .topo-cliente{display:none}
+  .topo-kpis{margin-left:0;width:100%;justify-content:space-between;gap:6px}
+  .kpi{padding:6px 10px;flex:1;min-width:0}
+  .kpi small{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .kpi b{font-size:13.5px}
+  .faixa{padding:30px 16px 104px}
+  .entrada{padding:0 16px;margin-top:-76px}
+  .card-entrada{padding:20px 18px}
+  main{padding:8px 16px 32px}
+  .secao-anual{padding:24px 16px;border-radius:16px}
+  .camp-grid{grid-template-columns:1fr}
+  /* tabela de mídias vira cartões empilhados */
+  .mid-row{display:block;padding:16px 18px}
+  .mid-row.cab{display:none}
+  .doc-row{display:block;padding:14px 18px}
+  .doc-row>*{margin-bottom:8px}
+  .doc-row>*:last-child{margin-bottom:0}
+  .mid-row>div{margin-bottom:8px}
+  .mid-row>div:last-child{margin-bottom:0}
+  .resumo-mes{gap:22px}
+  .foot-in{flex-direction:column;gap:10px}
+}
+
+/* ============ Impressão (PDF do resultado anual) ============ */
+@media print{
+  body{background:#fff}
+  .topo,.faixa,.entrada,.secao,.fila,footer .aviso,.btns-exp,.toast{display:none!important}
+  .secao-anual{display:block!important;background:#fff;padding:0;margin:0;border-radius:0}
+  .anual-grid{grid-template-columns:1fr 1fr}
+  .bloco{break-inside:avoid;border:1px solid #ddd}
+  .tab-scroll{overflow:visible;border:1px solid #ddd;display:block!important}
+  table{min-width:0}
+  footer{margin-top:20px;border:none;padding:12px 0}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ Cabeçalho fixo ============ -->
+<header class="topo">
+  <div class="topo-in">
+    <div class="marca">
+      <img class="marca-img" src="data:image/png;base64,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Sn7/o6PJovF6urxuo3Oy4662F2f1AS+rjB4/Npq+O63b8t2je5fk9yGigCQyzVQdE4vwPJzDXmdnh4X3jj3y5Dc4YoEZnjVgvOj1sdmQGUeKHncxxi12W9950cx/eqfrH7Ra/AUYKq7O9z+6lrVmrRlDPE6HPUmdrvWKhzzNYCMG25Y6voGk2aBaR6KAJDItJREMsBhxtNOMr79z3Z4FAGAp31aJ4mEQjKLizz+JiLTWj/ulzG2lpctXzPyNGX8IuIWPR6ML8y2efSvRwsyKjkkbHDR3xx3sS1IusUr0S4vsJ448aeMtIwv8CrZqJYkCksh0wxgEUAHtJ0Y4wt58102jJzPCIhjuo2E0SdO4F8daBUYkI4tqfzBaNKOaZeZ1llDhu+SGx08y2MsstR/X5vbdGwGs13ka8OJMPxEFJJFpwBGk44wYtjkB7jfizMQlFxvw+3pt7L8B9EUWu26Ps2kTotWrADNzSJMBgjRWxzre0epscT+z+mkE9tZd/fixHXtPA2xnZNFr16xhdXDQnH6zooAkMh0/3JGliFCJRvvvJRmBdmxcsXsGBuYMgYydwbVYGZXctwIsmuSn0gC3dKnVbdDchg0ccM4tM7NdQxh62rdo9nt9nLXaWJQZuHEt54C22MA9URydhYjnI0ICYN4J88YWNesGFDmYVHQJ5KBsITlEztgXpzbjgsts9+1rh9bHcXTUrvGZD9eeR3/VUI2t+PMfATUYqoWPOxcziuauXzdyiUvdDLd7ZBEMR4DpDRdeOG+oWZp2miaVCuK+KDZrkhnIpDq6BKktiCv86rkr+h/5IYBoAxbsGRr++5RYBuDX+s2KApLIdJO6EUTR4+MVDgO0d620jeGhtV95hrX5A1ucc881e+nQEOjgnooQb29xhG1MOcPMFloUOcD9xlB5YPn7ZjxWNGeILtqNCh6vj7n9svtWD4KDAFjn0QB/Xt3Z/6iZJf7hJ9avG3kgJWc/upa1U1faeOM8JxERwfSaMPtSdHf1NhOuWWkjEbWQRKY132Lh5C5V4ZMbenfWbPIeRERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERCYbyZqugoiITHUsigDMUlASEZEpbhjN+n9CdHTUc0JcagAAAABJRU5ErkJggg==" alt="MGB Mídia">
+      <span class="marca-sub">Portal do cliente</span>
+    </div>
+    <div class="topo-cliente" id="topo-cliente"></div>
+    <nav class="topo-kpis" aria-label="Indicadores">
+      <button class="kpi" id="kpi-pend" onclick="irPara('card-aguardando')"></button>
+      <button class="kpi" id="kpi-ativas" onclick="irPara('sec-campanhas')"></button>
+      <button class="kpi" id="kpi-invest" onclick="irPara('card-campanhas')"></button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ Abertura ============ -->
+<div class="faixa">
+  <div class="faixa-in">
+    <div>
+      <h1 id="saudacao"></h1>
+      <div class="sub" id="atualizado"></div>
+    </div>
+    <div class="frase-pub" id="frase-pub"></div>
+  </div>
+</div>
+
+<div class="entrada">
+  <section class="card-entrada" id="card-campanhas" aria-label="Suas campanhas">
+      <div class="card-head">
+        <h2>Suas campanhas</h2>
+        <select class="sel-mes" id="sel-mes" aria-label="Escolher o mês" onchange="setMes(this.value)"></select>
+      </div>
+      <div class="resumo-mes" id="resumo-mes"></div>
+      <div id="mini-radios"></div>
+    </section>
+
+  <section class="card-entrada" id="card-aguardando" aria-label="Aguardando você">
+      <div class="card-head">
+        <h2>Aguardando você<span id="badge-pend"></span></h2>
+      </div>
+      <div class="fila" id="fila-pend"></div>
+    </section>
+
+  <section class="card-entrada" id="card-posvenda" aria-label="Relatórios financeiros do mês">
+      <button class="pv-toggle" id="pv-btn" onclick="togglePosVenda()" aria-expanded="false">
+        <span>
+          <h2>Relatórios financeiros do mês</h2>
+          <span class="pv-sub" id="pv-sub"></span>
+        </span>
+        <svg class="pv-chev" id="pv-chev" width="16" height="10" viewBox="0 0 16 10" aria-hidden="true"><path d="M1 1l7 7 7-7" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div id="pv-lista" hidden></div>
+    </section>
+
+  <section class="card-entrada" id="card-registros" aria-label="Pós-venda">
+      <div class="card-head"><h2>Pós-venda</h2></div>
+      <div style="color:var(--muted);font-size:13px;margin:-8px 0 10px">Fotos, áudios e vídeos que comprovam a execução de cada ação.</div>
+      <div id="registros-lista"></div>
+    </section>
+</div>
+
+<main>
+  <!-- ============ Campanhas do mês ============ -->
+  <section class="secao" id="sec-campanhas">
+    <h2 id="tit-campanhas"></h2>
+    <div class="desc" id="desc-campanhas"></div>
+    <div class="camp-grid" id="camp-grid"></div>
+  </section>
+
+  <!-- ============ Mídias da campanha ============ -->
+  <section class="secao" id="sec-midias">
+    <h2>Mídias da campanha</h2>
+    <div class="desc" id="desc-midias"></div>
+    <div class="midias-card" id="midias-card"></div>
+  </section>
+
+  <!-- ============ Resultado anual ============ -->
+  <section class="secao-anual" id="sec-anual">
+    <div class="anual-head">
+      <h2>Resultado do ano</h2>
+      <div class="chips-ano" id="chips-ano" role="group" aria-label="Escolher o ano"></div>
+    </div>
+    <div class="desc" style="color:var(--muted);font-size:14px">Investimento, cidades e pessoas alcançadas — tudo derivado das veiculações contratadas com a MGB.</div>
+
+    <div class="anual-stats" id="anual-stats"></div>
+
+    <div class="anual-grid">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div class="bloco">
+          <h3>Investimento por mês</h3>
+          <div class="bdesc" id="anual-total-lbl"></div>
+          <div class="graf-wrap">
+            <svg id="graf-meses" width="100%" height="230" role="img" aria-label="Colunas de investimento mensal"></svg>
+            <div class="graf-tip" id="graf-tip"></div>
+          </div>
+        </div>
+        <div class="bloco impacto" id="bloco-impacto"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div class="bloco">
+          <h3>Cidades por investimento</h3>
+          <div class="bdesc">Participação de cada praça no ano</div>
+          <div id="rank-cidades"></div>
+        </div>
+        <div class="bloco">
+          <h3>Investimento por campanha</h3>
+          <div class="bdesc" id="camp-ano-desc"></div>
+          <div id="rank-campanhas"></div>
+        </div>
+        <div class="bloco destaque" id="bloco-destaque"></div>
+      </div>
+    </div>
+
+    <div class="bloco" style="margin-top:22px">
+      <div class="tab-head">
+        <div>
+          <h3>Detalhamento das veiculações</h3>
+          <div class="bdesc" style="margin:0" id="tab-desc"></div>
+        </div>
+        <div class="btns-exp">
+          <button class="btn-exp" id="btn-tab-toggle" onclick="toggleTabela()">Mostrar tabela</button>
+          <button class="btn-exp" onclick="exportarExcel()">Baixar em Excel</button>
+          <button class="btn-exp" onclick="window.print()">Salvar em PDF</button>
+        </div>
+      </div>
+      <div class="tab-scroll">
+        <table id="tab-detalhe">
+          <thead><tr>
+            <th>Mês</th><th>Cidade</th><th>Emissora</th>
+            <th class="r">Inserções</th><th class="r">Investimento</th>
+            <th class="r">População</th><th class="r">Alcance estimado</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-in">
+    <div>
+      <b>MGB Mídia — Bureau de Mídia</b><br>
+      Londrina/PR · <a href="mailto:comercial@agenciamgb.com.br" style="color:inherit">comercial@agenciamgb.com.br</a> ·
+      <a href="https://wa.me/5543996960078" target="_blank" rel="noopener" style="color:inherit">WhatsApp (43) 99696-0078</a> ·
+      <a href="https://www.agenciamgb.com.br" target="_blank" rel="noopener" style="color:inherit">agenciamgb.com.br</a>
+    </div>
+    <div class="aviso" style="max-width:420px">
+      Este link é permanente e sempre mostra seus dados mais recentes — salve nos favoritos para acompanhar quando quiser.
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   DADOS SIMULADOS — em produção, substituir pela fonte real.
+   Tudo abaixo (cabeçalho, cards, DRE, tabela) deriva SÓ deste objeto:
+   nenhum indicador tem query própria.
+
+   INSERÇÕES VEICULADAS — dois modos:
+   · Sem dado real: o portal ESTIMA pelo calendário (mês passado ≈
+     contratado; mês corrente proporcional aos dias corridos).
+   · Com dado real (checking do PI / export ListenPlay): abastecer o
+     campo `veic` da mídia, por mês — ex.: veic:{'2026-09':42} — e o
+     número real substitui a estimativa em tudo (linha, barra, tabela).
+================================================================ */
+const DB = {
+  cliente: { nome: 'Moinho Globo', equipe: 'equipe Moinho Globo' },
+  atualizadoEm: new Date(), // em produção: timestamp da última sincronização
+  cidades: {
+    'Maringá':      { pop: 436000 },
+    'Ponta Grossa': { pop: 355000 },
+    'Foz do Iguaçu':{ pop: 258000 },
+    'Umuarama':     { pop: 112000 },
+    'Apucarana':    { pop: 137000 },
+    'Campo Mourão': { pop: 95000  },
+  },
+  // share médio de audiência da emissora no período (fonte: aferição das praças)
+  emissoras: {
+    '98 FM':          { cidade:'Maringá',       share:.18 },
+    'Mundi FM':       { cidade:'Ponta Grossa',  share:.15 },
+    'Band FM Foz':    { cidade:'Foz do Iguaçu', share:.14 },
+    'Cultura FM':     { cidade:'Umuarama',      share:.21 },
+    'Antena 96 FM':   { cidade:'Apucarana',     share:.19 },
+    'Colméia FM':     { cidade:'Campo Mourão',  share:.17 },
+  },
+  campanhas: [
+    { id:'inst26', nome:'Institucional Moinho Globo — 2º semestre',
+      docs:[
+        { id:'p98',     tipo:'Proposta da rádio',        titulo:'Proposta original — 98 FM (Maringá)', url:'' },
+        { id:'pmundi',  tipo:'Proposta da rádio',        titulo:'Proposta original — Mundi FM (Ponta Grossa)', url:'' },
+        { id:'pband',   tipo:'Proposta da rádio',        titulo:'Proposta original — Band FM (Foz do Iguaçu)', url:'' },
+        { id:'pcult',   tipo:'Proposta da rádio',        titulo:'Proposta original — Cultura FM (Umuarama)', url:'' },
+        { id:'mapa1',   tipo:'Mapa de veiculação',       titulo:'Mapa de veiculação — 2º semestre', url:'', assinar:true, assinadoEm:'2026-07-02' },
+        { id:'carta1',  tipo:'Carta de credenciamento',  titulo:'Carta de credenciamento — praças do 2º semestre', url:'', assinar:true, assinadoEm:'2026-06-28' },
+      ],
+      midias:[
+        { emissora:'98 FM',        formato:'Spot 30"',                ini:'2026-07-01', fim:'2026-12-31', insMes:150, valorMes:4200, veic:{'2026-07':148,'2026-08':150} },
+        { emissora:'Mundi FM',     formato:'Spot 30"',                ini:'2026-07-01', fim:'2026-12-31', insMes:120, valorMes:3100 },
+        { emissora:'Band FM Foz',  formato:'Patrocínio Hora Certa',   ini:'2026-07-01', fim:'2026-12-31', insMes:90,  valorMes:2600, entrega:{segSex:true,sabDom:false,vinhAb:1,vinhPass:2,vinhEnc:1,chamadas:4,spots:2,merchan:1} },
+        { emissora:'Cultura FM',   formato:'Spot 30"',                ini:'2026-07-01', fim:'2026-12-31', insMes:120, valorMes:1900 },
+      ]},
+    { id:'promo70', nome:'Promoção 70 Anos',
+      docs:[
+        { id:'pant',    tipo:'Proposta da rádio',        titulo:'Proposta original — Antena 96 FM (Apucarana)', url:'' },
+        { id:'pcol',    tipo:'Proposta da rádio',        titulo:'Proposta original — Colméia FM (Campo Mourão)', url:'' },
+        { id:'mapa2',   tipo:'Mapa de veiculação',       titulo:'Mapa de veiculação — Promoção 70 Anos', url:'', assinar:true, assinadoEm:null },
+        { id:'carta2',  tipo:'Carta de credenciamento',  titulo:'Carta de credenciamento — Apucarana e Campo Mourão', url:'', assinar:true, assinadoEm:null },
+      ],
+      midias:[
+        { emissora:'Antena 96 FM', formato:'Spot 30" + inserção ao vivo', ini:'2026-09-01', fim:'2026-10-31', insMes:100, valorMes:2200 },
+        { emissora:'Colméia FM',   formato:'Spot 30"',                ini:'2026-09-01', fim:'2026-10-31', insMes:100, valorMes:1800, pendenciaId:'spots70' },
+      ]},
+    { id:'verao26', nome:'Verão Moinho Globo',
+      docs:[
+        { id:'p98v',    tipo:'Proposta da rádio',        titulo:'Proposta original — 98 FM (Maringá)', url:'' },
+        { id:'pbandv',  tipo:'Proposta da rádio',        titulo:'Proposta original — Band FM (Foz do Iguaçu)', url:'' },
+      ],
+      midias:[
+        { emissora:'98 FM',        formato:'Spot 30"',                ini:'2026-11-16', fim:'2027-01-15', insMes:80, valorMes:2400 },
+        { emissora:'Band FM Foz',  formato:'Spot 30"',                ini:'2026-11-16', fim:'2027-01-15', insMes:80, valorMes:2000 },
+      ]},
+    { id:'maes26', nome:'Dia das Mães 2026',
+      docs:[
+        { id:'p98m',    tipo:'Proposta da rádio',        titulo:'Proposta original — 98 FM (Maringá)', url:'' },
+        { id:'pcultm',  tipo:'Proposta da rádio',        titulo:'Proposta original — Cultura FM (Umuarama)', url:'' },
+        { id:'mapam',   tipo:'Mapa de veiculação',       titulo:'Mapa de veiculação — Dia das Mães', url:'', assinar:true, assinadoEm:'2026-04-08' },
+        { id:'cartam',  tipo:'Carta de credenciamento',  titulo:'Carta de credenciamento — Maringá e Umuarama', url:'', assinar:true, assinadoEm:'2026-04-05' },
+      ],
+      midias:[
+        { emissora:'98 FM',        formato:'Spot 30"',                ini:'2026-04-13', fim:'2026-05-10', insMes:120, valorMes:3800 },
+        { emissora:'Cultura FM',   formato:'Spot 30"',                ini:'2026-04-13', fim:'2026-05-10', insMes:100, valorMes:1600 },
+      ]},
+    { id:'inst25', nome:'Institucional 2025',
+      midias:[
+        { emissora:'98 FM',        formato:'Spot 30"',                ini:'2025-03-01', fim:'2025-12-31', insMes:130, valorMes:3400 },
+        { emissora:'Mundi FM',     formato:'Spot 30"',                ini:'2025-03-01', fim:'2025-12-31', insMes:110, valorMes:2600 },
+        { emissora:'Cultura FM',   formato:'Spot 30"',                ini:'2025-03-01', fim:'2025-12-31', insMes:100, valorMes:1500 },
+      ]},
+    { id:'natal25', nome:'Natal 2025',
+      midias:[
+        { emissora:'Band FM Foz',  formato:'Spot 30"',                ini:'2025-11-10', fim:'2025-12-24', insMes:90, valorMes:2300 },
+        { emissora:'98 FM',        formato:'Testeira de programa',    ini:'2025-11-10', fim:'2025-12-24', insMes:70, valorMes:2100 },
+      ]},
+  ],
+  pendencias: [
+    { id:'spots70', titulo:'2 spots de 30" — Promoção 70 Anos', desc:'Gravações enviadas pela produtora em 28/08. A Colméia FM só entra no ar depois do seu ok.', botao:'Ouvir e aprovar' },
+  ],
+  // pós-venda: relatórios mensais de veiculação (comprovação emissora por emissora).
+  // url = link do relatório publicado (relatorio-exibicao.html / PDF no Drive).
+  // Sem aprovadoEm = aguardando aprovação do cliente → vira pendência.
+  relatorios: [
+    { id:'rel-2026-08', mes:'2026-08', url:'', aprovadoEm:null },
+    { id:'rel-2026-07', mes:'2026-07', url:'', aprovadoEm:'2026-08-05' },
+    { id:'rel-2026-05', mes:'2026-05', url:'', aprovadoEm:'2026-06-04' },
+    { id:'rel-2026-04', mes:'2026-04', url:'', aprovadoEm:'2026-05-06' },
+  ],
+  // metodologia de alcance (mesma do relatório pós-venda)
+  penetracaoRadio: .76, // ouvem rádio na semana — Kantar IBOPE Media 2025
+};
+
+/* ================== utilitários ================== */
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const MESES_AB = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const HOJE = new Date(); HOJE.setHours(0,0,0,0);
+const fmt$ = (v,cents=true)=> v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:cents?2:0,maximumFractionDigits:cents?2:0});
+const fmtN = v => Math.round(v).toLocaleString('pt-BR');
+const fmtData = d => d.toLocaleDateString('pt-BR');
+const plural = (n,um,varios)=> `${n===0?'Nenhuma':n} ${n===1?um:varios}`.replace('Nenhuma '+varios, 'Nenhuma '+um).replace(/^1 /,'1 ');
+const pd = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const hash = s => { let h=0; for(const c of s) h=(h*31+c.charCodeAt(0))>>>0; return (h%1000)/1000; };
+const irPara = id => document.getElementById(id).scrollIntoView({behavior:'smooth',block:'center'});
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),3200); }
+
+/* ================== derivações (fonte única) ==================
+   Uma "veiculação" = uma mídia num mês. Tudo no portal soma veiculações. */
+function veicNoMes(m, ano, mes){ // mes 0-based
+  if(m.pontual){ // ação avulsa com datas marcadas (sem valor mensal)
+    const doMes=(m.datas||[]).filter(d=>{const p=String(d).split('-');return +p[0]===ano&&+p[1]-1===mes;});
+    if(!doMes.length) return null;
+    const tot=(m.datas||[]).length||1;
+    const valor=(m.valorTotal||0)*doMes.length/tot;
+    const veiculadas=doMes.filter(d=>pd(d)<=HOJE).length;
+    return { contratadas:doMes.length, veiculadas, valor, pendente:false, real:true };
+  }
+  const ini=pd(m.ini), fim=pd(m.fim);
+  const mIni=new Date(ano,mes,1), mFim=new Date(ano,mes+1,0);
+  const a = ini>mIni?ini:mIni, b = fim<mFim?fim:mFim;
+  if(a>b) return null;
+  const dias=(b-a)/864e5+1, diasMes=mFim.getDate();
+  const frac=dias/diasMes;
+  let contratadas=Math.round(m.insMes*frac);
+  const valor=m.valorMes*frac;
+  // veiculadas: dado real do PI (campo `veic`) tem prioridade; sem ele,
+  // estimativa pelo calendário (passado ≈ contratado; corrente proporcional aos dias)
+  let veiculadas=0, real=false;
+  const chave=`${ano}-${String(mes+1).padStart(2,'0')}`;
+  const pendente = m.pendenciaId && DB.pendencias.some(p=>p.id===m.pendenciaId);
+  if(m.veic && m.veic[chave]!=null){ veiculadas=m.veic[chave]; real=true; }
+  else if(!pendente){
+    if(mFim<HOJE) veiculadas=Math.round(contratadas*(0.965+0.035*hash(m.emissora+ano+mes)));
+    else if(a<=HOJE){ const corridos=(Math.min(HOJE,b)-a)/864e5+1; veiculadas=Math.round(contratadas*corridos/dias); }
+  }
+  // sem inserções no contrato antigo, mas com entrega diária estruturada:
+  // inserções do mês = soma dos itens/dia × dias marcados dentro do mês
+  if(!contratadas && m.entrega){
+    const e=m.entrega;
+    const porDia=(e.vinhAb||0)+(e.vinhPass||0)+(e.vinhEnc||0)+(e.chamadas||0)+(e.spots||0)+(e.merchan||0);
+    if(porDia){
+      contratadas = porDia * diasValidos(a, b, e, false);
+      const ate = HOJE<b ? HOJE : b;
+      veiculadas = (!pendente && a<=ate) ? porDia * diasValidos(a, ate, e, false) : 0;
+    }
+  }
+  return { contratadas, veiculadas, valor, pendente, real };
+}
+function statusMidia(m){
+  if(m.formalizacao) return {cls:'fim', txt:'Em formalização'};
+  if(m.pendenciaId && DB.pendencias.some(p=>p.id===m.pendenciaId)) return {cls:'pend', txt:'Pendência: spot aguardando sua aprovação'};
+  const ini=pd(m.ini), fim=pd(m.fim);
+  if(HOJE<ini) return {cls:'prog', txt:'Programada — estreia '+fmtData(ini)};
+  if(HOJE>fim) return {cls:'fim', txt:'Encerrada em '+fmtData(fim)};
+  return {cls:'on', txt:'No ar agora'};
+}
+// assinaturas pendentes do cliente (mapa de veiculação, carta de credenciamento…)
+function pendenciasAssinatura(){
+  return DB.campanhas.flatMap(c=>(c.docs||[])
+    .filter(d=>d.assinar && !d.assinadoEm)
+    .map(d=>({c,d})));
+}
+const relatoriosPendentes = () => DB.relatorios.filter(r=>!r.aprovadoEm);
+const tituloRel = r => { const [y,m]=r.mes.split('-').map(Number); return `Relatório financeiro — ${MESES[m-1]}/${y}`; };
+function totalPendencias(){ return DB.pendencias.length + relatoriosPendentes().length + pendenciasAssinatura().length; }
+
+/* Conexão com a MGB (produção): Web App do Apps Script, mesmo padrão do
+   MGB Financeiro. GET serve o JSON que preenche o DB; POST abaixo registra
+   cada ação do cliente (aprovação, assinatura) na planilha com data/hora
+   e dispara o aviso pra MGB. Com API_URL vazio, o portal roda em demonstração. */
+const API_URL='';
+function registrarAcao(tipo,dados){
+  if(!API_URL) return;
+  fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({tipo,cliente:DB.cliente.nome,quando:new Date().toISOString(),...dados})});
+}
+
+function campanhasDoMes(ano,mes){
+  return DB.campanhas.map(c=>{
+    const vs=c.midias.map(m=>({m,v:veicNoMes(m,ano,mes)})).filter(x=>x.v);
+    if(!vs.length) return null;
+    return { c, midias:vs, valor:vs.reduce((s,x)=>s+x.v.valor,0) };
+  }).filter(Boolean);
+}
+const campanhaAtivaHoje = c => c.midias.some(m=>{ const s=statusMidia(m); return s.cls==='on'||s.cls==='pend'; });
+function alcanceCidade(cidade, emissorasAtivas){ // conta só a maior emissora da cidade — sem dupla contagem
+  const shares=[...emissorasAtivas].filter(e=>DB.emissoras[e].cidade===cidade).map(e=>DB.emissoras[e].share).filter(sh=>sh>0);
+  if(!shares.length) return 0;
+  return Math.round(DB.cidades[cidade].pop * DB.penetracaoRadio * Math.max(...shares));
+}
+
+/* ================== estado ================== */
+let mesSel, anoSel=2026, campSel=null;
+{ // meses disponíveis = meses com veiculação + mês corrente
+  const set=new Set();
+  DB.campanhas.forEach(c=>c.midias.forEach(m=>{
+    let d=new Date(pd(m.ini).getFullYear(),pd(m.ini).getMonth(),1);
+    const f=pd(m.fim);
+    while(d<=f){ set.add(d.getFullYear()+'-'+d.getMonth()); d=new Date(d.getFullYear(),d.getMonth()+1,1); }
+  }));
+  set.add(HOJE.getFullYear()+'-'+HOJE.getMonth());
+  window.MESES_DISP=[...set].map(s=>s.split('-').map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  mesSel=[HOJE.getFullYear(),HOJE.getMonth()];
+}
+
+/* ================== render: cabeçalho + abertura ================== */
+// agenda derivada dos contratos: estreias, ações marcadas e fim de período
+function proximasDatasHtml(){
+  const hojeStr=HOJE.getFullYear()+'-'+String(HOJE.getMonth()+1).padStart(2,'0')+'-'+String(HOJE.getDate()).padStart(2,'0');
+  const evs=[];
+  DB.campanhas.forEach(c=>(c.midias||[]).forEach(m=>{
+    if(m.ini && m.ini>hojeStr) evs.push({q:m.ini, txt:`Estreia — ${m.emissora}`});
+    (m.datas||[]).filter(d=>d>hojeStr).slice(0,1).forEach(d=>evs.push({q:d, txt:`Ação no PDV — ${m.emissora}`}));
+  }));
+  // fim de período: agrupa rádios que terminam no mesmo dia
+  const fins={};
+  DB.campanhas.forEach(c=>(c.midias||[]).forEach(m=>{ if(m.fim && m.fim>=hojeStr){ (fins[m.fim]=fins[m.fim]||[]).push(m.emissora); } }));
+  Object.keys(fins).forEach(f=>evs.push({q:f, txt: fins[f].length===1?`Fim do período — ${fins[f][0]}`:`Fim do período de ${fins[f].length} rádios`}));
+  evs.sort((x,y)=>x.q.localeCompare(y.q));
+  const top=evs.slice(0,3);
+  if(!top.length) return '';
+  return `<div style="margin-top:14px;border-top:1px solid var(--linha);padding-top:12px">
+    <div style="font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px">Próximas datas da sua campanha</div>
+    ${top.map(e=>`<div style="display:flex;gap:12px;font-size:13px;padding:4px 0">
+      <b class="num" style="min-width:52px;color:var(--tinta)">${fmtData(pd(e.q))}</b><span style="color:var(--muted)">${e.txt}</span></div>`).join('')}
+  </div>`;
+}
+function renderTopo(){
+  const [ano,mes]=mesSel;
+  const camps=campanhasDoMes(ano,mes);
+  const ativasHoje=campanhasDoMes(HOJE.getFullYear(),HOJE.getMonth()).filter(x=>campanhaAtivaHoje(x.c));
+  const invest=camps.reduce((s,x)=>s+x.valor,0);
+  const nPend=totalPendencias();
+
+  document.getElementById('topo-cliente').textContent=DB.cliente.nome;
+  const kp=document.getElementById('kpi-pend');
+  kp.className='kpi '+(nPend>0?'quente':'silencio');
+  kp.innerHTML=`<small>Aguardando você</small><b>${nPend>0?(nPend===1?'1 item':nPend+' itens'):'Tudo em dia'}</b>`;
+  document.getElementById('kpi-ativas').innerHTML=
+    `<small>Hoje</small><b>${ativasHoje.length===1?'1 campanha ativa':ativasHoje.length+' campanhas ativas'}</b>`;
+  const cabe=window.innerWidth>760;
+  document.getElementById('kpi-invest').innerHTML=
+    `<small>Investimento — ${cabe?MESES[mes]:MESES_AB[mes]}/${ano}</small><b>${fmt$(invest)}</b>`;
+
+  document.getElementById('saudacao').innerHTML=`Olá, ${DB.cliente.equipe} 👋`;
+  document.getElementById('atualizado').textContent=
+    `Suas campanhas de rádio, em um só lugar! · Atualizado em ${fmtData(DB.atualizadoEm)} às ${DB.atualizadoEm.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+
+  // card Suas campanhas
+  const sel=document.getElementById('sel-mes');
+  sel.innerHTML=MESES_DISP.map(([y,m])=>
+    `<option value="${y}-${m}" ${y===ano&&m===mes?'selected':''}>${MESES[m]}/${y}</option>`).join('');
+  const ehMesAtual = ano===HOJE.getFullYear() && mes===HOJE.getMonth();
+  const nRadios=new Set(camps.flatMap(x=>x.midias.map(mm=>mm.m.emissora))).size;
+  const nCidades=new Set(camps.flatMap(x=>x.midias.map(mm=>DB.emissoras[mm.m.emissora].cidade))).size;
+  const radiosNoAr=new Set(camps.flatMap(x=>x.midias.filter(mm=>statusMidia(mm.m).cls==='on').map(mm=>mm.m.emissora))).size;
+  document.getElementById('resumo-mes').innerHTML= camps.length===0
+    ? `<div style="color:var(--muted);font-size:14px;line-height:1.7">Sem veiculação em ${MESES[mes]}/${ano}. Escolha outro mês acima para ver o histórico.</div>`
+    : `<div><div class="num">${fmt$(invest)}</div><small>Investimento — ${MESES[mes]}/${ano}</small></div>
+       <div><div class="num">${camps.length}</div><small>${camps.length===1?'campanha no mês':'campanhas no mês'}</small></div>
+       ${ehMesAtual
+         ? `<div><div class="num ${radiosNoAr>0?'verde':''}">${radiosNoAr}</div><small>${radiosNoAr===1?'rádio no ar agora':'rádios no ar agora'}, de ${nRadios} contratadas em ${nCidades===1?'1 cidade':nCidades+' cidades'}</small></div>`
+         : `<div><div class="num">${nRadios}</div><small>${nRadios===1?'rádio':'rádios'} em ${nCidades===1?'1 cidade':nCidades+' cidades'}</small></div>`}`;
+
+  // mini-lista das rádios do mês — preenche o card e antecipa o detalhe
+  const midiasMes = camps.flatMap(x=>x.midias.map(mm=>({m:mm.m, v:mm.v})));
+  document.getElementById('mini-radios').innerHTML = midiasMes.length ?
+    midiasMes.slice(0,4).map(({m,v})=>{
+      const st=statusMidia(m);
+      return `<div class="mini-r"><b>${m.emissora}<small>${DB.emissoras[m.emissora]?DB.emissoras[m.emissora].cidade:''}${m.formato?' · '+m.formato:''}</small></b><span class="chip ${st.cls}">${st.txt}</span><span class="num">${fmt$(v.valor,false)}</span></div>`;
+    }).join('') + (midiasMes.length>4?`<div class="mini-mais">e mais ${midiasMes.length-4===1?'1 rádio':(midiasMes.length-4)+' rádios'} — detalhe completo em Mídias da campanha, abaixo</div>`:'')
+    : '';
+
+  // fila aguardando: aprovações + assinaturas pendentes (mapa, carta de credenciamento)
+  document.getElementById('badge-pend').innerHTML = nPend>0?`<span class="badge-fila">${nPend}</span>`:'';
+  document.getElementById('fila-pend').innerHTML = nPend===0
+    ? `<div class="fila-vazia"><b>Tudo em dia.</b> O próximo passo é nosso: o relatório de ${MESES[HOJE.getMonth()]} chega até o dia 5 do mês que vem, e você recebe um aviso aqui.</div>`
+      + proximasDatasHtml()
+    : DB.pendencias.map(p=>`
+      <div class="fila-item">
+        <div class="fi-txt"><b>${p.titulo}</b><small>${p.desc}</small></div>
+        ${p.url?`<a class="btn-acao" style="text-decoration:none" href="${p.url}" target="_blank" rel="noopener">${p.botao}</a>`
+          :`<button class="btn-acao" onclick="aprovar('${p.id}')">${p.botao}</button>`}
+      </div>`).join('')
+    + relatoriosPendentes().map(r=>`
+      <div class="fila-item">
+        <div class="fi-txt"><b>${tituloRel(r)}</b><small>Fechamento financeiro do mês, emissora por emissora. Aprovado, fica guardado em Relatórios financeiros.</small></div>
+        ${r.url?`<a class="btn-acao" style="text-decoration:none" href="${r.url}" target="_blank" rel="noopener">Ver e aprovar relatório</a>`
+          :`<button class="btn-acao" onclick="aprovarRel('${r.id}')">Ver e aprovar relatório</button>`}
+      </div>`).join('')
+    + pendenciasAssinatura().map(({c,d})=>`
+      <div class="fila-item">
+        <div class="fi-txt"><b>Assinar: ${d.titulo}</b><small>${d.titulo.includes(c.nome)?'':c.nome+' · '}Sua assinatura libera a veiculação.</small></div>
+        <button class="btn-acao" onclick="assinarDoc('${c.id}','${d.id}')">Ver e assinar</button>
+      </div>`).join('');
+}
+
+function aprovar(id){
+  const p=DB.pendencias.find(x=>x.id===id);
+  DB.pendencias=DB.pendencias.filter(x=>x.id!==id);
+  registrarAcao('aprovacao',{item:p.titulo});
+  toast(`Aprovado: ${p.titulo}. A MGB já foi avisada.`);
+  renderTudo();
+}
+function aprovarRel(id){
+  const r=DB.relatorios.find(x=>x.id===id);
+  r.aprovadoEm=HOJE.toISOString().slice(0,10);
+  registrarAcao('aprovacao-relatorio',{item:tituloRel(r)});
+  toast(`Aprovado: ${tituloRel(r)}. Ele fica guardado em Relatórios financeiros.`);
+  renderTudo();
+}
+function verRel(id){
+  const r=DB.relatorios.find(x=>x.id===id);
+  if(r.url){ window.open(r.url,'_blank'); return; }
+  toast('Exemplo de demonstração — na versão final, abre o relatório do mês.');
+}
+let pvAberto=true; // aberto por padrão — o cliente entra e já vê os relatórios
+function togglePosVenda(){ pvAberto=!pvAberto; renderPosVenda(); }
+// meses com veiculação que ainda não têm relatório → entram como "Indisponível"
+// e viram "Liberado" sozinhos quando o relatório for adicionado em DB.relatorios
+function mesesSemRelatorio(){
+  return MESES_DISP
+    .filter(([y,m])=> (y<HOJE.getFullYear() || (y===HOJE.getFullYear()&&m<=HOJE.getMonth()))
+      && y===HOJE.getFullYear()
+      && !DB.relatorios.some(r=>r.mes===`${y}-${String(m+1).padStart(2,'0')}`)
+      && campanhasDoMes(y,m).length>0)
+    .map(([y,m])=>({y,m,radios:[...new Set(campanhasDoMes(y,m).flatMap(x=>x.midias.map(mm=>mm.m.emissora)))]}));
+}
+function renderPosVenda(){
+  const rels=[...DB.relatorios].sort((a,b)=>b.mes.localeCompare(a.mes));
+  const faltando=mesesSemRelatorio();
+  const nPend=relatoriosPendentes().length;
+  document.getElementById('pv-sub').textContent =
+    `${rels.length===1?'1 relatório financeiro':rels.length+' relatórios financeiros'}`+
+    (nPend>0?` · ${nPend===1?'1 aguarda':nPend+' aguardam'} sua aprovação`:'')+
+    (faltando.length?` · ${MESES[faltando[0].m]} em preparação`:'');
+  const btn=document.getElementById('pv-btn'), lista=document.getElementById('pv-lista');
+  btn.setAttribute('aria-expanded',pvAberto);
+  lista.hidden=!pvAberto;
+  if(!pvAberto) return;
+  const rowsFaltando=faltando.map(f=>{
+    const prox=new Date(f.y,f.m+1,5);
+    return `
+    <div class="pv-row">
+      <span style="min-width:0"><b>Relatório financeiro — ${MESES[f.m]}/${f.y}</b>
+        <small style="display:block;color:var(--hint);font-size:12px">${f.radios.join(' · ')}</small></span>
+      <span class="pv-dir">
+        <span class="chip fim">Indisponível — liberamos até ${fmtData(prox)}</span>
+      </span>
+    </div>`;
+  }).join('');
+  const rowsRels=rels.map(r=>`
+    <div class="pv-row">
+      <b>${tituloRel(r)}</b>
+      <span class="pv-dir">
+        ${r.aprovadoEm?`<span class="chip on">Liberado para visualizar</span>`:`<span class="chip pend">Aguardando sua aprovação</span>`}
+        ${r.aprovadoEm
+          ?(r.url?`<a class="link-doc" href="${r.url}" target="_blank" rel="noopener">Ver relatório</a>`:`<button class="link-doc" onclick="verRel('${r.id}')">Ver relatório</button>`)
+          :(r.url?`<a class="link-doc" href="${r.url}" target="_blank" rel="noopener">Ver e aprovar</a>`:`<button class="link-doc" onclick="aprovarRel('${r.id}')">Ver e aprovar</button>`)}
+      </span>
+    </div>`).join('');
+  lista.innerHTML=rowsFaltando+rowsRels;
+}
+function assinarDoc(cid,did){
+  const d=DB.campanhas.find(c=>c.id===cid).docs.find(x=>x.id===did);
+  d.assinadoEm=HOJE.toISOString().slice(0,10);
+  registrarAcao('assinatura',{item:d.titulo});
+  toast(`Assinado: ${d.titulo}. A MGB já foi avisada.`);
+  renderTudo();
+}
+function verDoc(cid,did){
+  const d=DB.campanhas.find(c=>c.id===cid).docs.find(x=>x.id===did);
+  if(d.url){ window.open(d.url,'_blank'); return; }
+  toast('Exemplo de demonstração — na versão final, abre o PDF do documento.');
+}
+
+/* ================== render: campanhas + mídias ================== */
+function renderCampanhas(){
+  const [ano,mes]=mesSel;
+  const camps=campanhasDoMes(ano,mes);
+  document.getElementById('tit-campanhas').textContent=`Campanhas de ${MESES[mes]}/${ano}`;
+  document.getElementById('desc-campanhas').textContent= camps.length
+    ? 'Toque numa campanha para ver as mídias contratadas, emissora por emissora.'
+    : '';
+  if(campSel && !camps.some(x=>x.c.id===campSel)) campSel=null;
+  if(!campSel && camps.length) campSel=camps[0].c.id;
+
+  document.getElementById('camp-grid').innerHTML = camps.length===0
+    ? `<div class="vazio">Nenhuma campanha veiculou em ${MESES[mes]}/${ano}.<br>Use o seletor de mês no card <b>Suas campanhas</b> para navegar pelo histórico — ou fale com a MGB para planejar a próxima.</div>`
+    : camps.map(x=>{
+      const st=x.midias.map(mm=>statusMidia(mm.m));
+      const docPend=(x.c.docs||[]).some(d=>d.assinar&&!d.assinadoEm);
+      const geral = (docPend||st.some(s=>s.cls==='pend')) ? {cls:'pend',txt:'Com pendência sua'} :
+                    st.some(s=>s.cls==='on')  ? {cls:'on', txt:'No ar agora'} :
+                    st.every(s=>s.cls==='fim')? {cls:'fim',txt:'Encerrada'} : {cls:'prog',txt:'Programada'};
+      const ini=x.c.midias.reduce((a,m)=>Math.min(a,+pd(m.ini)),Infinity);
+      const fim=x.c.midias.reduce((a,m)=>Math.max(a,+pd(m.fim)),0);
+      const nR=new Set(x.midias.map(mm=>mm.m.emissora)).size;
+      const nC=new Set(x.midias.map(mm=>DB.emissoras[mm.m.emissora].cidade)).size;
+      return `
+      <button class="camp-card ${x.c.id===campSel?'sel':''}" onclick="verCampanha('${x.c.id}')">
+        <span class="chip ${geral.cls}">${geral.txt}</span>
+        <h3>${x.c.nome}</h3>
+        <div class="camp-meta">
+          <span>${fmtData(new Date(ini))} a ${fmtData(new Date(fim))}</span>
+          <span>${nR===1?'1 rádio':nR+' rádios'} · ${nC===1?'1 cidade':nC+' cidades'}</span>
+        </div>
+        <div class="camp-rodape">
+          <span class="num">${fmt$(x.valor)}<small style="font-family:Inter;font-weight:400;color:var(--muted)"> em ${MESES_AB[mes]}</small></span>
+          <span class="link-ver">Ver campanha</span>
+        </div>
+      </button>`;
+    }).join('');
+  renderMidias();
+}
+function verCampanha(id){ campSel=id; renderCampanhas(); irPara('sec-midias'); }
+
+// entrega diária estruturada: evolução até hoje × total do período
+function diasDaEntrega(ent){ // dias marcados (novo: diasSemana) com legado segSex/sabDom
+  if(ent.diasSemana&&ent.diasSemana.length) return ent.diasSemana;
+  return [].concat(ent.segSex?[1,2,3,4,5]:[], ent.sabDom?[6,0]:[]);
+}
+function diasValidos(iniIso, fimIso, ent, ateHoje){
+  const ini=iniIso instanceof Date?iniIso:pd(iniIso), fim=fimIso instanceof Date?fimIso:pd(fimIso);
+  const fimEf = ateHoje && HOJE<fim ? HOJE : fim;
+  if(!iniIso||!fimIso||fimEf<ini) return 0;
+  const marcados=diasDaEntrega(ent);
+  let n=0; const d=new Date(ini);
+  while(d<=fimEf){ if(marcados.indexOf(d.getDay())>-1) n++; d.setDate(d.getDate()+1); }
+  return n;
+}
+function entregaHtml(m){
+  const ent=m.entrega; if(!ent) return null;
+  const ini=ent.chIni||m.ini, fim=ent.chFim||m.fim;
+  const tot=diasValidos(ini,fim,ent,false), feito=diasValidos(ini,fim,ent,true);
+  const itens=[];
+  const vinh=(ent.vinhAb||0)+(ent.vinhPass||0)+(ent.vinhEnc||0);
+  if(vinh) itens.push(['Vinhetas (abertura, passagem e encerramento)', vinh]);
+  if(ent.chamadas) itens.push(['Chamadas', ent.chamadas]);
+  if(ent.spots) itens.push(['Spots no programa', ent.spots]);
+  if(ent.merchan) itens.push(['Merchans no programa', ent.merchan]);
+  if(!itens.length||!tot) return null;
+  const NOMES_D=['dom','seg','ter','qua','qui','sex','sáb'];
+  const marcados=diasDaEntrega(ent);
+  const dias=[1,2,3,4,5,6,0].filter(x=>marcados.indexOf(x)>-1).map(x=>NOMES_D[x]).join(' · ');
+  return itens.map(([nome,porDia])=>{
+    const t=porDia*tot, f=Math.min(porDia*feito,t), pct=t?Math.round(f/t*100):0;
+    return `<div style="margin-bottom:7px"><span class="num" style="font-weight:600">${fmtN(f)}</span><span class="de"> de ${fmtN(t)} — ${nome}</span>
+      <div class="barra-ins"><i style="width:${pct}%"></i></div></div>`;
+  }).join('')+`<small style="color:var(--hint);font-size:11px">${dias} · entregue até hoje × total do período</small>`;
+}
+function renderMidias(){
+  const [ano,mes]=mesSel;
+  const camps=campanhasDoMes(ano,mes);
+  const alvo=camps.find(x=>x.c.id===campSel);
+  const box=document.getElementById('midias-card');
+  if(!alvo){
+    document.getElementById('desc-midias').textContent='';
+    box.innerHTML=`<div class="vazio" style="border:none">Escolha uma campanha acima para ver as mídias.</div>`;
+    return;
+  }
+  document.getElementById('desc-midias').textContent=`${alvo.c.nome} — o que está contratado e como está a entrega em ${MESES[mes]}/${ano}.`;
+  box.innerHTML=`
+    <div class="mid-row cab">
+      <div>Emissora e cidade</div><div>Formato</div><div>Período</div><div>Entrega contratada</div><div>Situação</div>
+    </div>`+
+    alvo.midias.map(({m,v})=>{
+      const st=statusMidia(m);
+      const pct=v.contratadas?Math.min(100,Math.round(v.veiculadas/v.contratadas*100)):0;
+      return `
+      <div class="mid-row">
+        <div class="mid-emissora"><b>${m.emissora}</b><small>${DB.emissoras[m.emissora].cidade}</small></div>
+        <div class="mid-col">${m.formato}</div>
+        <div class="mid-col">${fmtData(pd(m.ini))} a ${fmtData(pd(m.fim))}</div>
+        <div class="mid-col mid-ins">
+          ${entregaHtml(m)||(v.contratadas?`<span class="num">${fmtN(v.veiculadas)}<span class="de"> de ${fmtN(v.contratadas)} veiculadas no mês${v.real?'':' (estimativa)'}</span></span>
+          <div class="barra-ins" role="img" aria-label="${pct}% das inserções do mês já veiculadas"><i style="width:${pct}%"></i></div>`
+          :'<span class="de">conforme contrato</span>')}
+        </div>
+        <div><span class="chip ${st.cls}">${st.txt}</span>${m.posVendaUrl?`<div style="margin-top:6px"><a class="link-doc" href="${m.posVendaUrl}" target="_blank" rel="noopener">Ver pós-venda</a></div>`:''}</div>
+      </div>`;
+    }).join('')
+    + renderDocs(alvo.c);
+}
+
+function renderDocs(c){
+  const docs=c.docs||[];
+  if(!docs.length) return '';
+  return `
+    <div class="docs-head">Documentos da campanha
+      <small>Propostas originais das rádios, mapa de veiculação e carta de credenciamento — como foram contratados.</small>
+    </div>`+
+    docs.map(d=>{
+      const chip = !d.assinar ? `<span class="chip fim">Disponível para consulta</span>`
+        : d.assinadoEm ? `<span class="chip on">Assinado em ${fmtData(pd(d.assinadoEm))}</span>`
+        : `<span class="chip pend">Aguardando sua assinatura</span>`;
+      const acao = (d.assinar && !d.assinadoEm)
+        ? `<button class="link-doc" onclick="assinarDoc('${c.id}','${d.id}')">Ver e assinar</button>`
+        : `<button class="link-doc" onclick="verDoc('${c.id}','${d.id}')">Ver documento</button>`;
+      return `
+      <div class="doc-row">
+        <div><small>${d.tipo}</small><b>${d.titulo}</b></div>
+        <div>${chip}</div>
+        <div>${acao}</div>
+      </div>`;
+    }).join('');
+}
+
+/* ================== render: resultado anual ================== */
+function anosDisponiveis(){
+  const s=new Set();
+  DB.campanhas.forEach(c=>c.midias.forEach(m=>{ s.add(pd(m.ini).getFullYear()); s.add(pd(m.fim).getFullYear()); }));
+  return [...s].sort();
+}
+function dadosAno(ano){
+  const porMes=Array(12).fill(0);
+  const porCidade={}, porCamp={}, emissorasAtivas=new Set(), linhas=[];
+  for(let mes=0;mes<12;mes++){
+    DB.campanhas.forEach(c=>c.midias.forEach(m=>{
+      const v=veicNoMes(m,ano,mes);
+      if(!v) return;
+      const cid=DB.emissoras[m.emissora].cidade;
+      porMes[mes]+=v.valor;
+      porCidade[cid]=(porCidade[cid]||0)+v.valor;
+      if(!porCamp[c.id]) porCamp[c.id]={nome:c.nome,valor:0,ins:0,radios:new Set()};
+      porCamp[c.id].valor+=v.valor; porCamp[c.id].ins+=v.contratadas; porCamp[c.id].radios.add(m.emissora);
+      emissorasAtivas.add(m.emissora);
+      linhas.push({mes,cidade:cid,emissora:m.emissora,ins:v.contratadas,valor:v.valor});
+    }));
+  }
+  const total=porMes.reduce((a,b)=>a+b,0);
+  const campanhas=Object.values(porCamp).sort((a,b)=>b.valor-a.valor);
+  const cidades=Object.entries(porCidade).map(([cidade,valor])=>({
+    cidade,valor,pop:DB.cidades[cidade].pop,
+    alcance:alcanceCidade(cidade,emissorasAtivas),
+  })).sort((a,b)=>b.valor-a.valor);
+  return {porMes,total,cidades,campanhas,linhas,alcanceTotal:cidades.reduce((s,c)=>s+c.alcance,0)};
+}
+
+function renderAnual(){
+  const anos=anosDisponiveis().filter(a=>a<=HOJE.getFullYear());
+  document.getElementById('chips-ano').innerHTML=anos.map(a=>
+    `<button class="chip-ano ${a===anoSel?'sel':''}" onclick="setAno(${a})">${a}</button>`).join('');
+  const d=dadosAno(anoSel), dAnt=dadosAno(anoSel-1);
+  const varAno = dAnt.total>0 ? (d.total-dAnt.total)/dAnt.total*100 : null;
+
+  // somatória do ano: total contratado, já veiculado até hoje, inserções
+  const anoCorrente = anoSel===HOJE.getFullYear();
+  const jaInvestido = anoSel>HOJE.getFullYear() ? 0
+    : !anoCorrente ? d.total
+    : d.porMes.slice(0,HOJE.getMonth()).reduce((a,b)=>a+b,0)
+      + (()=>{ const dm=new Date(anoSel,HOJE.getMonth()+1,0).getDate(); return d.porMes[HOJE.getMonth()]*HOJE.getDate()/dm; })();
+  const insAno=d.linhas.reduce((s,l)=>s+l.ins,0);
+  document.getElementById('anual-stats').innerHTML=`
+    <div class="stat principal">
+      <small>Investido no ano — soma dos 12 meses de ${anoSel}</small>
+      <span class="num">${fmt$(d.total,false)}</span>
+      ${varAno!==null?`<span class="delta ${varAno>=0?'up':'down'}">${varAno>=0?'+':'−'}${Math.abs(varAno).toFixed(0)}% vs ${anoSel-1} (${fmt$(dAnt.total,false)})</span>`:''}
+    </div>
+    <div class="stat">
+      <small>${anoCorrente?'Já veiculado até hoje':'Total veiculado no ano'}</small>
+      <span class="num">${fmt$(jaInvestido,false)}</span>
+      ${anoCorrente?`<small style="margin-top:2px">o restante já está contratado até dezembro</small>`:''}
+    </div>
+    <div class="stat">
+      <small>Inserções contratadas no ano</small>
+      <span class="num">${fmtN(insAno)}</span>
+      <small style="margin-top:2px">em ${d.cidades.length===1?'1 cidade':d.cidades.length+' cidades'} do Paraná</small>
+    </div>`;
+
+  document.getElementById('anual-total-lbl').textContent=
+    `Como o investimento se distribuiu ao longo de ${anoSel}`;
+
+  desenharColunas(d.porMes);
+  renderCampAno(d);
+  renderRanking(d);
+  renderDestaque(d);
+  renderImpacto(d);
+  renderTabela(d);
+}
+function setAno(a){ anoSel=a; renderAnual(); }
+
+function desenharColunas(porMes){
+  const svg=document.getElementById('graf-meses');
+  const W=Math.min(svg.parentElement.clientWidth||640, document.documentElement.clientWidth-40)||640, H=230, padL=44, padB=26, padT=18;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const max=Math.max(...porMes,1);
+  // teto arredondado pra ticks limpos
+  const passo=[1000,2000,2500,5000,10000,20000].find(p=>p*4>=max)||50000;
+  const teto=Math.ceil(max/passo)*passo;
+  const iw=(W-padL-8)/12, bw=Math.min(24,iw*.55);
+  const y=v=>padT+(H-padT-padB)*(1-v/teto);
+  let out='';
+  // grade + ticks (hairline, recessiva)
+  for(let t=0;t<=teto;t+=passo){
+    out+=`<line x1="${padL}" x2="${W-4}" y1="${y(t)}" y2="${y(t)}" stroke="#E9E5F1" stroke-width="1"/>`;
+    out+=`<text x="${padL-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="#8B8499">${t>=1000?(t/1000)+' mil':t}</text>`;
+  }
+  const iMax=porMes.indexOf(Math.max(...porMes));
+  const ehAnoAtual=anoSel===HOJE.getFullYear();
+  porMes.forEach((v,i)=>{
+    const x=padL+i*iw+(iw-bw)/2;
+    if(v>0){
+      const h=Math.max(3,(H-padT-padB)*v/teto);
+      out+=`<path d="M${x} ${H-padB} v${-(h-4)} q0 -4 4 -4 h${bw-8} q4 0 4 4 v${h-4} z" fill="#6C55DB" data-i="${i}" class="col"/>`;
+      if(i===iMax){
+        const perto=x+bw/2>W-46, colado=x+bw/2<padL+42;
+        out+=`<text x="${perto?W-2:(colado?padL:x+bw/2)}" y="${y(v)-7}" text-anchor="${perto?'end':(colado?'start':'middle')}" font-size="11.5" font-weight="600" fill="#241A38">${fmt$(v,false)}</text>`;
+      }
+    }
+    const atual = ehAnoAtual&&i===HOJE.getMonth();
+    const mostraLabel = iw>=26 || atual || i%2===0; // em tela estreita, rótulo mês sim, mês não
+    if(mostraLabel) out+=`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="11" font-weight="${atual?'700':'400'}" fill="${atual?'#241A38':'#8B8499'}">${MESES_AB[i]}</text>`;
+  });
+  svg.innerHTML=out;
+  // tooltip por coluna
+  const tip=document.getElementById('graf-tip');
+  svg.querySelectorAll('.col').forEach(el=>{
+    el.style.cursor='pointer';
+    el.addEventListener('mouseenter',e=>{
+      const i=+el.dataset.i, r=el.getBoundingClientRect(), w=svg.getBoundingClientRect();
+      tip.innerHTML=`${MESES[i]}/${anoSel} · <b>${fmt$(porMes[i],false)}</b>`;
+      tip.style.left=(r.left-w.left+r.width/2)+'px';
+      tip.style.top=(r.top-w.top)+'px';
+      tip.style.opacity=1;
+    });
+    el.addEventListener('mouseleave',()=>tip.style.opacity=0);
+  });
+}
+
+function renderCampAno(d){
+  document.getElementById('camp-ano-desc').textContent=`Para onde foi o investimento de ${anoSel}, campanha por campanha`;
+  const max=d.campanhas[0]?.valor||1;
+  document.getElementById('rank-campanhas').innerHTML=d.campanhas.map(c=>`
+    <div class="rank-item">
+      <div class="rank-l1"><b>${c.nome}</b><span class="num">${fmt$(c.valor,false)}</span></div>
+      <div class="rank-l2"><span>${fmtN(c.ins)} inserções · ${c.radios.size===1?'1 rádio':c.radios.size+' rádios'}</span><span>${(c.valor/d.total*100).toFixed(0)}% do ano</span></div>
+      <div class="rank-bar"><i style="width:${c.valor/max*100}%"></i></div>
+    </div>`).join('')||'<div class="fila-vazia">Sem veiculações neste ano.</div>';
+}
+
+function renderRanking(d){
+  const max=d.cidades[0]?.valor||1;
+  document.getElementById('rank-cidades').innerHTML=d.cidades.map(c=>`
+    <div class="rank-item">
+      <div class="rank-l1"><b>${c.cidade}</b><span class="num">${fmt$(c.valor,false)}</span></div>
+      <div class="rank-l2"><span>${c.pop?fmtN(c.pop)+' habitantes':'população a confirmar'}</span><span>${(c.valor/d.total*100).toFixed(0)}% do ano</span></div>
+      <div class="rank-bar"><i style="width:${c.valor/max*100}%"></i></div>
+    </div>`).join('')||'<div class="fila-vazia">Sem veiculações neste ano.</div>';
+}
+
+function renderDestaque(d){
+  const top=d.cidades[0];
+  const box=document.getElementById('bloco-destaque');
+  if(!top){ box.innerHTML='<h3>Cidade destaque</h3><div class="bdesc">Sem dados no ano.</div>'; return; }
+  const nEm=new Set(d.linhas.filter(l=>l.cidade===top.cidade).map(l=>l.emissora)).size;
+  box.innerHTML=`
+    <h3>Cidade com maior investimento</h3>
+    <div class="bdesc">${anoSel}</div>
+    <div class="num-hero num">${top.cidade}</div>
+    <div class="motivo">${fmt$(top.valor,false)} — ${(top.valor/d.total*100).toFixed(0)}% do investimento do ano,
+    em ${nEm===1?'1 emissora':nEm+' emissoras'}. ${top.pop?`É a maior praça do seu plano: ${fmtN(top.pop)} habitantes.`:''}</div>`;
+}
+
+function renderImpacto(d){
+  if(!(d.alcanceTotal>0)){
+    document.getElementById('bloco-impacto').innerHTML=`
+    <h3>Pessoas alcançadas</h3>
+    <div class="bdesc">Estimativa de alcance por emissora</div>
+    <div class="formula" style="margin-top:8px"><b>Ainda sem estimativa.</b> O alcance depende da participação de audiência aferida
+    de cada emissora contratada. Assim que a MGB registrar o share das rádios do seu plano, este bloco mostra as pessoas
+    alcançadas (população × 76% que ouvem rádio na semana × share da emissora) e o custo por pessoa — a mesma conta do relatório mensal.</div>`;
+    return;
+  }
+  const cpp = d.alcanceTotal>0 ? d.total/d.alcanceTotal : 0;
+  document.getElementById('bloco-impacto').innerHTML=`
+    <h3>Pessoas alcançadas</h3>
+    <div class="bdesc">Estimativa para ${anoSel}, somando as cidades do plano</div>
+    <div class="num-hero num">${fmtN(d.alcanceTotal)}</div>
+    ${cpp>0?`<div style="margin-top:6px;font-size:14px"><b class="num" style="font-size:17px">${fmt$(cpp)}</b>
+      <span style="color:var(--muted)"> por pessoa alcançada — investimento do ano ÷ pessoas alcançadas</span></div>`:''}
+    <div class="imp-cidades">
+      <div class="imp-cid" style="color:var(--hint);font-size:12px"><span>Cidade</span><span style="display:flex;gap:26px"><span>Pessoas</span><span>R$/pessoa</span></span></div>
+      ${d.cidades.map(c=>
+      `<div class="imp-cid"><span>${c.cidade}</span><span style="display:flex;gap:26px;align-items:baseline"><b>${fmtN(c.alcance)}</b><b style="min-width:52px;text-align:right">${c.alcance>0?fmt$(c.valor/c.alcance):'—'}</b></span></div>`).join('')}
+    </div>
+    <div class="formula"><b>Como calculamos:</b> população da cidade × 76% que ouvem rádio na semana
+    (Kantar IBOPE Media, 2025) × participação de audiência da emissora contratada.
+    Em cidades com mais de uma emissora, contamos só a de maior alcance, para não somar a mesma pessoa duas vezes.
+    O custo por pessoa divide o investimento pelo alcance estimado. É a mesma conta do seu relatório mensal.</div>`;
+}
+
+let tabAberta = localStorage.getItem('mgb_portal_tab_aberta')==='1'; // recolhida por padrão
+function toggleTabela(){
+  tabAberta=!tabAberta;
+  localStorage.setItem('mgb_portal_tab_aberta',tabAberta?'1':'0');
+  aplicarTabela();
+}
+function aplicarTabela(){
+  const n=document.querySelectorAll('#tab-detalhe tbody tr').length;
+  document.querySelector('.tab-scroll').classList.toggle('recolhida',!tabAberta);
+  document.getElementById('btn-tab-toggle').textContent = tabAberta?'Recolher tabela':`Mostrar as ${n} linhas`;
+}
+function renderTabela(d){
+  document.getElementById('tab-desc').textContent=`Uma linha por emissora e mês — ${anoSel}`;
+  document.querySelector('#tab-detalhe tbody').innerHTML=d.linhas.map(l=>{
+    const e=DB.emissoras[l.emissora];
+    const alc=e.share>0?Math.round(DB.cidades[l.cidade].pop*DB.penetracaoRadio*e.share):0;
+    return `<tr>
+      <td>${MESES[l.mes]}</td><td>${l.cidade}</td><td>${l.emissora}</td>
+      <td class="r">${l.ins?fmtN(l.ins):'—'}</td><td class="r">${fmt$(l.valor)}</td>
+      <td class="r">${DB.cidades[l.cidade].pop?fmtN(DB.cidades[l.cidade].pop):'—'}</td><td class="r">${alc?`<span class="verde">${fmtN(alc)}</span>`:'—'}</td>
+    </tr>`;
+  }).join('');
+  aplicarTabela();
+}
+
+function exportarExcel(){
+  const d=dadosAno(anoSel);
+  const sep=';';
+  const linhas=[['Mês','Cidade','Emissora','Inserções','Investimento (R$)','População','Alcance estimado'].join(sep)];
+  d.linhas.forEach(l=>{
+    const e=DB.emissoras[l.emissora];
+    const alc=e.share>0?Math.round(DB.cidades[l.cidade].pop*DB.penetracaoRadio*e.share):0;
+    linhas.push([MESES[l.mes],l.cidade,l.emissora,l.ins,l.valor.toFixed(2).replace('.',','),DB.cidades[l.cidade].pop,alc].join(sep));
+  });
+  const blob=new Blob(['﻿'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`mgb-veiculacoes-${DB.cliente.nome.toLowerCase().replace(/\s+/g,'-')}-${anoSel}.csv`;
+  a.click();
+  toast('Planilha baixada — abre direto no Excel.');
+}
+
+/* ================== boot ================== */
+// frase de publicidade — troca a cada visita (igual ao hub financeiro)
+const FRASES_PUB=[
+  'Quem não é visto não é lembrado. Quem é ouvido, é lembrado duas vezes.',
+  '79% dos brasileiros ouvem rádio todos os dias. A sua marca está nessa conversa.',
+  'No interior, a rádio local é a voz da cidade — e a sua marca fala por ela.',
+  'Parar de anunciar para economizar é parar o relógio para ganhar tempo.',
+  '58% das pessoas pesquisam um produto depois de ouvir sobre ele no rádio.',
+  'Mídia boa não é a mais cara: é a que chega na hora da decisão.',
+  'Marca forte não nasce do dia pra noite. Nasce todo dia, no ar.',
+  'O rádio é o meio nº 1 em confiança no Brasil — acima da TV e das redes.',
+];
+function renderFrasePub(){
+  const i=(parseInt(localStorage.getItem('mgb_portal_frase')||'0',10))%FRASES_PUB.length;
+  localStorage.setItem('mgb_portal_frase',(i+1)%FRASES_PUB.length);
+  document.getElementById('frase-pub').innerHTML=`<p>${FRASES_PUB[i]}</p><small>MGB Mídia — Bureau de Mídia</small>`;
+}
+renderFrasePub();
+
+function setMes(v){ const [y,m]=v.split('-').map(Number); mesSel=[y,m]; renderTudo(); }
+function renderRegistros(){
+  const regs=DB.campanhas.flatMap(c=>(c.midias||[]).filter(m=>m.posVendaUrl).map(m=>({m,c})));
+  document.getElementById('registros-lista').innerHTML = regs.length
+    ? regs.map(({m,c})=>`<div class="pv-row"><b>${m.emissora} — ${c.nome}</b>
+        <span class="pv-dir"><span class="chip on">Registros disponíveis</span>
+        <a class="link-doc" href="${m.posVendaUrl}" target="_blank" rel="noopener">Ver fotos, áudios e vídeos</a></span></div>`).join('')
+    : '<div class="fila-vazia">Depois de cada ação executada, os registros da comprovação (fotos, áudios e vídeos) aparecem aqui.</div>';
+}
+function renderTudo(){ renderTopo(); renderPosVenda(); renderRegistros(); renderCampanhas(); renderAnual(); }
+renderTudo();
+window.addEventListener('load',()=>desenharColunas(dadosAno(anoSel).porMes)); // remede após fontes/layout final
+window.addEventListener('resize',()=>desenharColunas(dadosAno(anoSel).porMes));
+</script>
+</body>
+</html>

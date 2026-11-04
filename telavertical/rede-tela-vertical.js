@@ -12,7 +12,7 @@
 (function (global) {
   'use strict';
   var REDE = {
-    insercoesDia: 150,          // entrega por tela/dia (Eder, 11/10/2026: 150; 100 é pouco)
+    insercoesDia: 100,          // entrega por tela/dia (Eder, 04/11/2026: operação trabalha com 100/dia)
     exposicoesDia: 3.5,         // exposições diárias por pessoa nos residenciais (mesmo da proposta)
     condos: [
       { id: 'lagoa',       hub: 'Lagoa Dourada',      nome: 'Lagoa Dourada',      bairro: 'Aquaville',             zona: 'Leste',  tipo: 'residencial', pessoas: 1344,  telas: 7, torres: 5 },

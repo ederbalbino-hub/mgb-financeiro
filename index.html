@@ -2567,7 +2567,7 @@ textarea { resize:vertical; min-height:70px; }
   <div id=&quot;e-sec-midia&quot; class=&quot;section&quot;>
     <div class=&quot;card&quot;>
       <div class=&quot;card-title&quot;><div class=&quot;icon&quot;>🏢</div> Selecione os Condomínios</div>
-      <p style=&quot;font-size:12px;color:#6B7280;margin-bottom:14px&quot;>Entrega mínima: <strong>150 inserções/dia por tela</strong> (~4.500/mês).</p>
+      <p style=&quot;font-size:12px;color:#6B7280;margin-bottom:14px&quot;>Entrega mínima: <strong>100 inserções/dia por tela</strong> (~3.000/mês).</p>
       <div class=&quot;condo-grid&quot; id=&quot;e-condo-grid&quot;></div>
       <div class=&quot;summary-box&quot; id=&quot;e-condo-summary&quot; style=&quot;display:none&quot;>
         <div class=&quot;sum-item&quot;><div class=&quot;sum-num&quot; id=&quot;e-sum-condos&quot;>0</div><div class=&quot;sum-lbl&quot;>Condomínios</div></div>
@@ -2664,7 +2664,7 @@ const ePlanos = [
   { id:'semestral',  nome:'Semestral',  meses:6,  desc:'Ótimo para construção de marca. Frequência gera lembrança.' },
   { id:'anual',      nome:'Anual',      meses:12, desc:'Máxima visibilidade. Sua marca referência nos condomínios.' },
 ];
-const INS_DIA=(function(){ try{ return (window.parent.TV_REDE&&window.parent.TV_REDE.REDE.insercoesDia)||150; }catch(err){ return 150; } })(), INS_MES=30;
+const INS_DIA=(function(){ try{ return (window.parent.TV_REDE&&window.parent.TV_REDE.REDE.insercoesDia)||100; }catch(err){ return 100; } })(), INS_MES=30;
 // Fator de frequência DOOH: cada pessoa é impactada ~3x/mês (padrão indústria)
 const FREQ_IMPACTO=3;
 let eTipo='pj', eCondos=new Set(), ePlano=null;
