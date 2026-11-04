@@ -1,3 +1,6 @@
 *.bak
 *.bak-*
 .DS_Store
+_harness-hub.html
+portal-cliente.html
+bot/scripts/notif-banco/
