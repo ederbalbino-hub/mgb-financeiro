@@ -6788,10 +6788,11 @@ function copiarSpot() {
       <div class="ferr-card">
         <div class="ferr-t">🚀 Disparar faturamento do mês</div>
         <div class="ferr-d">Lê a planilha "MGB Faturamento - Clientes" e emite nota + boleto pra quem você marcar. Nada é emitido automaticamente — você revisa e escolhe antes de clicar.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:10px">
           <div><label class="ferr-lbl">Ambiente</label><select id="f-fat-amb" class="ferr-in"><option value="producao">🔴 Produção</option></select></div>
           <div><label class="ferr-lbl">Competência</label><input id="f-fat-comp" class="ferr-in" placeholder="ex.: 2026-10" onchange="if(fatLinhas.length) fFatAplicarHistorico()"></div>
           <div><label class="ferr-lbl">Alíquota ISS do mês</label><input id="f-fat-aliq" class="ferr-in" inputmode="decimal" placeholder="ex.: 3,50" oninput="fAliqSalvar(this.value)"></div>
+          <div><label class="ferr-lbl">Simples vigente (%)</label><input id="f-fat-simples" class="ferr-in" inputmode="decimal" placeholder="ex.: 7,40" oninput="fSimplesSalvar(this.value)" title="Alíquota efetiva do Simples Nacional (DAS) — o contador avisa quando mudar; mesma das abas Nota Fiscal e Empresa"></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
           <button class="ferr-btn" onclick="fFatCarregar()" id="f-fat-btn-carregar">🔄 Carregar planilha</button>
@@ -7346,6 +7347,11 @@ function fSimplesSalvar(valorStr){
   notaConfig={ ...notaConfig, simplesMes: (v||v===0)&&String(valorStr).trim()!==''?v:null };
   try{ scheduleSave(); }catch(e){}
   try{ buildVisaoEmpresa(); }catch(e){}
+  // sincroniza os dois campos (Nota Fiscal e Faturamento) sem sobrescrever o que o usuário está digitando
+  ['f-nota-simples-mes','f-fat-simples'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && document.activeElement!==el) el.value = (v||v===0) ? fRecNum(v) : '';
+  });
 }
 function fAliqSalvar(valorStr){
   const v=fRecParseValor(valorStr);
@@ -7836,6 +7842,8 @@ function fFatInit(){
   if(compEl && !compEl.value){ const d=new Date(); compEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
   const aliqEl=document.getElementById('f-fat-aliq');
   if(aliqEl && !aliqEl.value && notaConfig.aliquotaMes!=null) aliqEl.value=fRecNum(notaConfig.aliquotaMes);
+  const simEl=document.getElementById('f-fat-simples');
+  if(simEl && !simEl.value) simEl.value=fRecNum(impostoSimples());
   fFatLista();
 }
 function fFatEhManual(modulo){ return FAT_MANUAL_MODULOS.indexOf(modulo)>-1; }
