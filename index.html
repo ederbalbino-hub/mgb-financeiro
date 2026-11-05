@@ -3870,6 +3870,23 @@ vCalc();
       </div><!-- /acc-body-dcomp -->
     </div><!-- /desp-comp-section -->
 
+    <!-- Mensalidade do Sistema TV (4YouSee) por condomínio — espelho dos custos do módulo Elevadores -->
+    <div id="tv-sistema-section" style="display:none">
+      <div class="acc-hdr open" id="acc-hdr-tvsist" onclick="toggleAcc('tvsist')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="sec-title">📺 Mensalidade do Sistema (4YouSee) por condomínio</div>
+          <span style="font-size:10px;color:var(--hint)" id="tv-sistema-sum"></span>
+        </div>
+        <span class="acc-toggle">›</span>
+      </div>
+      <div class="acc-body" id="acc-body-tvsist" style="max-height:3000px">
+        <div class="anunc-section">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Espelho dos custos "Sistema TV" lançados no módulo Elevadores — condomínio novo fechado no CRM entra aqui sozinho. Pra editar, mexa no custo da unidade no módulo Elevadores.</div>
+          <div id="tv-sistema-grid" style="overflow-x:auto"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="elev-invest-section" style="display:none">
       <div class="acc-hdr open" id="acc-hdr-einvest" onclick="toggleAcc('einvest')">
         <div style="display:flex;align-items:center;gap:10px">
@@ -12009,6 +12026,30 @@ function initAcc(id, openByDefault=true){
 // ── DESPESAS COMPARTILHADAS ───────────────────────────────────────────────
 let editDespCompId = null;
 
+// ── Mensalidade do Sistema TV (4YouSee) por condomínio — espelho (só leitura) dos custos do módulo Elevadores ──
+function tvSistemaCusto(item){ return ((db.elev||{})[item]||[]).find(x=>x&&x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||''))); }
+function buildTvSistema(){
+  const grid=g('tv-sistema-grid'); if(!grid) return;
+  const m=MODULES.find(x=>x.id==='elev');
+  const itens=((m&&m.items)||[]).filter(i=>!/^(Outros|Expansão|Cliente Piloto|Franqueado Piloto)$/.test(i));
+  const linhas=itens.map(it=>({it,c:tvSistemaCusto(it)}));
+  const com=linhas.filter(l=>l.c).sort((a,b)=>a.it.localeCompare(b.it,'pt-BR')), sem=linhas.filter(l=>!l.c);
+  let telas=0,total=0;
+  const td='padding:5px 8px;border-top:1px solid var(--border2)';
+  const rows=com.map(l=>{
+    const q=l.c.q||0,u=l.c.u||0,v=q*u; telas+=q; total+=v;
+    return `<tr><td style="${td}">${l.it}</td><td style="${td};text-align:center">${q}</td><td style="${td};text-align:right">${f(u)}</td><td style="${td};text-align:right;font-weight:700;color:var(--red)">${f(v)}</td><td style="${td};text-align:center;color:var(--muted)">${l.c.dataInicio?fmtMes(l.c.dataInicio):'—'}</td></tr>`;
+  }).join('');
+  const sum=g('tv-sistema-sum'); if(sum) sum.textContent=com.length?com.length+' cond. · '+telas+' telas · '+f(total)+'/mês':'';
+  grid.innerHTML = com.length
+    ? `<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:520px">
+        <tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th style="text-align:left;padding:4px 8px">Condomínio</th><th style="padding:4px 8px">Telas</th><th style="text-align:right;padding:4px 8px">R$/tela</th><th style="text-align:right;padding:4px 8px">R$/mês</th><th style="padding:4px 8px">Desde</th></tr>
+        ${rows}
+        <tr><td style="${td};font-weight:700">Total · ${com.length} condomínio(s)</td><td style="${td};text-align:center;font-weight:700">${telas}</td><td style="${td}"></td><td style="${td};text-align:right;font-weight:800;color:var(--red)">${f(total)}</td><td style="${td}"></td></tr>
+      </table>`
+    : '<div class="anunc-empty">Nenhum custo "Sistema TV" lançado no módulo Elevadores ainda.</div>';
+  if(sem.length) grid.innerHTML+=`<div style="font-size:10.5px;color:var(--amber);margin-top:8px">⚠ Sem custo de sistema lançado no módulo: ${sem.map(s=>s.it).join(', ')}</div>`;
+}
 function despCompIsAtivo(d){
   if(!d.inicio) return false;
   const [anoI,mesI]=d.inicio.split('-').map(Number);
@@ -12049,7 +12090,9 @@ function syncDespComp(){
 function buildDespComp(){
   const isElev=curMod==='elev';
   g('desp-comp-section').style.display=isElev?'':'none';
+  const tvs=g('tv-sistema-section'); if(tvs) tvs.style.display=isElev?'':'none';
   if(!isElev) return;
+  try{ buildTvSistema(); }catch(e){ console.error('tv sistema',e); }
 
   // Checkboxes de condomínios no form
   const telasWrap=g('dc-telas');
