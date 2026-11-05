@@ -7502,6 +7502,7 @@ function notasAvulsasBackfill(){
 }
 // Digitou/colou um CNPJ completo na nota: busca na Receita (publica.cnpj.ws) e preenche razão social (e e-mail, se estiver vazio).
 let _notaCnpjUlt='', _notaCnpjTimer=null;
+let _notaCnpjEnd=null; // endereço do tomador vindo da Receita — vai junto na emissão (a NFS-e exige endereço no cadastro Asaas)
 function fNotaBuscarCnpj(){
   const docEl=document.getElementById('f-nota-tom-doc'); if(!docEl) return;
   const raw=docEl.value.replace(/\D/g,''); if(raw.length!==14||raw===_notaCnpjUlt) return;
@@ -7510,13 +7511,15 @@ function fNotaBuscarCnpj(){
   fetch('https://publica.cnpj.ws/cnpj/'+raw).then(r=>r.ok?r.json():Promise.reject()).then(d=>{
     if((docEl.value.replace(/\D/g,''))!==raw) return;           // mudou o CNPJ enquanto buscava
     const razao=d.razao_social||'', fant=(d.estabelecimento&&d.estabelecimento.nome_fantasia)||'', mail=(d.estabelecimento&&d.estabelecimento.email)||'';
+    const est=d.estabelecimento||{};
+    _notaCnpjEnd=est.cep?{ cnpj:raw, cep:String(est.cep), logradouro:((est.tipo_logradouro||'')+' '+(est.logradouro||'')).trim(), numero:est.numero||'', complemento:est.complemento||'', bairro:est.bairro||'' }:null;
     const nome=document.getElementById('f-nota-tom-nome'), em=document.getElementById('f-nota-tom-email'), desc=document.getElementById('f-nota-desc');
     const antigo=nome.value.trim();
     if(razao) nome.value=razao;
     if(em&&!em.value.trim()&&mail) em.value=String(mail).toLowerCase();
     const sel=document.getElementById('f-nota-cli');
     if(desc&&razao&&!desc.value.trim()) desc.value='Prestação de serviços de mídia — '+(fant||razao);   // descrição já escrita (ex.: nome fantasia que o Eder digitou) não é trocada
-    if(info) info.innerHTML='<span style="color:var(--green)">✓ Receita Federal: '+razao.replace(/</g,'')+(fant?' ('+fant.replace(/</g,'')+')':'')+(mail?'':' · sem e-mail no cadastro — preencha abaixo')+'</span>';
+    if(info) info.innerHTML='<span style="color:var(--green)">✓ Receita Federal: '+razao.replace(/</g,'')+(fant?' ('+fant.replace(/</g,'')+')':'')+(mail?'':' · sem e-mail no cadastro — preencha abaixo')+(_notaCnpjEnd?' · endereço ok':'')+'</span>';
   }).catch(()=>{ _notaCnpjUlt=''; if(info) info.innerHTML='<span style="color:#B45309">⚠ Não consegui consultar a Receita agora — preencha o nome à mão.</span>'; });
 }
 document.addEventListener('input',function(e){ if(e.target&&e.target.id==='f-nota-tom-doc'){ clearTimeout(_notaCnpjTimer); _notaCnpjTimer=setTimeout(fNotaBuscarCnpj,500); } });
@@ -7577,10 +7580,17 @@ async function fNotaEmitir(){
   if(!email){ alert('Informe o e-mail do tomador (a Asaas precisa pra enviar o boleto'+(semNota?'':' e a nota')+').'); return; }
   if(!desc){ alert('Informe a descrição do serviço.'); return; }
   if(!(valor>0)){ alert('Informe o valor.'); return; }
+  if(!semNota && !(iss>0)){ alert('Informe a Alíquota ISS (%) antes de emitir — sem ela a Asaas recusa a nota (campo "taxes" obrigatório).\n\nSe quiser só o boleto, marque "sem nota fiscal".'); return; }
+  // Endereço do tomador: a NFS-e exige endereço completo no cadastro do cliente da Asaas.
+  // Vem da busca de CNPJ na Receita (preferência) ou do cadastro do cliente (clientesInfo).
+  const infoCli=(typeof clientesInfo!=='undefined'&&clientesInfo[mod]&&clientesInfo[mod][item])||{};
+  const endInfo=(_notaCnpjEnd && _notaCnpjEnd.cnpj===doc && _notaCnpjEnd.cep)?_notaCnpjEnd:infoCli;
+  const endereco=endInfo.cep?{ cep:endInfo.cep, logradouro:endInfo.logradouro||'', numero:endInfo.numero||'S/N', complemento:endInfo.complemento||undefined, bairro:endInfo.bairro||'' }:undefined;
+  if(!semNota && !endereco && !confirm('Não achei o endereço do tomador (digite o CNPJ de novo pra buscar na Receita). Sem endereço no cadastro, a Asaas recusa a NOTA (o boleto sai).\n\nEmitir mesmo assim?')) return;
   if(ambiente==='producao' && !confirm(semNota ? 'Isso vai gerar um BOLETO REAL em produção, SEM nota fiscal. Confirma?' : 'Isso vai gerar um BOLETO e uma NOTA FISCAL REAIS em produção. Confirma?')) return;
   const btn=document.getElementById('f-nota-btn'); const st=document.getElementById('f-nota-status');
   btn.disabled=true; btn.style.opacity='.6'; st.innerHTML='<div class="ferr-info">Enviando pra Asaas…</div>';
-  const payload={ tomador:{nome, cnpj:doc||undefined, email}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, cobranca:(retemIss&&iss>0&&!semNota)?Math.round((valor-Math.round(valor*iss)/100)*100)/100:valor, aliquotaIss:iss||undefined, retemIss}, vencimento:fVencBoleto().iso, semNota };
+  const payload={ tomador:{nome, cnpj:doc||undefined, email, endereco}, servico:{codigo:cod||undefined, descricao:desc}, valores:{total:valor, cobranca:(retemIss&&iss>0&&!semNota)?Math.round((valor-Math.round(valor*iss)/100)*100)/100:valor, aliquotaIss:iss||undefined, retemIss}, vencimento:fVencBoleto().iso, semNota };
   try{
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     const j=await r.json();
