@@ -314,6 +314,8 @@ async function pesquisarAuto(){
   const cfg = cfgPesq(), st = $('#pesqStatus'), bt = $('#bPesq');
   if(!S.cli.nome.trim()){ alert('Preencha o nome do cliente primeiro.'); return; }
   if(!cfg.url || !cfg.token){ alert('Configure a URL e o token da pesquisa (⚙ logo abaixo do botão).'); $('#cfgPesq').open = true; return; }
+  const segAtual = S.cli.segmento.trim();
+  if(segAtual && !confirm('Pesquisar "'+S.cli.nome.trim()+'" no segmento "'+segAtual+'"?\n\nSe esse segmento for do cliente ANTERIOR, cancele e corrija o campo "Segmento do cliente" (ou apague-o, que a pesquisa descobre sozinha).')) return;
   bt.disabled = true;
   try{
     st.textContent = '① Lendo o site e entendendo a empresa… (até 1 min)';
@@ -398,11 +400,12 @@ function aplicarIA(txt){
 function aplicarObj(o){
   const un = v => String(v).replace(/\\n/g,'\n');
   const novo_ = JSON.parse(JSON.stringify(S.cli));
-  if(o.segmento && !novo_.segmento.trim()) novo_.segmento = String(o.segmento);
+  if(o.segmento) novo_.segmento = String(o.segmento); /* a pesquisa manda o segmento atual no pedido; a resposta sempre pode atualizar o campo */
   if(o.sobre && !novo_.fotosTexto.trim()) novo_.fotosTexto = String(o.sobre);
   ['headline','destaque','sub','pa_titulo','pa_p1','pa_p2'].forEach(k => { if(o[k]) novo_[k] = un(o[k]); });
   const mk = o.mercado || o.mkt;
   if(mk){
+    novo_.mkt = mktVazio(); /* zera tudo antes: dado de mercado do cliente anterior nunca sobrevive a uma pesquisa nova */
     if(mk.titulo) novo_.mkt.titulo = un(mk.titulo);
     if(mk.lead) novo_.mkt.lead = un(mk.lead);
     (mk.destaques||mk.d||[]).slice(0,3).forEach((x,i)=>{ novo_.mkt.d[i] = {num:String(x.num||''), txt:String(x.texto||x.txt||''), src:String(x.fonte||x.src||'')}; });
