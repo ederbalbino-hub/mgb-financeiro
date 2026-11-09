@@ -8236,19 +8236,30 @@ async function fFatCarregar(){
     const j=await r.json();
     if(j.erro) throw new Error(j.erro);
     fatLinhas=(j.rows||[]).map(row=>({ ...row, modo:((row.boleto===false||fFatEhManual(row.modulo))?'nota':'ambos'), descricao:(row.modulo==='Tarobá'?FAT_DESC_TAROBA:row.descricao), selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null }));
-    // Tarobá: a comissão é digitada mês a mês no módulo Tarobá — o valor da competência vem de lá (a planilha fica com 0)
-    try{
-      const mt=/^(\d{4})-(\d{2})$/.exec(compSel);
-      if(mt) fatLinhas.forEach(r=>{
-        if(r.modulo!=='Tarobá') return;
-        const item=/cascavel/i.test(r.id+' '+r.cliente)?'Rádio Tarobá Cascavel':'Rádio Tarobá Londrina';
-        const v=recTarobaGetMes(item,+mt[1],+mt[2]-1);
-        if(v>0){ r.valor=v; r.valorDoModulo=true; r.hubMod='taroba'; r.hubItem=item; }
-      });
-    }catch(e){}
     // linhas que o hub incluiu na planilha (id "hub-…"): religa ao cliente do hub e completa o código de serviço
     const ref=(j.rows||[]).find(x=>x.modulo==='TV Interna'&&x.ctribnac);
     if(ref&&(notaConfig.fatCtribnac!==ref.ctribnac||notaConfig.fatCnbs!==ref.cnbs)){ notaConfig.fatCtribnac=ref.ctribnac; notaConfig.fatCnbs=ref.cnbs; }
+    // Tarobá: a comissão é digitada mês a mês no módulo Tarobá — o valor da competência vem de lá (a planilha fica com 0).
+    // Vale pra TODOS os itens do módulo (rádios E TVs, por nome, não mais hardcoded nas 2 rádios): item com valor no mês
+    // e sem linha na planilha (ex.: TV Tarobá Londrina) entra como linha própria do hub, valor editável, padrão só nota.
+    try{
+      const mt=/^(\d{4})-(\d{2})$/.exec(compSel);
+      const mTar=MODULES.find(x=>x.id==='taroba');
+      if(mt&&mTar) mTar.items.forEach(item=>{
+        const v=recTarobaGetMes(item,+mt[1],+mt[2]-1);
+        const r=fatLinhas.find(x=>x.modulo==='Tarobá'&&fSimNome(x.cliente,item)>=0.85);
+        if(r){ r.hubMod='taroba'; r.hubItem=item; if(v>0){ r.valor=v; r.valorDoModulo=true; } }
+        else if(v>0){
+          const info=(((typeof clientesInfo!=='undefined'?clientesInfo:{}).taroba)||{})[item]||{};
+          fatLinhas.push({ linha:null, id:'hub-taroba-'+fNormNome(item), modulo:'Tarobá', cliente:info.razao||item,
+            cnpj:info.cnpj||'', email:info.email||'', logradouro:info.logradouro||'', numero:info.numero||'', complemento:info.complemento||'',
+            bairro:info.bairro||'', cidade:info.cidade||'', uf:info.uf||'', cep:info.cep||'',
+            valor:v, valorDoModulo:true, descricao:FAT_DESC_TAROBA, ctribnac:notaConfig.fatCtribnac||'', cnbs:notaConfig.fatCnbs||'',
+            boleto:false, modo:'nota', issRetido:false, selecionado:false, status:'pendente', erro:null, invoiceId:null, boletoUrl:null,
+            hubMod:'taroba', hubItem:item, apelido:item, doHub:true });
+        }
+      });
+    }catch(e){ console.warn('Tarobá → Faturamento',e); }
     const doHubPorId={}; fFatContratosHub(j.rows||[]).forEach(c=>doHubPorId[c.id]=c);
     fatLinhas.forEach(r=>{ const c=doHubPorId[r.id]; if(!c) return; r.hubMod=c.hubMod; r.hubItem=c.hubItem; r.doHub=true;
       if(!r.ctribnac){ r.ctribnac=c.ctribnac; r.cnbs=c.cnbs; } });
@@ -8353,7 +8364,7 @@ function fFatLista(){
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
       return '<tr data-fid="'+r.id+'" class="'+(fatSelId===r.id?'sel':'')+'" onclick="fFatSelLinha(this.dataset.fid)"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<input type="checkbox" '+((r.status==='aguardando-nota'||r.status==='emitida')?'disabled title="Já enviado neste mês" ':'')+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+(manual?' <span title="valor digitado à mão, padrão só nota" style="font-size:9px;color:#B45309">✋ valor manual</span>':'')+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+(manual?' <span title="valor digitado à mão, padrão só nota" style="font-size:9px;color:#B45309">✋ valor manual</span>':'')+(r.valorDoModulo?' <span title="valor preenchido com o lançamento do módulo Tarobá nesta competência (pode ajustar)" style="font-size:9px;color:#0D9488">↪ do módulo</span>':'')+'</td>'+
         '<td class="fat-nm" style="padding:4px 6px;border-top:1px solid var(--border2)"><a href="#" class="fat-ed" onclick="event.preventDefault();event.stopPropagation();fFatEditar(\''+r.id+'\')" title="Corrigir e-mail, WhatsApp e CNPJ/CPF deste cliente (vale para as próximas emissões)">✏️</a>'+(r.cliente||'')+(r.doHub?' <span title="Cliente novo do hub (Novo cliente). Não está na planilha de faturamento: os dados vêm do cadastro." style="font-size:9px;color:#6C55DB;font-weight:700">✨ novo no hub</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:right;white-space:nowrap">'+((manual||r.soHub)?'<input value="'+(r.valor?String(r.valor).replace('.',','):'')+'" placeholder="valor" onchange="fFatValor(\''+r.id+'\',this.value)" style="width:92px;text-align:right;font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)">':f(r.valor||0))+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<select onchange="fFatModo(\''+r.id+'\',this.value)" style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text)"><option value="ambos"'+((r.modo||'ambos')==='ambos'?' selected':'')+'>Nota + boleto</option><option value="nota"'+(r.modo==='nota'?' selected':'')+'>Só nota</option><option value="boleto"'+(r.modo==='boleto'?' selected':'')+'>Só boleto</option></select>')+'</td>'+
