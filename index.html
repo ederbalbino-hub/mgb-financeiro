@@ -8295,8 +8295,12 @@ function fFatBoleto(r){
   const v=Number(r.valor)||0, a=Number(notaConfig.aliquotaMes)||0;
   return (r.issRetido&&a>0&&r.modo!=='boleto') ? Math.round((v-Math.round(v*a)/100)*100)/100 : v;
 }
-function fFatValor(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.valor=fRecParseValor(v); fFatLista(); } }
-function fFatModo(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.modo=v; fFatLista(); } } // redesenha: a coluna Boleto muda com o modo (só boleto = valor cheio)
+function fFatValor(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.valor=fRecParseValor(v);
+  if(!r.valorDoModulo){ const V=(notaConfig.fatValores=notaConfig.fatValores||{}), k=fFatKey(r); if(r.valor>0) V[k]=r.valor; else delete V[k]; try{ scheduleSave(); }catch(e){} }
+  fFatLista(); } }
+function fFatModo(id,v){ const r=fatLinhas.find(x=>x.id===id); if(r){ r.modo=v;
+  (notaConfig.fatModos=notaConfig.fatModos||{})[id]=v; try{ scheduleSave(); }catch(e){}
+  fFatLista(); } } // redesenha: a coluna Boleto muda com o modo (só boleto = valor cheio)
 function fFatToggle(id){ const r=fatLinhas.find(x=>x.id===id); if(r) r.selecionado=!r.selecionado; fFatResumo(); } // sem redesenhar: o checkbox já mudou sozinho e a tela não se mexe
 function fFatResumo(){
   const el=document.getElementById('f-fat-resumo'); if(!el) return;
@@ -8533,6 +8537,10 @@ function fFatLojasCadastrar(){
 function fFatAplicarEdicoes(){
   const E=(notaConfig&&notaConfig.fatEdicoes)||{};
   fatLinhas.forEach(r=>{ const e=E[r.id]; if(!e) return; if(e.email) r.email=e.email; if(e.cnpj) r.cnpj=e.cnpj; if(e.tel) r.whatsapp=e.tel; r.editado=true; });
+  // Modo salvo vence o padrão derivado (o emitido do mês, h.modo, vence depois no fFatAplicarHistorico).
+  // Valor salvo (por competência) só preenche linha manual vazia — planilha e módulo continuam mandando.
+  const M=(notaConfig&&notaConfig.fatModos)||{}, V=(notaConfig&&notaConfig.fatValores)||{};
+  fatLinhas.forEach(r=>{ if(M[r.id]) r.modo=M[r.id]; const sv=Number(V[fFatKey(r)])||0; if(sv>0&&!r.valorDoModulo&&!(Number(r.valor)>0)) r.valor=sv; });
 }
 function fFatEditar(id){
   const r=fatLinhas.find(x=>x.id===id); if(!r) return;
