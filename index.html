@@ -5864,16 +5864,16 @@ function copiarSpot() {
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Responsável (contato)</label><input class="anunc-form-inp" id="lead-responsavel" placeholder="Ex: João Silva" autocomplete="off" style="width:100%"></div>
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Função/Cargo</label><input class="anunc-form-inp" id="lead-funcao" placeholder="Ex: Síndico, Gerente..." autocomplete="off" style="width:100%"></div>
           </div>
-          <div class="anunc-form-field"><label class="anunc-form-lbl">CNPJ (opcional — usado pra preencher o contrato depois)</label><input class="anunc-form-inp" id="lead-cnpj" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off" oninput="leadMaskCNPJ(this)" style="width:100%"></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">E-mail (recebe contrato, nota e boleto)</label><input class="anunc-form-inp" id="lead-email" type="email" placeholder="financeiro@cliente.com.br" autocomplete="off" style="width:100%"></div>
           <!-- Dados da nota fiscal (03/11, pedido do Eder: a NFS-e exige razão social + endereço completo — caso Eletran) -->
           <details id="lead-fiscal-box" style="border:1.5px dashed #B45309;border-radius:10px;padding:8px 10px;background:rgba(180,83,9,.05)">
-            <summary style="cursor:pointer;font-size:11.5px;font-weight:700;color:#B45309">🧾 Dados para a nota fiscal — obrigatórios para fechar (o 🔍 preenche pelo CNPJ)</summary>
+            <summary style="cursor:pointer;font-size:11.5px;font-weight:700;color:#B45309">🧾 CNPJ e dados da nota fiscal — obrigatórios para fechar (o 🔍 preenche tudo)</summary>
             <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
               <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-                <div class="anunc-form-field" style="flex:1;min-width:190px"><label class="anunc-form-lbl">Razão social (como sai na nota)</label><input class="anunc-form-inp" id="lead-razao" autocomplete="off" style="width:100%"></div>
-                <button type="button" class="anunc-btn" style="margin-bottom:10px" onclick="leadFiscalBuscaCNPJ()" title="Busca razão social e endereço nos dados públicos da Receita a partir do CNPJ preenchido acima">🔍 Buscar pelo CNPJ</button>
+                <div class="anunc-form-field" style="flex:1;min-width:170px"><label class="anunc-form-lbl">CNPJ</label><input class="anunc-form-inp" id="lead-cnpj" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off" oninput="leadMaskCNPJ(this)" style="width:100%"></div>
+                <button type="button" class="anunc-btn" style="margin-bottom:10px" onclick="leadFiscalBuscaCNPJ()" title="Busca razão social e endereço nos dados públicos da Receita a partir do CNPJ">🔍 Buscar pelo CNPJ</button>
               </div>
+              <div class="anunc-form-field"><label class="anunc-form-lbl">Razão social (como sai na nota)</label><input class="anunc-form-inp" id="lead-razao" autocomplete="off" style="width:100%"></div>
               <div id="lead-fiscal-hint" style="font-size:10.5px;color:var(--hint);margin-top:-6px" aria-live="polite"></div>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <div class="anunc-form-field" style="width:104px"><label class="anunc-form-lbl">CEP</label><input class="anunc-form-inp" id="lead-cep" placeholder="86000-000" maxlength="9" autocomplete="off" onblur="leadFiscalCEP()" style="width:100%"></div>
@@ -13809,7 +13809,7 @@ function leadFiscalPreencher(fi){
   fi=fi||{};
   Object.keys(LEAD_FISCAL_IDS).forEach(k=>{ const el=g(LEAD_FISCAL_IDS[k]); if(el) el.value=fi[k]||''; });
   const h=g('lead-fiscal-hint'); if(h){ h.textContent=''; }
-  const d=g('lead-fiscal-box'); if(d) d.open=!!(fi.logradouro||fi.razao);
+  const d=g('lead-fiscal-box'); if(d) d.open=!!(fi.logradouro||fi.razao||((g('lead-cnpj')||{}).value||'').trim()); // o CNPJ mora aqui dentro agora (09/11) — lead com CNPJ abre a caixa
 }
 // Endereço completo o suficiente pra NFS-e sair (razão cai no nome do lead se vazia)
 function leadFiscalCompleto(l){
@@ -13830,7 +13830,7 @@ async function leadFiscalBuscaCNPJ(){
   const hint=g('lead-fiscal-hint');
   const diz=(t,c)=>{ if(hint){ hint.textContent=t; hint.style.color=c||'var(--hint)'; } };
   const cnpj=((g('lead-cnpj')||{}).value||'').replace(/\D/g,'');
-  if(cnpj.length!==14){ diz('⚠ Preencha o CNPJ (14 dígitos) no campo ali em cima primeiro','var(--red)'); (g('lead-cnpj')||{focus(){}}).focus(); return; }
+  if(cnpj.length!==14){ diz('⚠ Preencha o CNPJ (14 dígitos) ao lado primeiro','var(--red)'); (g('lead-cnpj')||{focus(){}}).focus(); return; }
   diz('Buscando os dados do CNPJ…');
   const tentativas=[
     ()=>fetch('https://publica.cnpj.ws/cnpj/'+cnpj).then(r=>r.ok?r.json():Promise.reject()).then(d=>{ const e=d.estabelecimento||{}; return {razao:d.razao_social||'',logradouro:[e.tipo_logradouro,e.logradouro].filter(Boolean).join(' '),numero:e.numero||'',complemento:e.complemento||'',bairro:e.bairro||'',cidade:(e.cidade||{}).nome||'',uf:(e.estado||{}).sigla||'',cep:String(e.cep||'').replace(/\D/g,''),email:(e.email||'').toLowerCase(),tel:e.ddd1&&e.telefone1?e.ddd1+e.telefone1:''}; }),
