@@ -8277,7 +8277,7 @@ async function fFatCarregar(){
     st.innerHTML='<div class="ferr-info" style="color:var(--red)">⚠ '+e.message+' — se for erro de autorização, abra o link do script uma vez no navegador e clique em Permitir.</div>';
   }finally{ btn.disabled=false; btn.style.opacity='1'; }
 }
-function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)&&r.status!=='emitida'&&r.status!=='aguardando-nota'&&!fFatPagoManual(r)) r.selecionado=true; }); fFatLista(); }
+function fFatSelecionarTodos(){ fatLinhas.forEach(r=>{ if(!fFatEhManual(r.modulo)&&r.status!=='emitida'&&r.status!=='aguardando-nota'&&!(r.modo!=='nota'&&fFatPagoManual(r))) r.selecionado=true; }); fFatLista(); }
 function fFatLimparSelecao(){ fatLinhas.forEach(r=>r.selecionado=false); fFatLista(); }
 // Boleto = valor da nota MENOS o ISS retido pelo cliente (só quem retém: Londrina). O Simples (DAS) é da MGB e não entra aqui.
 // SÓ BOLETO (sem nota) não tem ISS: o boleto sai pelo valor cheio.
@@ -8296,13 +8296,52 @@ function fFatResumo(){
 function fFatBadge(s){ return ({pendente:'⏳ pendente',emitindo:'🔄 emitindo…','aguardando-nota':'🔄 aguardando nota','boleto-emitido':'🧾 boleto emitido — falta a nota',emitida:'✅ emitida',erro:'⚠ erro'}[s]||s); }
 // Status de PAGAMENTO (diferente do status de emissão acima) — vem da planilha, atualizado pelo
 // webhook da Asaas (bot/api/asaas-webhook.js) assim que o cliente paga ou o boleto vence.
+// Liga a linha aos clientes da Visão Receita do mês (hub direto ou por CNPJ/valor/nome, igual ao espelho do Asaas).
+// Memoizado por competência: a lista chama isso por linha a cada redesenho.
+let _fatAlvoMemo={comp:'',n:-1,map:{},linhas:[]};
+function fFatAlvosDaLinha(r){
+  const comp=(document.getElementById('f-fat-comp')||{}).value||''; const m=/^(\d{4})-(\d{2})$/.exec(comp); if(!m) return [];
+  if(_fatAlvoMemo.comp!==comp||_fatAlvoMemo.n!==fatLinhas.length){
+    _fatAlvoMemo={comp,n:fatLinhas.length,map:{},linhas:(function(){ try{ return coletaClientesMes(+m[1],+m[2]-1); }catch(e){ return []; } })()};
+  }
+  if(_fatAlvoMemo.map[r.id]) return _fatAlvoMemo.map[r.id];
+  let a=[]; try{ a=fFatAlvos(r,_fatAlvoMemo.linhas)||[]; }catch(e){}
+  return _fatAlvoMemo.map[r.id]=a;
+}
+function fFatPagosDaLinha(r){ // marcações de recPagamentos dos clientes ligados à linha, na competência escolhida
+  const comp=(document.getElementById('f-fat-comp')||{}).value||''; const m=/^(\d{4})-(\d{2})$/.exec(comp); if(!m) return [];
+  const k=recPagKey(+m[1],+m[2]-1);
+  return fFatAlvosDaLinha(r).map(a=>((recPagamentos[a.mod]||{})[a.item]||{})[k]).filter(Boolean);
+}
 function fFatPagoManual(r){
-  try{
-    if(!r.hubMod||!r.hubItem) return false;
-    const comp=(document.getElementById('f-fat-comp')||{}).value||''; const m=/^(\d{4})-(\d{2})$/.exec(comp); if(!m) return false;
-    const pg=((recPagamentos[r.hubMod]||{})[r.hubItem]||{})[recPagKey(+m[1],+m[2]-1)];
-    return !!(pg&&pg.pago);
-  }catch(e){ return false; }
+  try{ const p=fFatPagosDaLinha(r); return p.length>0&&p.every(x=>x.pago); }catch(e){ return false; }
+}
+function fFatBaixaManualFeita(r){ // todos os clientes da linha com baixa manual (fonte 'manual') nesta competência
+  try{ const p=fFatPagosDaLinha(r); return p.length>0&&p.every(x=>x.pago&&x.fonte==='manual'); }catch(e){ return false; }
+}
+// 💵 Baixa manual direto na lista do dia 5 (cliente pagou em dinheiro/Pix por fora do Asaas):
+// mesma marcação da Visão Receita (recPagamentos, fonte 'manual' — o espelho do Asaas não mexe nela),
+// aplicada a todos os clientes ligados à linha (ex.: Móveis Brasília = 6 lojas) com um confirm só.
+function fFatBaixaManual(id){
+  const r=fatLinhas.find(x=>x.id===id); if(!r) return;
+  const comp=(document.getElementById('f-fat-comp')||{}).value||''; const m=/^(\d{4})-(\d{2})$/.exec(comp);
+  if(!m){ alert('Escolha a competência primeiro.'); return; }
+  const alvos=fFatAlvosDaLinha(r);
+  if(!alvos.length){ alert('Não achei "'+(r.apelido||r.cliente)+'" nos clientes do financeiro deste mês — confira o cadastro ou dê a baixa pela Visão Receita (Clientes — mês).'); return; }
+  const k=recPagKey(+m[1],+m[2]-1), mesTxt=comp.split('-').reverse().join('/'), nome=r.apelido||r.cliente;
+  if(fFatBaixaManualFeita(r)){
+    if(!confirm('Desfazer a baixa manual de '+nome+' em '+mesTxt+'?')) return;
+    alvos.forEach(a=>{ const Q=(recPagamentos[a.mod]=recPagamentos[a.mod]||{}); const I=(Q[a.item]=Q[a.item]||{}); const pg=I[k]||{pago:false,obs:''};
+      I[k]={...pg,pago:pg.asaas?pg.asaas.st==='pago':false,fonte:pg.asaas?'asaas':null}; });
+  } else {
+    if(!confirm('Baixa manual: marcar '+nome+' como PAGO em '+mesTxt+'?'+(alvos.length>1?'\n(Vale para as '+alvos.length+' unidades ligadas a esta cobrança.)':'')+'\n\nUse só para recebimento fora do Asaas: dinheiro, Pix direto, permuta.')) return;
+    const quem=(window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||'';
+    alvos.forEach(a=>{ const Q=(recPagamentos[a.mod]=recPagamentos[a.mod]||{}); const I=(Q[a.item]=Q[a.item]||{}); const pg=I[k]||{pago:false,obs:''};
+      I[k]={...pg,pago:true,fonte:'manual',baixaEm:new Date().toISOString(),baixaPor:quem}; });
+  }
+  try{ buildLancRec(); }catch(e){}
+  try{ scheduleSave(); }catch(e){}
+  fFatLista();
 }
 // Sem cobrança emitida na competência escolhida: mostra a situação do último mês faturado (de fatEmissoes ou do espelho do Asaas na Visão Receita),
 // para dar para ver quem pagou/está devendo mesmo olhando o mês que ainda não foi emitido.
@@ -8326,6 +8365,8 @@ function fFatUltimoPag(r){
 }
 function fFatBadgePagamento(r){
   const s=r.statusPagamento;
+  // Baixa manual vence o status do boleto: cliente que pagou em dinheiro não fica "vencido" na lista
+  if(fFatBaixaManualFeita(r)) return '<span style="color:var(--green);font-weight:600" title="Baixa manual — recebido fora do Asaas (dinheiro/Pix direto)">🟢 pago ✋</span>';
   if(!r.paymentId&&fFatPagoManual(r)) return '<span style="color:var(--green)">🟢 pago</span>';
   if(!r.paymentId){
     const u=fFatUltimoPag(r);
@@ -8363,6 +8404,8 @@ function fFatLista(){
     lst.map(r=>{
       const manual=fFatEhManual(r.modulo);
       const jaFaturado=r.ultimoMesFaturado && String(r.ultimoMesFaturado).slice(0,7)===comp;
+      const baixaFeita=fFatBaixaManualFeita(r);
+      const linkBaixa=(r.statusPagamento==='pago'&&!baixaFeita)?'':' <a href="#" onclick="event.preventDefault();event.stopPropagation();fFatBaixaManual(\''+r.id+'\')" title="'+(baixaFeita?'Desfazer a baixa manual desta competência':'Pagou em dinheiro/Pix por fora do Asaas? Marca esta competência como paga (baixa manual)')+'" style="font-size:9px;color:var(--hint);margin-left:4px;white-space:nowrap">'+(baixaFeita?'desfazer':'💵 baixa')+'</a>';
       return '<tr data-fid="'+r.id+'" class="'+(fatSelId===r.id?'sel':'')+'" onclick="fFatSelLinha(this.dataset.fid)"><td style="padding:4px 6px;border-top:1px solid var(--border2)">'+('<input type="checkbox" '+((r.status==='aguardando-nota'||r.status==='emitida')?'disabled title="Já enviado neste mês" ':'')+(r.selecionado?'checked':'')+' onchange="fFatToggle(\''+r.id+'\')">')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.modulo||'')+(manual?' <span title="valor digitado à mão, padrão só nota" style="font-size:9px;color:#B45309">✋ valor manual</span>':'')+(r.valorDoModulo?' <span title="valor preenchido com o lançamento do módulo Tarobá nesta competência (pode ajustar)" style="font-size:9px;color:#0D9488">↪ do módulo</span>':'')+'</td>'+
         '<td class="fat-nm" style="padding:4px 6px;border-top:1px solid var(--border2)"><a href="#" class="fat-ed" onclick="event.preventDefault();event.stopPropagation();fFatEditar(\''+r.id+'\')" title="Corrigir e-mail, WhatsApp e CNPJ/CPF deste cliente (vale para as próximas emissões)">✏️</a>'+(r.cliente||'')+(r.doHub?' <span title="Cliente novo do hub (Novo cliente). Não está na planilha de faturamento: os dados vêm do cadastro." style="font-size:9px;color:#6C55DB;font-weight:700">✨ novo no hub</span>':'')+'</td>'+
@@ -8373,7 +8416,7 @@ function fFatLista(){
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);text-align:center">'+(r.issRetido?'sim':'não')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+(r.ultimoMesFaturado?String(r.ultimoMesFaturado).slice(0,7):'—')+(jaFaturado?' <span style="color:#B45309">⚠ já faturado este mês</span>':'')+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadge(r.status)+(r.emitidoEm&&r.status!=='pendente'?' <span style="font-size:9px;color:var(--muted)">'+new Date(r.emitidoEm).toLocaleDateString('pt-BR')+(r.nfNumero?' · NF '+r.nfNumero:'')+'</span>':'')+(r.erro?' <span style="color:var(--red)" title="'+String(r.erro).replace(/"/g,'')+'">(!)</span>':'')+(r.boletoUrl?' <a href="'+r.boletoUrl+'" target="_blank">boleto</a>':'')+'</td>'+
-        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+'</td>'+
+        '<td style="padding:4px 6px;border-top:1px solid var(--border2)">'+fFatBadgePagamento(r)+linkBaixa+'</td>'+
         '<td style="padding:4px 6px;border-top:1px solid var(--border2);white-space:nowrap">'+(r.boletoUrl&&r.modo!=='nota'?'<a href="#" onclick="event.preventDefault();fFatEnviarWhats(\''+r.id+'\')" title="Abre o WhatsApp com o boleto pronto pra enviar">📲 boleto</a>':'<span style="color:var(--muted)" title="O botão do WhatsApp aparece depois que o boleto é emitido">—</span>')+(r.hubMod?' <a href="#" onclick="event.preventDefault();fFatRecibo(\''+r.id+'\')" title="Abre a aba Recibos já preenchida com este cliente" style="margin-left:6px">🧾 recibo</a>':'')+((r.paymentId||r.invoiceId)&&r.statusPagamento!=='pago'?' <a href="#" onclick="event.preventDefault();fFatCancelar(\''+r.id+'\')" title="Cancela o boleto e a nota deste mês no Asaas para emitir de novo (não funciona em boleto pago)" style="margin-left:6px;color:var(--red)">↩ cancelar</a>':'')+'</td></tr>';
     }).join('')+'</table></div><div style="height:70px"></div>';
   const _nb=el.querySelector('.fat-scroll'); if(_nb){ _nb.scrollTop=_st; _nb.scrollLeft=_sl; }
@@ -8569,7 +8612,7 @@ async function fFatCancelar(id){
 }
 async function fFatEmitirUma(row){
   if(row.status==='aguardando-nota'||row.status==='emitida') return row.status; // já enviado neste mês
-  if(!row.paymentId&&fFatPagoManual(row)){ row.selecionado=false; return 'pago'; } // já consta como pago neste mês
+  if(!row.paymentId&&row.modo!=='nota'&&fFatPagoManual(row)){ row.selecionado=false; return 'pago'; } // pago por fora: não gera boleto novo; "só nota" continua emitindo (a NFS-e é devida mesmo pago em dinheiro)
   if(row.soHub&&row.modo!=='nota'&&String(row.cnpj||'').replace(/\D/g,'').length<11){
     row.status='erro'; row.erro='Falta CNPJ/CPF — cadastre na caixa "Cadastrar lojas" (Nome - CNPJ)'; fFatLista(); return 'erro';
   }
