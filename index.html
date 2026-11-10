@@ -14314,6 +14314,17 @@ function deserializeState(obj){
 //  3) recusa qualquer salvamento que encolha o estado a menos da metade do que foi carregado (_baseBytes).
 let _baseBytes = 0;          // tamanho do estado carregado do servidor — base da trava 3
 let _alertaBloqueio = false; // avisa só uma vez por sessão
+// ── SAVE POR SEÇÃO (10/11/2026, caso Karen): a aba só grava as seções que ELA alterou ─────────
+// Antes: cada save mandava o estado INTEIRO — uma aba desatualizada (do Eder ou da Karen) escrevia o
+// passado por cima do presente. Agora: guardamos um hash por seção na carga; na hora de salvar, baixamos
+// o estado MAIS NOVO do servidor, sobrepomos só as seções sujas desta aba e gravamos o conjunto (com
+// contador _v e autor). Bônus: o que outra sessão salvou é incorporado aqui no mesmo passo.
+// O backend não muda (continua um JSON só); _v/_salvoPor/_salvoEm viajam dentro do próprio JSON.
+let _secBase = null;   // {seção: {h,b}} do último estado confirmado (carga ou save ok)
+let _secVBase = 0;     // _v do servidor na última carga/save
+function _secHash(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))|0; } return h; }
+function _secSnapshot(obj){ const out={}; Object.keys(obj).forEach(k=>{ const s=JSON.stringify(obj[k])||''; out[k]={h:_secHash(s),b:s.length}; }); return out; }
+function _quemSalva(){ try{ return (window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||''; }catch(e){ return ''; } }
 async function saveToSheets(){
   if(!_cargaInicialCompleta){
     console.warn('saveToSheets ignorado: carga inicial ainda não terminou (evita sobrescrever com estado vazio).');
@@ -14325,16 +14336,60 @@ async function saveToSheets(){
     if(!_alertaBloqueio){ _alertaBloqueio=true; alert('⚠ Não consegui carregar os seus dados do servidor, então NÃO vou salvar nada (isso protege o que já está guardado).\n\nRecarregue a página. Se continuar, avise o suporte antes de editar qualquer coisa.'); }
     return;
   }
-  const payload = JSON.stringify(serializeState());
-  if(_baseBytes>8000 && payload.length < _baseBytes*0.5){
-    console.error('saveToSheets BLOQUEADO: o estado encolheu de', _baseBytes, 'para', payload.length, 'bytes.');
-    setSyncStatus('error', '⚠ Salvamento bloqueado (dados diminuíram demais)');
-    if(!_alertaBloqueio){ _alertaBloqueio=true; alert('⚠ Por segurança NÃO salvei: os dados ficariam menos da metade do que foram carregados (possível perda). Recarregue a página antes de continuar.'); }
-    return;
-  }
+  const meu = serializeState();
+  const snap = _secSnapshot(meu);
+  // seções sujas = o que ESTA aba mudou desde a última carga/save confirmado
+  const sujas = _secBase ? Object.keys(snap).filter(k=>!_secBase[k]||_secBase[k].h!==snap[k].h) : Object.keys(snap);
+  if(_secBase && !sujas.length){ setSyncStatus('idle'); return; }  // nada mudou — nem vai à rede
   setSyncStatus('saving');
+  // 1) baixa o estado mais novo do servidor pra mesclar
+  let servidor = null;
+  try{
+    const r = await fetch(APPS_SCRIPT_URL + '?t=' + Date.now(), { method:'GET', mode:'cors' });
+    const tx = await r.text();
+    if(tx && tx.trim().startsWith('{')){ const o=JSON.parse(tx); if(Object.keys(o).length>0) servidor=o; }
+  }catch(e){ console.warn('saveToSheets: não consegui ler o servidor antes de gravar ('+e+') — salvamento cheio (modo antigo).'); }
+  let payloadObj, aviso=[];
+  if(servidor && _secBase){
+    const snapSrv = _secSnapshot(servidor);
+    const sv = Number(servidor._v)||0;
+    payloadObj = Object.assign({}, servidor);   // começa do MAIS NOVO — preserva o trabalho das outras sessões
+    const bloqueadas=[], conflitos=[], novidades=[];
+    sujas.forEach(k=>{
+      const base=_secBase[k]||{h:0,b:0};
+      // trava por seção: seção grande que encolheu pra menos de 40% = possível perda — mantém a do servidor
+      if(base.b>4000 && snap[k].b < base.b*0.4){ bloqueadas.push(k); return; }
+      if(snapSrv[k] && snapSrv[k].h!==base.h) conflitos.push(k);  // outra sessão também mexeu aqui (minha versão vence)
+      payloadObj[k]=meu[k];
+    });
+    // seções que NÃO mexi mas o servidor tem mais novas → incorpora no meu estado (o que a Karen salvou aparece)
+    Object.keys(snapSrv).forEach(k=>{
+      if(k.charAt(0)==='_'||sujas.indexOf(k)>-1||!(k in snap)) return;
+      if(_secBase[k]&&snapSrv[k].h!==_secBase[k].h) novidades.push(k);
+    });
+    if(novidades.length){ try{ deserializeState(novidades.reduce((o,k)=>(o[k]=servidor[k],o),{})); }catch(e){ console.error('incorporar novidades',e); } }
+    payloadObj._v = sv+1; payloadObj._salvoPor=_quemSalva(); payloadObj._salvoEm=new Date().toISOString();
+    if(bloqueadas.length){ aviso.push('⚠ Não salvei '+bloqueadas.join(', ')+' (encolheu demais — recarregue e confira)'); if(!_alertaBloqueio){ _alertaBloqueio=true; alert('⚠ Por segurança NÃO salvei a(s) seção(ões): '+bloqueadas.join(', ')+' — diminuíram demais de uma vez (possível perda). O resto foi salvo. Recarregue a página e confira.'); } }
+    if(conflitos.length) aviso.push('⚠ '+(servidor._salvoPor||'outra sessão')+' também mexeu em: '+conflitos.join(', ')+' — prevaleceu o desta aba');
+    if(novidades.length) aviso.push('↻ atualizado de '+(servidor._salvoPor||'outra sessão')+': '+novidades.join(', '));
+    // guarda as novas bases: o que vai ficar gravado no servidor
+    _secBase=_secSnapshot(payloadObj); delete _secBase._v; delete _secBase._salvoPor; delete _secBase._salvoEm;
+    _secVBase=payloadObj._v;
+  } else {
+    // sem leitura do servidor (offline/erro) ou sem baseline: comportamento antigo (estado inteiro), com a trava global
+    payloadObj = meu;
+    const bruto = JSON.stringify(payloadObj);
+    if(_baseBytes>8000 && bruto.length < _baseBytes*0.5){
+      console.error('saveToSheets BLOQUEADO: o estado encolheu de', _baseBytes, 'para', bruto.length, 'bytes.');
+      setSyncStatus('error', '⚠ Salvamento bloqueado (dados diminuíram demais)');
+      if(!_alertaBloqueio){ _alertaBloqueio=true; alert('⚠ Por segurança NÃO salvei: os dados ficariam menos da metade do que foram carregados (possível perda). Recarregue a página antes de continuar.'); }
+      return;
+    }
+    payloadObj._v=_secVBase+1; payloadObj._salvoPor=_quemSalva(); payloadObj._salvoEm=new Date().toISOString();
+  }
+  const payload = JSON.stringify(payloadObj);
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: {'Content-Type':'text/plain;charset=utf-8'},
@@ -14342,6 +14397,7 @@ async function saveToSheets(){
     });
     _baseBytes = payload.length;
     setSyncStatus('saved');
+    aviso.forEach(m=>{ try{ mostrarToast(m); }catch(e){} });
     setTimeout(()=>setSyncStatus('idle'), 3000);
   } catch(e){
     console.error('Save error:', e);
@@ -14361,6 +14417,9 @@ async function loadFromSheets(){
         if(Object.keys(obj).length > 0){
           deserializeState(obj);
           _baseBytes = text.length;
+          // baseline do save por seção: hash do que o SERVIDOR tem agora (lado cru), por seção
+          _secBase = _secSnapshot(obj); delete _secBase._v; delete _secBase._salvoPor; delete _secBase._salvoEm;
+          _secVBase = Number(obj._v)||0;
           _cargaSheetsOk = true; // só migra/salva se o estado REAL veio do servidor (nunca sobre o estado default/offline)
           setTimeout(()=>{ try{ mgbConferirAssinaturas(); }catch(e){} }, 6000);
           syncFinanceiro();
