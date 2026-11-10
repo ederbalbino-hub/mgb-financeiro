@@ -965,6 +965,7 @@ body{-webkit-font-smoothing:antialiased}
         <div id="home-merc-alert" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);border:2px solid #C2410C;color:#7C2D12;font-size:13.5px;line-height:1.5"></div>
         <div id="home-vaapty-alert" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#FDF2F8,#F5F3FF);border:2px solid #D6367F;color:#831843;font-size:13.5px;line-height:1.5"></div>
         <div id="home-fat-virada" style="display:none;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border:2px solid #2563EB;color:#1E3A8A;font-size:13.5px;line-height:1.5;text-align:left"></div>
+        <div id="home-fat-pend" style="display:none;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#FEF2F2,#FFF7ED);border:2px solid #DC2626;color:#7F1D1D;font-size:13.5px;line-height:1.5;text-align:left"></div>
         <div id="home-rops-alert" onclick="goPage('radioops')" style="display:none;cursor:pointer;margin:0 0 14px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#ECFDF5,#F0FDF4 60%,#FFFBEB);border:2px solid #118A5D;box-shadow:0 8px 30px rgba(17,138,93,.18);color:#065F46;font-size:13.5px;line-height:1.5"></div>
         <!-- Hubs principais -->
         <div class="home-hubs">
@@ -8081,15 +8082,24 @@ function fFatProvRender(){
     '<tr style="font-weight:700"><td style="padding:5px 6px;border-top:2px solid var(--border2)">Total provisionado</td>'+p.totais.map(t=>'<td style="text-align:right;padding:5px 6px;border-top:2px solid var(--border2);font-family:\'DM Mono\',monospace">'+fm(t)+'</td>').join('')+'</tr></tbody></table></div>';
 }
 function fFatGuardar(r){
+  const em=r.emitidoEm||new Date().toISOString();
+  // status de pagamento mais velho que a emissão = sobra do mês anterior — não entra no registro novo
+  const pgOk=r.statusPagamento&&!(r.statusPagamentoEm&&(new Date(r.statusPagamentoEm)<new Date(em)));
   fatEmissoes[fFatKey(r)]={ status:r.status, modo:r.modo, valor:r.valor, boleto:fFatBoleto(r), paymentId:r.paymentId||null, invoiceId:r.invoiceId||null,
-    boletoUrl:r.boletoUrl||null, erro:r.erro||null, em:r.emitidoEm||new Date().toISOString(), nf:r.nfNumero||null,
-    pg:r.statusPagamento||null, pgEm:r.statusPagamentoEm||null };
+    boletoUrl:r.boletoUrl||null, erro:r.erro||null, em:em, nf:r.nfNumero||null, cliente:r.apelido||r.cliente||null,
+    pg:pgOk?(r.statusPagamento||null):null, pgEm:pgOk?(r.statusPagamentoEm||null):null };
   try{ scheduleSave(); }catch(e){}
 }
 function fFatAplicarHistorico(){
   fatLinhas.forEach(r=>{
     const h=fatEmissoes[fFatKey(r)];
-    if(h){ Object.assign(r,{ status:h.status, paymentId:h.paymentId, invoiceId:h.invoiceId, boletoUrl:h.boletoUrl, erro:h.erro, emitidoEm:h.em, nfNumero:h.nf }); if(h.pg){ r.statusPagamento=h.pg; r.statusPagamentoEm=h.pgEm||null; } if(h.modo) r.modo=h.modo; r.selecionado=false; }
+    if(h){ Object.assign(r,{ status:h.status, paymentId:h.paymentId, invoiceId:h.invoiceId, boletoUrl:h.boletoUrl, erro:h.erro, emitidoEm:h.em, nfNumero:h.nf });
+      // Status de pagamento ANTERIOR à emissão = resto do mês velho (gravado por aba com código desatualizado).
+      // Apaga do registro — o sincronizar com o Asaas traz o status verdadeiro da cobrança nova.
+      const pgVelho=h.pg&&h.pgEm&&h.em&&(new Date(h.pgEm)<new Date(h.em));
+      if(pgVelho){ h.pg=null; h.pgEm=null; try{ scheduleSave(); }catch(e){} }
+      if(h.pg){ r.statusPagamento=h.pg; r.statusPagamentoEm=h.pgEm||null; } else { r.statusPagamento=null; r.statusPagamentoEm=null; }
+      if(h.modo) r.modo=h.modo; r.selecionado=false; }
     else {
       // Virada de competência: o pagamento que veio da planilha é do ÚLTIMO mês faturado — não vale pro mês novo.
       // Zera a coluna (pedido do Eder 10/11: status velho confundia) e guarda o anterior só pro balãozinho.
@@ -8343,15 +8353,18 @@ function fFatBaixaManual(id){
   const alvos=fFatAlvosDaLinha(r);
   if(!alvos.length){ alert('Não achei "'+(r.apelido||r.cliente)+'" nos clientes do financeiro deste mês — confira o cadastro ou dê a baixa pela Visão Receita (Clientes — mês).'); return; }
   const k=recPagKey(+m[1],+m[2]-1), mesTxt=comp.split('-').reverse().join('/'), nome=r.apelido||r.cliente;
+  const H=fatEmissoes[fFatKey(r)];
   if(fFatBaixaManualFeita(r)){
     if(!confirm('Desfazer a baixa manual de '+nome+' em '+mesTxt+'?')) return;
     alvos.forEach(a=>{ const Q=(recPagamentos[a.mod]=recPagamentos[a.mod]||{}); const I=(Q[a.item]=Q[a.item]||{}); const pg=I[k]||{pago:false,obs:''};
       I[k]={...pg,pago:pg.asaas?pg.asaas.st==='pago':false,fonte:pg.asaas?'asaas':null}; });
+    if(H) delete H.pgManual;   // volta a contar como pendência no aviso da Home
   } else {
     if(!confirm('Baixa manual: marcar '+nome+' como PAGO em '+mesTxt+'?'+(alvos.length>1?'\n(Vale para as '+alvos.length+' unidades ligadas a esta cobrança.)':'')+'\n\nUse só para recebimento fora do Asaas: dinheiro, Pix direto, permuta.')) return;
     const quem=(window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||'';
     alvos.forEach(a=>{ const Q=(recPagamentos[a.mod]=recPagamentos[a.mod]||{}); const I=(Q[a.item]=Q[a.item]||{}); const pg=I[k]||{pago:false,obs:''};
       I[k]={...pg,pago:true,fonte:'manual',baixaEm:new Date().toISOString(),baixaPor:quem}; });
+    if(H) H.pgManual=true;   // o aviso de pendências da Home respeita a baixa manual
   }
   try{ buildLancRec(); }catch(e){}
   try{ scheduleSave(); }catch(e){}
@@ -8388,6 +8401,9 @@ function fFatBadgePagamento(r){
     const dica=u?('Este mês ainda não foi emitido. Última cobrança'+(u.lbl?' ('+u.lbl+')':'')+': '+u.st+'.'):'Este mês ainda não foi emitido.';
     return '<span style="color:var(--muted)" title="'+dica+'">—</span>';
   }
+  // defesa extra: status datado de ANTES da emissão é sobra do mês anterior — mostra aguardando, sem a data velha
+  if(s&&r.statusPagamentoEm&&r.emitidoEm&&(new Date(r.statusPagamentoEm)<new Date(r.emitidoEm)))
+    return '<span style="color:var(--muted);font-weight:600" title="Cobrança nova desta competência — o status atualiza no próximo sincronizar com o Asaas">⚪ aguardando</span>';
   const map={
     pago:{icone:'🟢',txt:'pago',cor:'var(--green)'},
     vencido:{icone:'🔴',txt:'vencido',cor:'var(--red)'},
@@ -14873,6 +14889,7 @@ function buildHome(){
   try{ crmPendentesHome(); }catch(e){ console.error('crmPendentesHome',e); }
   try{ mercadaoAvisoHome(); }catch(e){ console.error('mercadaoAvisoHome',e); }
   try{ fatViradaAvisoHome(); }catch(e){ console.error('fatViradaAvisoHome',e); }
+  try{ fatPendAnterioresHome(); }catch(e){ console.error('fatPendAnterioresHome',e); }
   const now=new Date();
   g('home-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 
@@ -15878,6 +15895,28 @@ function fatViradaAvisoHome(){
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
     '<button onclick="fatAbrirFaturamento()" style="border:0;border-radius:9px;padding:8px 14px;background:#2563EB;color:#fff;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit">🚀 Abrir o Faturamento</button>'+
     '<button onclick="try{localStorage.setItem(\'fat_virada_ok\',\''+comp+'\')}catch(e){};g(\'home-fat-virada\').style.display=\'none\'" style="border:1px solid #2563EB;border-radius:9px;padding:8px 14px;background:transparent;color:#2563EB;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit">✓ Entendi</button></div>';
+}
+// 💰 Pendências de meses ANTERIORES (pedido do Eder 10/11): boleto emitido em competência passada e ainda
+// não pago (nem baixa manual) = aviso fixo na Home, pra cobrança velha não sumir quando a lista vira o mês.
+// Fica na tela enquanto a pendência existir — some sozinho quando o Asaas confirmar o pagamento (ou baixa manual).
+function fatPendAnterioresHome(){
+  const box=g('home-fat-pend'); if(!box) return;
+  const hj=new Date(); const compAtual=hj.getFullYear()+'-'+String(hj.getMonth()+1).padStart(2,'0');
+  const pend=[];
+  Object.keys(fatEmissoes||{}).forEach(k=>{
+    const i=k.lastIndexOf('|'); if(i<0) return; const mes=k.slice(i+1);
+    if(!/^\d{4}-\d{2}$/.test(mes)||mes>=compAtual) return;
+    const e=fatEmissoes[k]||{};
+    if(!e.paymentId||e.pgManual||e.pg==='pago'||e.pg==='cancelado') return;
+    pend.push({ mes, nome:e.cliente||k.slice(0,i).replace(/^hub-[a-z]+-/,''), st:e.pg==='vencido'?'vencido':'aguardando', valor:Number(e.boleto)||0 });
+  });
+  if(!pend.length){ box.style.display='none'; return; }
+  pend.sort((a,b)=>a.mes.localeCompare(b.mes)||String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+  const tot=pend.reduce((s,p)=>s+p.valor,0);
+  box.style.display='block';
+  box.innerHTML='<b>💰 '+pend.length+' cobrança'+(pend.length>1?'s':'')+' de mês anterior ainda não paga'+(pend.length>1?'s':'')+(tot>0?' — '+f(tot):'')+'.</b>'+
+    '<div style="margin-top:6px;font-size:12.5px;line-height:1.7">'+pend.map(p=>'• <b>'+p.nome+'</b> ('+p.mes.slice(5,7)+'/'+p.mes.slice(2,4)+') — '+(p.st==='vencido'?'<span style="color:#DC2626;font-weight:700">vencido</span>':'aguardando')+(p.valor>0?' · '+f(p.valor):'')).join('<br>')+'</div>'+
+    '<div style="margin-top:10px"><button onclick="fatAbrirFaturamento()" style="border:0;border-radius:9px;padding:8px 14px;background:#DC2626;color:#fff;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit">Abrir o Faturamento</button></div>';
 }
 function crmPendentesHome(){
   const box=g('home-crm-pend'); if(!box) return;
