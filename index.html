@@ -14325,6 +14325,7 @@ let _secVBase = 0;     // _v do servidor na última carga/save
 function _secHash(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))|0; } return h; }
 function _secSnapshot(obj){ const out={}; Object.keys(obj).forEach(k=>{ const s=JSON.stringify(obj[k])||''; out[k]={h:_secHash(s),b:s.length}; }); return out; }
 function _quemSalva(){ try{ return (window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||''; }catch(e){ return ''; } }
+let _saveAdiados = 0, _alertaAdiado = false;  // saves adiados em sequência por não conseguir ler o servidor antes de gravar
 async function saveToSheets(){
   if(!_cargaInicialCompleta){
     console.warn('saveToSheets ignorado: carga inicial ainda não terminou (evita sobrescrever com estado vazio).');
@@ -14376,16 +14377,15 @@ async function saveToSheets(){
     _secBase=_secSnapshot(payloadObj); delete _secBase._v; delete _secBase._salvoPor; delete _secBase._salvoEm;
     _secVBase=payloadObj._v;
   } else {
-    // sem leitura do servidor (offline/erro) ou sem baseline: comportamento antigo (estado inteiro), com a trava global
-    payloadObj = meu;
-    const bruto = JSON.stringify(payloadObj);
-    if(_baseBytes>8000 && bruto.length < _baseBytes*0.5){
-      console.error('saveToSheets BLOQUEADO: o estado encolheu de', _baseBytes, 'para', bruto.length, 'bytes.');
-      setSyncStatus('error', '⚠ Salvamento bloqueado (dados diminuíram demais)');
-      if(!_alertaBloqueio){ _alertaBloqueio=true; alert('⚠ Por segurança NÃO salvei: os dados ficariam menos da metade do que foram carregados (possível perda). Recarregue a página antes de continuar.'); }
-      return;
-    }
-    payloadObj._v=_secVBase+1; payloadObj._salvoPor=_quemSalva(); payloadObj._salvoEm=new Date().toISOString();
+    // Leitura pré-save falhou (servidor fora do ar/engasgado): NUNCA gravar o estado inteiro por cima —
+    // era assim que uma aba atropelava o que a outra pessoa tinha salvo (sumiço do Tarobá nov/2026, 11/11).
+    // Em vez disso, adia e tenta de novo sozinho em 30 s, quantas vezes precisar.
+    _saveAdiados++;
+    console.warn('saveToSheets ADIADO ('+_saveAdiados+'x): sem leitura do servidor antes de gravar — não salvo por cima às cegas. Nova tentativa em 30 s.');
+    setSyncStatus('error', '⚠ Servidor não respondeu — salvamento adiado (tento de novo sozinho)');
+    if(_saveAdiados===3 && !_alertaAdiado){ _alertaAdiado=true; alert('⚠ O servidor não está respondendo, então ainda NÃO salvei suas últimas mudanças (isso evita gravar por cima do que outra pessoa salvou).\n\nDeixe esta aba aberta que eu continuo tentando a cada 30 segundos. O aviso vermelho some quando conseguir.'); }
+    setTimeout(function(){ try{ saveToSheets(); }catch(e){} }, 30000);
+    return;
   }
   const payload = JSON.stringify(payloadObj);
   try {
@@ -14396,6 +14396,7 @@ async function saveToSheets(){
       body: payload
     });
     _baseBytes = payload.length;
+    _saveAdiados = 0; _alertaAdiado = false;
     setSyncStatus('saved');
     aviso.forEach(m=>{ try{ mostrarToast(m); }catch(e){} });
     setTimeout(()=>setSyncStatus('idle'), 3000);
