@@ -15940,15 +15940,24 @@ async function mercadaoAvisoHome(){
 // 📅 Virada de competência (10/11, pedido do Eder): no começo do mês, avisa na Home (dele e da Karen)
 // que a coluna Pagamento do Faturamento zerou — nada do mês novo foi emitido ainda. "Entendi" dispensa
 // o aviso neste navegador até a próxima virada (cada um dispensa o seu).
-function fatAbrirFaturamento(){
+function fatAbrirFaturamento(comp){
   goPage('contabilidade');
-  setTimeout(function(){ try{ const t=[].slice.call(document.querySelectorAll('#page-contabilidade .ferr-tab')).find(x=>((x.getAttribute('onclick')||'').indexOf("'fat'")>-1)); showContabTab('fat',t); }catch(e){} },300);
+  setTimeout(function(){ try{
+    const t=[].slice.call(document.querySelectorAll('#page-contabilidade .ferr-tab')).find(x=>((x.getAttribute('onclick')||'').indexOf("'fat'")>-1));
+    showContabTab('fat',t);
+    // Veio de um aviso da Home com mês marcado (ex.: pendência de 10/26): já abre naquela competência
+    // e carrega a lista, pra pendência aparecer na tela com o link "💵 baixa" em cada linha.
+    if(comp&&/^\d{4}-\d{2}$/.test(comp)){ const c=document.getElementById('f-fat-comp'); if(c) c.value=comp; fFatCarregar(); }
+  }catch(e){} },300);
 }
 function fatViradaAvisoHome(){
   const box=g('home-fat-virada'); if(!box) return;
   const h=new Date(); const comp=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0');
   let ok=''; try{ ok=localStorage.getItem('fat_virada_ok')||''; }catch(e){}
-  if(ok===comp || h.getDate()>12){ box.style.display='none'; return; }
+  // Se já tem emissão na competência atual, o aviso ("nada deste mês foi emitido") deixou de ser verdade — some sozinho (11/11).
+  let emitiu=false;
+  try{ emitiu=Object.keys(fatEmissoes||{}).some(k=>{ if(k.slice(-8)!=='|'+comp) return false; const e=fatEmissoes[k]||{}; return !!(e.paymentId||e.invoiceId||e.nf||e.status==='emitida'); }); }catch(e){}
+  if(ok===comp || h.getDate()>12 || emitiu){ box.style.display='none'; return; }
   box.style.display='block';
   box.innerHTML='<b>📅 Virou a competência: '+MESES[h.getMonth()]+'/'+h.getFullYear()+'.</b> A coluna <b>Pagamento</b> do Faturamento está zerada — nada deste mês foi emitido ainda. A situação do mês anterior fica no balãozinho (passe o mouse no —).'+
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
@@ -15975,7 +15984,9 @@ function fatPendAnterioresHome(){
   box.style.display='block';
   box.innerHTML='<b>💰 '+pend.length+' cobrança'+(pend.length>1?'s':'')+' de mês anterior ainda não paga'+(pend.length>1?'s':'')+(tot>0?' — '+f(tot):'')+'.</b>'+
     '<div style="margin-top:6px;font-size:12.5px;line-height:1.7">'+pend.map(p=>'• <b>'+p.nome+'</b> ('+p.mes.slice(5,7)+'/'+p.mes.slice(2,4)+') — '+(p.st==='vencido'?'<span style="color:#DC2626;font-weight:700">vencido</span>':'aguardando')+(p.valor>0?' · '+f(p.valor):'')).join('<br>')+'</div>'+
-    '<div style="margin-top:10px"><button onclick="fatAbrirFaturamento()" style="border:0;border-radius:9px;padding:8px 14px;background:#DC2626;color:#fff;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit">Abrir o Faturamento</button></div>';
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
+    [...new Set(pend.map(p=>p.mes))].map(m=>'<button onclick="fatAbrirFaturamento(\''+m+'\')" style="border:0;border-radius:9px;padding:8px 14px;background:#DC2626;color:#fff;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit">Abrir o Faturamento de '+m.slice(5,7)+'/'+m.slice(2,4)+'</button>').join('')+'</div>'+
+    '<div style="font-size:11.5px;margin-top:6px;opacity:.8">Abre já no mês certo — quem pagou por fora, dê a baixa pelo link "💵 baixa" da linha.</div>';
 }
 function crmPendentesHome(){
   const box=g('home-crm-pend'); if(!box) return;
