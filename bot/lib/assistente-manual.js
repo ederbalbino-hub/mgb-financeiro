@@ -43,6 +43,7 @@ Serve para emitir nota fiscal e boleto do mês, em lote, via Asaas.
 ## CRM — o CRM é a ÚNICA porta de entrada (cliente E condomínio)
 - Tudo que entra no sistema começa num lead do CRM (menu CRM / Leads): Novo → … → Fechado. Pelo CRM também se marcam lembretes (vão para o Google Agenda).
 - Lead de anunciante: escolha o produto (Tela Vertical, Vaapty etc.). Ao fechar, o hub guarda os dados do cliente; a unidade/receita só é lançada quando o contrato é gerado.
+- PAGAMENTO DO LEAD (desde 12/11/2026): campo "Pagamento" ao lado do valor — 💰 Faturamento (normal, dinheiro) ou 🔄 Permuta (o cliente paga em produto/serviço). Lead de permuta mostra o selo "🔄 PERMUTA" no card. Ao fechar um lead de permuta, o hub lembra de cadastrar o saldo em Cobrança Mensal > Tela Vertical > Permutas (ver seção Permutas).
 - 🧾 DADOS PARA A NOTA FISCAL (obrigatórios para fechar, desde 03/11/2026): todo lead (menos condomínio) tem o bloco "🧾 Dados para a nota fiscal" com razão social e endereço completo (CEP, logradouro, número, complemento, bairro, cidade, UF). O botão "🔍 Buscar pelo CNPJ" preenche tudo sozinho pelos dados públicos da Receita (preencha o CNPJ antes); digitar o CEP também busca o endereço. O hub NÃO deixa marcar Fechado sem o endereço completo — a NFS-e não sai sem ele. Esses dados vão sozinhos para a planilha de faturamento quando o cliente é cadastrado. Lead fechado com endereço faltando aparece com "🧾 endereço da nota incompleto" no card: abra, complete e salve.
 - LEAD DE CONDOMÍNIO (produto "🏢 Condomínio (entra na rede)"): serve para cadastrar um condomínio novo da rede de elevadores (Tela Vertical). Preencha nome, contato do síndico e o bloco "Dados do condomínio": endereço, bairro, zona, tipo (residencial/comercial), torres, telas, moradores (ou nº de apartamentos — o hub multiplica por 2,79), mês em que o custo do sistema começa e a 📷 foto da fachada (JPG/PNG; o hub reduz para 800×600).
 - Ao mover o lead do condomínio para FECHADO o hub faz sozinho: (1) cria a unidade no módulo Tela Vertical (Elevadores), já pronta para a Karen lançar receitas/despesas; (2) lança o custo fixo mensal do Sistema TV (telas × R$ 39,56, sem data de fim) a partir do mês escolhido (dá para desmarcar); (3) coloca o condomínio na rede: aparece sozinho nos mídia kits, na proposta ao anunciante, no gerador de apresentação, na apresentação de síndicos e no site (leva até ~1 minuto para atualizar). Sem nº de telas o hub NÃO deixa fechar.
@@ -76,6 +77,16 @@ Serve para emitir nota fiscal e boleto do mês, em lote, via Asaas.
 - Caixa "Essa cobrança é…": AVULSA (só desta vez; entra na receita só do mês) ou MENSAL (repete: o cliente entra no Faturamento com contrato; escolha o módulo e por quantos meses). Se o cliente já tem contrato mensal ativo naquele mês, nada é duplicado.
 - Depois de emitir, a cobrança aparece sozinha em Financeiro MGB > Visão Receita (avulsa) e o status do boleto (aguardando/pago/vencido) vem do Asaas ao conferir. 
 - Na lista do Faturamento, a coluna Pagamento mostra a situação do último mês faturado quando o mês escolhido ainda não foi emitido (ex.: "pago · 10/26").
+
+## Despesas da empresa (Financeiro MGB > Visão Geral > aba Empresa)
+- RECORRENTES: tabela "Despesas da empresa" (contador, internet…) — descrição, valor/mês e mês de início; botão Ativo/Inativo liga e desliga.
+- AVULSAS (desde 12/11/2026): botão "＋ Despesa avulsa" abre a Nova despesa já em "MGB · dia a dia" — para gasto pontual que cai SÓ no mês da data (gasolina, café, material de escritório, limpeza…). Atalhos "Mais usadas" preenchem categoria e descrição com 1 clique; "✏️ Outros" abre campo livre. Na etapa Pagamento dá para marcar com o que foi pago: 💳 Crédito, 💳 Débito, ⚡ PIX ou 🔄 Permuta. A tabela "Despesas avulsas do mês" (logo abaixo das recorrentes) lista o que foi lançado no mês escolhido, com o ✕ para remover. As avulsas também aparecem na lista de despesas do mês e entram no total de despesas da empresa.
+
+## Permutas (Cobrança Mensal > aba Tela Vertical > Permutas)
+- Cadastro dos clientes que pagam em PRODUTO em vez de dinheiro: cliente (puxa dos anunciantes e do CRM), valor total da permuta (R$), quais produtos (ex.: pizzas), quais condomínios escolhidos e a QUANTIDADE de produtos permutados.
+- "＋ Uso" registra cada vez que a permuta é usada: data, quantidade, POR QUEM (Eder/Jadson) e observação. O hub mostra Usado e SALDO restante (quantidade − usos); o saldo fica âmbar quando resta pouco e vermelho quando zera. Usar mais que o saldo pede confirmação. Dá para remover um uso (o saldo volta).
+- Permuta NÃO entra na soma de receita em dinheiro — é crédito em produto.
+- Os relatórios do sócio (✨ Gerar Relatório e 📊 Relatório Anual, na mesma aba) ganham a seção "🔄 PERMUTAS" com saldos e os usos do mês (ou do ano), para prestar contas ao Jadson.
 
 ## Recibos
 Aba Recibos (Contabilidade): gera o recibo do cliente. Pelo Faturamento, o botão 🧾 já abre o recibo preenchido.

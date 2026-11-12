@@ -1339,6 +1339,27 @@ body{-webkit-font-smoothing:antialiased}
             <button class="badd" onclick="addEmpresaDesp()">+ Adicionar</button>
           </div>
         </div>
+        <div class="tcard" style="margin-top:14px">
+          <div class="thead" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div class="ttitle">Despesas avulsas do mês</div>
+              <div style="font-size:10px;color:var(--hint)" id="ov-empav-sum"></div>
+            </div>
+            <button class="badd" onclick="MGBLancar.despesa({destino:MGBLancar.MGB_DIA})" title="Gasolina, café, material de escritório e outros gastos pontuais — cai só no mês da data">＋ Despesa avulsa</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Dia</th>
+                <th>Descrição</th>
+                <th>Pago com</th>
+                <th class="tr">Valor</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="ov-empav-body"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- Movimentações do banco (C6) — realizados importados via Open Finance -->
@@ -5797,6 +5818,38 @@ function copiarSpot() {
           </div>
         </div>
       </div>
+      <!-- PERMUTAS: clientes que pagam em produto/serviço (cadastro + saldo + usos) -->
+      <div style="padding:0 22px 28px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div style="font-weight:700;font-size:14px">🔄 Permutas</div>
+              <div style="font-size:11px;color:var(--hint)" id="permutas-sum">Clientes de permuta: o que a Tela Vertical tem a receber em produto, quanto já foi usado e o saldo.</div>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">
+                <th style="padding:6px 8px">Cliente</th><th style="padding:6px 8px">Produtos</th><th style="padding:6px 8px">Condomínios</th>
+                <th style="padding:6px 8px;text-align:right">Valor</th><th style="padding:6px 8px;text-align:center">Qtd</th>
+                <th style="padding:6px 8px;text-align:center">Usado</th><th style="padding:6px 8px;text-align:center">Saldo</th><th style="padding:6px 8px"></th>
+              </tr></thead>
+              <tbody id="permutas-body"></tbody>
+            </table>
+          </div>
+          <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">＋ Cadastrar permuta</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input class="anunc-form-inp" id="perm-cliente" list="perm-cli-l" placeholder="Cliente (puxa do CRM/anunciantes)" style="flex:2;min-width:170px"><datalist id="perm-cli-l"></datalist>
+              <input class="anunc-form-inp" id="perm-valor" type="number" step="0.01" min="0" placeholder="Valor total (R$)" style="width:130px">
+              <input class="anunc-form-inp" id="perm-produtos" placeholder="Produtos (ex: pizzas, consultas)" style="flex:2;min-width:170px">
+              <input class="anunc-form-inp" id="perm-condos" list="perm-condo-l" placeholder="Condomínios escolhidos" style="flex:2;min-width:170px"><datalist id="perm-condo-l"></datalist>
+              <input class="anunc-form-inp" id="perm-qtd" type="number" step="1" min="1" placeholder="Qtd" style="width:80px" title="Quantidade de produtos permutados">
+              <button class="badd" onclick="permutaAdd()">+ Adicionar</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div id="rele-preview" style="display:none;padding:0 22px 28px">
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
           <button onclick="releVoltar()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px">← Editar dados</button>
@@ -5921,6 +5974,7 @@ function copiarSpot() {
           <div class="anunc-form-field"><label class="anunc-form-lbl">De onde veio esse lead?</label><select class="anunc-form-inp" id="lead-origem" style="width:100%"></select></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Valor mensal estimado (R$)</label><input class="anunc-form-inp" id="lead-valor" type="number" step="0.01" min="0" placeholder="0,00" autocomplete="off" style="width:100%"></div>
+            <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Pagamento</label><select class="anunc-form-inp" id="lead-formapg" style="width:100%" title="Permuta: o cliente paga em produto/serviço — cadastre o saldo em Cobrança Mensal › Tela Vertical › Permutas"><option value="faturamento">💰 Faturamento</option><option value="permuta">🔄 Permuta</option></select></div>
             <div class="anunc-form-field" style="flex:1;min-width:180px"><label class="anunc-form-lbl">📅 Próximo follow-up (data e hora)</label><input class="anunc-form-inp" id="lead-lembrete" type="datetime-local" style="width:100%;color-scheme:light"></div>
           </div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Observações</label><textarea class="anunc-form-inp" id="lead-obs" rows="2" style="width:100%;resize:vertical;font-family:'DM Sans',sans-serif"></textarea></div>
@@ -9673,6 +9727,10 @@ let editElevInvestId = null;
 // anunciantes = [{id, nome, valor, inicio, meses, telas:[]}]
 let anunciantes = [];
 let anuncId = 1;
+// permutas (Tela Vertical) = [{id, cliente, valor, produtos, condominios, qtd, obs, criadoEm,
+//   usos:[{data:'YYYY-MM-DD', qtd, quem, obs}]}]  · usado = Σ usos.qtd · saldo = qtd − usado
+let permutas = [];
+let permutaId = 1;
 // catalogo = [{desc, forn, cat, u, q}]
 let catalogo = [];
 // pagamentos[modId][item][ano][mes] = {pago:bool, dataPago:str, obs:str}
@@ -11160,6 +11218,24 @@ function buildVisaoEmpresa(){
     }).join('');
   }
 
+  // Despesas avulsas (dia a dia) do mês selecionado — lançadas pelo botão "＋ Despesa avulsa"
+  if(g('ov-empav-body')){
+    const avs=(typeof MGBLancar!=='undefined')?MGBLancar.avulsasDoMes(empresaAvulsas,selAno,selMes):[];
+    const totAv=avs.reduce((a,x)=>a+x.valor,0);
+    g('ov-empav-sum').textContent=avs.length?`${avs.length} lançamento(s) em ${String(selMes+1).padStart(2,'0')}/${selAno} · ${f(totAv)}`:`Nada lançado em ${String(selMes+1).padStart(2,'0')}/${selAno}`;
+    const PAGTO_ROT={credito:'💳 Crédito',debito:'💳 Débito',pix:'⚡ PIX',permuta:'🔄 Permuta'};
+    g('ov-empav-body').innerHTML=avs.length?avs.slice().sort((a,b)=>String(a.data).localeCompare(String(b.data))).map(av=>{
+      const cat=(MGBLancar.CATEGORIAS.find(c=>c.id===av.cat)||{}).rotulo||'';
+      return `<tr>
+        <td style="font-size:10px;color:var(--muted)">${av.data?av.data.slice(8,10)+'/'+av.data.slice(5,7):'—'}</td>
+        <td style="font-weight:500">${av.desc}${av.reembolso?' <span style="font-size:9px;color:var(--amber)">· Eder pagou</span>':''}<div style="font-size:9px;color:var(--hint)">${cat}${av.forn?' · '+av.forn:''}</div></td>
+        <td style="font-size:10px;color:var(--muted)">${PAGTO_ROT[av.pagto]||'—'}</td>
+        <td class="tr mono" style="color:var(--red);font-weight:700">${f(av.valor||0)}</td>
+        <td><button class="del" onclick="delEmpresaAvulsa(${av.id})" title="Remover">✕</button></td>
+      </tr>`;
+    }).join(''):`<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--hint);font-size:11px">Nenhuma despesa avulsa neste mês. Use o botão ＋ Despesa avulsa (gasolina, café, material…).</td></tr>`;
+  }
+
   // Preenche mês corrente como sugestão de início
   if(!g('emp-inicio').value){
     g('emp-inicio').value=new Date().toISOString().slice(0,7);
@@ -11520,6 +11596,16 @@ function toggleEmpresaDesp(id){
 function delEmpresaDesp(id){
   if(!confirm('Remover essa despesa?')) return;
   empresaDespesas=empresaDespesas.filter(x=>x.id!==id);
+  buildVisaoEmpresa();
+  buildSidebar();
+  if(curOvTab==='visao') buildOverview();
+  scheduleSave();
+}
+function delEmpresaAvulsa(id){
+  const av=empresaAvulsas.find(x=>x.id===id); if(!av) return;
+  if(!confirm('Remover "'+av.desc+'" ('+f(av.valor)+')?')) return;
+  empresaAvulsas=empresaAvulsas.filter(x=>x.id!==id);
+  try{ delete despPagamentos._empresa.Empresa['_av_'+id]; }catch(e){}
   buildVisaoEmpresa();
   buildSidebar();
   if(curOvTab==='visao') buildOverview();
@@ -13655,7 +13741,7 @@ function leadCardHtml(l){
     <div class="lead-card-nome">${l.nome}</div>
     ${l.responsavel?`<div style="font-size:10.5px;color:var(--muted);margin-top:-1px">👤 ${l.responsavel}${l.funcao?' · '+l.funcao:''}</div>`:''}
     ${l.origem?`<div style="font-size:9.5px;color:var(--hint);margin-top:-2px;margin-bottom:2px">via ${l.origem}</div>`:''}
-    ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês</div>`:''}
+    ${l.valor?`<div style="font-size:11px;color:var(--green);font-weight:700">${f(l.valor)}/mês${l.formaPg==='permuta'?' <span style="font-size:9px;color:var(--amber);font-weight:700" title="Pagamento em permuta">🔄 PERMUTA</span>':''}</div>`:(l.formaPg==='permuta'?`<div style="font-size:9px;color:var(--amber);font-weight:700" title="Pagamento em permuta">🔄 PERMUTA</div>`:'')}
     ${(()=>{ const inf=(((typeof clientesInfo!=='undefined'?clientesInfo:{})[l.produto]||{})[l.itemCriado])||null; if(!inf) return ''; if(inf.assinadoEm) return '<div style="font-size:10.5px;color:var(--green);font-weight:700;margin-top:2px">✅ contrato assinado '+new Date(inf.assinadoEm).toLocaleDateString('pt-BR')+'</div>'; if(inf.assinafyDocId) return '<div style="font-size:10.5px;color:var(--muted);margin-top:2px">✍️ aguardando assinatura</div>'; return ''; })()}
     ${(l.estagio==='fechado'&&!String(l.email||'').trim())?`<div style="font-size:10.5px;color:var(--red);font-weight:700;margin-top:2px" title="Sem e-mail o contrato não pode ser enviado pra assinatura">⚠ sem e-mail — contrato não pode ser enviado</div>`:''}
     ${(l.estagio==='fechado'&&l.produto!=='condo'&&(l.criado||'')>='2026-11-03'&&!leadFiscalCompleto(l))?`<div style="font-size:10.5px;color:var(--red);font-weight:700;margin-top:2px" title="A NFS-e precisa da razão social e do endereço completo">🧾 endereço da nota incompleto</div>`:''}
@@ -13846,6 +13932,7 @@ function openLeadModal(mode,id){
   if(g('lead-email')) g('lead-email').value = l ? (l.email||'') : '';
   g('lead-origem').value = l ? (l.origem||'') : '';
   g('lead-valor').value = l && l.valor ? l.valor : '';
+  g('lead-formapg').value = l && l.formaPg ? l.formaPg : 'faturamento';
   g('lead-lembrete').value = l ? leadNormalizaLembreteInput(l.lembrete) : '';
   g('lead-obs').value = l ? (l.obs||'') : '';
   leadFiscalPreencher(l ? l.fiscal : null);
@@ -13872,7 +13959,7 @@ function renderLeadEstagioChips(sel){
 // Esc fecha o formulário do lead. Com alteração não salva, o 1º Esc avisa e o 2º descarta.
 let _leadSnap='', _leadEscAviso=0;
 function leadFormSnap(){
-  return JSON.stringify(['lead-nome','lead-tel','lead-responsavel','lead-funcao','lead-cnpj','lead-origem','lead-valor','lead-lembrete','lead-obs'].concat(Object.values(LC_IDS)).concat(Object.values(LEAD_FISCAL_IDS)).map(i=>(g(i)||{}).value||'').concat([_leadProdutoSel,_leadEstagioSel]));
+  return JSON.stringify(['lead-nome','lead-tel','lead-responsavel','lead-funcao','lead-cnpj','lead-origem','lead-valor','lead-formapg','lead-lembrete','lead-obs'].concat(Object.values(LC_IDS)).concat(Object.values(LEAD_FISCAL_IDS)).map(i=>(g(i)||{}).value||'').concat([_leadProdutoSel,_leadEstagioSel]));
 }
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape') return;
@@ -14085,6 +14172,7 @@ function saveLeadModal(){
   if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ g('lead-email').focus(); leadToast('⚠ O e-mail parece incompleto'); return; }
   const origem=g('lead-origem').value||'';
   const valor=parseFloat(g('lead-valor').value)||0;
+  const formaPg=g('lead-formapg').value||'faturamento';
   const lembrete=g('lead-lembrete').value||'';
   const obs=g('lead-obs').value.trim();
   const condo=_leadProdutoSel==='condo'?leadCondoLer():null;
@@ -14099,15 +14187,18 @@ function saveLeadModal(){
   const estagio=_leadEstagioSel||'novo';
   if(curLeadId!=null){
     l=leads.find(x=>x.id===curLeadId);
-    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.lembrete=lembrete; l.obs=obs; l.fiscal=fiscal; if(condo){ l.condo=condo; leadCondoSync(l); } leadFiscalSyncInfo(l); }
+    if(l){ l.nome=nome; l.tel=tel; l.responsavel=responsavel; l.funcao=funcao; l.cnpj=cnpj; l.email=email; l.produto=_leadProdutoSel; l.origem=origem; l.valor=valor; l.formaPg=formaPg; l.lembrete=lembrete; l.obs=obs; l.fiscal=fiscal; if(condo){ l.condo=condo; leadCondoSync(l); } leadFiscalSyncInfo(l); }
   } else {
-    l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, email, fiscal, produto:_leadProdutoSel, origem, valor, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
+    l={id:leadNextId++, nome, tel, responsavel, funcao, cnpj, email, fiscal, produto:_leadProdutoSel, origem, valor, formaPg, lembrete, obs, estagio:'novo', historico:[], itemCriado:null, calEventId:null, criado:leadHoje()};
     if(condo) l.condo=condo;
     leads.push(l);
   }
   closeLeadModal();
   // mudou o estágio no formulário: mesmo caminho do arrastar no kanban (fechado registra o cliente, fechado/perdido limpa o lembrete)
   if(l && l.estagio!==estagio){ leadChangeStage(l.id,estagio); leadToast('✓ '+l.nome+' → '+leadStage(estagio).label); }
+  if(l && l.formaPg==='permuta' && l.estagio==='fechado' && typeof permutas!=='undefined' && !permutas.some(p=>p.cliente===(l.itemCriado||l.nome))){
+    leadToast('🔄 Cliente de PERMUTA — cadastre o saldo em Cobrança Mensal › Tela Vertical › Permutas');
+  }
   buildLeads();
   scheduleSave();
   if(l) leadSyncCalendar(l).then(buildLeads); // em segundo plano — não trava o salvar
@@ -14165,7 +14256,7 @@ let migracoes = {}; // flags de migrações one-shot já aplicadas (persistido)
 function serializeState(){
   return {
     migracoes,
-    db, rec, fin, pagamentos, catalogo, anunciantes, despesasComp, elevInvestimentos, recPagamentos,
+    db, rec, fin, pagamentos, catalogo, anunciantes, permutas, despesasComp, elevInvestimentos, recPagamentos,
     empresaDespesas, empresaReceitas, empresaMovimentos, despPagamentos, empresaAvulsas, receitasAvulsas,
     pessoalRec, pessoalDesp, pessoalPag, pessoalRecPag,
     pessoalRegras, pessoalUltimaImport, relAjustes, leads, clientesInfo, etiquetas, recibos, notas, notaConfig, fatEmissoes, leoUnidades,
@@ -14252,6 +14343,10 @@ function deserializeState(obj){
   if(obj.empresaReceitas && Array.isArray(obj.empresaReceitas)){
     empresaReceitas=obj.empresaReceitas;
     empresaRecId=empresaReceitas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
+  }
+  if(obj.permutas && Array.isArray(obj.permutas)){
+    permutas=obj.permutas;
+    permutaId=permutas.reduce((a,x)=>Math.max(a,(x.id||0)+1),1);
   }
   if(obj.empresaAvulsas && Array.isArray(obj.empresaAvulsas)){
     empresaAvulsas=obj.empresaAvulsas;
@@ -15849,7 +15944,7 @@ function showRelTab(id, el){
               elev:'Prestação de contas — Tela Vertical (receitas × despesas × lucro)'};
   const sb=g('rel-page-sub'); if(sb) sb.textContent=subs[id]||'';
   if(id==='vaapty') relvResumo();
-  if(id==='elev') releResumo();
+  if(id==='elev'){ releResumo(); permutasRender(); }
 }
 
 // ── RELATÓRIO VAAPTY (repasse de comissão) ────────────────────────────────
@@ -16088,6 +16183,135 @@ function relvVoltar(){ g('relv-preview').style.display='none'; }
 function relvPrint(){ relPrintEl('relv-output','mgb mídia_repasse vaapty_'+(g('relv-mes').value||'')); }
 
 // ── RELATÓRIO ELEVADORES (receitas × despesas × lucro) ────────────────────
+// ── PERMUTAS (Tela Vertical) ──────────────────────────────────────────────
+function permutaUsado(p){ return (p.usos||[]).reduce((a,u)=>a+(+u.qtd||0),0); }
+function permutaSaldo(p){ return (+p.qtd||0)-permutaUsado(p); }
+function permutasRender(){
+  const body=g('permutas-body'); if(!body) return;
+  // datalists: clientes (anunciantes + leads de permuta) e condomínios (unidades do módulo Elevadores)
+  const nomes=new Set();
+  (typeof anunciantes!=='undefined'?anunciantes:[]).forEach(a=>nomes.add(a.nome));
+  (typeof leads!=='undefined'?leads:[]).filter(l=>l.formaPg==='permuta'||l.produto==='elev'||l.produto==='condo').forEach(l=>nomes.add(l.itemCriado||l.nome));
+  g('perm-cli-l').innerHTML=[...nomes].sort().map(n=>`<option value="${esc3(n)}">`).join('');
+  const elevMod=MODULES.find(m=>m.id==='elev');
+  g('perm-condo-l').innerHTML=(elevMod?elevMod.items:[]).map(n=>`<option value="${esc3(n)}">`).join('');
+  if(!permutas.length){
+    body.innerHTML=`<tr><td colspan="8" style="padding:14px;text-align:center;color:var(--hint);font-size:11px">Nenhuma permuta cadastrada. Cliente fechado como 🔄 Permuta no CRM entra aqui pelo formulário abaixo.</td></tr>`;
+  } else {
+    body.innerHTML=permutas.map(p=>{
+      const usado=permutaUsado(p), saldo=permutaSaldo(p);
+      const corSaldo=saldo<=0?'var(--red)':saldo<=(+p.qtd||0)*.2?'var(--amber)':'var(--green)';
+      const usosHtml=(p.usos||[]).slice().reverse().map((u,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed var(--border)">
+        <span>${u.data?u.data.split('-').reverse().join('/'):'—'} · <b>${u.qtd}</b> un. · ${esc3(u.quem||'—')}${u.obs?' · '+esc3(u.obs):''}</span>
+        <button class="del" onclick="permutaUsoDel(${p.id},${(p.usos||[]).length-1-i})" title="Remover este uso">✕</button></div>`).join('')||'<div style="color:var(--hint);padding:3px 0">Nenhum uso registrado.</div>';
+      return `<tr style="border-top:1px solid var(--border)">
+        <td style="padding:7px 8px;font-weight:600">${esc3(p.cliente)}</td>
+        <td style="padding:7px 8px;font-size:11px;color:var(--muted)">${esc3(p.produtos||'—')}</td>
+        <td style="padding:7px 8px;font-size:11px;color:var(--muted)">${esc3(p.condominios||'—')}</td>
+        <td style="padding:7px 8px;text-align:right;font-weight:700">${p.valor?f(p.valor):'—'}</td>
+        <td style="padding:7px 8px;text-align:center">${p.qtd||0}</td>
+        <td style="padding:7px 8px;text-align:center;color:var(--muted)">${usado}</td>
+        <td style="padding:7px 8px;text-align:center;font-weight:800;color:${corSaldo}">${saldo}</td>
+        <td style="padding:7px 8px;white-space:nowrap">
+          <button class="anunc-btn" onclick="permutaUsoForm(${p.id})" style="font-size:10px;padding:4px 10px">＋ Uso</button>
+          <button class="del" onclick="permutaDel(${p.id})" title="Excluir permuta">✕</button>
+        </td>
+      </tr>
+      <tr id="perm-uso-row-${p.id}" style="display:none"><td colspan="8" style="padding:4px 8px 12px;background:var(--surface2);border-radius:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 0 6px">
+          <span style="font-size:11px;font-weight:700">Registrar uso:</span>
+          <input class="anunc-form-inp" id="perm-uso-data-${p.id}" type="date" style="width:140px;color-scheme:dark">
+          <input class="anunc-form-inp" id="perm-uso-qtd-${p.id}" type="number" min="1" step="1" placeholder="Qtd" style="width:75px">
+          <input class="anunc-form-inp" id="perm-uso-quem-${p.id}" list="perm-quem-l" placeholder="Por quem" style="width:120px">
+          <input class="anunc-form-inp" id="perm-uso-obs-${p.id}" placeholder="Obs (opcional)" style="flex:1;min-width:120px">
+          <button class="badd" onclick="permutaUsoAdd(${p.id})">✓ Registrar</button>
+        </div>
+        <div style="font-size:11px"><b style="font-size:10px;color:var(--muted);text-transform:uppercase">Histórico de usos</b>${usosHtml}</div>
+      </td></tr>`;
+    }).join('');
+  }
+  if(!g('perm-quem-l')){ const dl=document.createElement('datalist'); dl.id='perm-quem-l'; dl.innerHTML='<option value="Eder"><option value="Jadson">'; document.body.appendChild(dl); }
+  const totSaldo=permutas.reduce((a,p)=>a+permutaSaldo(p),0);
+  const totValor=permutas.reduce((a,p)=>a+(+p.valor||0),0);
+  if(permutas.length) g('permutas-sum').textContent=`${permutas.length} permuta(s) · ${f(totValor)} em valor · ${totSaldo} produto(s) de saldo a usar`;
+}
+function esc3(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function permutaAdd(){
+  const cliente=g('perm-cliente').value.trim();
+  if(!cliente){ g('perm-cliente').focus(); return; }
+  const valor=parseFloat(g('perm-valor').value)||0;
+  const produtos=g('perm-produtos').value.trim();
+  const condominios=g('perm-condos').value.trim();
+  const qtd=parseInt(g('perm-qtd').value)||0;
+  if(!qtd){ g('perm-qtd').focus(); alert('Informe a quantidade de produtos permutados.'); return; }
+  permutas.push({id:permutaId++, cliente, valor, produtos, condominios, qtd, usos:[], criadoEm:new Date().toISOString()});
+  ['perm-cliente','perm-valor','perm-produtos','perm-condos','perm-qtd'].forEach(i=>g(i).value='');
+  permutasRender(); scheduleSave();
+}
+function permutaDel(id){
+  const p=permutas.find(x=>x.id===id); if(!p) return;
+  if(!confirm('Excluir a permuta de "'+p.cliente+'"? O histórico de usos some junto.')) return;
+  permutas=permutas.filter(x=>x.id!==id);
+  permutasRender(); scheduleSave();
+}
+function permutaUsoForm(id){
+  const row=g('perm-uso-row-'+id); if(!row) return;
+  const abrir=row.style.display==='none';
+  document.querySelectorAll('[id^="perm-uso-row-"]').forEach(r=>r.style.display='none');
+  if(abrir){ row.style.display='table-row'; const d=g('perm-uso-data-'+id); if(d&&!d.value) d.value=new Date().toISOString().slice(0,10); }
+}
+function permutaUsoAdd(id){
+  const p=permutas.find(x=>x.id===id); if(!p) return;
+  const qtd=parseInt(g('perm-uso-qtd-'+id).value)||0;
+  if(!qtd){ g('perm-uso-qtd-'+id).focus(); return; }
+  const saldo=permutaSaldo(p);
+  if(qtd>saldo && !confirm('Esse uso ('+qtd+') passa do saldo restante ('+saldo+'). Registrar mesmo assim?')) return;
+  p.usos=p.usos||[];
+  p.usos.push({data:g('perm-uso-data-'+id).value||new Date().toISOString().slice(0,10), qtd, quem:g('perm-uso-quem-'+id).value.trim(), obs:g('perm-uso-obs-'+id).value.trim()});
+  permutasRender(); scheduleSave();
+}
+function permutaUsoDel(id,idx){
+  const p=permutas.find(x=>x.id===id); if(!p||!p.usos||!p.usos[idx]) return;
+  if(!confirm('Remover esse uso ('+p.usos[idx].qtd+' un.)? O saldo volta.')) return;
+  p.usos.splice(idx,1);
+  permutasRender(); scheduleSave();
+}
+// Bloco de permutas pros relatórios do sócio (mensal: usos do mês · anual: usos do ano)
+function permutasRelatorioHTML(ano,mes){ // mes null = ano inteiro
+  if(!permutas.length) return '';
+  const chave=mes==null?String(ano):ano+'-'+String(mes+1).padStart(2,'0');
+  const linhas=permutas.map(p=>{
+    const usosPer=(p.usos||[]).filter(u=>String(u.data||'').startsWith(chave));
+    return {p, usado:permutaUsado(p), saldo:permutaSaldo(p), usosPer, qtdPer:usosPer.reduce((a,u)=>a+(+u.qtd||0),0)};
+  });
+  const rows=linhas.map((x,i)=>`
+    <tr style="${i%2?'background:#FFFBEB':''}">
+      <td style="padding:8px 12px;font-weight:600;color:#78350F">${esc3(x.p.cliente)}<div style="font-size:9px;color:#9CA3AF">${esc3(x.p.produtos||'')}${x.p.condominios?' · '+esc3(x.p.condominios):''}</div></td>
+      <td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace;color:#78350F">${x.p.valor?'R$ '+x.p.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:8px 12px;text-align:center;color:#92400E">${x.p.qtd||0}</td>
+      <td style="padding:8px 12px;text-align:center;color:#92400E">${x.qtdPer||'—'}</td>
+      <td style="padding:8px 12px;text-align:center;color:#92400E">${x.usado}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:800;color:${x.saldo<=0?'#DC2626':'#B45309'}">${x.saldo}</td>
+    </tr>
+    ${x.usosPer.length?`<tr><td colspan="6" style="padding:0 12px 8px;font-size:10px;color:#92400E">${x.usosPer.map(u=>'· '+u.data.split('-').reverse().join('/')+' — '+u.qtd+' un.'+(u.quem?' por '+esc3(u.quem):'')+(u.obs?' ('+esc3(u.obs)+')':'')).join('<br>')}</td></tr>`:''}`).join('');
+  return `
+    <div style="padding:8px 32px 20px">
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:#92400E;letter-spacing:.3px;margin:14px 0 6px">🔄 PERMUTAS · SALDOS E USOS ${mes==null?'DO ANO':'DO MÊS'}</div>
+      <div style="height:1px;background:#FDE68A;margin-bottom:10px"></div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#92400E;color:#fff">
+          <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Cliente / produtos</th>
+          <th style="padding:8px 12px;text-align:right;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Valor</th>
+          <th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Qtd total</th>
+          <th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">${mes==null?'Usado no ano':'Usado no mês'}</th>
+          <th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Usado total</th>
+          <th style="padding:8px 12px;text-align:center;font-size:10px;letter-spacing:.5px;text-transform:uppercase">Saldo</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="font-size:10px;color:#92400E;margin-top:6px">Permuta não entra na soma de receita em dinheiro — é crédito em produto. Saldo = quantidade permutada − usada.</div>
+    </div>`;
+}
 function releDados(ano,mes){
   // Receitas: anunciantes ativos no mês
   const receitas=(typeof anunciantes!=='undefined'?anunciantes:[]).filter(a=>{
@@ -16176,6 +16400,7 @@ function releGerar(){
         <div style="font-size:26px;font-weight:800;font-family:'DM Mono',monospace">R$ ${d.lucro.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
       </div>
     </div>
+    ${permutasRelatorioHTML(ano,mes)}
     <div style="background:#06281c;color:#c9f5df;padding:14px 32px;font-size:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <span><strong>MGB Mídia · Comunicação e Marketing Ltda.</strong> · CNPJ: 23.770.170/0001-50 · Londrina/PR · Emitido em ${hoje}</span>
       <span style="color:#189A66;font-weight:600">comercial@agenciamgb.com.br · (43) 99696-0078</span>
@@ -16329,6 +16554,7 @@ function releAnualGerar(){
       </table>
       <div style="margin-top:8px;font-size:10px;color:#6B7280">Lucro = receitas dos anunciantes − despesas do módulo Tela Vertical, mês a mês (mesmas contas do relatório mensal). O repasse de cada sócio é 50% do lucro.</div>
     </div>
+    ${permutasRelatorioHTML(ano,null)}
     <div style="background:#16294F;color:#D8E0EF;padding:14px 32px;font-size:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <span><strong>MGB Mídia · Comunicação e Marketing Ltda.</strong> · CNPJ: 23.770.170/0001-50 · Londrina/PR · Emitido em ${hoje}</span>
       <span style="color:#C0A062;font-weight:600">comercial@agenciamgb.com.br · (43) 99696-0078</span>

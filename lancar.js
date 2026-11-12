@@ -77,7 +77,7 @@
     var r = {
       t: t, tipo: c.livre ? String(d.categoriaTxt || '').trim() || 'Outros' : c.tipo, d: String(d.descricao).trim(), f: String(d.fornecedor || '').trim(), q: 1, u: valor,
       cc: d.item || '', venc: t === 'À vista' ? mes : '', pago: false, dataPago: '',
-      data: d.data, cat: d.categoria, catTxt: c.livre ? String(d.categoriaTxt || '').trim() : '', origem: 'lancar', reembolso: d.quemPagou === 'eder',
+      data: d.data, cat: d.categoria, catTxt: c.livre ? String(d.categoriaTxt || '').trim() : '', origem: 'lancar', reembolso: d.quemPagou === 'eder', pagto: d.pagto || '',
       lancadoPor: d.lancadoPor || '', lid: d.lid || ('L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
       criadoEm: d.criadoEm || new Date().toISOString()
     };
@@ -90,7 +90,7 @@
   function avulsaEmpresa(d, id) {
     return {
       id: id, data: d.data, mes: mesDe(d.data), desc: String(d.descricao).trim(), forn: String(d.fornecedor || '').trim(),
-      cat: d.categoria, catTxt: (categoria(d.categoria) || {}).livre ? String(d.categoriaTxt || '').trim() : '', valor: Math.round(numero(d.valor) * 100) / 100, reembolso: d.quemPagou === 'eder',
+      cat: d.categoria, catTxt: (categoria(d.categoria) || {}).livre ? String(d.categoriaTxt || '').trim() : '', valor: Math.round(numero(d.valor) * 100) / 100, reembolso: d.quemPagou === 'eder', pagto: d.pagto || '',
       lancadoPor: d.lancadoPor || '', criadoEm: d.criadoEm || new Date().toISOString()
     };
   }
@@ -324,7 +324,7 @@
   function novaDespesa(manter) {
     injetarEstilos();
     var base = manter || {};
-    estado = { destino: base.destino || '', item: base.item || '', categoria: '', data: base.data || hojeISO(), forma: 'avista', quemPagou: base.quemPagou || 'mgb', jaPaga: base.jaPaga !== false };
+    estado = { destino: base.destino || '', item: base.item || '', categoria: '', data: base.data || hojeISO(), forma: 'avista', quemPagou: base.quemPagou || 'mgb', jaPaga: base.jaPaga !== false, pagto: '' };
     var areas = [{ id: MGB_DIA, rot: '🏢 MGB · dia a dia' }].concat(modulos().filter(function (m) { return SEM_DESPESA.indexOf(m.id) < 0; }).map(function (m) { return { id: m.id, rot: (m.icon || '') + ' ' + rotMod(m) }; }));
     var sug = sugestoes(typeof db !== 'undefined' ? db : {}, typeof empresaAvulsas !== 'undefined' ? empresaAvulsas : []); // eslint-disable-line no-undef
     var grupos = {};
@@ -337,6 +337,10 @@
       '<div class="origem" id="lz-origem" hidden></div>' +
       '<p class="sub" id="lz-area-dica">MGB · dia a dia é o que não é de um cliente: combustível do dia a dia, almoço, escritório. Viagem a serviço de um cliente vai no cliente.</p></section>' +
       '<section class="card"><div class="sec">2 · O que foi?</div>' +
+      '<div id="lz-rapidas-w" hidden><div class="grupo">Mais usadas no dia a dia</div><div class="chips" id="lz-rapidas">' +
+      [['gasolina', '⛽ Gasolina', 'combustivel', 'Gasolina'], ['cafe', '☕ Café / chá', 'alimentacao', 'Café / chá'], ['escritorio', '📎 Material de escritório', 'escritorio', 'Material de escritório'], ['limpeza', '🧽 Limpeza', 'servico', 'Limpeza'], ['outros', '✏️ Outros', 'outro', '']].map(function (q) {
+        return '<button type="button" class="chip" data-rapida="' + q[0] + '" data-rcat="' + q[2] + '" data-rdesc="' + q[3] + '" aria-pressed="false">' + q[1] + '</button>';
+      }).join('') + '</div></div>' +
       Object.keys(grupos).map(function (gname) { return '<div class="grupo">' + esc(gname) + '</div><div class="chips">' + grupos[gname].map(function (c) { return '<button type="button" class="chip" data-cat="' + c.id + '" aria-pressed="false">' + esc(c.rotulo) + '</button>'; }).join('') + '</div>'; }).join('') +
       '<label class="f" for="lz-cat-txt" id="lz-cat-txt-w" hidden>O que foi?<input id="lz-cat-txt" placeholder="ex.: Conserto do carro, curso, brinde de cliente" autocomplete="off"></label>' +
       '</section>' +
@@ -354,6 +358,7 @@
       '<section class="card"><div class="sec">4 · Pagamento</div>' +
       '<div class="chips" role="group" aria-label="Situação"><button type="button" class="chip" data-paga="1" aria-pressed="true">✔ Já paga</button><button type="button" class="chip" data-paga="0" aria-pressed="false">A pagar</button></div>' +
       '<div class="chips" role="group" aria-label="Quem pagou" id="lz-quem"><button type="button" class="chip" data-quem="mgb" aria-pressed="true">Conta da MGB</button><button type="button" class="chip" data-quem="eder" aria-pressed="false">Eder pagou (reembolso)</button></div>' +
+      '<div class="grupo">Pago com</div><div class="chips" role="group" aria-label="Pago com"><button type="button" class="chip" data-pagto="credito" aria-pressed="false">💳 Crédito</button><button type="button" class="chip" data-pagto="debito" aria-pressed="false">💳 Débito</button><button type="button" class="chip" data-pagto="pix" aria-pressed="false">⚡ PIX</button><button type="button" class="chip" data-pagto="permuta" aria-pressed="false">🔄 Permuta</button></div>' +
       '<p class="sub">Eder pagou: a MGB transfere para o Eder e a transferência fica marcada como reembolso, não como pró-labore.</p></section>' +
       '</main><aside><section class="card"><div class="sec">Vai entrar assim</div><div class="resumo" id="lz-resumo">Escolha para quem é e o que foi.</div>' +
       '<div class="erros" id="lz-erros" role="alert"></div>' +
@@ -375,6 +380,7 @@
       origemUnidade();
       var parc = el.querySelector('#lz-forma option[value="parcelado"]'); parc.disabled = area === MGB_DIA;
       if (area === MGB_DIA && estado.forma === 'parcelado') { el.querySelector('#lz-forma').value = 'avista'; estado.forma = 'avista'; formaMudou(); }
+      el.querySelector('#lz-rapidas-w').hidden = area !== MGB_DIA;
       resumo();
     }
     // De onde vem a unidade escolhida: cadastrada no hub (pelo Novo cliente, com dados do CRM) e o CNPJ, quando houver.
@@ -400,7 +406,7 @@
       return { destino: estado.destino, item: estado.destino === MGB_DIA ? '' : el.querySelector('#lz-item').value, categoria: estado.categoria, categoriaTxt: el.querySelector('#lz-cat-txt').value,
         descricao: el.querySelector('#lz-desc').value, fornecedor: el.querySelector('#lz-forn').value, valor: el.querySelector('#lz-valor').value,
         data: el.querySelector('#lz-data').value, forma: estado.forma, parcelas: el.querySelector('#lz-parc').value, meses: el.querySelector('#lz-meses').value,
-        quemPagou: estado.quemPagou, jaPaga: estado.jaPaga, lancadoPor: quem() };
+        quemPagou: estado.quemPagou, jaPaga: estado.jaPaga, pagto: estado.pagto || '', lancadoPor: quem() };
     }
     function resumo() {
       var d = dados(), v = numero(d.valor), m = mesDe(d.data), alvo;
@@ -413,7 +419,8 @@
         else if (d.forma === 'mensal') txt += '<br>' + brl(v) + ' por mês, ' + (parseInt(d.meses, 10) || 1) + ' meses a partir de ' + fmtMes(m);
         else txt += '<br>' + brl(v) + ' em ' + fmtMes(m);
       }
-      txt += '<br><span class="hint">' + (d.jaPaga ? 'Já paga' : 'A pagar') + ' · ' + (d.quemPagou === 'eder' ? 'Eder pagou (reembolso)' : 'conta da MGB') + '</span>';
+      var pagtoRot = { credito: 'crédito', debito: 'débito', pix: 'PIX', permuta: 'permuta' }[d.pagto] || '';
+      txt += '<br><span class="hint">' + (d.jaPaga ? 'Já paga' : 'A pagar') + ' · ' + (d.quemPagou === 'eder' ? 'Eder pagou (reembolso)' : 'conta da MGB') + (pagtoRot ? ' · ' + pagtoRot : '') + '</span>';
       el.querySelector('#lz-resumo').innerHTML = txt;
     }
 
@@ -428,6 +435,20 @@
     el.querySelector('#lz-cat-txt').addEventListener('input', resumo);
     el.querySelectorAll('[data-paga]').forEach(function (b) { b.addEventListener('click', function () { estado.jaPaga = b.getAttribute('data-paga') === '1'; marcar('data-paga', b.getAttribute('data-paga')); resumo(); }); });
     el.querySelectorAll('[data-quem]').forEach(function (b) { b.addEventListener('click', function () { estado.quemPagou = b.getAttribute('data-quem'); marcar('data-quem', estado.quemPagou); resumo(); }); });
+    el.querySelectorAll('[data-pagto]').forEach(function (b) { b.addEventListener('click', function () {
+      estado.pagto = estado.pagto === b.getAttribute('data-pagto') ? '' : b.getAttribute('data-pagto');  // clicar de novo desmarca
+      marcar('data-pagto', estado.pagto); resumo();
+    }); });
+    el.querySelectorAll('[data-rapida]').forEach(function (b) { b.addEventListener('click', function () {
+      marcar('data-rapida', b.getAttribute('data-rapida'));
+      estado.categoria = b.getAttribute('data-rcat'); marcar('data-cat', estado.categoria);
+      var livre = !!(categoria(estado.categoria) || {}).livre, w = el.querySelector('#lz-cat-txt-w');
+      w.hidden = !livre;
+      var de = el.querySelector('#lz-desc'), rdesc = b.getAttribute('data-rdesc');
+      if (rdesc) { de.value = rdesc; var s = sug.descricoes[rdesc]; if (s) { var fo = el.querySelector('#lz-forn'), va = el.querySelector('#lz-valor'); if (!fo.value && s.f && s.f !== '—') fo.value = s.f; if (!va.value && s.u) va.value = String(s.u).replace('.', ','); } el.querySelector('#lz-valor').focus(); }
+      else { el.querySelector('#lz-cat-txt').focus(); }
+      resumo();
+    }); });
     el.querySelector('#lz-forma').addEventListener('change', formaMudou);
     ['#lz-valor', '#lz-data', '#lz-parc', '#lz-meses', '#lz-desc'].forEach(function (s) { el.querySelector(s).addEventListener('input', resumo); });
     el.querySelector('#lz-desc').addEventListener('change', function (e) {   // descrição já usada: completa fornecedor, valor e categoria
