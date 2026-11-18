@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "mkdir -p .publico && for f in * .well-known; do case \"$f\" in bot|docs|supabase|apps-script-*|node_modules|.publico|vercel.json|*.md) ;; *) [ -e \"$f\" ] && cp -R \"$f\" .publico/ ;; esac; done; echo publicado: $(ls .publico | wc -l) itens",
+  "outputDirectory": ".publico",
   "cleanUrls": false,
   "headers": [
     {

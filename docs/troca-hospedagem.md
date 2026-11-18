@@ -9,7 +9,7 @@
 | Peça | Situação |
 |---|---|
 | Projeto `mgb-hub` no Vercel | criado e ligado ao repositório (branch de produção: `main`) |
-| Arquivos fora da publicação (`.vercelignore`) | `bot/`, `docs/`, `supabase/`, Apps Scripts |
+| Arquivos fora da publicação | o build do `mgb-hub` (`vercel.json` da raiz) monta `.publico/` sem `bot/`, `docs/`, `supabase/` e Apps Scripts. **Não usar `.vercelignore` na raiz:** o Vercel aplica ele aos dois projetos e apaga a API |
 | Cabeçalhos de segurança (`vercel.json` da raiz) | HSTS, nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy e CSP em modo "só relatar" |
 | Relatórios da CSP | `/api/csp` na API, aparecem no log com o prefixo `csp:` |
 | API aceita chamadas do endereço novo | `HUB_ORIGINS` inclui `https://hub-mgb.vercel.app` |

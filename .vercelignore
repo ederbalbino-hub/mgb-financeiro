@@ -1,8 +1,0 @@
-# Projeto "mgb-hub" no Vercel (hub + materiais públicos). A API é outro projeto (pasta bot/).
-bot/
-docs/
-supabase/
-apps-script-assinafy/
-apps-script-faturamento/
-*.md
-.gitignore
