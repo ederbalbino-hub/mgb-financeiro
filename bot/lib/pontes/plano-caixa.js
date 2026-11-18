@@ -27,9 +27,21 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
   if (!regra.metodos.includes(req.method)) return res.status(405).json({ error: "Método não permitido." });
 
   const base = env.PLANO_CAIXA_URL;
-  const token = env.PLANO_CAIXA_TOKEN;
-  if (!base || !token) return res.status(503).json({ error: "Servidor sem PLANO_CAIXA_URL/PLANO_CAIXA_TOKEN." });
+  // Troca de token sem parar o sync: com PLANO_CAIXA_TOKEN_NOVO no Vercel, tenta o novo primeiro e,
+  // se o Plano de Caixa ainda não o conhecer ("forbidden"), cai no antigo. Depois da troca,
+  // PLANO_CAIXA_TOKEN recebe o novo e PLANO_CAIXA_TOKEN_NOVO é apagado.
+  const tokens = [env.PLANO_CAIXA_TOKEN_NOVO, env.PLANO_CAIXA_TOKEN].filter(Boolean);
+  if (!base || !tokens.length) return res.status(503).json({ error: "Servidor sem PLANO_CAIXA_URL/PLANO_CAIXA_TOKEN." });
 
+  let ultimo;
+  for (const token of tokens) {
+    ultimo = await chamar(req, res, acao, base, token, fetchFn);
+    if (!ultimo.recusado) break;
+  }
+  return ultimo.responder();
+}
+
+async function chamar(req, res, acao, base, token, fetchFn) {
   try {
     let r;
     if (req.method === "GET") {
@@ -59,22 +71,23 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
       });
     }
     const texto = (await r.text()).trim();
+    const fim = (status, corpo) => ({ recusado: false, responder: () => res.status(status).json(corpo) });
     if (texto === "forbidden" || /"erro"\s*:\s*"forbidden"/.test(texto)) {
-      return res.status(502).json({ error: "Plano de Caixa recusou o token (PLANO_CAIXA_TOKEN diferente do Script Properties?)." });
+      return { recusado: true, responder: () => res.status(502).json({ error: "Plano de Caixa recusou o token (PLANO_CAIXA_TOKEN diferente do Script Properties?)." }) };
     }
     if (req.method === "POST") {
-      if (!/^ok/.test(texto)) return res.status(502).json({ error: `Plano de Caixa respondeu: ${texto.slice(0, 120)}` });
-      return res.status(200).json({ ok: true, resposta: texto });
+      if (!/^ok/.test(texto)) return fim(502, { error: `Plano de Caixa respondeu: ${texto.slice(0, 120)}` });
+      return fim(200, { ok: true, resposta: texto });
     }
     let j;
     try {
       j = JSON.parse(texto);
     } catch {
-      return res.status(502).json({ error: "Plano de Caixa não devolveu JSON." });
+      return fim(502, { error: "Plano de Caixa não devolveu JSON." });
     }
-    return res.status(200).json(j);
+    return fim(200, j);
   } catch (e) {
     console.error("plano-caixa:", e.message || e);
-    return res.status(502).json({ error: "Não consegui falar com o Plano de Caixa." });
+    return { recusado: false, responder: () => res.status(502).json({ error: "Não consegui falar com o Plano de Caixa." }) };
   }
 }

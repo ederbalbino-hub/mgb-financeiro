@@ -203,3 +203,19 @@ test("plano-caixa: token recusado pelo Apps Script vira 502 claro", async () => 
   });
   assert.equal(r.statusCode, 502);
 });
+
+test("plano-caixa: na troca de token tenta o NOVO e cai no antigo se o script ainda não conhecer", async () => {
+  const env = { ...ENV, PLANO_CAIXA_TOKEN_NOVO: "token-novo" };
+  const vistos = [];
+  const f = fetchFalso((url) => { const t = new URL(url).searchParams.get("token"); vistos.push(t); return { texto: t === "token-plano" ? '{"hub_1":"pago"}' : "forbidden" }; });
+  const r = resFalsa();
+  await planoCaixa(req({ token: tk("eder", "admin"), query: { acao: "statusDespesasEmpresa" } }), r, { env, fetchFn: f });
+  assert.equal(r.statusCode, 200);
+  assert.deepEqual(vistos, ["token-novo", "token-plano"]);
+
+  const f2 = fetchFalso((url) => ({ texto: new URL(url).searchParams.get("token") === "token-novo" ? '{"ok":true}' : "forbidden" }));
+  const r2 = resFalsa();
+  await planoCaixa(req({ token: tk("eder", "admin"), query: { acao: "statusDespesasEmpresa" } }), r2, { env, fetchFn: f2 });
+  assert.equal(r2.statusCode, 200);
+  assert.equal(f2.chamadas.length, 1, "token novo aceito: não tenta o antigo");
+});
