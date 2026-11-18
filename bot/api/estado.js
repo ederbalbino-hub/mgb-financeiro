@@ -11,10 +11,11 @@
 import { cors, exigirLogin } from "../lib/http.js";
 import { lerEstado, gravarEstado, ErroEstado } from "../lib/estado.js";
 import { filtrarLeitura, mesclarGravacao, veTudo } from "../lib/visibilidade.js";
+import { avisarFechamentos } from "../lib/notificacao.js";
 
 export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   if (cors(req, res, { metodos: "GET,POST,OPTIONS", env })) return;
-  const usuario = exigirLogin(req, res, null, env);
+  const usuario = await exigirLogin(req, res, null, env, fetchFn);
   if (!usuario) return;
 
   try {
@@ -39,21 +40,17 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
       obj._salvoEm = new Date().toISOString();
       const v = req.query?.v;
       const versaoLida = v === undefined || v === "" ? undefined : Number(v);
-      if (!veTudo(usuario.papel)) {
-        // Papel com visão parcial: o navegador dele não tem as outras seções. Parte do que está no
-        // banco e troca só as seções que ele pode gravar.
-        const atual = await lerEstado(env, fetchFn);
-        if (versaoLida !== undefined && versaoLida !== atual.versao) {
-          return res.status(409).json({ error: "Outra pessoa salvou antes. Recarregando para mesclar.", conflito: true, v: atual.versao });
-        }
-        const { doc, mudou } = mesclarGravacao(atual.estado, obj, usuario.papel);
-        if (!mudou) return res.status(200).json({ ok: true, v: atual.versao, semMudanca: true });
-        const r = await gravarEstado(doc, atual.versao, usuario, env, fetchFn);
-        console.log(`estado: salvo por ${usuario.login} (v${r.versao}, visão parcial)`);
-        return res.status(200).json({ ok: true, v: r.versao });
+      // Parte sempre do que está no banco e troca só as seções que o papel pode gravar
+      // (lib/visibilidade.js). Seção que não veio no envio fica como está.
+      const atual = await lerEstado(env, fetchFn);
+      if (versaoLida !== undefined && versaoLida !== atual.versao) {
+        return res.status(409).json({ error: "Outra pessoa salvou antes. Recarregando para mesclar.", conflito: true, v: atual.versao });
       }
-      const r = await gravarEstado(obj, versaoLida, usuario, env, fetchFn);
+      const { doc, mudou } = mesclarGravacao(atual.estado, obj, usuario.papel);
+      if (!mudou) return res.status(200).json({ ok: true, v: atual.versao, semMudanca: true });
+      const r = await gravarEstado(doc, atual.versao, usuario, env, fetchFn);
       console.log(`estado: salvo por ${usuario.login} (v${r.versao})`);
+      await avisarFechamentos(atual.estado.leads, doc.leads, usuario.nome, env, fetchFn);
       return res.status(200).json({ ok: true, v: r.versao });
     }
 

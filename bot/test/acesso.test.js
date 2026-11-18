@@ -44,8 +44,16 @@ test("Cleiton: Estúdio e ferramentas, sem financeiro", () => {
   for (const p of ["operacional:contratos", "overview", "radioops", "contabilidade"]) assert.ok(!A.pode("programacao", p), p);
 });
 
-test("todo papel acessa a Home", () => {
-  for (const p of Object.keys(A.PERFIS)) assert.ok(A.pode(p, "home"), p);
+test("todo papel acessa a Home, menos o Cleiton (modo Estúdio, sem hub)", () => {
+  for (const p of Object.keys(A.PERFIS)) {
+    if (p === "programacao") continue;
+    assert.ok(A.pode(p, "home"), p);
+  }
+  assert.ok(!A.pode("programacao", "home"));
+  for (const p of ["overview", "custos", "leads", "radioops", "contabilidade", "operacional:contratos"]) assert.ok(!A.pode("programacao", p), p);
+  assert.ok(A.pode("programacao", "operacional:estudio"));
+  assert.ok(A.podeAba("programacao", "ferramentas", "etq"));
+  assert.ok(!A.podeAba("programacao", "ferramentas", "backup"), "sem backup: ele só tem as etiquetas");
 });
 
 test("lê o destino de cada botão do hub", () => {
@@ -124,3 +132,4 @@ test("Karen: módulo Tela Vertical inteiro (operação, propostas, síndicos, Co
   for (const p of ["admin-geral", "admin-meudia"]) assert.ok(A.pode(p, "operacional:telavertical"), p);
   for (const p of ["bureau", "programacao"]) assert.ok(!A.pode(p, "operacional:telavertical"), p);
 });
+

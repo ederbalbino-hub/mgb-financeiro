@@ -66,12 +66,15 @@
       paginas: ['home', 'radioops'],
       extras: ['ropsPainel']
     },
-    // Cleiton: Gerador de Spots e Blocos Rádio no Estúdio, e as Ferramentas.
+    // Cleiton (decisão de 18/11/2026): não entra no hub. "Modo Estúdio": só Gerador de Spots e
+    // Blocos Rádio (Estúdio) e as Etiquetas (Ferramentas), sem menu lateral nem Home.
     programacao: {
       rotulo: 'Cleiton',
-      paginas: ['home', 'operacional:estudio', 'ferramentas'],
+      paginas: ['operacional:estudio', 'ferramentas'],
       extras: [],
-      abas: { estudio: ['gerador', 'blocos'] }
+      abas: { estudio: ['gerador', 'blocos'], ferramentas: ['etq'] },
+      inicio: 'operacional:estudio',
+      modoEstudio: true
     }
   };
 
@@ -213,6 +216,11 @@
       '#mgb-renov .rv-caixa[hidden]{display:none}#mgb-renov .rv-bts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}' +
       '#mgb-renov .rv-bts button{min-height:38px;padding:0 12px;border-radius:9px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}' +
       '#mgb-renov .rv-ok{background:#c2410c;border:1px solid #c2410c;color:#fff}#mgb-renov .rv-nao{background:#fff;border:1px solid #f2b880;color:#7a3e00}' +
+      'body.mgb-modo-estudio #sidebar,body.mgb-modo-estudio .mobile-bottom-nav,body.mgb-modo-estudio .sb-toggle,body.mgb-modo-estudio #mgb-pill{display:none!important}' +
+      'body.mgb-modo-estudio .shell{grid-template-columns:1fr!important}body.mgb-modo-estudio .main{margin-left:0!important}body.mgb-modo-estudio .ferr-tabs{display:none!important}' +
+      '#mgb-estudio-bar{position:sticky;top:0;z-index:9000;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:#241a38;color:#fff;font-family:"DM Sans",system-ui,sans-serif}' +
+      '#mgb-estudio-bar b{margin-right:auto;font-size:15px}#mgb-estudio-bar button{min-height:38px;padding:0 14px;border-radius:9px;border:1px solid #6C55DB;background:#4E38B2;color:#fff;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}' +
+      '#mgb-estudio-bar button.sair{background:transparent;border-color:#8b80a8}' +
       '#mgb-login{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:#f3f1ec;font-family:"DM Sans",system-ui,sans-serif}' +
       '#mgb-login form{width:100%;max-width:360px;background:#fff;border:1px solid #ddd8ce;border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 40px rgba(36,26,56,.08)}' +
       '#mgb-login h1{margin:0;font-size:22px;color:#241a38}#mgb-login p{margin:0;font-size:14px;color:#5d5868}' +
@@ -221,6 +229,7 @@
       '#mgb-login input:focus{outline:2px solid #6C55DB;outline-offset:1px;border-color:#6C55DB}' +
       '#mgb-login button{height:46px;border:0;border-radius:10px;background:#4E38B2;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}' +
       '#mgb-login button[disabled]{opacity:.6;cursor:wait}#mgb-login .erro{color:#b42318;font-size:13px;min-height:18px}' +
+      '#mgb-login .ok{color:#1d7a46;font-size:13px}#mgb-login .link{background:none;border:0;height:auto;padding:0;color:#4E38B2;font-weight:600;font-size:13px;text-decoration:underline;cursor:pointer;align-self:flex-start}' +
       '#mgb-pill{position:fixed;right:16px;bottom:16px;z-index:9000;font-family:"DM Sans",system-ui,sans-serif}' +
       '@media (max-width:768px){#mgb-pill{bottom:84px;right:12px}}' +
       '#mgb-pill>button{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 6px;border-radius:999px;border:1px solid #ddd8ce;background:#fff;box-shadow:0 4px 16px rgba(36,26,56,.12);cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;color:#241a38}' +
@@ -308,6 +317,7 @@
     var w = doc.querySelector('.home-welcome');
     if (w && sessao) w.textContent = 'Olá, ' + sessao.usuario.nome + '! 👋';
     montarAvisoRenovacao();
+    aplicarModoEstudio();
 
     montarPill();
     montarFaixaVerComo();
@@ -459,7 +469,12 @@
     });
     if (originais.goPage) {
       global.goPage = function (p) {
-        if (perfilAtual && !pode(perfilAtual, p)) p = 'home';
+        if (typeof p === 'string' && p.indexOf('operacional:') === 0) return global.goOperacional(p.slice(12));
+        if (perfilAtual && !pode(perfilAtual, p)) {
+          var ini = paginaInicial(perfilAtual);
+          if (ini.indexOf('operacional:') === 0) return global.goOperacional(ini.slice(12));
+          p = ini;
+        }
         var r = originais.goPage.apply(this, [p].concat([].slice.call(arguments, 1)));
         aplicar();
         if (p === 'ferramentas' && perfilAtual && !podeAba(perfilAtual, 'ferramentas', 'pdf')) {
@@ -470,8 +485,14 @@
     }
     if (originais.goOperacional) {
       global.goOperacional = function (g) {
-        if (perfilAtual && !pode(perfilAtual, 'operacional:' + (g || 'contratos'))) return global.goPage('home');
-        return originais.goOperacional.apply(this, arguments);
+        if (perfilAtual && !pode(perfilAtual, 'operacional:' + (g || 'contratos'))) {
+          var ini = paginaInicial(perfilAtual);
+          if (ini === 'operacional:' + (g || 'contratos')) return undefined; // evita laço
+          return global.goPage(ini);
+        }
+        var r = originais.goOperacional.apply(this, arguments);
+        aplicar();
+        return r;
       };
     }
     if (originais.openGerador) {
@@ -505,11 +526,36 @@
     }
   }
 
+  function paginaInicial(perfil) { return (PERFIS[perfil] && PERFIS[perfil].inicio) || 'home'; }
+
   function definirPerfil() {
     if (!sessao) return;
     perfilAtual = perfilEfetivo(sessao.usuario.papel, modo(), verComo);
     aplicar();
     if (typeof global.curPage === 'string' && !pode(perfilAtual, global.curPage)) global.goPage('home');
+  }
+
+  // ── Modo Estúdio (Cleiton) ─────────────────────────────────────────────
+  function aplicarModoEstudio() {
+    var ligado = !!(PERFIS[perfilAtual] && PERFIS[perfilAtual].modoEstudio);
+    doc.body.classList.toggle('mgb-modo-estudio', ligado);
+    var bar = doc.getElementById('mgb-estudio-bar');
+    if (!ligado) { if (bar) bar.remove(); return; }
+    if (bar) return;
+    bar = doc.createElement('nav');
+    bar.id = 'mgb-estudio-bar';
+    bar.innerHTML = '<b>🎙️ Estúdio MGB</b>' +
+      '<button type="button" data-ir="estudio">Spots e Blocos</button>' +
+      '<button type="button" data-ir="etq">Etiquetas</button>' +
+      '<button type="button" data-ir="sair" class="sair">Sair</button>';
+    doc.body.insertBefore(bar, doc.body.firstChild);
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-ir]'); if (!b) return;
+      var ir = b.getAttribute('data-ir');
+      if (ir === 'estudio') global.goOperacional('estudio');
+      else if (ir === 'etq') { global.goPage('ferramentas'); global.showFerrTab('etq'); }
+      else sair();
+    });
   }
 
   // ── Pílula do usuário (canto inferior direito) ─────────────────────────
@@ -570,45 +616,113 @@
   });
 
   // ── Login ──────────────────────────────────────────────────────────────
-  function mostrarLogin(aviso) {
+  // ── Login ──────────────────────────────────────────────────────────────
+  // Novo (11/2026): e-mail e senha pelo Supabase Auth (global.MGBSupabase, criado no api-token.js).
+  // O login antigo por usuário (HUB_USERS) continua aceito até o servidor desligar (LOGIN_ANTIGO=desligado).
+  var sb = function () { return global.MGBSupabase || null; };
+
+  function formulario(html) {
     injetarEstilos();
     var el = doc.getElementById('mgb-login');
     if (!el) { el = doc.createElement('div'); el.id = 'mgb-login'; doc.body.appendChild(el); }
-    el.innerHTML =
-      '<form novalidate>' +
-      '<img src="marca/mgb-logo-roxo.svg" alt="MGB Mídia" width="117" height="60" style="display:block;margin-bottom:4px"><h1>Hub</h1><p>Entre com o seu usuário para ver a sua área de trabalho.</p>' +
-      '<label for="mgb-usuario">Usuário<input id="mgb-usuario" name="usuario" autocomplete="username" autocapitalize="none" required></label>' +
+    el.innerHTML = '<form novalidate><img src="marca/mgb-logo-roxo.svg" alt="MGB Mídia" width="117" height="60" style="display:block;margin-bottom:4px">' + html + '</form>';
+    return el;
+  }
+
+  function mostrarLogin(aviso) {
+    var el = formulario(
+      '<h1>Hub</h1><p>Entre com o seu e-mail e senha.</p>' +
+      '<label for="mgb-usuario">E-mail<input id="mgb-usuario" name="email" type="email" autocomplete="username" autocapitalize="none" required></label>' +
       '<label for="mgb-senha">Senha<input id="mgb-senha" name="senha" type="password" autocomplete="current-password" required></label>' +
-      '<div class="erro" role="alert" id="mgb-erro">' + (aviso || '') + '</div>' +
-      '<button type="submit">Entrar</button></form>';
+      '<div class="erro" role="alert" id="mgb-erro">' + esc(aviso || '') + '</div>' +
+      '<button type="submit">Entrar</button>' +
+      '<button type="button" class="link" id="mgb-esqueci">Esqueci minha senha</button>');
     var u = doc.getElementById('mgb-usuario');
     u.value = ler(K_ULTIMO) || '';
     (u.value ? doc.getElementById('mgb-senha') : u).focus();
     el.querySelector('form').addEventListener('submit', function (e) {
       e.preventDefault();
-      entrar(u.value, doc.getElementById('mgb-senha').value, el.querySelector('button'));
+      entrar(u.value, doc.getElementById('mgb-senha').value, el.querySelector('button[type=submit]'));
     });
+    doc.getElementById('mgb-esqueci').addEventListener('click', function () { mostrarEsqueci(u.value); });
   }
 
   function entrar(usuario, senha, btn) {
     var erro = doc.getElementById('mgb-erro');
-    if (!usuario || !senha) { erro.textContent = 'Preencha usuário e senha.'; return; }
+    usuario = String(usuario || '').trim().toLowerCase();
+    if (!usuario || !senha) { erro.textContent = 'Preencha e-mail e senha.'; return; }
     btn.disabled = true; btn.textContent = 'Entrando…'; erro.textContent = '';
+    var falhou = function (msg) { erro.textContent = msg; btn.disabled = false; btn.textContent = 'Entrar'; };
+
+    if (usuario.indexOf('@') !== -1 && sb()) {
+      sb().auth.signInWithPassword({ email: usuario, password: senha }).then(function (r) {
+        if (r.error) return falhou(/invalid/i.test(r.error.message) ? 'E-mail ou senha incorretos.' : 'Não foi possível entrar: ' + r.error.message);
+        gravar(K_ULTIMO, usuario);
+        global.location.reload(); // recarrega para buscar os dados já com o login
+      }).catch(function () { falhou('Sem conexão com o servidor. Tente de novo.'); });
+      return;
+    }
+
+    // login antigo (usuário sem @), enquanto o servidor aceitar
     fetch(API + '?action=login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ usuario: usuario, senha: senha })
     }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         if (!res.ok) throw new Error(res.j.error || 'Não foi possível entrar.');
-        gravar(K_ULTIMO, usuario.trim().toLowerCase());
-        iniciarSessao({ token: res.j.token, usuario: res.j.usuario });
-        var el = doc.getElementById('mgb-login'); if (el) el.remove();
-        global.goPage('home');
+        gravar(K_ULTIMO, usuario);
+        gravar(K_SESSAO, JSON.stringify({ token: res.j.token, usuario: res.j.usuario }));
+        global.location.reload();
       })
-      .catch(function (e) {
-        erro.textContent = e.message === 'Failed to fetch' ? 'Sem conexão com o servidor. Tente de novo.' : e.message;
-        btn.disabled = false; btn.textContent = 'Entrar';
+      .catch(function (e) { falhou(e.message === 'Failed to fetch' ? 'Sem conexão com o servidor. Tente de novo.' : e.message); });
+  }
+
+  function mostrarEsqueci(email) {
+    var el = formulario(
+      '<h1>Trocar a senha</h1><p>Digite o seu e-mail. Se ele tiver acesso ao hub, você recebe um link para escolher uma senha nova.</p>' +
+      '<label for="mgb-email-rec">E-mail<input id="mgb-email-rec" type="email" autocomplete="username" autocapitalize="none" required></label>' +
+      '<div class="erro" role="alert" id="mgb-erro"></div>' +
+      '<button type="submit">Enviar link</button><button type="button" class="link" id="mgb-voltar">Voltar</button>');
+    var inp = doc.getElementById('mgb-email-rec');
+    inp.value = String(email || '').indexOf('@') !== -1 ? email : ''; inp.focus();
+    doc.getElementById('mgb-voltar').addEventListener('click', function () { mostrarLogin(); });
+    el.querySelector('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var erro = doc.getElementById('mgb-erro'), btn = el.querySelector('button[type=submit]');
+      var em = inp.value.trim().toLowerCase();
+      if (em.indexOf('@') === -1) { erro.textContent = 'Digite um e-mail válido.'; return; }
+      if (!sb()) { erro.textContent = 'Serviço de login indisponível. Tente de novo.'; return; }
+      btn.disabled = true; btn.textContent = 'Enviando…';
+      sb().auth.resetPasswordForEmail(em, { redirectTo: global.location.origin + global.location.pathname }).then(function () {
+        erro.className = 'ok';
+        erro.textContent = 'Pronto. Se esse e-mail tiver acesso, o link chega em alguns minutos (olhe também o spam).';
+        btn.textContent = 'Enviado';
       });
+    });
+  }
+
+  // Link do e-mail de convite ou de troca de senha: o Supabase já abriu a sessão; falta escolher a senha.
+  function mostrarCriarSenha(tipo) {
+    var el = formulario(
+      '<h1>' + (tipo === 'invite' ? 'Crie a sua senha' : 'Escolha a senha nova') + '</h1><p>Use pelo menos 10 caracteres.</p>' +
+      '<label for="mgb-s1">Senha<input id="mgb-s1" type="password" autocomplete="new-password" required></label>' +
+      '<label for="mgb-s2">Repita a senha<input id="mgb-s2" type="password" autocomplete="new-password" required></label>' +
+      '<div class="erro" role="alert" id="mgb-erro"></div><button type="submit">Salvar e entrar</button>');
+    doc.getElementById('mgb-s1').focus();
+    el.querySelector('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var s1 = doc.getElementById('mgb-s1').value, s2 = doc.getElementById('mgb-s2').value;
+      var erro = doc.getElementById('mgb-erro'), btn = el.querySelector('button[type=submit]');
+      if (s1.length < 10) { erro.textContent = 'A senha precisa ter pelo menos 10 caracteres.'; return; }
+      if (s1 !== s2) { erro.textContent = 'As duas senhas não são iguais.'; return; }
+      btn.disabled = true; btn.textContent = 'Salvando…';
+      sb().auth.updateUser({ password: s1 }).then(function (r) {
+        if (r.error) { erro.textContent = 'Não consegui salvar: ' + r.error.message; btn.disabled = false; btn.textContent = 'Salvar e entrar'; return; }
+        global.MGB_AUTH_LINK = '';
+        try { global.history.replaceState(null, '', global.location.pathname); } catch (e2) {}
+        global.location.reload();
+      });
+    });
   }
 
   function iniciarSessao(s) {
@@ -624,39 +738,61 @@
     sessao = null; perfilAtual = null; verComo = '';
     var p = doc.getElementById('mgb-pill'); if (p) p.remove();
     var f = doc.getElementById('mgb-vercomo'); if (f) f.remove();
-    mostrarLogin();
+    var fim = function () { mostrarLogin(); };
+    if (sb()) sb().auth.signOut().then(fim, fim); else fim();
   }
 
-  function verificarEmSegundoPlano() {
-    fetch(API + '?action=me', { headers: { Authorization: 'Bearer ' + sessao.token } })
+  // Confere com o servidor quem é o usuário (o papel vale sempre o do cadastro atual).
+  function confirmarUsuario(aoConfirmar) {
+    fetch(API + '?action=me')
       .then(function (r) {
-        if (r.status === 401 || r.status === 503) { sair(); return null; }
+        if (r.status === 401 || r.status === 503 || r.status === 410) { sair(); return null; }
         return r.ok ? r.json() : null;
       })
-      .then(function (j) {
-        if (j && j.usuario && sessao) {
-          sessao.usuario = j.usuario; // papel pode ter mudado no cadastro
-          gravar(K_SESSAO, JSON.stringify(sessao));
-          definirPerfil();
-        }
-      })
-      .catch(function () { /* sem rede: mantém a sessão local até expirar */ });
+      .then(function (j) { if (j && j.usuario) aoConfirmar(j.usuario); })
+      .catch(function () { /* sem rede: mantém a sessão local */ });
   }
 
-  function iniciar() {
+  // Cleiton (programação) não navega pelo hub: o perfil dele abre direto no modo Estúdio.
+  function irParaPaginaDoPapel(usuario) {
+    if (usuario && PERFIS[usuario.papel] && PERFIS[usuario.papel].inicio && global.goPage) {
+      setTimeout(function () { global.goPage(paginaInicial(usuario.papel)); }, 0);
+    }
+    return false;
+  }
+
+  function iniciarSessaoNova() {
+    var guardada = null;
+    try { guardada = JSON.parse(ler(K_SESSAO) || 'null'); } catch (e) {}
+    if (guardada && guardada.novo && guardada.usuario && !irParaPaginaDoPapel(guardada.usuario)) iniciarSessao(guardada);
+    confirmarUsuario(function (u) {
+      if (irParaPaginaDoPapel(u)) return;
+      if (!sessao) iniciarSessao({ novo: true, usuario: u });
+      else { sessao.usuario = u; gravar(K_SESSAO, JSON.stringify(sessao)); definirPerfil(); }
+    });
+  }
+
+  function iniciarAntigo() {
     var s = null;
     try { s = JSON.parse(ler(K_SESSAO) || 'null'); } catch (e) {}
-    var dados = s && decodificarToken(s.token);
+    var dados = s && !s.novo && decodificarToken(s.token);
     if (s && dados && dados.exp > Date.now()) {
       iniciarSessao(s);
-      verificarEmSegundoPlano();
+      confirmarUsuario(function (u) { sessao.usuario = u; gravar(K_SESSAO, JSON.stringify(sessao)); definirPerfil(); });
       return;
     }
     gravar(K_SESSAO, null);
-    fetch(API + '?action=config')
-      .then(function (r) { return r.json(); })
-      .then(function (j) { if (j && j.ativo) mostrarLogin(); /* inativo: hub segue como antes */ })
-      .catch(function () { mostrarLogin('Sem conexão com o servidor de login. Tente de novo em instantes.'); });
+    mostrarLogin();
+  }
+
+  function iniciar() {
+    if (!sb()) { iniciarAntigo(); return; }
+    sb().auth.getSession().then(function (r) {
+      var sess = r && r.data && r.data.session;
+      if (sess && global.MGB_AUTH_LINK) { mostrarCriarSenha(global.MGB_AUTH_LINK); return; }
+      if (sess) { iniciarSessaoNova(); return; }
+      iniciarAntigo();
+    }, iniciarAntigo);
   }
 
   global.MGBAcesso = Object.assign(api, { sair: sair, usuario: function () { return sessao && sessao.usuario ? sessao.usuario : null; } });

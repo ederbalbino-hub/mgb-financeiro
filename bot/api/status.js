@@ -21,7 +21,7 @@ async function proxyJson(url) {
 export default async function handler(req, res) {
   // CORS só pro hub + login obrigatório (qualquer papel): monitoramento interno das telas e rádios.
   if (cors(req, res, { metodos: "GET,OPTIONS" })) return;
-  if (!exigirLogin(req, res)) return;
+  if (!(await exigirLogin(req, res))) return;
 
   const action = req.query.action || "";
 

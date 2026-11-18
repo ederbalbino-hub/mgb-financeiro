@@ -30,7 +30,7 @@ const req = ({ origin, method = "GET", token } = {}) => ({
 });
 const tokenDe = (login, papel) => assinarToken({ login, papel }, SEGREDO);
 
-test("CORS: libera o hub e recusa outros sites", () => {
+test("CORS: libera o hub e recusa outros sites", async () => {
   const r1 = resFalsa();
   assert.equal(cors(req({ origin: HUB }), r1, { env: {} }), false);
   assert.equal(r1.headers["Access-Control-Allow-Origin"], HUB);
@@ -40,7 +40,7 @@ test("CORS: libera o hub e recusa outros sites", () => {
   assert.equal(r2.headers["Access-Control-Allow-Origin"], undefined, "não pode refletir origem desconhecida");
 });
 
-test("CORS: preflight de origem estranha leva 403; do hub, 204", () => {
+test("CORS: preflight de origem estranha leva 403; do hub, 204", async () => {
   const r1 = resFalsa();
   assert.equal(cors(req({ origin: "https://evil.example", method: "OPTIONS" }), r1, { env: {} }), true);
   assert.equal(r1.statusCode, 403);
@@ -49,47 +49,91 @@ test("CORS: preflight de origem estranha leva 403; do hub, 204", () => {
   assert.equal(r2.statusCode, 204);
 });
 
-test("HUB_ORIGINS substitui a lista padrão", () => {
+test("HUB_ORIGINS substitui a lista padrão", async () => {
   assert.deepEqual(origensPermitidas({ HUB_ORIGINS: "https://hub.mgb.com.br/, https://x.dev" }), ["https://hub.mgb.com.br", "https://x.dev"]);
   assert.deepEqual(origensPermitidas({}), [HUB]);
 });
 
-test("sem token: 401", () => {
+test("sem token: 401", async () => {
   const r = resFalsa();
-  assert.equal(exigirLogin(req(), r, null, ENV), null);
+  assert.equal(await exigirLogin(req(), r, null, ENV), null);
   assert.equal(r.statusCode, 401);
 });
 
-test("token forjado ou de outro segredo: 401", () => {
+test("token forjado ou de outro segredo: 401", async () => {
   const r = resFalsa();
   const falso = assinarToken({ login: "eder", papel: "admin" }, "outro-segredo");
-  assert.equal(exigirLogin(req({ token: falso }), r, null, ENV), null);
+  assert.equal(await exigirLogin(req({ token: falso }), r, null, ENV), null);
   assert.equal(r.statusCode, 401);
 });
 
-test("login não configurado no servidor: 503 (fail-closed)", () => {
+test("login não configurado no servidor: 503 (fail-closed)", async () => {
   const r = resFalsa();
-  assert.equal(exigirLogin(req({ token: tokenDe("eder", "admin") }), r, null, {}), null);
+  assert.equal(await exigirLogin(req({ token: tokenDe("eder", "admin") }), r, null, {}), null);
   assert.equal(r.statusCode, 503);
 });
 
-test("financeiro: admin e Karen passam, Guina (bureau) leva 403", () => {
-  assert.equal(exigirLogin(req({ token: tokenDe("eder", "admin") }), resFalsa(), PAPEIS_FINANCEIRO, ENV).login, "eder");
-  assert.equal(exigirLogin(req({ token: tokenDe("karen", "financeiro") }), resFalsa(), PAPEIS_FINANCEIRO, ENV).login, "karen");
+test("financeiro: admin e Karen passam, Guina (bureau) leva 403", async () => {
+  assert.equal((await exigirLogin(req({ token: tokenDe("eder", "admin") }), resFalsa(), PAPEIS_FINANCEIRO, ENV)).login, "eder");
+  assert.equal((await exigirLogin(req({ token: tokenDe("karen", "financeiro") }), resFalsa(), PAPEIS_FINANCEIRO, ENV)).login, "karen");
   const r = resFalsa();
-  assert.equal(exigirLogin(req({ token: tokenDe("guina", "bureau") }), r, PAPEIS_FINANCEIRO, ENV), null);
+  assert.equal(await exigirLogin(req({ token: tokenDe("guina", "bureau") }), r, PAPEIS_FINANCEIRO, ENV), null);
   assert.equal(r.statusCode, 403);
 });
 
-test("o papel vale o do cadastro atual, não o do token", () => {
+test("o papel vale o do cadastro atual, não o do token", async () => {
   // token antigo dizendo "admin", mas no cadastro a Guina é bureau
   const r = resFalsa();
-  assert.equal(exigirLogin(req({ token: tokenDe("guina", "admin") }), r, PAPEIS_FINANCEIRO, ENV), null);
+  assert.equal(await exigirLogin(req({ token: tokenDe("guina", "admin") }), r, PAPEIS_FINANCEIRO, ENV), null);
   assert.equal(r.statusCode, 403);
 });
 
-test("usuário removido do HUB_USERS perde o acesso na hora", () => {
+test("usuário removido do HUB_USERS perde o acesso na hora", async () => {
   const r = resFalsa();
-  assert.equal(exigirLogin(req({ token: tokenDe("cleiton", "programacao") }), r, null, ENV), null);
+  assert.equal(await exigirLogin(req({ token: tokenDe("cleiton", "programacao") }), r, null, ENV), null);
+  assert.equal(r.statusCode, 401);
+});
+
+// ── Login novo (Supabase Auth) ──────────────────────────────────────────────────
+const ENV_SB = { SUPABASE_URL: "https://ref.supabase.co", SUPABASE_SECRET_KEY: "sb_secret_x" };
+const JWT = (n) => `cabeca.${n}.assinatura`;
+function authFalso(usuarios) {
+  const chamadas = [];
+  const fn = async (url, opts) => {
+    chamadas.push(url);
+    const t = opts.headers.Authorization.slice(7);
+    const u = usuarios[t];
+    return u ? { ok: true, json: async () => u } : { ok: false, json: async () => ({}) };
+  };
+  fn.chamadas = chamadas;
+  return fn;
+}
+
+test("Supabase: token válido com papel vira usuário do hub", async () => {
+  const f = authFalso({ [JWT("k")]: { email: "karen@x.com", app_metadata: { papel: "financeiro", nome: "Karen", login: "karen" } } });
+  const u = await exigirLogin(req({ token: JWT("k") }), resFalsa(), PAPEIS_FINANCEIRO, ENV_SB, f);
+  assert.deepEqual(u, { login: "karen", nome: "Karen", papel: "financeiro", email: "karen@x.com" });
+});
+
+test("Supabase: usuário sem papel no app_metadata é recusado", async () => {
+  const r = resFalsa();
+  const f = authFalso({ [JWT("s")]: { email: "alguem@x.com", app_metadata: {}, user_metadata: { papel: "admin" } } });
+  assert.equal(await exigirLogin(req({ token: JWT("s") }), r, null, ENV_SB, f), null);
+  assert.equal(r.statusCode, 401, "papel só vale do app_metadata, que o usuário não consegue editar");
+});
+
+test("Supabase: token recusado pelo Supabase → 401; papel errado → 403", async () => {
+  const r1 = resFalsa();
+  assert.equal(await exigirLogin(req({ token: JWT("x") }), r1, null, ENV_SB, authFalso({})), null);
+  assert.equal(r1.statusCode, 401);
+  const r2 = resFalsa();
+  const f = authFalso({ [JWT("c")]: { email: "c@x.com", app_metadata: { papel: "programacao", login: "cleiton" } } });
+  assert.equal(await exigirLogin(req({ token: JWT("c") }), r2, PAPEIS_FINANCEIRO, ENV_SB, f), null);
+  assert.equal(r2.statusCode, 403);
+});
+
+test("LOGIN_ANTIGO=desligado: token antigo válido é recusado", async () => {
+  const r = resFalsa();
+  assert.equal(await exigirLogin(req({ token: tokenDe("eder", "admin") }), r, null, { ...ENV, LOGIN_ANTIGO: "desligado" }), null);
   assert.equal(r.statusCode, 401);
 });

@@ -17,7 +17,7 @@ const ACOES = new Set(["listar", "incluir", "marcar-emitido"]);
 
 export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   if (cors(req, res, { metodos: "GET,OPTIONS", env })) return;
-  if (!exigirLogin(req, res, PAPEIS_FINANCEIRO, env)) return;
+  if (!(await exigirLogin(req, res, PAPEIS_FINANCEIRO, env, fetchFn))) return;
   if (req.method !== "GET") return res.status(405).json({ ok: false, erro: "Use GET." });
 
   const action = String(req.query?.action || "");

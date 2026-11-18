@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   if (cors(req, res, { metodos: "POST,OPTIONS" })) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST." });
 
-  const usuario = exigirLogin(req, res);
+  const usuario = await exigirLogin(req, res);
   if (!usuario) return;
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Assistente sem chave configurada (ANTHROPIC_API_KEY no Vercel)." });
 

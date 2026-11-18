@@ -160,7 +160,7 @@ async function acharOuCriarCliente(ambiente, tomador) {
 export default async function handler(req, res) {
   // CORS só pro hub + login obrigatório (admin/financeiro): emite nota e boleto de verdade.
   if (cors(req, res, { metodos: "GET,POST,OPTIONS" })) return;
-  if (!exigirLogin(req, res, PAPEIS_FINANCEIRO)) return;
+  if (!(await exigirLogin(req, res, PAPEIS_FINANCEIRO))) return;
 
   const action = req.query.action || "";
   const ambiente = (req.query.ambiente || req.body?.ambiente || "producao") === "sandbox" ? "sandbox" : "producao";

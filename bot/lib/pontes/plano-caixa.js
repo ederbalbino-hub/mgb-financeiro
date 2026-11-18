@@ -23,7 +23,7 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
   const acao = String(req.query?.acao || "");
   const regra = ACOES[acao];
   if (!regra) return res.status(400).json({ error: "Ação desconhecida." });
-  if (!exigirLogin(req, res, regra.papeis, env)) return;
+  if (!(await exigirLogin(req, res, regra.papeis, env, fetchFn))) return;
   if (!regra.metodos.includes(req.method)) return res.status(405).json({ error: "Método não permitido." });
 
   const base = env.PLANO_CAIXA_URL;

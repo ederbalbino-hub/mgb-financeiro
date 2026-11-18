@@ -55,7 +55,7 @@ function toBR(isoDate) {
 export default async function handler(req, res) {
   // CORS só pro hub + login obrigatório (admin/financeiro): dá acesso às contas bancárias.
   if (cors(req, res, { metodos: "GET,OPTIONS" })) return;
-  if (!exigirLogin(req, res, PAPEIS_FINANCEIRO)) return;
+  if (!(await exigirLogin(req, res, PAPEIS_FINANCEIRO))) return;
 
   const action = req.query.action || "";
 

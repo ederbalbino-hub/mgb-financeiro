@@ -13,6 +13,7 @@
 // Fail-closed: sem HUB_AUTH_SECRET/HUB_USERS no Vercel, os endpoints protegidos respondem 503.
 
 import { carregarUsuarios, usuarioDaRequisicao } from "./auth.js";
+import { pareceTokenSupabase, usuarioSupabase } from "./supabaseAuth.js";
 
 export const ORIGENS_PADRAO = ["https://ederbalbino-hub.github.io"];
 
@@ -43,20 +44,35 @@ export function cors(req, res, { metodos = "GET,POST,OPTIONS", env = process.env
 }
 
 // Exige login (e, se informado, um dos papéis). Devolve o usuário ou null (já respondeu o erro).
-export function exigirLogin(req, res, papeis = null, env = process.env) {
-  let usuarios;
-  try {
-    usuarios = carregarUsuarios(env);
-  } catch {
-    res.status(500).json({ error: "Cadastro de usuários inválido no servidor." });
-    return null;
+//
+// Dois logins convivem durante a troca:
+//   - novo: Supabase Auth (e-mail e senha), token JWT; papel em app_metadata (lib/supabaseAuth.js);
+//   - antigo: HUB_USERS/HUB_AUTH_SECRET (lib/auth.js). Desligado com LOGIN_ANTIGO=desligado no Vercel.
+export async function exigirLogin(req, res, papeis = null, env = process.env, fetchFn = fetch) {
+  const h = req.headers.authorization || req.headers.Authorization || "";
+  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
+  const antigoLigado = env.LOGIN_ANTIGO !== "desligado";
+
+  let u = null;
+  if (pareceTokenSupabase(token)) {
+    u = await usuarioSupabase(token, env, fetchFn);
+  } else if (antigoLigado) {
+    let usuarios;
+    try {
+      usuarios = carregarUsuarios(env);
+    } catch {
+      res.status(500).json({ error: "Cadastro de usuários inválido no servidor." });
+      return null;
+    }
+    if (!usuarios && !env.SUPABASE_URL) {
+      res.status(503).json({ error: "Login não configurado no servidor." });
+      return null;
+    }
+    const dados = usuarios && usuarioDaRequisicao(req, env);
+    const cad = dados && usuarios[dados.login];
+    if (cad) u = { login: cad.login, nome: cad.nome, papel: cad.papel };
   }
-  if (!usuarios) {
-    res.status(503).json({ error: "Login não configurado no servidor." });
-    return null;
-  }
-  const dados = usuarioDaRequisicao(req, env);
-  const u = dados && usuarios[dados.login];
+
   if (!u) {
     res.status(401).json({ error: "Sessão expirada. Entre de novo no hub." });
     return null;
@@ -65,7 +81,7 @@ export function exigirLogin(req, res, papeis = null, env = process.env) {
     res.status(403).json({ error: "Seu usuário não tem permissão para esta ação." });
     return null;
   }
-  return { login: u.login, nome: u.nome, papel: u.papel };
+  return { login: u.login, nome: u.nome, papel: u.papel, email: u.email };
 }
 
 // Quem mexe com dinheiro, nota fiscal e banco.

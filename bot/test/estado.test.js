@@ -280,3 +280,70 @@ test("visibilidade: visão parcial também respeita a trava de versão", async (
   const { r } = await gravarComo("cleiton", "programacao", { etiquetas: [{ id: 3 }] }, 6);
   assert.equal(r.statusCode, 409);
 });
+
+// ── Funil: Karen só vê leads fechados; aviso de fechamento por e-mail ─────────────
+const LEADS = [
+  { id: 1, nome: "Padaria A", estagio: "negociando", tel: "43 9999-0001" },
+  { id: 2, nome: "Loja B", estagio: "fechado", tel: "43 9999-0002", responsavel: "Ana", valor: 900 },
+];
+const ESTADO_FUNIL = JSON.stringify({ leads: LEADS, clientesInfo: { elev: {} } });
+const ENV_AVISO = { ...ENV_PAPEIS, AVISO_FECHAMENTO_PARA: "karen@x.com,eder@x.com", RESEND_API_KEY: "re_x", RESEND_FROM: "MGB <f@x.com>" };
+function bancoComResend(dados, versao) {
+  const sb = supabaseFalso({ dados, versao });
+  const emails = [];
+  const fn = async (url, opts) => {
+    if (url === "https://api.resend.com/emails") { emails.push(JSON.parse(opts.body)); return { ok: true, status: 200, text: async () => "{}" }; }
+    return sb(url, opts);
+  };
+  fn.chamadas = sb.chamadas; fn.emails = emails;
+  return fn;
+}
+
+test("funil: Karen recebe só os leads fechados", async () => {
+  const r = resFalsa();
+  await estado(req({ token: tk("karen", "financeiro") }), r, { env: ENV_AVISO, fetchFn: bancoComResend(ESTADO_FUNIL, 3) });
+  assert.deepEqual(JSON.parse(r.corpo).leads.map((l) => l.nome), ["Loja B"]);
+});
+
+test("funil: Karen cadastra o cliente (marca itemCriado) sem poder mexer no funil", async () => {
+  const f = bancoComResend(ESTADO_FUNIL, 3);
+  const r = resFalsa();
+  const enviado = { leads: [{ id: 2, nome: "Loja B", estagio: "fechado", itemCriado: "Loja B" }], clientesInfo: { elev: { "Loja B": { cnpj: "1" } } } };
+  await estado(req({ method: "POST", token: tk("karen", "financeiro"), query: { v: "3" }, body: JSON.stringify(enviado) }), r, { env: ENV_AVISO, fetchFn: f });
+  assert.equal(r.statusCode, 200);
+  const gravado = JSON.parse(JSON.parse(f.chamadas.find((c) => c.url.endsWith("/rpc/salvar_estado")).opts.body).p_dados);
+  assert.deepEqual(gravado.leads, [LEADS[0], { ...LEADS[1], itemCriado: "Loja B" }], "só a marca de cadastrado entra; o resto do funil fica");
+  assert.deepEqual(gravado.clientesInfo.elev, { "Loja B": { cnpj: "1" } });
+  assert.equal(f.emails.length, 0);
+});
+
+test("funil: Eder fecha um lead → e-mail para Karen e Eder; lead já fechado não repete", async () => {
+  const f = bancoComResend(ESTADO_FUNIL, 3);
+  const r = resFalsa();
+  const enviado = { leads: [{ ...LEADS[0], estagio: "fechado", email: "padaria@a.com" }, LEADS[1]], clientesInfo: { elev: {} } };
+  await estado(req({ method: "POST", token: tk("eder", "admin"), query: { v: "3" }, body: JSON.stringify(enviado) }), r, { env: ENV_AVISO, fetchFn: f });
+  assert.equal(r.statusCode, 200);
+  assert.equal(f.emails.length, 1);
+  assert.deepEqual(f.emails[0].to, ["karen@x.com", "eder@x.com"]);
+  assert.match(f.emails[0].subject, /Padaria A/);
+  assert.match(f.emails[0].html, /43 9999-0001/);
+});
+
+test("funil: seção que não veio no envio do Eder não é apagada", async () => {
+  const f = bancoComResend(ESTADO_FUNIL, 3);
+  const r = resFalsa();
+  await estado(req({ method: "POST", token: tk("eder", "admin"), query: { v: "3" }, body: JSON.stringify({ leads: LEADS, novaSecao: 1 }) }), r, { env: ENV_AVISO, fetchFn: f });
+  const gravado = JSON.parse(JSON.parse(f.chamadas.find((c) => c.url.endsWith("/rpc/salvar_estado")).opts.body).p_dados);
+  assert.deepEqual(gravado.clientesInfo, { elev: {} });
+  assert.equal(gravado.novaSecao, 1);
+});
+
+test("funil: Karen não muda etapa, não apaga e não cria lead", async () => {
+  const f = bancoComResend(ESTADO_FUNIL, 3);
+  const r = resFalsa();
+  const enviado = { leads: [{ id: 2, nome: "OUTRO NOME", estagio: "perdido", itemCriado: "X" }, { id: 99, nome: "Lead novo", estagio: "fechado" }], clientesInfo: { elev: {} } };
+  await estado(req({ method: "POST", token: tk("karen", "financeiro"), query: { v: "3" }, body: JSON.stringify(enviado) }), r, { env: ENV_AVISO, fetchFn: f });
+  const gravado = JSON.parse(JSON.parse(f.chamadas.find((c) => c.url.endsWith("/rpc/salvar_estado")).opts.body).p_dados);
+  assert.deepEqual(gravado.leads, [LEADS[0], { ...LEADS[1], itemCriado: "X" }]);
+  assert.equal(f.emails.length, 0);
+});

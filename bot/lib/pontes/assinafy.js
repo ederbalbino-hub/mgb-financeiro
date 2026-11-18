@@ -16,7 +16,7 @@ const ACOES = { enviar: "POST", status: "GET", baixar: "GET" };
 
 export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   if (cors(req, res, { metodos: "GET,POST,OPTIONS", env })) return;
-  const usuario = exigirLogin(req, res, PAPEIS_FINANCEIRO, env);
+  const usuario = await exigirLogin(req, res, PAPEIS_FINANCEIRO, env, fetchFn);
   if (!usuario) return;
 
   const action = String(req.query?.action || "");
