@@ -10,6 +10,7 @@
 
 import { cors, exigirLogin } from "../lib/http.js";
 import { lerEstado, gravarEstado, ErroEstado } from "../lib/estado.js";
+import { filtrarLeitura, mesclarGravacao, veTudo } from "../lib/visibilidade.js";
 
 export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   if (cors(req, res, { metodos: "GET,POST,OPTIONS", env })) return;
@@ -18,9 +19,10 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
 
   try {
     if (req.method === "GET") {
-      const { texto } = await lerEstado(env, fetchFn);
+      const { texto, estado } = await lerEstado(env, fetchFn);
       res.setHeader("Content-Type", "application/json; charset=utf-8");
-      return res.status(200).send(texto);
+      // Cada papel recebe só as seções das telas dele (lib/visibilidade.js).
+      return res.status(200).send(veTudo(usuario.papel) ? texto : JSON.stringify(filtrarLeitura(estado, usuario.papel)));
     }
 
     if (req.method === "POST") {
@@ -36,7 +38,21 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
       obj._salvoLogin = usuario.login;
       obj._salvoEm = new Date().toISOString();
       const v = req.query?.v;
-      const r = await gravarEstado(obj, v === undefined || v === "" ? undefined : Number(v), usuario, env, fetchFn);
+      const versaoLida = v === undefined || v === "" ? undefined : Number(v);
+      if (!veTudo(usuario.papel)) {
+        // Papel com visão parcial: o navegador dele não tem as outras seções. Parte do que está no
+        // banco e troca só as seções que ele pode gravar.
+        const atual = await lerEstado(env, fetchFn);
+        if (versaoLida !== undefined && versaoLida !== atual.versao) {
+          return res.status(409).json({ error: "Outra pessoa salvou antes. Recarregando para mesclar.", conflito: true, v: atual.versao });
+        }
+        const { doc, mudou } = mesclarGravacao(atual.estado, obj, usuario.papel);
+        if (!mudou) return res.status(200).json({ ok: true, v: atual.versao, semMudanca: true });
+        const r = await gravarEstado(doc, atual.versao, usuario, env, fetchFn);
+        console.log(`estado: salvo por ${usuario.login} (v${r.versao}, visão parcial)`);
+        return res.status(200).json({ ok: true, v: r.versao });
+      }
+      const r = await gravarEstado(obj, versaoLida, usuario, env, fetchFn);
       console.log(`estado: salvo por ${usuario.login} (v${r.versao})`);
       return res.status(200).json({ ok: true, v: r.versao });
     }

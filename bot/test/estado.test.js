@@ -107,7 +107,7 @@ test("estado: sem login não chega no banco", async () => {
 
 test("estado: GET logado devolve o estado com _v = versão do banco", async () => {
   const r = resFalsa();
-  await estado(req({ token: tk("guina", "bureau") }), r, { env: ENV_SB, fetchFn: supabaseFalso({ dados: '{"db":{"x":1},"_v":99}', versao: 3 }) });
+  await estado(req({ token: tk("eder", "admin") }), r, { env: ENV_SB, fetchFn: supabaseFalso({ dados: '{"db":{"x":1},"_v":99}', versao: 3 }) });
   assert.equal(r.statusCode, 200);
   assert.deepEqual(JSON.parse(r.corpo), { db: { x: 1 }, _v: 3 });
 });
@@ -218,4 +218,65 @@ test("plano-caixa: na troca de token tenta o NOVO e cai no antigo se o script ai
   await planoCaixa(req({ token: tk("eder", "admin"), query: { acao: "statusDespesasEmpresa" } }), r2, { env, fetchFn: f2 });
   assert.equal(r2.statusCode, 200);
   assert.equal(f2.chamadas.length, 1, "token novo aceito: não tenta o antigo");
+});
+
+// ── Visibilidade por papel (lib/visibilidade.js + api/estado.js) ─────────────────
+const ESTADO_CHEIO = JSON.stringify({ migracoes: { a: 1 }, db: { elev: { x: [1] } }, leads: [{ n: "L" }], etiquetas: [{ id: 1 }], pessoalDesp: [{ v: 9 }], pessoalRegras: [1] });
+const ENV_PAPEIS = {
+  ...ENV, SUPABASE_URL: "https://ref.supabase.co", SUPABASE_SECRET_KEY: "sb_secret_teste",
+  HUB_USERS: JSON.stringify({
+    eder: { nome: "Eder", papel: "admin", senha: hashSenha("x") }, karen: { nome: "Karen", papel: "financeiro", senha: hashSenha("x") },
+    guina: { nome: "Guina", papel: "bureau", senha: hashSenha("x") }, cleiton: { nome: "Cleiton", papel: "programacao", senha: hashSenha("x") },
+  }),
+};
+async function lerComo(login, papel) {
+  const r = resFalsa();
+  await estado(req({ token: tk(login, papel) }), r, { env: ENV_PAPEIS, fetchFn: supabaseFalso({ dados: ESTADO_CHEIO, versao: 7 }) });
+  assert.equal(r.statusCode, 200);
+  return Object.keys(JSON.parse(r.corpo)).filter((k) => k !== "_v");
+}
+
+test("visibilidade: admin vê tudo; Karen tudo menos o Pessoal; Guina e Cleiton só o que usam", async () => {
+  assert.deepEqual(await lerComo("eder", "admin"), ["migracoes", "db", "leads", "etiquetas", "pessoalDesp", "pessoalRegras"]);
+  assert.deepEqual(await lerComo("karen", "financeiro"), ["migracoes", "db", "leads", "etiquetas"]);
+  assert.deepEqual(await lerComo("guina", "bureau"), ["migracoes"]);
+  assert.deepEqual(await lerComo("cleiton", "programacao"), ["migracoes", "etiquetas"]);
+});
+
+async function gravarComo(login, papel, enviado, v = 7) {
+  const f = supabaseFalso({ dados: ESTADO_CHEIO, versao: 7 });
+  const r = resFalsa();
+  await estado(req({ method: "POST", token: tk(login, papel), query: { v: String(v) }, body: JSON.stringify(enviado) }), r, { env: ENV_PAPEIS, fetchFn: f });
+  const salvou = f.chamadas.find((c) => c.url.endsWith("/rpc/salvar_estado"));
+  return { r, gravado: salvou ? JSON.parse(JSON.parse(salvou.opts.body).p_dados) : null };
+}
+
+test("visibilidade: Karen não apaga nem altera o Pessoal, mesmo mandando vazio", async () => {
+  const { r, gravado } = await gravarComo("karen", "financeiro", { migracoes: { a: 1 }, db: { elev: { x: [2] } }, leads: [{ n: "L" }], etiquetas: [{ id: 1 }], pessoalDesp: [], pessoalRegras: [] });
+  assert.equal(r.statusCode, 200);
+  assert.deepEqual(gravado.db, { elev: { x: [2] } }, "a mudança dela entra");
+  assert.deepEqual(gravado.pessoalDesp, [{ v: 9 }], "o Pessoal fica como estava");
+  assert.deepEqual(gravado.pessoalRegras, [1]);
+});
+
+test("visibilidade: Cleiton só grava Etiquetas; o resto que ele mandar é ignorado", async () => {
+  const { r, gravado } = await gravarComo("cleiton", "programacao", { migracoes: { z: 1 }, etiquetas: [{ id: 2 }], db: {}, leads: [] });
+  assert.equal(r.statusCode, 200);
+  assert.deepEqual(gravado.etiquetas, [{ id: 2 }]);
+  assert.deepEqual(gravado.db, { elev: { x: [1] } });
+  assert.deepEqual(gravado.leads, [{ n: "L" }]);
+  assert.deepEqual(gravado.migracoes, { a: 1 });
+  assert.equal(gravado._salvoPor, "Cleiton");
+});
+
+test("visibilidade: Guina não grava nada (responde ok sem tocar no banco)", async () => {
+  const { r, gravado } = await gravarComo("guina", "bureau", { migracoes: { a: 1 }, db: {}, pessoalDesp: [] });
+  assert.equal(r.statusCode, 200);
+  assert.equal(r.corpo.semMudanca, true);
+  assert.equal(gravado, null);
+});
+
+test("visibilidade: visão parcial também respeita a trava de versão", async () => {
+  const { r } = await gravarComo("cleiton", "programacao", { etiquetas: [{ id: 3 }] }, 6);
+  assert.equal(r.statusCode, 409);
 });
