@@ -1,0 +1,4 @@
+Repositório público "mgb-financeiro" (só redirecionamento), criado no dia da troca de hospedagem.
+Contém apenas index.html e 404.html (iguais). O GitHub Pages serve o 404.html para qualquer caminho
+que não existe, e o script leva para o mesmo caminho em https://mgb-hub.vercel.app.
+Ver docs/troca-hospedagem.md no repositório do hub.
