@@ -12,8 +12,9 @@ import faturamento from "../lib/pontes/faturamento.js";
 import planoCaixa from "../lib/pontes/plano-caixa.js";
 import assinafy from "../lib/pontes/assinafy.js";
 import conferencia from "../lib/pontes/conferencia.js";
+import csp from "../lib/pontes/csp.js";
 
-const PONTES = { faturamento, "plano-caixa": planoCaixa, assinafy, conferencia };
+const PONTES = { faturamento, "plano-caixa": planoCaixa, assinafy, conferencia, csp };
 
 export default async function handler(req, res) {
   const alvo = String(req.query?.alvo || "");

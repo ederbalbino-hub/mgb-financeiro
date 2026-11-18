@@ -41,6 +41,10 @@
     {
       "source": "/api/conferencia",
       "destination": "/api/ponte?alvo=conferencia"
+    },
+    {
+      "source": "/api/csp",
+      "destination": "/api/ponte?alvo=csp"
     }
   ],
   "crons": [
