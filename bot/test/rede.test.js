@@ -6,8 +6,8 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const R = require("../../telavertical/rede-tela-vertical.js");
 
-test("entrega de 150 inserções por tela/dia", () => {
-  assert.equal(R.REDE.insercoesDia, 150);
+test("entrega de 100 inserções por tela/dia (padrão do Eder desde 04/11/2026)", () => {
+  assert.equal(R.REDE.insercoesDia, 100);
 });
 
 test("lista viva usa as telas do hub e o público da rede, casando nomes diferentes", () => {
