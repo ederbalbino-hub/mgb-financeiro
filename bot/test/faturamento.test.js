@@ -42,3 +42,33 @@ test("navegação de mês atravessa a virada do ano", () => {
   assert.equal(F.somaMes("2027-01", -1), "2026-12");
   assert.equal(F.mesAnterior("2026-01"), "2025-12");
 });
+
+const N = [
+  { id: "arfix", apelido: "Arfix", status: "boleto-emitido", modo: "ambos", statusPagamento: "vencido", valor: 600 },
+  { id: "lmk", cliente: "LMK", status: "boleto-emitido", modo: "ambos", statusPagamento: "vencido", valor: 300 },
+  { id: "arel", cliente: "Arel", status: "emitida", modo: "ambos", nfNumero: "9", statusPagamento: "vencido" },
+  { id: "jk1", cliente: "Vaapty JK", modulo: "Rádio Interna", status: "boleto-emitido", modo: "ambos", statusPagamento: "pendente" },
+  { id: "jk2", cliente: "Vaapty JK", modulo: "Vaapty", status: "boleto-emitido", modo: "ambos", statusPagamento: "pendente" },
+  { id: "dm", cliente: "DM", status: "emitida", modo: "ambos", nfNumero: "10", statusPagamento: "pendente" },
+  { id: "ok", cliente: "Ok", status: "emitida", modo: "boleto", statusPagamento: "pago" },
+  { id: "baixa", cliente: "Baixa", status: "emitida", modo: "boleto", statusPagamento: "vencido" },
+  { id: "bureau", cliente: "Bureau", status: "emitida", modo: "nota", nfNumero: "11" },
+  { id: "novo", cliente: "Novo", status: "pendente", modo: "ambos" },
+];
+const baixa = (r) => r.id === "baixa";
+
+test("recebimento: pagos (com baixa manual), pendentes, vencidos e notas sem número", () => {
+  assert.deepEqual(F.recebimento(N, baixa), { emitidos: 9, comBoleto: 8, pagos: 2, pendentes: 3, vencidos: 3, semStatus: 1, notas: 3, semNumero: 4 });
+});
+
+test("o que travou: vencidos e notas sem número, agrupados por cliente; pendente no prazo e baixa manual não travam", () => {
+  const t = F.travou(N, baixa);
+  assert.deepEqual(t.map((g) => g.cliente + ": " + g.motivo), [
+    "Arel: boleto vencido",
+    "Arfix: boleto vencido e nota sem número",
+    "LMK: boleto vencido e nota sem número",
+    "Vaapty JK: 2 notas sem número",
+  ]);
+  assert.equal(t[3].tom, "atencao");
+  assert.equal(t[3].linhas.length, 2);
+});
