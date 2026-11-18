@@ -53,7 +53,7 @@ O navegador nunca fala com o banco, com os Apps Scripts nem com o Asaas: só com
 | Estado do hub (clientes, despesas, receitas, CRM, Tela Vertical…) | `public.hub_estado`, uma linha com um JSON | `salvar_estado()` aplica a trava de versão e recusa estado vazio ou encolhido para menos de 30% |
 | Versões anteriores do estado | `public.hub_estado_historico` | tudo dos últimos 30 dias; antes disso, 1 versão por dia |
 | Cadastro do Faturamento | planilha "MGB Faturamento - Clientes" (Google) | **fonte oficial** até a etapa 3 do Faturamento |
-| Espelho do Faturamento | `fat_clientes`, `fat_emissoes`, `fat_auditoria` e a visão `fat_conferencia` | só leitura nesta etapa |
+| Cópia do Faturamento no banco | `fat_clientes`, `fat_emissoes`, `fat_auditoria` e a visão `fat_conferencia` | o hub ainda **lê** da planilha; as gravações vão para os dois lados (ver abaixo) |
 | Notas e boletos | Asaas | |
 | Contratos assinados | Assinafy + Google Drive ("MGB contratos") | |
 | Blocos de rádio | servidor `agenciamgb.com.br/contratos/api_blocos.php` | fora deste projeto |
@@ -95,11 +95,25 @@ order by case gravidade when 'erro' then 1 when 'atencao' then 2 else 3 end, com
 | `atencao` | falta registro de um lado. O caso mais comum é boleto emitido com a nota ainda sem número: conferir no Asaas se a nota foi autorizada |
 | `info` | esperado. Ex.: lojas cadastradas só no hub não estão na planilha |
 
-### Próximas etapas do Faturamento
+### Como o banco se mantém em dia
 
-2. Conferência diária com aviso por e-mail quando aparecer `erro`.
-3. O hub passa a ler e gravar o Faturamento nas tabelas `fat_*`, e a planilha vira só cópia.
-4. Desligar a planilha e o Apps Script do Faturamento.
+| O que acontece | Para onde vai |
+|---|---|
+| Hub salva | `fatEmissoes` é copiado para `fat_emissoes` (gatilho no banco) |
+| Hub cadastra cliente (`incluir`) ou marca emitido (`marcar-emitido`) | planilha **e** `fat_clientes`, na hora (`bot/lib/faturamentoDb.js`) |
+| Asaas avisa pagamento | planilha **e** `fat_clientes`, na hora |
+| De hora em hora | a planilha inteira é relida para `fat_clientes` (Edge Function `espelho-faturamento`), pegando também o que foi digitado direto na planilha |
+| Todo dia às 8h07 | `/api/conferencia` compara os lados e manda e-mail se houver divergência nova |
+
+A gravação no banco nunca atrapalha o hub: se falhar, só vai para o log, e a conferência mostra a diferença.
+
+### Etapas do Faturamento
+
+1. ✅ Espelho e conferência.
+2. ✅ Conferência diária com aviso por e-mail (liga com `AVISO_FECHAMENTO_PARA`).
+3. ✅ (3a) Gravação em paralelo: planilha e banco ao mesmo tempo, planilha ainda oficial.
+4. Depois do faturamento de 05/12/2026, se a conferência estiver limpa: o hub passa a **ler** do banco e a planilha vira só cópia (3b).
+5. Desligar a planilha e o Apps Script do Faturamento.
 
 ## Operação
 

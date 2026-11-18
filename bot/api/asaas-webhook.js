@@ -14,6 +14,7 @@
 // falhas), então aqui só validamos e respondemos — a escrita na planilha roda sem bloquear.
 
 import { ehMercadao, reciboHtml, reciboTexto } from "../lib/recibo.js";
+import { registrarPagamento } from "../lib/faturamentoDb.js";
 
 const ASAAS_BASE = "https://api.asaas.com/v3";
 
@@ -136,6 +137,8 @@ export default async function handler(req, res) {
       status,
       token: process.env.ASAAS_WEBHOOK_TOKEN,
     });
+    // Gravação em paralelo no Supabase (a planilha continua sendo a fonte oficial).
+    await registrarPagamento(paymentId, status);
     const r = await fetch(FATURAMENTO_API_URL + "?" + qs.toString());
     const j = await r.json().catch(() => ({}));
     if (!j.ok) console.log("asaas-webhook: planilha não atualizou:", j.erro || j);

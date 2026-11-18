@@ -12,12 +12,14 @@
 // Variáveis no Vercel: FATURAMENTO_API_URL e FATURAMENTO_SECRET (= Script Properties → FATURAMENTO_SECRET).
 
 import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../http.js";
+import { registrarInclusao, registrarEmissao } from "../faturamentoDb.js";
 
 const ACOES = new Set(["listar", "incluir", "marcar-emitido"]);
 
 export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   if (cors(req, res, { metodos: "GET,OPTIONS", env })) return;
-  if (!(await exigirLogin(req, res, PAPEIS_FINANCEIRO, env, fetchFn))) return;
+  const usuario = await exigirLogin(req, res, PAPEIS_FINANCEIRO, env, fetchFn);
+  if (!usuario) return;
   if (req.method !== "GET") return res.status(405).json({ ok: false, erro: "Use GET." });
 
   const action = String(req.query?.action || "");
@@ -43,6 +45,12 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
       return res.status(502).json({ ok: false, erro: "Faturamento não devolveu JSON." });
     }
     if (j && j.erro === "forbidden") return res.status(502).json({ ok: false, erro: "Faturamento recusou o segredo (FATURAMENTO_SECRET diferente?)." });
+    // Gravação em paralelo no Supabase (a planilha continua sendo a fonte oficial).
+    if (j && j.ok) {
+      const params = Object.fromEntries(Object.entries(req.query || {}).filter(([k]) => k !== "s" && k !== "token" && k !== "alvo" && k !== "action").map(([k, v]) => [k, Array.isArray(v) ? String(v[0]) : String(v)]));
+      if (action === "incluir") await registrarInclusao(params, usuario.login, env, fetchFn);
+      if (action === "marcar-emitido") await registrarEmissao(params, usuario.login, env, fetchFn);
+    }
     return res.status(200).json(j);
   } catch (e) {
     console.error("faturamento:", e.message || e);

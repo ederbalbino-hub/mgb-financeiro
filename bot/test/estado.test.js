@@ -410,3 +410,45 @@ test("conferência: sem divergência não manda nada; Karen pode só olhar sem e
   assert.equal(r2.corpo.itens.length, 1);
   assert.equal(f2.emails.length, 0);
 });
+
+// ── Faturamento: gravação em paralelo no Supabase (etapa 3a) ───────────────────────
+const ENV_FAT = { ...ENV_PAPEIS, FATURAMENTO_API_URL: "https://fat.example/exec", FATURAMENTO_SECRET: "segredo-fat" };
+function fatFalso({ planilha = { ok: true }, bancoFalha = false } = {}) {
+  const rpcs = [];
+  const fn = async (url, opts = {}) => {
+    const R = (o, s = 200) => ({ ok: s < 400, status: s, text: async () => JSON.stringify(o) });
+    if (url.startsWith("https://fat.example")) return R(planilha);
+    if (url.includes("/rest/v1/rpc/")) { rpcs.push({ fn: url.split("/rpc/")[1], corpo: JSON.parse(opts.body) }); return bancoFalha ? R({ message: "fora" }, 500) : R(null, 204); }
+    return R({}, 404);
+  };
+  fn.rpcs = rpcs;
+  return fn;
+}
+
+test("faturamento: incluir na planilha grava também no banco, com quem fez", async () => {
+  const f = fatFalso();
+  const r = resFalsa();
+  await faturamento(req({ token: tk("karen", "financeiro"), query: { action: "incluir", id: "hub-radio-x", cliente: "X", valor: "500", s: "injetado" } }), r, { env: ENV_FAT, fetchFn: f });
+  assert.equal(r.statusCode, 200);
+  assert.equal(f.rpcs[0].fn, "fat_registrar_inclusao");
+  assert.equal(f.rpcs[0].corpo.p.id, "hub-radio-x");
+  assert.equal(f.rpcs[0].corpo.p.s, undefined, "segredo nunca vai para o banco");
+  assert.equal(f.rpcs[0].corpo.p_origem, "hub: karen");
+});
+
+test("faturamento: marcar emitido grava no banco; planilha recusando não grava", async () => {
+  const f = fatFalso();
+  await faturamento(req({ token: tk("eder", "admin"), query: { action: "marcar-emitido", id: "radio-arel", mesRef: "2026-12", nfNumero: "123", paymentId: "pay_1" } }), resFalsa(), { env: ENV_FAT, fetchFn: f });
+  assert.deepEqual(f.rpcs[0].corpo, { p_id: "radio-arel", p_mes: "2026-12", p_nf: "123", p_valor_boleto: "", p_payment_id: "pay_1", p_origem: "hub: eder" });
+  const f2 = fatFalso({ planilha: { ok: false, erro: "linha não encontrada" } });
+  await faturamento(req({ token: tk("eder", "admin"), query: { action: "marcar-emitido", id: "x", mesRef: "2026-12" } }), resFalsa(), { env: ENV_FAT, fetchFn: f2 });
+  assert.equal(f2.rpcs.length, 0);
+});
+
+test("faturamento: banco fora do ar não atrapalha o hub (planilha segue oficial)", async () => {
+  const f = fatFalso({ bancoFalha: true });
+  const r = resFalsa();
+  await faturamento(req({ token: tk("eder", "admin"), query: { action: "incluir", id: "hub-x" } }), r, { env: ENV_FAT, fetchFn: f });
+  assert.equal(r.statusCode, 200);
+  assert.deepEqual(r.corpo, { ok: true });
+});
