@@ -347,3 +347,66 @@ test("funil: Karen não muda etapa, não apaga e não cria lead", async () => {
   assert.deepEqual(gravado.leads, [LEADS[0], { ...LEADS[1], itemCriado: "X" }]);
   assert.equal(f.emails.length, 0);
 });
+
+// ── Conferência diária do Faturamento (lib/pontes/conferencia.js) ─────────────────
+import conferencia, { assinatura } from "../lib/pontes/conferencia.js";
+const ITENS = [{ gravidade: "atencao", tipo: "emitido no hub, planilha não atualizada", cliente_id: "elev-arfix", cliente: "Arfix", competencia: "2026-11", detalhe: "hub: boleto-emitido" }];
+function supaConferencia(itens, controle) {
+  const chamadas = []; const emails = []; let ctrl = { ...controle };
+  const fn = async (url, opts = {}) => {
+    chamadas.push({ url, opts });
+    const R = (o, s = 200) => ({ ok: s < 400, status: s, text: async () => (o == null ? "" : JSON.stringify(o)) });
+    if (url === "https://api.resend.com/emails") { emails.push(JSON.parse(opts.body)); return R({ id: "x" }); }
+    if (url.includes("/rest/v1/fat_conferencia?")) return R(itens);
+    if (url.includes("/rest/v1/fat_conferencia_avisos") && (opts.method || "GET") === "GET") return R([ctrl]);
+    if (url.includes("/rest/v1/fat_conferencia_avisos") && opts.method === "PATCH") { ctrl = { ...ctrl, ...JSON.parse(opts.body) }; return R(null, 204); }
+    return R({}, 404);
+  };
+  fn.emails = emails; fn.ctrl = () => ctrl; fn.chamadas = chamadas;
+  return fn;
+}
+const ENV_CONF = { ...ENV_AVISO, CRON_SECRET: "segredo-cron" };
+const reqCron = (t = "segredo-cron") => ({ method: "GET", query: {}, headers: { authorization: `Bearer ${t}` } });
+
+test("conferência: sem login nem segredo do cron → 401", async () => {
+  const r = resFalsa();
+  await conferencia(reqCron("errado"), r, { env: ENV_CONF, fetchFn: supaConferencia(ITENS, { assinatura: "" }) });
+  assert.equal(r.statusCode, 401);
+});
+
+test("conferência: divergência nova → e-mail para Karen e Eder", async () => {
+  const f = supaConferencia(ITENS, { assinatura: "", avisado_em: null });
+  const r = resFalsa();
+  await conferencia(reqCron(), r, { env: ENV_CONF, fetchFn: f });
+  assert.equal(r.corpo.enviado, true);
+  assert.deepEqual(f.emails[0].to, ["karen@x.com", "eder@x.com"]);
+  assert.match(f.emails[0].html, /Arfix/);
+  assert.equal(f.ctrl().assinatura, assinatura(ITENS));
+});
+
+test("conferência: mesma lista no dia seguinte não repete; depois de 7 dias lembra", async () => {
+  const ontem = new Date(Date.now() - 24 * 3600e3).toISOString();
+  const f1 = supaConferencia(ITENS, { assinatura: assinatura(ITENS), avisado_em: ontem });
+  const r1 = resFalsa();
+  await conferencia(reqCron(), r1, { env: ENV_CONF, fetchFn: f1 });
+  assert.equal(r1.corpo.enviado, false);
+  assert.equal(f1.emails.length, 0);
+  const f2 = supaConferencia(ITENS, { assinatura: assinatura(ITENS), avisado_em: new Date(Date.now() - 8 * 24 * 3600e3).toISOString() });
+  const r2 = resFalsa();
+  await conferencia(reqCron(), r2, { env: ENV_CONF, fetchFn: f2 });
+  assert.equal(r2.corpo.enviado, true);
+  assert.equal(r2.corpo.lembrete, true);
+});
+
+test("conferência: sem divergência não manda nada; Karen pode só olhar sem enviar", async () => {
+  const f = supaConferencia([], { assinatura: "x" });
+  const r = resFalsa();
+  await conferencia(reqCron(), r, { env: ENV_CONF, fetchFn: f });
+  assert.equal(r.corpo.enviado, false);
+  assert.equal(f.emails.length, 0);
+  const r2 = resFalsa();
+  const f2 = supaConferencia(ITENS, { assinatura: "" });
+  await conferencia({ method: "GET", query: { enviar: "nao" }, headers: { authorization: `Bearer ${tk("karen", "financeiro")}` } }, r2, { env: ENV_CONF, fetchFn: f2 });
+  assert.equal(r2.corpo.itens.length, 1);
+  assert.equal(f2.emails.length, 0);
+});

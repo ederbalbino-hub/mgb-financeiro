@@ -37,6 +37,16 @@
     {
       "source": "/api/assinafy",
       "destination": "/api/ponte?alvo=assinafy"
+    },
+    {
+      "source": "/api/conferencia",
+      "destination": "/api/ponte?alvo=conferencia"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/conferencia",
+      "schedule": "7 11 * * *"
     }
   ]
 }
