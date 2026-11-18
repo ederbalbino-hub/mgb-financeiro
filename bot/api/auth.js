@@ -8,19 +8,14 @@
 // Variáveis de ambiente: HUB_AUTH_SECRET e HUB_USERS (ver lib/auth.js e scripts/gerar-usuarios.js).
 
 import { carregarUsuarios, verificarSenha, assinarToken, usuarioDaRequisicao } from "../lib/auth.js";
+import { cors } from "../lib/http.js";
 
 function publico(u) {
   return { login: u.login, nome: u.nome, papel: u.papel };
 }
 
 export default async function handler(req, res) {
-  const origin = req.headers.origin || "*";
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Cache-Control", "no-store");
-  if (req.method === "OPTIONS") return res.status(204).end();
+  if (cors(req, res, { metodos: "GET,POST,OPTIONS" })) return;
 
   const action = req.query.action || "";
   let usuarios;

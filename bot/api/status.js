@@ -7,6 +7,8 @@
 //   GET /api/status?action=telas  -> painel 4YouSee (telas/api.php)
 //   GET /api/status?action=radio  -> unidades conectadas na rádio Vaapty (ouvintes.php)
 
+import { cors, exigirLogin } from "../lib/http.js";
+
 const TELAS_URL = "https://agenciamgb.com.br/telas/api.php";
 const RADIO_URL = "https://agenciamgb.com.br/radios/vaapty/status/ouvintes.php";
 
@@ -17,12 +19,9 @@ async function proxyJson(url) {
 }
 
 export default async function handler(req, res) {
-  // CORS: o index.html (outra origem) precisa chamar este endpoint.
-  const origin = req.headers.origin || "*";
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(204).end();
+  // CORS só pro hub + login obrigatório (qualquer papel): monitoramento interno das telas e rádios.
+  if (cors(req, res, { metodos: "GET,OPTIONS" })) return;
+  if (!exigirLogin(req, res)) return;
 
   const action = req.query.action || "";
 

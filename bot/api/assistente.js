@@ -8,7 +8,7 @@
 // Só responde para quem está logado no hub (token válido).
 
 import Anthropic from "@anthropic-ai/sdk";
-import { usuarioDaRequisicao } from "../lib/auth.js";
+import { cors, exigirLogin } from "../lib/http.js";
 import { MANUAL } from "../lib/assistente-manual.js";
 
 const MODELO = process.env.ASSISTENTE_MODELO || "claude-sonnet-5-5";
@@ -27,17 +27,11 @@ DINHEIRO CURTO: quando a pessoa disser que está sem dinheiro, apertada ou pergu
 Se errar ou não souber, assuma com leveza e sugira confirmar com o Eder.`;
 
 export default async function handler(req, res) {
-  const origin = req.headers.origin || "*";
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Cache-Control", "no-store");
-  if (req.method === "OPTIONS") return res.status(204).end();
+  if (cors(req, res, { metodos: "POST,OPTIONS" })) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST." });
 
-  const usuario = usuarioDaRequisicao(req);
-  if (!usuario) return res.status(401).json({ error: "Entre no hub para usar o assistente." });
+  const usuario = exigirLogin(req, res);
+  if (!usuario) return;
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Assistente sem chave configurada (ANTHROPIC_API_KEY no Vercel)." });
 
   const body = typeof req.body === "string" ? safeJson(req.body) : req.body || {};

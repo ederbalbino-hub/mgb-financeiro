@@ -9,6 +9,8 @@
 // Formato de saída de "transactions" (igual ao que o import de PDF já usa no index.html):
 //   { periodo:{ini,fim}, txns:[ {data:'DD/MM/YYYY', historico, valor, lado:'rec'|'desp', docto, src, conta} ] }
 
+import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../lib/http.js";
+
 const PLUGGY_API = "https://api.pluggy.ai";
 
 // --- autentica com CLIENT_ID/SECRET e devolve a apiKey (validade 2h) ---
@@ -51,12 +53,9 @@ function toBR(isoDate) {
 }
 
 export default async function handler(req, res) {
-  // CORS: o index.html (outra origem) precisa chamar este endpoint.
-  const origin = req.headers.origin || "*";
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(204).end();
+  // CORS só pro hub + login obrigatório (admin/financeiro): dá acesso às contas bancárias.
+  if (cors(req, res, { metodos: "GET,OPTIONS" })) return;
+  if (!exigirLogin(req, res, PAPEIS_FINANCEIRO)) return;
 
   const action = req.query.action || "";
 

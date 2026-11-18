@@ -34,7 +34,8 @@ export default async function handler(req, res) {
     if (!msg) return;
 
     const from = msg.from; // número do remetente em E.164 sem +
-    if (WHITELIST.length && !WHITELIST.includes(from)) {
+    // Fail-closed: sem WHITELIST no Vercel o bot não atende ninguém (antes atendia qualquer número).
+    if (!WHITELIST.includes(from)) {
       console.log("Número fora da whitelist:", from);
       return;
     }

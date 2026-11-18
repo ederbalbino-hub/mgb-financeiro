@@ -21,6 +21,8 @@
 // "ambiente" escolhe qual chave/URL usar — sandbox pra testar sem gerar nota/boleto real,
 // produção pra emitir de verdade. Nunca misturar chave de um ambiente com URL do outro.
 
+import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../lib/http.js";
+
 const BASE = {
   sandbox: "https://api-sandbox.asaas.com/v3",
   producao: "https://api.asaas.com/v3",
@@ -156,12 +158,9 @@ async function acharOuCriarCliente(ambiente, tomador) {
 }
 
 export default async function handler(req, res) {
-  // CORS: o index.html (outra origem) precisa chamar este endpoint.
-  const origin = req.headers.origin || "*";
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(204).end();
+  // CORS só pro hub + login obrigatório (admin/financeiro): emite nota e boleto de verdade.
+  if (cors(req, res, { metodos: "GET,POST,OPTIONS" })) return;
+  if (!exigirLogin(req, res, PAPEIS_FINANCEIRO)) return;
 
   const action = req.query.action || "";
   const ambiente = (req.query.ambiente || req.body?.ambiente || "producao") === "sandbox" ? "sandbox" : "producao";
