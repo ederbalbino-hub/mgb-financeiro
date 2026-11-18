@@ -21,14 +21,22 @@
     "api/estado.js": {
       "maxDuration": 30
     },
-    "api/faturamento.js": {
-      "maxDuration": 30
-    },
-    "api/plano-caixa.js": {
-      "maxDuration": 30
-    },
-    "api/assinafy.js": {
+    "api/ponte.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/faturamento",
+      "destination": "/api/ponte?alvo=faturamento"
+    },
+    {
+      "source": "/api/plano-caixa",
+      "destination": "/api/ponte?alvo=plano-caixa"
+    },
+    {
+      "source": "/api/assinafy",
+      "destination": "/api/ponte?alvo=assinafy"
+    }
+  ]
 }

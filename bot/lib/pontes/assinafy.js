@@ -10,7 +10,7 @@
 //
 // Variáveis no Vercel: ASSINAFY_GS_URL e ASSINAFY_GS_SECRET (= Script Properties → GS_SECRET no Apps Script).
 
-import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../lib/http.js";
+import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../http.js";
 
 const ACOES = { enviar: "POST", status: "GET", baixar: "GET" };
 

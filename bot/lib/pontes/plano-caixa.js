@@ -10,7 +10,7 @@
 //
 // Variáveis no Vercel: PLANO_CAIXA_URL (URL /exec da implantação "Qualquer pessoa") e PLANO_CAIXA_TOKEN.
 
-import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../lib/http.js";
+import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../http.js";
 
 const ACOES = {
   resumoEmpresa: { metodos: ["GET", "POST"], papeis: PAPEIS_FINANCEIRO },

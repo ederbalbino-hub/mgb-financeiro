@@ -11,7 +11,7 @@
 //
 // Variáveis no Vercel: FATURAMENTO_API_URL e FATURAMENTO_SECRET (= Script Properties → FATURAMENTO_SECRET).
 
-import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../lib/http.js";
+import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../http.js";
 
 const ACOES = new Set(["listar", "incluir", "marcar-emitido"]);
 

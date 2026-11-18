@@ -2,8 +2,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import estado from "../api/estado.js";
-import faturamento from "../api/faturamento.js";
-import planoCaixa from "../api/plano-caixa.js";
+import faturamento from "../lib/pontes/faturamento.js";
+import planoCaixa from "../lib/pontes/plano-caixa.js";
 import { lerEstado, gravarEstado } from "../lib/appsScript.js";
 import { assinarToken, hashSenha } from "../lib/auth.js";
 
