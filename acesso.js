@@ -221,15 +221,21 @@
       '#mgb-estudio-bar{position:sticky;top:0;z-index:9000;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:#241a38;color:#fff;font-family:"DM Sans",system-ui,sans-serif}' +
       '#mgb-estudio-bar b{margin-right:auto;font-size:15px}#mgb-estudio-bar button{min-height:38px;padding:0 14px;border-radius:9px;border:1px solid #6C55DB;background:#4E38B2;color:#fff;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}' +
       '#mgb-estudio-bar button.sair{background:transparent;border-color:#8b80a8}' +
-      '#mgb-login{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:#f3f1ec;font-family:"DM Sans",system-ui,sans-serif}' +
-      '#mgb-login form{width:100%;max-width:360px;background:#fff;border:1px solid #ddd8ce;border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 40px rgba(36,26,56,.08)}' +
-      '#mgb-login h1{margin:0;font-size:22px;color:#241a38}#mgb-login p{margin:0;font-size:14px;color:#5d5868}' +
-      '#mgb-login label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#3a3446}' +
-      '#mgb-login input{height:44px;border:1px solid #cfc9bd;border-radius:10px;padding:0 12px;font-size:15px;font-family:inherit}' +
+      // Tela de entrar (desenho aprovado em 18/11/2026): painel roxo com o logo + formulário.
+      '#mgb-login{position:fixed;inset:0;z-index:100000;display:flex;flex-wrap:wrap;overflow:auto;background:#F6F4FA;font-family:"DM Sans",system-ui,sans-serif;color:#241A38}' +
+      '#mgb-login .mgb-marca{flex:1 1 420px;min-height:280px;box-sizing:border-box;padding:56px;background:#2A1760;color:#fff;display:flex;flex-direction:column;justify-content:space-between;gap:32px}' +
+      '#mgb-login .mgb-marca h2{margin:0;font-size:36px;line-height:1.15;font-weight:700}#mgb-login .mgb-marca p{margin:10px 0 0;font-size:17px;line-height:1.5;color:#D9D2F2;max-width:420px}' +
+      '#mgb-login .mgb-marca small{font-size:13px;color:#B7ABDE}' +
+      '#mgb-login .mgb-lado{flex:999 1 480px;display:flex;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box}' +
+      '#mgb-login form{width:100%;max-width:400px;box-sizing:border-box;background:#fff;border:1px solid #E4DFF0;border-radius:18px;padding:36px 32px;display:flex;flex-direction:column;gap:18px}' +
+      '#mgb-login h1{margin:0;font-size:24px;color:#241A38}#mgb-login form p{margin:0;font-size:15px;color:#5D5868}' +
+      '#mgb-login label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;color:#3A3446}' +
+      '#mgb-login input{height:48px;border:1px solid #CFC7E6;border-radius:10px;padding:0 14px;font-size:16px;font-family:inherit;color:#241A38}' +
       '#mgb-login input:focus{outline:2px solid #6C55DB;outline-offset:1px;border-color:#6C55DB}' +
-      '#mgb-login button{height:46px;border:0;border-radius:10px;background:#4E38B2;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}' +
-      '#mgb-login button[disabled]{opacity:.6;cursor:wait}#mgb-login .erro{color:#b42318;font-size:13px;min-height:18px}' +
-      '#mgb-login .ok{color:#1d7a46;font-size:13px}#mgb-login .link{background:none;border:0;height:auto;padding:0;color:#4E38B2;font-weight:600;font-size:13px;text-decoration:underline;cursor:pointer;align-self:flex-start}' +
+      '#mgb-login button{min-height:48px;border:0;border-radius:10px;background:#4E38B2;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}#mgb-login button:hover{background:#2A1760}' +
+      '#mgb-login button[disabled]{opacity:.6;cursor:wait}#mgb-login .erro:not(:empty){color:#B42318;background:#FDECEA;border-radius:10px;padding:10px 12px;font-size:14px}' +
+      '@media (max-width:640px){#mgb-login .mgb-marca{padding:28px 24px;min-height:0}#mgb-login .mgb-marca h2{font-size:28px}#mgb-login form{padding:28px 22px}}' +
+      '#mgb-login .ok{color:#15803D;background:#E8F6EE;border-radius:10px;padding:10px 12px;font-size:14px}#mgb-login .link{background:none;border:0;min-height:0;height:auto;padding:0;color:#4E38B2;font-weight:600;font-size:13px;text-decoration:underline;cursor:pointer;align-self:flex-start}' +
       '#mgb-pill{position:fixed;right:16px;bottom:16px;z-index:9000;font-family:"DM Sans",system-ui,sans-serif}' +
       '@media (max-width:768px){#mgb-pill{bottom:84px;right:12px}}' +
       '#mgb-pill>button{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 6px;border-radius:999px;border:1px solid #ddd8ce;background:#fff;box-shadow:0 4px 16px rgba(36,26,56,.12);cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;color:#241a38}' +
@@ -313,6 +319,13 @@
       if (ok) el.removeAttribute('data-mgb-bloq'); else el.setAttribute('data-mgb-bloq', '');
     });
     filtrarResumoRops();
+
+    // Menu em seções: some a seção inteira quando o perfil não vê nenhum item dela.
+    doc.querySelectorAll('#sidebar .sb-grupo').forEach(function (g) {
+      var itens = g.querySelectorAll('.sb-nav-item');
+      var algum = Array.prototype.some.call(itens, function (i) { return !i.hasAttribute('data-mgb-bloq'); });
+      g.style.display = itens.length && !algum ? 'none' : '';
+    });
 
     var w = doc.querySelector('.home-welcome');
     if (w && sessao) w.textContent = 'Olá, ' + sessao.usuario.nome + '! 👋';
@@ -532,6 +545,8 @@
     if (!sessao) return;
     perfilAtual = perfilEfetivo(sessao.usuario.papel, modo(), verComo);
     aplicar();
+    // Avisa quem monta tela por perfil (inicio.js) que o usuário/perfil ficou conhecido ou mudou.
+    try { doc.dispatchEvent(new global.CustomEvent('mgb:perfil', { detail: { perfil: perfilAtual, usuario: sessao.usuario } })); } catch (e) {}
     if (typeof global.curPage === 'string' && !pode(perfilAtual, global.curPage)) global.goPage('home');
   }
 
@@ -625,13 +640,16 @@
     injetarEstilos();
     var el = doc.getElementById('mgb-login');
     if (!el) { el = doc.createElement('div'); el.id = 'mgb-login'; doc.body.appendChild(el); }
-    el.innerHTML = '<form novalidate><img src="marca/mgb-logo-roxo.svg" alt="MGB Mídia" width="117" height="60" style="display:block;margin-bottom:4px">' + html + '</form>';
+    el.innerHTML = '<section class="mgb-marca"><img src="marca/mgb-logo-branco.svg" alt="MGB Mídia" width="140" height="72">' +
+      '<div><h2>Hub MGB</h2><p>Faturamento, financeiro, clientes e Tela Vertical num lugar só.</p></div>' +
+      '<small>Acesso só para a equipe MGB. Sessão de 12 horas.</small></section>' +
+      '<div class="mgb-lado"><form novalidate>' + html + '</form></div>';
     return el;
   }
 
   function mostrarLogin(aviso) {
     var el = formulario(
-      '<h1>Hub</h1><p>Entre com o seu e-mail e senha.</p>' +
+      '<div style="display:flex;flex-direction:column;gap:6px"><h1>Entrar</h1><p>Use o e-mail e a senha do seu convite.</p></div>' +
       '<label for="mgb-usuario">E-mail<input id="mgb-usuario" name="email" type="email" autocomplete="username" autocapitalize="none" required></label>' +
       '<label for="mgb-senha">Senha<input id="mgb-senha" name="senha" type="password" autocomplete="current-password" required></label>' +
       '<div class="erro" role="alert" id="mgb-erro">' + esc(aviso || '') + '</div>' +
@@ -795,6 +813,6 @@
     }, iniciarAntigo);
   }
 
-  global.MGBAcesso = Object.assign(api, { sair: sair, usuario: function () { return sessao && sessao.usuario ? sessao.usuario : null; } });
+  global.MGBAcesso = Object.assign(api, { sair: sair, usuario: function () { return sessao && sessao.usuario ? sessao.usuario : null; }, perfil: function () { return perfilAtual; } });
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })(typeof window !== 'undefined' ? window : globalThis);

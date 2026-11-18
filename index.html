@@ -889,26 +889,47 @@ body{-webkit-font-smoothing:antialiased}
     <div class="logo-sub">Gestão financeira e operacional</div>
   </div>
   <div class="sb-scroll">
+    <!-- Menu em seções (desenho aprovado em 18/11/2026). O acesso.js esconde a seção quando o perfil não vê nenhum item dela. -->
+    <div class="sb-grupo sb-grupo-inicio">
     <div class="sb-nav-item on" id="nav-home" title="Início" onclick="goPage('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Início</div>
+    </div>
+    <div class="sb-grupo">
+    <div class="sb-lbl" style="margin-top:10px">Faturamento</div>
+    <div class="sb-nav-item" id="nav-contabilidade" title="Faturamento e notas" onclick="goPage('contabilidade')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l3 3v15H6V6z"/><path d="M9 3v4H6M9 12h6M9 16h6"/></svg>Faturamento e notas</div>
+    <div class="sb-nav-item" id="nav-relatorios" title="Cobrança mensal" onclick="goPage('relatorios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9.5 8.5h5M9.5 12.5h5"/></svg>Cobrança mensal</div>
+    </div>
+    <div class="sb-grupo">
     <div class="sb-lbl" style="margin-top:10px">Financeiro</div>
     <div class="sb-nav-item" id="nav-custos" title="Financeiro MGB" onclick="goPage('overview')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20v-7M11 20V5M17 20v-10"/><path d="M3 20h18"/></svg>Financeiro MGB</div>
     <div class="sb-nav-item" id="nav-pessoal" title="Plano de Caixa" onclick="goPage('planocaixa')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>Plano de Caixa</div>
-    <div class="sb-nav-item" id="nav-contabilidade" title="Contabilidade" onclick="goPage('contabilidade')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l3 3v15H6V6z"/><path d="M9 3v4H6M9 12h6M9 16h6"/></svg>Contabilidade</div>
-    <div class="sb-lbl" style="margin-top:10px">Operação</div>
+    <div class="sb-lbl" style="margin-top:6px;font-size:9px">Módulos</div>
+    <div id="sb-modules"></div>
+    </div>
+    <div class="sb-grupo">
+    <div class="sb-lbl" style="margin-top:10px">Clientes e contratos</div>
     <div class="sb-nav-item" id="nav-contratos" title="Contratos" onclick="goOperacional('contratos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>Contratos</div>
-    <div class="sb-nav-item" id="nav-estudio" title="Estúdio" onclick="goOperacional('estudio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Estúdio</div>
-    <div class="sb-nav-item" id="nav-relatorios" title="Cobrança Mensal" onclick="goPage('relatorios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9.5 8.5h5M9.5 12.5h5"/></svg>Cobrança Mensal</div>
-    <div class="sb-nav-item" id="nav-radioops" title="Rádio Ops" onclick="goPage('radioops')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M7 8l10-5"/><circle cx="9" cy="14.5" r="2.5"/><path d="M15 13h3M15 16h3"/></svg>Rádio Ops<span id="nav-rops-badge" style="display:none;margin-left:auto;font-size:10px;font-weight:800;background:#118A5D;color:#fff;border-radius:9px;padding:1px 7px">💰</span></div>
-    <div class="sb-nav-item" id="nav-planotaroba" title="Planejamento Tarobá" onclick="goPage('planotaroba')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Planejamento Tarobá</div>
-    <div class="sb-nav-item" id="nav-gerador" title="Gerar Resultados" onclick="openGerador()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 10h4M3 15h4M17 10h4M17 15h4"/></svg>Gerar Resultados</div>
+    </div>
+    <div class="sb-grupo">
+    <div class="sb-lbl" style="margin-top:10px">Tela Vertical</div>
     <div class="sb-nav-item" id="nav-telavertical" title="Tela Vertical" onclick="goOperacional('telavertical')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M12 7l3 3.5h-2V15h-2v-4.5H9z"/><path d="M10 18.5h4"/></svg>Tela Vertical</div>
+    </div>
+    <div class="sb-grupo">
+    <div class="sb-lbl" style="margin-top:10px">Comercial</div>
+    <div class="sb-nav-item" id="nav-leads" title="Funil de vendas" onclick="goPage('leads')" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5c1.6.6 2.6 1.9 2.6 3.5s-1 2.9-2.6 3.5"/></svg>Funil de vendas<span id="nav-leads-badge" style="display:none;margin-left:auto;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 6px;line-height:1.4"></span></div>
+    <div class="sb-nav-item" id="nav-gerador" title="Gerar Resultados" onclick="openGerador()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 10h4M3 15h4M17 10h4M17 15h4"/></svg>Gerar Resultados</div>
     <div class="sb-nav-item" id="nav-apresmgb" title="Apresentação MGB" onclick="goPage('apresmgb')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Apresentação MGB</div>
     <div class="sb-nav-item" id="nav-propvaapty" title="Proposta Vaapty" onclick="goPage('propvaapty')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M9 3h6M8 21h8"/></svg>Proposta Vaapty</div>
-    <div class="sb-nav-item" id="nav-leads" title="CRM" onclick="goPage('leads')" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5c1.6.6 2.6 1.9 2.6 3.5s-1 2.9-2.6 3.5"/></svg>CRM<span id="nav-leads-badge" style="display:none;margin-left:auto;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 6px;line-height:1.4"></span></div>
-    <div class="sb-lbl" style="margin-top:10px">Apoio</div>
+    <div class="sb-nav-item" id="nav-planotaroba" title="Planejamento Tarobá" onclick="goPage('planotaroba')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Planejamento Tarobá</div>
+    </div>
+    <div class="sb-grupo">
+    <div class="sb-lbl" style="margin-top:10px">Rádio Moinho</div>
+    <div class="sb-nav-item" id="nav-radioops" title="Rádio Ops" onclick="goPage('radioops')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M7 8l10-5"/><circle cx="9" cy="14.5" r="2.5"/><path d="M15 13h3M15 16h3"/></svg>Rádio Ops<span id="nav-rops-badge" style="display:none;margin-left:auto;font-size:10px;font-weight:800;background:#118A5D;color:#fff;border-radius:9px;padding:1px 7px">💰</span></div>
+    </div>
+    <div class="sb-grupo">
+    <div class="sb-lbl" style="margin-top:10px">Ferramentas</div>
     <div class="sb-nav-item" id="nav-ferramentas" title="Ferramentas" onclick="goPage('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.6 4.6 0 0 0-5.9 5.9L3 18l3 3 5.8-5.8a4.6 4.6 0 0 0 5.9-5.9l-2.9 2.9-2.1-.9-.9-2.1z"/></svg>Ferramentas</div>
-    <div class="sb-lbl" style="margin-top:10px">Módulos</div>
-    <div id="sb-modules"></div>
+    <div class="sb-nav-item" id="nav-estudio" title="Estúdio" onclick="goOperacional('estudio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Estúdio</div>
+    </div>
   </div>
   <div class="sb-footer">
     <div style="font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px" id="sb-mes-lbl"></div>
@@ -16793,7 +16814,8 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 </script>
 <script src="lancar.js"></script>
 <script src="novo.js?v=20261103"></script>
-<script src="acesso.js?v=20261118b"></script>
+<script src="acesso.js?v=20261119"></script>
+<script src="inicio.js?v=20261119"></script>
 <script src="assistente.js?v=20261029b"></script>
 </body>
 </html>
