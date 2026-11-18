@@ -5,7 +5,7 @@
 //   GET /api/rede            -> { ok, condos:[{id,hub,nome,bairro,zona,tipo,torres,telas,pessoas,foto}] }
 //   GET /api/rede?foto=<id>  -> imagem JPEG do condomínio (guardada no hub, em clientesInfo.elev[item].foto)
 
-import { lerEstado } from "../lib/appsScript.js";
+import { lerEstado } from "../lib/estado.js";
 
 // Lê pelo servidor, com o segredo (a URL do Apps Script não fica mais no código).
 async function loadState() {

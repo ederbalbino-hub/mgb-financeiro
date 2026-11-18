@@ -77,45 +77,82 @@ test("gravarEstado recusa vazio e repassa conflito de versão", async () => {
   assert.equal(new URL(f.chamadas[0].url).searchParams.get("v"), "8");
 });
 
-// ── api/estado.js ──────────────────────────────────────────────────────────────────
-test("estado: sem login não chega no Apps Script", async () => {
-  const f = fetchFalso(() => ({ texto: '{"db":{}}' }));
+// ── api/estado.js (Supabase) ─────────────────────────────────────────────────────
+const ENV_SB = { ...ENV, SUPABASE_URL: "https://ref.supabase.co", SUPABASE_SECRET_KEY: "sb_secret_teste" };
+// Supabase falso: guarda {dados, versao} e implementa as regras principais de salvar_estado.
+function supabaseFalso(inicial = null, { appsScript } = {}) {
+  let linha = inicial;
+  return fetchFalso((url, opts) => {
+    if (url.startsWith("https://script.example")) return { texto: appsScript ?? "forbidden" };
+    assert.equal(opts.headers.apikey, "sb_secret_teste");
+    const corpo = JSON.parse(opts.body || "{}");
+    if (url.endsWith("/rpc/carregar_estado")) return { texto: JSON.stringify(linha ? [{ dados: linha.dados, versao: linha.versao }] : []) };
+    if (url.endsWith("/rpc/salvar_estado")) {
+      if (!linha) { linha = { dados: corpo.p_dados, versao: 1, login: corpo.p_login }; return { texto: '{"ok":true,"v":1}' }; }
+      if (corpo.p_versao_esperada !== null && corpo.p_versao_esperada !== linha.versao) return { texto: JSON.stringify({ ok: false, conflito: true, v: linha.versao }) };
+      linha = { dados: corpo.p_dados, versao: linha.versao + 1, login: corpo.p_login };
+      return { texto: JSON.stringify({ ok: true, v: linha.versao }) };
+    }
+    return { status: 404, texto: "{}" };
+  });
+}
+
+test("estado: sem login não chega no banco", async () => {
+  const f = supabaseFalso({ dados: '{"db":{}}', versao: 1 });
   const r = resFalsa();
-  await estado(req(), r, { env: ENV, fetchFn: f });
+  await estado(req(), r, { env: ENV_SB, fetchFn: f });
   assert.equal(r.statusCode, 401);
   assert.equal(f.chamadas.length, 0);
 });
 
-test("estado: GET logado devolve o estado cru", async () => {
+test("estado: GET logado devolve o estado com _v = versão do banco", async () => {
   const r = resFalsa();
-  await estado(req({ token: tk("guina", "bureau") }), r, { env: ENV, fetchFn: fetchFalso(() => ({ texto: '{"db":{"x":1},"_v":3}' })) });
+  await estado(req({ token: tk("guina", "bureau") }), r, { env: ENV_SB, fetchFn: supabaseFalso({ dados: '{"db":{"x":1},"_v":99}', versao: 3 }) });
   assert.equal(r.statusCode, 200);
-  assert.equal(r.corpo, '{"db":{"x":1},"_v":3}');
+  assert.deepEqual(JSON.parse(r.corpo), { db: { x: 1 }, _v: 3 });
 });
 
-test("estado: GET com Apps Script recusando vira 502 (o hub não carrega lixo)", async () => {
+test("estado: banco vazio importa uma vez do Apps Script", async () => {
+  const f = supabaseFalso(null, { appsScript: '{"db":{"antigo":1},"_v":40}' });
   const r = resFalsa();
-  await estado(req({ token: tk("eder", "admin") }), r, { env: ENV, fetchFn: fetchFalso(() => ({ texto: "forbidden" })) });
+  await estado(req({ token: tk("eder", "admin") }), r, { env: ENV_SB, fetchFn: f });
+  assert.equal(r.statusCode, 200);
+  assert.deepEqual(JSON.parse(r.corpo).db, { antigo: 1 });
+  const salvou = f.chamadas.find((c) => c.url.endsWith("/rpc/salvar_estado"));
+  assert.equal(JSON.parse(salvou.opts.body).p_login, "importacao");
+});
+
+test("estado: Apps Script recusando na importação vira 502 (o hub não carrega lixo)", async () => {
+  const r = resFalsa();
+  await estado(req({ token: tk("eder", "admin") }), r, { env: ENV_SB, fetchFn: supabaseFalso(null, { appsScript: "forbidden" }) });
   assert.equal(r.statusCode, 502);
 });
 
-test("estado: POST grava com a versão lida e carimba quem salvou pelo login", async () => {
-  const f = fetchFalso(() => ({ texto: '{"ok":true,"v":5}' }));
+test("estado: sem SUPABASE_* configurado, 503", async () => {
   const r = resFalsa();
-  const corpo = JSON.stringify({ db: {}, _v: 5, _salvoPor: "Mentira" });
-  await estado(req({ method: "POST", token: tk("karen", "financeiro"), query: { v: "4" }, body: corpo }), r, { env: ENV, fetchFn: f });
-  assert.equal(r.statusCode, 200);
-  assert.deepEqual(r.corpo, { ok: true, v: 5 });
-  assert.equal(new URL(f.chamadas[0].url).searchParams.get("v"), "4");
-  const enviado = JSON.parse(f.chamadas[0].opts.body);
-  assert.equal(enviado._salvoPor, "Karen");
-  assert.equal(enviado._salvoLogin, "karen");
+  await estado(req({ token: tk("eder", "admin") }), r, { env: ENV, fetchFn: supabaseFalso() });
+  assert.equal(r.statusCode, 503);
 });
 
-test("estado: POST em conflito devolve 409", async () => {
+test("estado: POST grava com a versão lida e quem salvou vem do login", async () => {
+  const f = supabaseFalso({ dados: '{"db":{}}', versao: 4 });
+  const r = resFalsa();
+  const corpo = JSON.stringify({ db: { novo: 1 }, _v: 5, _salvoPor: "Mentira" });
+  await estado(req({ method: "POST", token: tk("karen", "financeiro"), query: { v: "4" }, body: corpo }), r, { env: ENV_SB, fetchFn: f });
+  assert.equal(r.statusCode, 200);
+  assert.deepEqual(r.corpo, { ok: true, v: 5 });
+  const enviado = JSON.parse(f.chamadas.at(-1).opts.body);
+  assert.equal(enviado.p_versao_esperada, 4);
+  assert.equal(enviado.p_login, "karen");
+  const dados = JSON.parse(enviado.p_dados);
+  assert.equal(dados._salvoPor, "Karen");
+  assert.equal(dados._v, 5);
+});
+
+test("estado: POST com versão velha devolve 409", async () => {
   const r = resFalsa();
   await estado(req({ method: "POST", token: tk("eder", "admin"), query: { v: "1" }, body: '{"db":{}}' }), r, {
-    env: ENV, fetchFn: fetchFalso(() => ({ texto: '{"ok":false,"conflito":true,"v":2}' })),
+    env: ENV_SB, fetchFn: supabaseFalso({ dados: '{"db":{}}', versao: 2 }),
   });
   assert.equal(r.statusCode, 409);
   assert.equal(r.corpo.conflito, true);

@@ -6,10 +6,10 @@
 //
 // Antes o navegador falava direto com o Apps Script, cuja URL estava no index.html público:
 // qualquer pessoa lia e sobrescrevia todos os dados da MGB. Agora só usuário logado chega aqui,
-// e o Apps Script só aceita o segredo que fica no Vercel (lib/appsScript.js).
+// e os dados ficam no Supabase (lib/estado.js), acessível só com a chave secreta do servidor.
 
 import { cors, exigirLogin } from "../lib/http.js";
-import { lerEstado, gravarEstado, ErroEstado } from "../lib/appsScript.js";
+import { lerEstado, gravarEstado, ErroEstado } from "../lib/estado.js";
 
 export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   if (cors(req, res, { metodos: "GET,POST,OPTIONS", env })) return;
@@ -31,12 +31,12 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
       } catch {
         return res.status(400).json({ error: "Corpo não é JSON." });
       }
-      // Quem salvou vem do login, não do navegador.
+      // Quem salvou vem do login, não do navegador (e fica também no histórico do banco).
       obj._salvoPor = usuario.nome;
       obj._salvoLogin = usuario.login;
       obj._salvoEm = new Date().toISOString();
       const v = req.query?.v;
-      const r = await gravarEstado(obj, v === undefined || v === "" ? undefined : Number(v), env, fetchFn);
+      const r = await gravarEstado(obj, v === undefined || v === "" ? undefined : Number(v), usuario, env, fetchFn);
       console.log(`estado: salvo por ${usuario.login} (v${r.versao})`);
       return res.status(200).json({ ok: true, v: r.versao });
     }

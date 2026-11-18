@@ -1,9 +1,9 @@
-// Cliente do estado do hub para o bot do WhatsApp (via lib/appsScript.js, com o segredo do servidor).
+// Cliente do estado do hub para o bot do WhatsApp (Supabase, via lib/estado.js).
 // Lê o estado completo, modifica em memória e grava de volta com trava de versão: se alguém salvou
 // no hub entre a leitura e a gravação, relê e aplica a mudança de novo (até 3 vezes), em vez de
 // atropelar o que a pessoa salvou.
 
-import { lerEstado, gravarEstado } from "./appsScript.js";
+import { lerEstado, gravarEstado } from "./estado.js";
 
 export async function loadState() {
   const { estado } = await lerEstado();
@@ -15,11 +15,10 @@ export async function atualizarEstado(mudar) {
   for (let tentativa = 1; ; tentativa++) {
     const { estado, versao } = await lerEstado();
     const resultado = mudar(estado);
-    estado._v = versao + 1;
     estado._salvoPor = "Bot WhatsApp";
     estado._salvoEm = new Date().toISOString();
     try {
-      await gravarEstado(estado, versao);
+      await gravarEstado(estado, versao, { login: "bot-whatsapp", nome: "Bot WhatsApp" });
       return resultado;
     } catch (e) {
       if (!e.conflito || tentativa >= 3) throw e;

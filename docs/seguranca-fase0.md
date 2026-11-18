@@ -1,97 +1,88 @@
 # Segurança — Fase 0: passo a passo de implantação
 
-Este guia leva o hub do modo **"qualquer pessoa com a URL lê e grava tudo"** para o modo **"só quem está logado, e só o que o papel permite"**. Cada passo funciona com o anterior já no ar, então o hub não para no meio da troca.
+Este guia leva o hub do modo **"qualquer pessoa com a URL lê e grava tudo"** para o modo **"só quem está logado, e só o que o papel permite"**. Junto, os dados do hub saem do Google Drive e vão para o **Supabase** (projeto **MGB Hub**, região São Paulo).
 
 ## O que muda
 
 | Antes | Depois |
 |---|---|
-| O navegador falava direto com 4 Apps Scripts cujas URLs estavam no `index.html` público | O navegador fala só com a API do Vercel, que exige login |
-| Qualquer pessoa lia o estado inteiro e gravava por cima | O Apps Script só responde com um segredo que fica no Vercel |
-| O Faturamento listava CNPJ, e-mail e endereço de todos os clientes | O mesmo |
+| Estado do hub num JSON no Drive, lido e gravado por qualquer pessoa com a URL | Estado no Postgres (Supabase); só o servidor acessa, com a chave secreta |
+| O Faturamento listava CNPJ, e-mail e endereço de todos os clientes | O navegador só fala com a API do Vercel, que exige login (admin/financeiro) |
 | Qualquer pessoa mandava documento para assinatura em nome da MGB | O mesmo |
-| O token do Plano de Caixa estava escrito no `index.html` | O token fica só no Vercel e no Script Properties |
-| Duas abas salvando juntas: a última apagava o trabalho da outra | Trava de versão: o segundo a salvar relê, mescla e salva de novo |
-| Uma resposta de erro podia virar `{}` e ser gravada por cima de tudo | Estado vazio ou encolhido demais é recusado |
-| Sem backup automático | Backup diário no Drive, com os 30 últimos |
+| O token do Plano de Caixa estava no `index.html` | O token fica só no Vercel e no Script Properties |
+| Duas abas salvando juntas: a última apagava o trabalho da outra | Trava de versão no banco: o segundo a salvar relê, mescla e salva de novo |
+| Uma resposta de erro podia virar `{}` e ser gravada por cima de tudo | O banco recusa estado vazio, inválido ou que encolheu para menos de 30% |
+| Sem histórico | Cada salvamento guarda a versão anterior (quem, quando). 30 dias completos, depois 1 por dia |
+| Sem backup | Backup diário do Supabase (plano Pro) |
 
-## Antes de começar: backup manual
+## Antes de começar
 
-No Google Drive, baixe o arquivo **`mgb-dados.json`** (o estado inteiro do hub) e guarde fora do Drive.
+1. **Backup manual:** no Google Drive, baixe o `mgb-dados.json` e guarde fora do Drive.
+2. **Feche todas as abas do hub,** em todos os computadores (Eder, Karen, Guina, Cleiton), antes do passo 3. Uma aba antiga aberta continuaria gravando no Drive depois da mudança.
 
-## Passo 1 — Gerar os segredos
+## Passo 1 — Chave secreta do Supabase
 
-São quatro segredos, um por Apps Script. Gere cada um com:
+1. Abra [supabase.com/dashboard](https://supabase.com/dashboard) → projeto **MGB Hub** → **Project Settings → API Keys**.
+2. Em **Secret keys**, crie uma chave chamada `vercel-hub` e copie o valor (`sb_secret_…`).
+3. Cole direto no Vercel (passo 2). Não mande por WhatsApp nem por e-mail.
+
+## Passo 2 — Vercel: variáveis
+
+Em **Vercel → projeto mgb-financeiro → Settings → Environment Variables (Production)**:
+
+| Variável | Valor |
+|---|---|
+| `SUPABASE_URL` | `https://wvatjibxyhhbotayabig.supabase.co` |
+| `SUPABASE_SECRET_KEY` | a chave do passo 1 |
+| `APPS_SCRIPT_URL` | URL `/exec` do script principal do hub (`AKfycbwD9L4g…`). Serve só para a importação única |
+| `FATURAMENTO_API_URL` | URL `/exec` do Faturamento (`AKfycbwdlNqi…`) |
+| `FATURAMENTO_SECRET` | segredo novo (ver abaixo) |
+| `ASSINAFY_GS_URL` | URL `/exec` do Assinafy (`AKfycbwG-31A…`) |
+| `ASSINAFY_GS_SECRET` | segredo novo |
+| `PLANO_CAIXA_URL` | URL `/exec` da implantação "Qualquer pessoa" do Plano de Caixa (`AKfycbyRPxmB…`) |
+| `PLANO_CAIXA_TOKEN` | **por enquanto, o token ANTIGO** (`1d97…`). O novo entra no passo 5 |
+
+Para gerar cada segredo novo:
 
 ```bash
 openssl rand -base64 32 | tr -d '/+=' | cut -c1-40
 ```
 
-Outra opção: no editor de qualquer Apps Script, rode `Logger.log(Utilities.getUuid().replace(/-/g,'') + Utilities.getUuid().replace(/-/g,''))`.
+Confira também que já existem `HUB_AUTH_SECRET`, `HUB_USERS`, `WHITELIST` e `ASAAS_WEBHOOK_TOKEN`. Sem `WHITELIST`, o bot do WhatsApp para de responder.
 
-| Nome no Vercel | Onde o mesmo valor vai no Apps Script |
-|---|---|
-| `HUB_STATE_SECRET` | script principal do hub → Script Properties → `HUB_STATE_SECRET` |
-| `FATURAMENTO_SECRET` | script do Faturamento → Script Properties → `FATURAMENTO_SECRET` |
-| `ASSINAFY_GS_SECRET` | script do Assinafy → Script Properties → `GS_SECRET` |
-| `PLANO_CAIXA_TOKEN` | Plano de Caixa → Script Properties → `TOKEN_SYNC_EMPRESA` (só no passo 4) |
+## Passo 3 — Publicar (merge na `main`) e importação automática
 
-Não mande os segredos por WhatsApp nem por e-mail. Cole direto no Vercel e no Apps Script.
+Depois do merge, a API (Vercel) e o hub (GitHub Pages) sobem juntos. **Na primeira vez que alguém abrir o hub**, a API vê o banco vazio, copia o estado atual do Apps Script para o Supabase e segue a partir de lá. Não tem passo manual.
 
-## Passo 2 — Vercel: variáveis e deploy da API
-
-Em **Vercel → projeto mgb-financeiro → Settings → Environment Variables (Production)**, adicione:
-
-| Variável | Valor |
-|---|---|
-| `APPS_SCRIPT_URL` | URL `/exec` do script principal do hub (a que estava no `index.html`, começa com `AKfycbwD9L4g…`) |
-| `HUB_STATE_SECRET` | segredo do passo 1 |
-| `FATURAMENTO_API_URL` | URL `/exec` do Faturamento (`AKfycbwdlNqi…`) |
-| `FATURAMENTO_SECRET` | segredo do passo 1 |
-| `ASSINAFY_GS_URL` | URL `/exec` do Assinafy (`AKfycbwG-31A…`) |
-| `ASSINAFY_GS_SECRET` | segredo do passo 1 |
-| `PLANO_CAIXA_URL` | URL `/exec` da implantação "Qualquer pessoa" do Plano de Caixa (`AKfycbyRPxmB…`) |
-| `PLANO_CAIXA_TOKEN` | **por enquanto, o token ANTIGO** (`1d97…`, o que já está no Code.gs). O token novo entra no passo 4. |
-
-Confira também que estas variáveis já existem: `HUB_AUTH_SECRET`, `HUB_USERS`, `WHITELIST` e `ASAAS_WEBHOOK_TOKEN`. Sem `WHITELIST`, o bot do WhatsApp para de responder.
-
-Depois faça o deploy da branch.
-
-**Por que funciona:** os Apps Scripts antigos ignoram o parâmetro de segredo. A API nova já funciona com eles e o hub antigo continua funcionando.
-
-**Teste:** abra `https://mgb-financeiro.vercel.app/api/estado` no navegador. Tem que aparecer `Sessão expirada`, porque você não mandou login.
-
-## Passo 3 — Hub: publicar o `index.html` novo
-
-Faça o merge na `main` (GitHub Pages). Depois, logado no hub:
+Teste, logado no hub:
 
 1. Os dados carregam? Aparece "salvo" depois de editar algo?
-2. Abra Contabilidade → 🧾 Faturamento. A lista de clientes aparece?
-3. Abra um contrato com assinatura pendente. O status aparece?
-4. Abra o Plano de Caixa → sincronizar. Aparece "✅ Confirmado"?
+2. Contabilidade → 🧾 Faturamento: a lista de clientes aparece?
+3. Um contrato com assinatura pendente: o status aparece?
+4. Plano de Caixa → sincronizar: aparece "✅ Confirmado"?
 
 Se algo falhar, a mensagem de erro diz qual variável falta.
 
-## Passo 4 — Trancar os Apps Scripts
+## Passo 4 — Desligar o acesso direto aos Apps Scripts
 
-Faça um por vez. Em cada um, depois de colar o código e configurar o Script Properties, vá em **Implantar → Gerenciar implantações → ✏️ editar a implantação atual → Versão: Nova versão → Implantar**.
+Faça um por vez. Para publicar uma versão nova: **Implantar → Gerenciar implantações → ✏️ editar a implantação atual → Versão: Nova versão → Implantar**.
 
-> ⚠️ Use **editar a implantação existente**, NÃO "Nova implantação". Editar mantém a mesma URL, e as URLs antigas que estão no histórico do git passam a responder "forbidden".
+> ⚠️ Use **editar a implantação existente**, NÃO "Nova implantação". Editar mantém a mesma URL, e as URLs que estão no histórico do git passam a responder "forbidden".
 
-### 4a. Script principal do hub
+### 4a. Script principal do hub: arquivar
 
-1. Substitua todo o `Código.gs` pelo conteúdo de [`apps-script-hub/Code.gs`](../apps-script-hub/Code.gs).
-2. Em Configurações do projeto → Script Properties, adicione `HUB_STATE_SECRET` com o mesmo valor do Vercel. Não mexa no `DATA_FILE_ID`.
-3. Implante a nova versão, como descrito acima.
-4. Rode **`instalarBackupDiario`** uma vez no editor. Ele agenda o backup das 3h e já faz o primeiro na pasta "MGB Backups".
-5. Teste: abra a URL `/exec` direto no navegador. Tem que aparecer só `forbidden`. O hub continua salvando normalmente.
+Só depois de confirmar, no passo 3, que o hub carrega e salva pelo Supabase:
+
+1. **Implantar → Gerenciar implantações → Arquivar** a implantação.
+2. A URL antiga para de responder, e a cópia dos dados que ficou no Drive deixa de ser pública.
+3. O `mgb-dados.json` pode continuar no Drive como backup frio.
 
 ### 4b. Faturamento
 
 1. Substitua o código pelo de [`apps-script-faturamento/Code.gs`](../apps-script-faturamento/Code.gs).
 2. Em Script Properties, adicione:
    - `FATURAMENTO_SECRET`, com o mesmo valor do Vercel;
-   - `WEBHOOK_TOKEN`, com o token que já estava na constante `WEBHOOK_TOKEN` do script antigo (o mesmo valor de `ASAAS_WEBHOOK_TOKEN` no Vercel). O código novo lê esse valor daqui.
+   - `WEBHOOK_TOKEN`, com o token que estava na constante `WEBHOOK_TOKEN` do script antigo (o mesmo valor de `ASAAS_WEBHOOK_TOKEN` no Vercel).
 3. Implante a nova versão.
 4. Teste: `…/exec?action=listar` direto no navegador → `{"ok":false,"erro":"forbidden"}`. O Faturamento no hub continua listando.
 
@@ -102,9 +93,9 @@ Faça um por vez. Em cada um, depois de colar o código e configurar o Script Pr
 3. Implante a nova versão.
 4. Teste: `…/exec?action=status&docId=x` → `{"erro":"forbidden"}`.
 
-### 4d. Plano de Caixa: trocar o token vazado
+## Passo 5 — Plano de Caixa: trocar o token vazado
 
-O token antigo (`1d97…`) está público e precisa morrer. No `Code.gs` do Plano de Caixa, faça quatro trocas.
+No `Code.gs` do Plano de Caixa, faça quatro trocas.
 
 **1.** Troque a linha `const TOKEN_SYNC_EMPRESA = '1d97…';` por:
 
@@ -133,25 +124,19 @@ por
 if (!tokenSyncOk_(body.token)) return ContentService.createTextOutput('forbidden');
 ```
 
-**3 e 4.** No `doGet`, nas duas linhas que comparam `e.parameter.token !== TOKEN_SYNC_EMPRESA`, troque a comparação por `!tokenSyncOk_(e.parameter.token)`.
+**3 e 4.** No `doGet`, nas duas linhas com `e.parameter.token !== TOKEN_SYNC_EMPRESA`, troque a comparação por `!tokenSyncOk_(e.parameter.token)`.
 
 Depois:
 
-1. Gere um token **novo** (passo 1).
+1. Gere um token **novo**.
 2. Coloque o token novo em Script Properties → `TOKEN_SYNC_EMPRESA`.
 3. Implante uma nova versão das **duas** implantações do Plano de Caixa: a "Só eu" e a "Qualquer pessoa".
-4. No Vercel, troque `PLANO_CAIXA_TOKEN` pelo token novo e faça o redeploy. O Vercel só lê variáveis novas depois de um deploy.
+4. No Vercel, troque `PLANO_CAIXA_TOKEN` pelo token novo e faça o **redeploy**. O Vercel só lê variáveis novas depois de um deploy.
 5. Teste no hub: Plano de Caixa → sincronizar → "✅ Confirmado".
 
-Entre os itens 3 e 4, o sync do Plano de Caixa falha por alguns minutos. Isso não perde dados: o hub manda de novo no próximo cálculo.
+## Passo 6 — Conferência final
 
-## Passo 5 — Conferência final
-
-Abra cada URL `/exec` antiga **sem login** (aba anônima). Todas têm que responder `forbidden`.
-
-```bash
-curl -sL "https://script.google.com/macros/s/AKfycbwD9L4gj8zr9vwOBZxn4-71khw5yhoXwJTFfsWizP-okmZZQWlumQs93seg-H2USa8D/exec"
-```
+Sem login (aba anônima), cada uma destas chamadas tem que ser recusada:
 
 ```bash
 curl -sL "https://script.google.com/macros/s/AKfycbwdlNqijPhK5MfOFhQ-4lo72hA-3G1J-iPZbdoOZAQGv_8z7NG4QBjNxDIhmZNFOIa8/exec?action=listar"
@@ -161,17 +146,37 @@ curl -sL "https://script.google.com/macros/s/AKfycbwdlNqijPhK5MfOFhQ-4lo72hA-3G1
 curl -sL "https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec?action=status&docId=x"
 ```
 
-E a API sem login:
-
 ```bash
 curl -s -X POST "https://mgb-financeiro.vercel.app/api/asaas?action=emitir"
 ```
 
-Tem que voltar `401`.
+```bash
+curl -s "https://mgb-financeiro.vercel.app/api/estado"
+```
+
+## Voltar uma versão do estado (se precisar)
+
+Cada salvamento guarda a versão anterior em `public.hub_estado_historico`. No SQL Editor do Supabase, para ver as últimas:
+
+```sql
+select id, versao, salvo_por, salvo_em, bytes
+from public.hub_estado_historico
+order by id desc
+limit 20;
+```
+
+Para restaurar uma versão, troque `<id>` pelo número escolhido:
+
+```sql
+select public.salvar_estado(
+  (select dados::text from public.hub_estado_historico where id = <id>),
+  null,
+  'restauracao',
+  'Restauração manual'
+);
+```
 
 ## Ainda aberto (precisa do código desses scripts)
-
-Estes Apps Scripts ainda são chamados direto do navegador. O código deles não está no repositório.
 
 | Script | Uso | Risco |
 |---|---|---|

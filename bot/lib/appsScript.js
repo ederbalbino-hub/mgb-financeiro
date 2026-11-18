@@ -1,4 +1,5 @@
 // Cliente do Apps Script do hub (estado inteiro num JSON no Drive), usado SÓ no servidor.
+// Desde a ida para o Supabase (lib/estado.js) só serve para a importação única dos dados.
 //
 // Desde 11/2026 o Apps Script só responde a quem manda ?s=<HUB_STATE_SECRET>. O navegador não
 // conhece nem a URL nem o segredo: o hub fala com /api/estado (que exige login) e /api/estado
@@ -17,12 +18,12 @@ export class ErroEstado extends Error {
   }
 }
 
-function urlComSegredo(env, extra = {}) {
+function urlComSegredo(env, extra = {}, { segredoOpcional = false } = {}) {
   const base = env.APPS_SCRIPT_URL;
   const segredo = env.HUB_STATE_SECRET;
-  if (!base || !segredo) throw new ErroEstado("Servidor sem APPS_SCRIPT_URL/HUB_STATE_SECRET configurados.", { status: 503 });
+  if (!base || (!segredo && !segredoOpcional)) throw new ErroEstado("Servidor sem APPS_SCRIPT_URL/HUB_STATE_SECRET configurados.", { status: 503 });
   const u = new URL(base);
-  u.searchParams.set("s", segredo);
+  if (segredo) u.searchParams.set("s", segredo);
   for (const [k, v] of Object.entries(extra)) if (v !== undefined && v !== null) u.searchParams.set(k, String(v));
   return u.toString();
 }
@@ -30,8 +31,10 @@ function urlComSegredo(env, extra = {}) {
 // Lê o estado. Devolve o TEXTO cru (para repassar ao hub sem reserializar) e o objeto.
 // Nunca devolve estado vazio em silêncio: resposta que não é um objeto JSON com conteúdo vira erro.
 // (Antes, um erro do Apps Script virava {} e o bot gravava esse {} por cima de tudo.)
-export async function lerEstado(env = process.env, fetchFn = fetch) {
-  const r = await fetchFn(urlComSegredo(env, { t: Date.now() }), { method: "GET", redirect: "follow" });
+// segredoOpcional: só para a importação única para o Supabase (lib/estado.js), quando o script
+// antigo ainda não exige segredo.
+export async function lerEstado(env = process.env, fetchFn = fetch, { segredoOpcional = false } = {}) {
+  const r = await fetchFn(urlComSegredo(env, { t: Date.now() }, { segredoOpcional }), { method: "GET", redirect: "follow" });
   const texto = await r.text();
   if (!r.ok) throw new ErroEstado(`Apps Script respondeu ${r.status}.`);
   let obj;
