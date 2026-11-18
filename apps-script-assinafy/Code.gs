@@ -125,7 +125,21 @@ function cors_(out) {
   return out;
 }
 
+// ── Segurança (11/2026) ──────────────────────────────────────────────────────────
+// Só responde com ?s=<GS_SECRET> (Script Properties). Quem chama é o Vercel (bot/api/assinafy.js),
+// que exige login no hub — o navegador não conhece o segredo. Sem GS_SECRET, recusa tudo.
+// (O webhook da Assinafy não é usado — ver cabeçalho —, então também fica atrás do segredo.)
+function segredoOk_(e) {
+  const k = String(props_().getProperty('GS_SECRET') || '');
+  const c = String((e && e.parameter && e.parameter.s) || '');
+  if (!k || !c || k.length !== c.length) return false;
+  let diff = 0;
+  for (let i = 0; i < k.length; i++) diff |= k.charCodeAt(i) ^ c.charCodeAt(i);
+  return diff === 0;
+}
+
 function doGet(e) {
+  if (!segredoOk_(e)) return json_({ erro: 'forbidden' });
   try {
     const action = (e.parameter.action || '').toString();
     if (action === 'status') return cors_(json_(consultarStatus_(e.parameter.docId)));
@@ -137,6 +151,7 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  if (!segredoOk_(e)) return json_({ erro: 'forbidden' });
   try {
     const action = (e.parameter.action || '').toString();
     if (action === 'enviar') {

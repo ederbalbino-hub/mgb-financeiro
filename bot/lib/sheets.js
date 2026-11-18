@@ -1,28 +1,36 @@
-// Cliente do Apps Script — mesma URL usada pelo dashboard.
-// Lê estado completo, modifica em memória e devolve via POST.
-// Funciona sem mudanças no Apps Script atual.
+// Cliente do estado do hub para o bot do WhatsApp (via lib/appsScript.js, com o segredo do servidor).
+// Lê o estado completo, modifica em memória e grava de volta com trava de versão: se alguém salvou
+// no hub entre a leitura e a gravação, relê e aplica a mudança de novo (até 3 vezes), em vez de
+// atropelar o que a pessoa salvou.
 
-const URL = process.env.APPS_SCRIPT_URL;
+import { lerEstado, gravarEstado } from "./appsScript.js";
 
 export async function loadState() {
-  const res = await fetch(`${URL}?t=${Date.now()}`, { method: "GET" });
-  const text = await res.text();
-  if (!text.trim().startsWith("{")) return {};
-  return JSON.parse(text);
+  const { estado } = await lerEstado();
+  return estado;
 }
 
-export async function saveState(state) {
-  await fetch(URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(state),
-  });
+// Aplica `mudar(state)` sobre o estado mais novo e grava. Devolve o que `mudar` devolver.
+export async function atualizarEstado(mudar) {
+  for (let tentativa = 1; ; tentativa++) {
+    const { estado, versao } = await lerEstado();
+    const resultado = mudar(estado);
+    estado._v = versao + 1;
+    estado._salvoPor = "Bot WhatsApp";
+    estado._salvoEm = new Date().toISOString();
+    try {
+      await gravarEstado(estado, versao);
+      return resultado;
+    } catch (e) {
+      if (!e.conflito || tentativa >= 3) throw e;
+    }
+  }
 }
 
 // Adiciona um lançamento de despesa no db do módulo/unidade.
 // Formato compatível com o que o dashboard espera (campo r.t, r.dataInicio, r.venc etc).
 export async function addDespesa({ modId, item, descricao, fornecedor, valor, tipo, dataInicio, mesesRec, nparc, venc, cc }) {
-  const state = await loadState();
+  return atualizarEstado((state) => {
   if (!state.db) state.db = {};
   if (!state.db[modId]) state.db[modId] = {};
   if (!state.db[modId][item]) state.db[modId][item] = [];
@@ -49,19 +57,19 @@ export async function addDespesa({ modId, item, descricao, fornecedor, valor, ti
   }
 
   state.db[modId][item].push(entry);
-  await saveState(state);
   return entry;
+  });
 }
 
 // Marca uma receita como recebida no mês.
 export async function marcarReceitaPaga({ modId, item, ano, mes }) {
-  const state = await loadState();
+  return atualizarEstado((state) => {
   if (!state.recPagamentos) state.recPagamentos = {};
   if (!state.recPagamentos[modId]) state.recPagamentos[modId] = {};
   if (!state.recPagamentos[modId][item]) state.recPagamentos[modId][item] = {};
   const key = `${ano}-${mes}`;
   state.recPagamentos[modId][item][key] = { pago: true, obs: "" };
-  await saveState(state);
+  });
 }
 
 // Lista módulos e seus itens — útil pra montar o contexto que vai pro Claude.

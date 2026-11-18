@@ -8,6 +8,7 @@
 window.coi={shouldRegister:()=>localStorage.getItem('mgb_coi')==='1',shouldDeregister:()=>localStorage.getItem('mgb_coi')!=='1'};
 </script>
 <script src="coi-serviceworker.min.js"></script>
+<script src="api-token.js?v=20261118"></script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -3032,7 +3033,7 @@ function ePrintContract(){
   },800);
 }
 /* ── Assinatura eletrônica (Assinafy, via Apps Script — ver Automacao Financeira/apps-script-assinafy) ── */
-const ASSINAFY_API_URL='https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec';
+const ASSINAFY_API_URL='https://mgb-financeiro.vercel.app/api/assinafy'; /* via Vercel, com login (11/2026) */
 let eAssDocId=null;
 async function eEnviarAssinatura(){
   const out=document.getElementById('e-contract-out');
@@ -3046,7 +3047,7 @@ async function eEnviarAssinatura(){
   const btn=document.getElementById('e-ass-btn'); const st=document.getElementById('e-ass-status');
   btn.disabled=true; btn.style.opacity='.6'; st.textContent='Enviando pra assinatura…';
   try{
-    const r=await fetch(ASSINAFY_API_URL+'?action=enviar',{method:'POST',body:JSON.stringify({
+    const r=await (parent.fetch||fetch)(ASSINAFY_API_URL+'?action=enviar',{method:'POST',body:JSON.stringify({
       nomeDoc:'Contrato Tela Vertical - '+nome,
       html:htmlDoc,
       signatarios:[{nome:nome,email:email},{nome:'Eder Balbino — Tela Vertical',email:'ederbalbino@gmail.com'}],
@@ -3066,7 +3067,7 @@ async function eCheckAssinatura(){
   const st=document.getElementById('e-ass-status');
   st.textContent='Consultando…';
   try{
-    const r=await fetch(ASSINAFY_API_URL+'?action=status&amp;docId='+encodeURIComponent(eAssDocId));
+    const r=await (parent.fetch||fetch)(ASSINAFY_API_URL+'?action=status&amp;docId='+encodeURIComponent(eAssDocId));
     const j=await r.json();
     if(j.assinado) st.innerHTML='✅ Assinado por todos! O PDF foi enviado por e-mail automaticamente.';
     else st.innerHTML='⏳ Aguardando assinatura ('+(j.status||'?')+') — &lt;a href=&quot;#&quot; onclick=&quot;event.preventDefault();eCheckAssinatura()&quot;&gt;verificar de novo&lt;/a&gt;';
@@ -3695,7 +3696,7 @@ function vEnviarWhats(){
 }
 
 /* Assinatura eletrônica (Assinafy, via Apps Script — ver Automacao Financeira/apps-script-assinafy) */
-const ASSINAFY_API_URL = 'https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec';
+const ASSINAFY_API_URL = 'https://mgb-financeiro.vercel.app/api/assinafy'; /* via Vercel, com login (11/2026) */
 let vAssDocId = null;
 async function vEnviarAssinatura(){
   if(!vUltimoPayload){ alert('Gere o contrato primeiro.'); return; }
@@ -3708,7 +3709,7 @@ async function vEnviarAssinatura(){
   const btn=document.getElementById('v-ass-btn'); const st=document.getElementById('v-ass-status');
   btn.disabled=true; btn.style.opacity='.6'; st.textContent='Enviando pra assinatura…';
   try{
-    const r = await fetch(ASSINAFY_API_URL+'?action=enviar', { method:'POST', body: JSON.stringify({
+    const r = await (parent.fetch||fetch)(ASSINAFY_API_URL+'?action=enviar', { method:'POST', body: JSON.stringify({
       nomeDoc: 'Contrato Vaapty - '+vUltimoPayload.nome,
       html: htmlDoc,
       signatarios: [ {nome: vUltimoPayload.nome, email: email}, {nome:'Eder Balbino — MGB Comunicação e Marketing Ltda.', email:'ederbalbino@gmail.com'} ],
@@ -3728,7 +3729,7 @@ async function vCheckAssinatura(){
   const st=document.getElementById('v-ass-status');
   st.textContent='Consultando…';
   try{
-    const r = await fetch(ASSINAFY_API_URL+'?action=status&amp;docId='+encodeURIComponent(vAssDocId));
+    const r = await (parent.fetch||fetch)(ASSINAFY_API_URL+'?action=status&amp;docId='+encodeURIComponent(vAssDocId));
     const j = await r.json();
     if(j.assinado) st.innerHTML='✅ Assinado por todos! O PDF foi enviado por e-mail automaticamente.';
     else st.innerHTML='⏳ Aguardando assinatura ('+(j.status||'?')+') — <a href=&quot;#&quot; onclick=&quot;event.preventDefault();vCheckAssinatura()&quot;>verificar de novo</a>';
@@ -4381,7 +4382,7 @@ const PK='mgb_pasta_v2';
 function load(){try{return JSON.parse(localStorage.getItem(PK))||{mercadao:[],elevador:[],vaapty:[]};}catch(e){return{mercadao:[],elevador:[],vaapty:[]};}}
 function save(d){try{localStorage.setItem(PK,JSON.stringify(d));}catch(e){}}
 // ── Assinatura: o hub guarda o documento da Assinafy de cada cliente e confere quando todos assinam ──
-const MGB_ASSINAFY_URL='https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec';
+const MGB_ASSINAFY_URL='https://mgb-financeiro.vercel.app/api/assinafy'; // via Vercel, com login (11/2026)
 window.mgbContratoEnviado=function(mod,nome,docId){
   try{
     clientesInfo[mod]=clientesInfo[mod]||{}; const alvo=fNormNome(nome);
@@ -7922,7 +7923,8 @@ async function fLeoEnviarEmail(){
 }
 
 /* ---- FATURAMENTO EM LOTE (sub-aba 🚀) — lê a planilha "MGB Faturamento - Clientes" ---- */
-const FATURAMENTO_API_URL = 'https://script.google.com/macros/s/AKfycbwdlNqijPhK5MfOFhQ-4lo72hA-3G1J-iPZbdoOZAQGv_8z7NG4QBjNxDIhmZNFOIa8/exec';
+// Planilha do Faturamento via Vercel (exige login de admin/financeiro; o segredo do Apps Script fica no servidor).
+const FATURAMENTO_API_URL = 'https://mgb-financeiro.vercel.app/api/faturamento';
 const FAT_MANUAL_MODULOS = ['Tarobá','Bureau de Mídia']; // valor digitado à mão (comissão fecha depois), padrão só nota, fora do "Marcar todos"
 const FAT_DESC_TAROBA = 'PLANEJAMENTO COMISSÃO DE VENDAS'; // texto das notas reais da Tarobá (NFS-e 446/447 de 06/10/2026)
 let fatLinhas = [];
@@ -10422,7 +10424,9 @@ function buildSidebar(){
 // Implantação separada ("Qualquer pessoa") só pra esse sync — o app principal do Plano de
 // Caixa continua "Só eu". Segurança aqui é o TOKEN_SYNC_EMPRESA (igual no Code.gs), não o Google.
 const PLANO_CAIXA_URL=(function(){ var d='https://script.google.com/macros/s/AKfycbyRPxmBYEOTYj2_eH7SsNL35_MZFF-2vL9os7luJWYSKszDFN04FF4zP0jmQLAGZECx/exec'; try{ var u=(localStorage.getItem('plano_url')||'').trim(); return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)?u:d; }catch(e){ return d; } })(); // pode ser trocada pelo botão 🔑 Chave (localStorage 'plano_url') sem mexer no código
-const PLANO_CAIXA_TOKEN='1d9716ba3d52e39f7cbe4bc19c49149d';
+// Sync com o Plano de Caixa passa pelo Vercel (/api/plano-caixa): o token mora só no servidor (11/2026).
+const PLANO_CAIXA_API='https://mgb-financeiro.vercel.app/api/plano-caixa';
+function planoApiPost_(acao,corpo){ return fetch(PLANO_CAIXA_API+'?acao='+acao,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(r=>r.json()).then(j=>{ if(!j.ok) throw new Error(j.error||'falhou'); return j; }); }
 const PLANO_CAIXA_APP_URL='https://script.google.com/macros/s/AKfycbz-77CBmSrRHB2uYjZNNkazXFt9kYHYL7aQQwz4nil5t9Kmof-6xNsZ8snt5hSrGD_l/exec'; // app privado ("Só eu")
 let _ultimoSyncEmpresa='';
 function escHubId(s){ return String(s).replace(/[^a-zA-Z0-9]+/g,'_'); }
@@ -10449,7 +10453,7 @@ function syncResumoEmpresaPlanoDeCaixa(ano,mes,receita,despesa){
   const chave=mesRef+'|'+receita+'|'+despesa+'|'+JSON.stringify(lista.map(function(x){return x.id+':'+x.valor+':'+x.pago;}));
   if(chave===_ultimoSyncEmpresa) return; // só manda se mudou algo desde o último envio
   _ultimoSyncEmpresa=chave;
-  enviarFormIframe_(PLANO_CAIXA_URL,{token:PLANO_CAIXA_TOKEN,acao:'resumoEmpresa',mesRef:mesRef,receita:String(receita),despesa:String(despesa),despesas:JSON.stringify(lista)});
+  planoApiPost_('resumoEmpresa',{mesRef:mesRef,receita:receita,despesa:despesa,despesas:lista}).catch(e=>{ _ultimoSyncEmpresa=''; console.warn('sync Plano de Caixa:',e.message); });
 }
 // Envia via <form> num iframe escondido em vez de fetch() — um fetch (até no-cors) fica
 // sujeito ao COEP que o coi-serviceworker liga nessa página (pro ffmpeg.wasm), que bloqueia
@@ -10477,7 +10481,7 @@ function enviarFormIframe_(url,campos){
 // o navegador tiver cookie de login do Google (a implantação "Qualquer pessoa" ainda assim
 // pode pedir login; se falhar, fica em silêncio e tenta de novo na próxima vez).
 function puxarStatusEmpresaDoPlanoDeCaixa(){
-  fetch(PLANO_CAIXA_URL+'?acao=statusDespesasEmpresa&token='+encodeURIComponent(PLANO_CAIXA_TOKEN))
+  fetch(PLANO_CAIXA_API+'?acao=statusDespesasEmpresa')
     .then(r=>r.json())
     .then(mapa=>{
       if(!mapa||mapa.erro) return;
@@ -11476,7 +11480,7 @@ function avisoLancar(){
       empresaMovimentos.push({id:empresaMovId++,desc:pesDescFromHist(it.historico),valor:it.valor,lado:'desp',data:iso,mes:iso.slice(0,7),_imp:_imp,conta:'Cartão '+(it.src||'').replace('wallet-','')}); nE++;
     }
   });
-  if(paraPlano.length) enviarFormIframe_(PLANO_CAIXA_URL,{token:PLANO_CAIXA_TOKEN,acao:'avisosPessoal',avisos:JSON.stringify(paraPlano)});
+  if(paraPlano.length) planoApiPost_('avisosPessoal',{avisos:paraPlano}).catch(e=>alert('⚠ Não consegui enviar os avisos pessoais ao Plano de Caixa: '+e.message));
   try{ localStorage.setItem('mgb_avisos_ign',JSON.stringify(ign)); }catch(e){}
   try{buildPessoal();}catch(e){} try{buildVisaoEmpresa();}catch(e){} try{buildSidebar();}catch(e){} try{scheduleSave();}catch(e){}
   avisoFechar();
@@ -11514,7 +11518,7 @@ function planoSyncAgora(){
     say('⏳ Enviado: receita '+f(rec)+' · despesa '+f(desp)+' · '+n+' despesas · '+nr+' receitas. Conferindo se chegou…');
     setTimeout(async function(){
       try{
-        var r=await fetch(PLANO_CAIXA_URL+'?acao=resumoEmpresa&mesRef='+mesRef+'&token='+encodeURIComponent(PLANO_CAIXA_TOKEN),{credentials:'omit'});
+        var r=await fetch(PLANO_CAIXA_API+'?acao=resumoEmpresa&mesRef='+mesRef);
         var j=await r.json();
         if(!j||!j.ok){ say('⚠ O Plano de Caixa não respondeu com confirmação. Ou o envio não chegou, ou o app ainda está numa versão antiga (precisa de uma nova implantação — botão 🔑 Chave → URL).'); return; }
         var rs=j.resumo; if(!rs){ say('⚠ Nada guardado no Plano de Caixa pra '+mesRef+'. O envio não chegou.'); return; }
@@ -14215,7 +14219,8 @@ function deleteLead(){
 }
 
 // ── GOOGLE SHEETS CONFIG (via Apps Script) ───────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwD9L4gj8zr9vwOBZxn4-71khw5yhoXwJTFfsWizP-okmZZQWlumQs93seg-H2USa8D/exec';
+// Estado do hub: passa pelo Vercel (exige login). O Apps Script só aceita o segredo que fica no servidor (11/2026).
+const ESTADO_API_URL = 'https://mgb-financeiro.vercel.app/api/estado';
 // Backend do Pluggy (bot no Vercel).
 const BANCO_API_URL = 'https://mgb-financeiro.vercel.app/api/banco';
 // Proxy pros painéis de telas (4YouSee) e rádio Vaapty que já existem em agenciamgb.com.br (evita CORS).
@@ -14441,14 +14446,16 @@ async function saveToSheets(){
   // 1) baixa o estado mais novo do servidor pra mesclar
   let servidor = null;
   try{
-    const r = await fetch(APPS_SCRIPT_URL + '?t=' + Date.now(), { method:'GET', mode:'cors' });
+    const r = await fetch(ESTADO_API_URL + '?t=' + Date.now(), { method:'GET', mode:'cors' });
+    if(!r.ok) throw new Error('HTTP '+r.status);
     const tx = await r.text();
     if(tx && tx.trim().startsWith('{')){ const o=JSON.parse(tx); if(Object.keys(o).length>0) servidor=o; }
   }catch(e){ console.warn('saveToSheets: não consegui ler o servidor antes de gravar ('+e+') — salvamento cheio (modo antigo).'); }
-  let payloadObj, aviso=[];
+  let payloadObj, aviso=[], versaoLida=0;
+  const _baseAntes=_secBase, _vBaseAntes=_secVBase;  // se a gravação falhar, volto a base (senão as mudanças desta aba deixam de contar como "sujas")
   if(servidor && _secBase){
     const snapSrv = _secSnapshot(servidor);
-    const sv = Number(servidor._v)||0;
+    const sv = Number(servidor._v)||0; versaoLida = sv;
     payloadObj = Object.assign({}, servidor);   // começa do MAIS NOVO — preserva o trabalho das outras sessões
     const bloqueadas=[], conflitos=[], novidades=[];
     sujas.forEach(k=>{
@@ -14483,13 +14490,25 @@ async function saveToSheets(){
     return;
   }
   const payload = JSON.stringify(payloadObj);
+  const desfazBase=()=>{ _secBase=_baseAntes; _secVBase=_vBaseAntes; };
   try {
-    await fetch(APPS_SCRIPT_URL, {
+    // trava de versão: o servidor só grava se ninguém salvou depois da leitura acima (v=versaoLida)
+    const r = await fetch(ESTADO_API_URL + '?v=' + versaoLida, {
       method: 'POST',
-      mode: 'no-cors',
+      mode: 'cors',
       headers: {'Content-Type':'text/plain;charset=utf-8'},
       body: payload
     });
+    const j = await r.json().catch(()=>({}));
+    if(r.status===409 || j.conflito){
+      // outra pessoa salvou no meio tempo: releio, mesclo e tento de novo (minhas mudanças continuam "sujas")
+      desfazBase();
+      console.warn('saveToSheets: conflito de versão — mesclando de novo.');
+      setSyncStatus('saving');
+      setTimeout(function(){ try{ saveToSheets(); }catch(e){} }, 1500);
+      return;
+    }
+    if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
     _baseBytes = payload.length;
     _saveAdiados = 0; _alertaAdiado = false;
     setSyncStatus('saved');
@@ -14497,7 +14516,9 @@ async function saveToSheets(){
     setTimeout(()=>setSyncStatus('idle'), 3000);
   } catch(e){
     console.error('Save error:', e);
-    setSyncStatus('error', 'Sem conexão');
+    desfazBase();
+    setSyncStatus('error', '⚠ Não salvei: '+(e.message||'sem conexão')+' — tento de novo em 30 s');
+    setTimeout(function(){ try{ saveToSheets(); }catch(e){} }, 30000);
   }
 }
 
@@ -14506,7 +14527,8 @@ async function loadFromSheets(){
   setSyncStatus('loading');
   for(let t=1;t<=3&&!_cargaSheetsOk;t++){
     try {
-      const res = await fetch(APPS_SCRIPT_URL + '?t=' + Date.now(), { method: 'GET', mode: 'cors' });
+      const res = await fetch(ESTADO_API_URL + '?t=' + Date.now(), { method: 'GET', mode: 'cors' });
+      if(!res.ok) throw new Error('HTTP '+res.status+' ao carregar o estado');
       const text = await res.text();
       if(text && text.trim().startsWith('{')){
         const obj = JSON.parse(text);

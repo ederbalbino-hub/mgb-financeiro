@@ -20,29 +20,7 @@
   var K_MODO = 'mgb_modo';
   var K_ULTIMO = 'mgb_ultimo_usuario';
 
-  // Toda chamada do hub para a API (mgb-financeiro.vercel.app/api/*) leva o token do login.
-  // Desde 11/2026 a API recusa (401) quem não manda — antes qualquer pessoa com a URL emitia nota.
-  // Envolve o fetch uma vez só, aqui, em vez de mexer em cada chamada do index.html/lancar.js/novo.js.
-  var API_BASE = 'https://mgb-financeiro.vercel.app/api/';
-  if (typeof global.fetch === 'function' && !global.fetch.__mgbAuth) {
-    var fetchOriginal = global.fetch;
-    var fetchComToken = function (entrada, opcoes) {
-      var url = typeof entrada === 'string' ? entrada : (entrada && entrada.url) || '';
-      if (url.indexOf(API_BASE) !== 0 || url.indexOf(API_BASE + 'auth') === 0) return fetchOriginal.apply(this, arguments);
-      var s = null;
-      try { s = JSON.parse(ler(K_SESSAO) || 'null'); } catch (e) {}
-      var o = Object.assign({}, opcoes || {});
-      var h = new Headers(o.headers || (typeof entrada !== 'string' && entrada.headers) || {});
-      if (s && s.token && !h.has('Authorization')) h.set('Authorization', 'Bearer ' + s.token);
-      o.headers = h;
-      return fetchOriginal.call(this, entrada, o).then(function (r) {
-        if (r.status === 401 && sessao) sair(); // sessão vencida ou usuário removido: volta pro login
-        return r;
-      });
-    };
-    fetchComToken.__mgbAuth = true;
-    global.fetch = fetchComToken;
-  }
+  // O token vai nas chamadas para a API pelo api-token.js (carregado no <head>).
 
   var TODAS = ['home', 'overview', 'custos', 'pessoal', 'contabilidade', 'operacional:contratos', 'operacional:estudio',
     'relatorios', 'ferramentas', 'gerador', 'midiakit', 'apresmgb', 'sindicos', 'leads', 'propvaapty', 'planotaroba', 'radioops', 'planocaixa',

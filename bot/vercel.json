@@ -17,6 +17,18 @@
     },
     "api/rede.js": {
       "maxDuration": 30
+    },
+    "api/estado.js": {
+      "maxDuration": 30
+    },
+    "api/faturamento.js": {
+      "maxDuration": 30
+    },
+    "api/plano-caixa.js": {
+      "maxDuration": 30
+    },
+    "api/assinafy.js": {
+      "maxDuration": 60
     }
   }
 }

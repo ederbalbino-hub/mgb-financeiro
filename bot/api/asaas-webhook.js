@@ -84,8 +84,8 @@ async function enviarReciboMercadao(payment) {
   console.log(`asaas-webhook: recibo enviado → ${destinos.join(", ")} (${payment.id})`);
 }
 
-const FATURAMENTO_API_URL =
-  "https://script.google.com/macros/s/AKfycbwdlNqijPhK5MfOFhQ-4lo72hA-3G1J-iPZbdoOZAQGv_8z7NG4QBjNxDIhmZNFOIa8/exec";
+// URL do Apps Script do Faturamento vem do Vercel (a mesma que /api/faturamento usa).
+const FATURAMENTO_API_URL = process.env.FATURAMENTO_API_URL;
 
 // Normaliza os ~15 status possíveis da Asaas pros 3 que o hub pinta (vermelho/verde/cinza).
 const MAPA_STATUS = {

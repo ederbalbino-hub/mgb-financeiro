@@ -20,7 +20,7 @@
   //   ListenX (NFS-e 724406): R$ 64,87 por unidade de rádio ao mês (3.567,85 ÷ 55)
   var CUSTO_TELA = 39.56;
   var CUSTO_POR_TORRE = CUSTO_TELA; // uma tela por torre
-  var ASSINAFY_API_URL = 'https://script.google.com/macros/s/AKfycbwG-31A0O10zru2-klj4EbtiD5rg22R-kNG2TLE4Gkd_ZBStE-QNqsbkq-vwSf6vgf3/exec';
+  var ASSINAFY_API_URL = 'https://mgb-financeiro.vercel.app/api/assinafy'; // via Vercel, com login (11/2026)
 
   // ── Regras puras (testadas em bot/test/novo.test.js) ───────────────────
   function custoCondominio(torres) {

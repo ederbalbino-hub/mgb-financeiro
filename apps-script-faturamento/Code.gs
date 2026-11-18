@@ -2,6 +2,8 @@
  * MGB Faturamento API — Apps Script anexado à planilha "MGB Faturamento - Clientes".
  * Alimenta o Faturamento do dia 5 no hub (index.html).
  *
+ * Segurança: listar/incluir/marcar-emitido exigem &s=<FATURAMENTO_SECRET> (ver segredoOk_).
+ *
  * GET ?action=listar[&mesRef=YYYY-MM]
  *   -> { rows: [ {linha,id,modulo,cliente,cnpj,email,logradouro,numero,complemento,bairro,
  *                 cidade,uf,cep,valor,issRetido,aliquotaIssPlanilha,descricao,ctribnac,cnbs,boleto,
@@ -52,9 +54,30 @@ function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
+// ── Segurança (11/2026) ────────────────────────────────────────────────────────────────
+// listar / incluir / marcar-emitido só respondem com ?s=<FATURAMENTO_SECRET> (Script Properties).
+// Quem chama é o Vercel (bot/api/faturamento.js), que exige login no hub — o navegador não
+// conhece o segredo. atualizar-status-pagamento continua no WEBHOOK_TOKEN (chamado pelo webhook da Asaas).
+// Sem FATURAMENTO_SECRET configurado, recusa tudo (fail-closed).
+function igual_(a, b) {
+  a = String(a || ''); b = String(b || '');
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+function segredoOk_(p) {
+  return igual_(p && p.s, PropertiesService.getScriptProperties().getProperty('FATURAMENTO_SECRET'));
+}
+function webhookToken_() {
+  // Preferível guardar em Script Properties → WEBHOOK_TOKEN; a constante fica como fallback.
+  return PropertiesService.getScriptProperties().getProperty('WEBHOOK_TOKEN') || WEBHOOK_TOKEN;
+}
+
 function doGet(e) {
   try {
     const action = (e.parameter.action || '').toString();
+    if (action !== 'atualizar-status-pagamento' && !segredoOk_(e.parameter)) return json_({ ok: false, erro: 'forbidden' });
     if (action === 'listar') return json_(listar_(e.parameter));
     if (action === 'incluir') return json_(incluir_(e.parameter));
     if (action === 'marcar-emitido') return json_(marcarEmitido_(e.parameter));
@@ -212,7 +235,7 @@ function marcarEmitido_(p) {
 }
 
 function atualizarStatusPagamento_(p) {
-  if (p.token !== WEBHOOK_TOKEN) return { ok: false, erro: 'Token inválido.' };
+  if (webhookToken_() === 'COLE_AQUI_O_TOKEN_QUE_JA_ESTA_NO_SCRIPT' || !igual_(p.token, webhookToken_())) return { ok: false, erro: 'Token inválido.' };
   const paymentId = p.paymentId;
   const status = p.status;
   if (!paymentId || !status) return { ok: false, erro: 'Faltam paymentId e/ou status.' };
