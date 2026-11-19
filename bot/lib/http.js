@@ -12,7 +12,7 @@
 //
 // Fail-closed: sem HUB_AUTH_SECRET/HUB_USERS no Vercel, os endpoints protegidos respondem 503.
 
-import { carregarUsuarios, usuarioDaRequisicao } from "./auth.js";
+import { carregarUsuarios, usuarioDaRequisicao, PAPEIS_SEM_HUB } from "./auth.js";
 import { pareceTokenSupabase, usuarioSupabase } from "./supabaseAuth.js";
 
 export const ORIGENS_PADRAO = ["https://ederbalbino-hub.github.io"];
@@ -75,6 +75,10 @@ export async function exigirLogin(req, res, papeis = null, env = process.env, fe
 
   if (!u) {
     res.status(401).json({ error: "Sessão expirada. Entre de novo no hub." });
+    return null;
+  }
+  if (PAPEIS_SEM_HUB.includes(u.papel)) {
+    res.status(403).json({ error: "Seu acesso ao hub foi encerrado." });
     return null;
   }
   if (papeis && !papeis.includes(u.papel)) {

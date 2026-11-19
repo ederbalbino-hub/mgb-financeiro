@@ -57,3 +57,16 @@ test("lê o usuário do cabeçalho Authorization", () => {
   assert.equal(usuarioDaRequisicao({ headers: { authorization: `Bearer ${t}` } }, env).login, "cleiton");
   assert.equal(usuarioDaRequisicao({ headers: {} }, env), null);
 });
+
+test("Guina (bureau) saiu do hub: o servidor recusa o perfil dele em qualquer chamada", async () => {
+  const { exigirLogin } = await import("../lib/http.js");
+  const SEG = "segredo-teste";
+  const env = { HUB_AUTH_SECRET: SEG, HUB_USERS: JSON.stringify({ guina: { nome: "Guina", papel: "bureau", senha: "scrypt$a$b" } }) };
+  const token = assinarToken({ login: "guina", papel: "bureau" }, SEG);
+  let st = 0, corpo = null;
+  const res = { status(s) { st = s; return this; }, json(o) { corpo = o; return this; } };
+  const u = await exigirLogin({ headers: { authorization: "Bearer " + token } }, res, null, env, async () => ({}));
+  assert.equal(u, null);
+  assert.equal(st, 403);
+  assert.match(corpo.error, /encerrado/);
+});

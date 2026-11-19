@@ -236,10 +236,9 @@ async function lerComo(login, papel) {
   return Object.keys(JSON.parse(r.corpo)).filter((k) => k !== "_v");
 }
 
-test("visibilidade: admin vê tudo; Karen tudo menos o Pessoal; Guina e Cleiton só o que usam", async () => {
+test("visibilidade: admin vê tudo; Karen tudo menos o Pessoal; Cleiton só o que usa", async () => {
   assert.deepEqual(await lerComo("eder", "admin"), ["migracoes", "db", "leads", "etiquetas", "pessoalDesp", "pessoalRegras"]);
   assert.deepEqual(await lerComo("karen", "financeiro"), ["migracoes", "db", "leads", "etiquetas"]);
-  assert.deepEqual(await lerComo("guina", "bureau"), ["migracoes"]);
   assert.deepEqual(await lerComo("cleiton", "programacao"), ["migracoes", "etiquetas"]);
 });
 
@@ -269,10 +268,12 @@ test("visibilidade: Cleiton só grava Etiquetas; o resto que ele mandar é ignor
   assert.equal(gravado._salvoPor, "Cleiton");
 });
 
-test("visibilidade: Guina não grava nada (responde ok sem tocar no banco)", async () => {
-  const { r, gravado } = await gravarComo("guina", "bureau", { migracoes: { a: 1 }, db: {}, pessoalDesp: [] });
-  assert.equal(r.statusCode, 200);
-  assert.equal(r.corpo.semMudanca, true);
+test("Guina (bureau) saiu do hub em 19/11: não lê nem grava o estado", async () => {
+  const r = resFalsa();
+  await estado(req({ token: tk("guina", "bureau") }), r, { env: ENV_PAPEIS, fetchFn: supabaseFalso({ dados: ESTADO_CHEIO, versao: 7 }) });
+  assert.equal(r.statusCode, 403);
+  const { r: r2, gravado } = await gravarComo("guina", "bureau", { migracoes: { a: 1 } });
+  assert.equal(r2.statusCode, 403);
   assert.equal(gravado, null);
 });
 

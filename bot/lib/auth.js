@@ -30,6 +30,8 @@ export function verificarSenha(senha, armazenado) {
 }
 
 // ── Usuários ──────────────────────────────────────────────────────────────
+// 19/11/2026: o Guina (bureau) saiu do hub; fica só com o link do painel do Rádio Ops.
+export const PAPEIS_SEM_HUB = ["bureau"];
 export function carregarUsuarios(env = process.env) {
   if (!env.HUB_USERS || !env.HUB_AUTH_SECRET) return null; // login ainda não ativado
   let lista;

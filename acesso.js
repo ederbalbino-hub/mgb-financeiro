@@ -764,7 +764,7 @@
   function confirmarUsuario(aoConfirmar) {
     fetch(API + '?action=me')
       .then(function (r) {
-        if (r.status === 401 || r.status === 503 || r.status === 410) { sair(); return null; }
+        if (r.status === 401 || r.status === 403 || r.status === 503 || r.status === 410) { sair(); return null; }
         return r.ok ? r.json() : null;
       })
       .then(function (j) { if (j && j.usuario) aoConfirmar(j.usuario); })

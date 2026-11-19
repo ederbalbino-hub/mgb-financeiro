@@ -7,7 +7,7 @@
 //
 // Variáveis de ambiente: HUB_AUTH_SECRET e HUB_USERS (ver lib/auth.js e scripts/gerar-usuarios.js).
 
-import { carregarUsuarios, verificarSenha, assinarToken } from "../lib/auth.js";
+import { carregarUsuarios, verificarSenha, assinarToken, PAPEIS_SEM_HUB } from "../lib/auth.js";
 import { cors, exigirLogin } from "../lib/http.js";
 
 function publico(u) {
@@ -53,6 +53,7 @@ export default async function handler(req, res) {
       await new Promise((r) => setTimeout(r, 600)); // desacelera tentativas
       return res.status(401).json({ error: "Usuário ou senha incorretos." });
     }
+    if (PAPEIS_SEM_HUB.includes(u.papel)) return res.status(403).json({ error: "Seu acesso ao hub foi encerrado." });
     const token = assinarToken({ login: u.login, papel: u.papel }, process.env.HUB_AUTH_SECRET);
     return res.status(200).json({ token, usuario: publico(u) });
   }
