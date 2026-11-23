@@ -366,12 +366,21 @@ function leadCRM(acao){
     localStorage.setItem('mgb_lead_fila', JSON.stringify(fila));
   }catch(e){}
 }
+/* Sem alert/confirm: navegador pode suprimir diálogos ("impedir novas caixas…") e o clique
+   viraria silêncio. Tudo aparece escrito no status ao lado do botão; a confirmação do
+   segmento virou um segundo clique no próprio botão. */
+let _pesqConfirmaSeg = '';
 async function pesquisarAuto(){
   const cfg = cfgPesq(), st = $('#pesqStatus'), bt = $('#bPesq');
-  if(!S.cli.nome.trim()){ alert('Preencha o nome do cliente primeiro.'); return; }
-  if(!hubToken() && (!cfg.url || !cfg.token)){ alert('Abra o planejamento por dentro do hub (logado) — a pesquisa usa o servidor do hub, sem configurar nada.\n\nFora do hub, configure a URL e o token do Apps Script (⚙ logo abaixo do botão).'); $('#cfgPesq').open = true; return; }
+  if(!S.cli.nome.trim()){ st.textContent = '⚠ Preencha o nome do cliente primeiro.'; return; }
+  if(!hubToken() && (!cfg.url || !cfg.token)){ st.textContent = '⚠ Entre no hub (logado) para pesquisar sem configurar nada — ou preencha o ⚙ abaixo para usar fora do hub.'; $('#cfgPesq').open = true; return; }
   const segAtual = S.cli.segmento.trim();
-  if(segAtual && !confirm('Pesquisar "'+S.cli.nome.trim()+'" no segmento "'+segAtual+'"?\n\nSe esse segmento for do cliente ANTERIOR, cancele e corrija o campo "Segmento do cliente" (ou apague-o, que a pesquisa descobre sozinha).')) return;
+  if(segAtual && _pesqConfirmaSeg !== S.cli.nome.trim()+'|'+segAtual){
+    _pesqConfirmaSeg = S.cli.nome.trim()+'|'+segAtual;
+    st.textContent = 'Vou pesquisar "'+S.cli.nome.trim()+'" no segmento "'+segAtual+'". Se esse segmento for do cliente anterior, corrija (ou apague) o campo Segmento. Clique de novo em 🔎 para confirmar.';
+    return;
+  }
+  _pesqConfirmaSeg = '';
   bt.disabled = true;
   try{
     st.textContent = '① Lendo o site e entendendo a empresa… (até 1 min)';
