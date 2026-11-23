@@ -13833,8 +13833,8 @@ function leadJaCadastradoNoProduto(nome,produto){
   return null;
 }
 // ── Proposta gerada/enviada pelas páginas de proposta → lead novo no CRM ──
-// As propostas (mídia kit, proposta ao anunciante, Vaapty) gravam em localStorage 'mgb_lead_fila'; aqui a fila vira lead.
-const LEAD_ACOES={pdf:'Proposta gerada (PDF)', whatsapp:'Proposta enviada pelo WhatsApp'};
+// As propostas (mídia kit, proposta ao anunciante, Vaapty) e o Planejamento Tarobá gravam em localStorage 'mgb_lead_fila'; aqui a fila vira lead.
+const LEAD_ACOES={pdf:'Proposta gerada (PDF)', whatsapp:'Proposta enviada pelo WhatsApp', planejamento:'Planejamento Tarobá montado (pesquisa automática)', html:'Proposta gerada (HTML)'};
 function leadFilaProcessar(){
   if(!_cargaSheetsOk) return;              // sem a carga do Sheets não mexe em nada (a fila espera)
   let fila; try{ fila=JSON.parse(localStorage.getItem('mgb_lead_fila')||'[]'); }catch(e){ return; }
@@ -13845,7 +13845,7 @@ function leadFilaProcessar(){
   fila.forEach(d=>{
     const nome=String((d&&d.cliente)||'').trim(); if(!nome||!leadModPor(d.produto)) return;
     const k=fNormNome(nome), acao=LEAD_ACOES[d.acao]||'Proposta gerada';
-    const texto=acao+(d.valor?' · R$ '+Number(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})+'/mês':'')+(d.obs?' — '+d.obs:'');
+    const texto=acao+(d.valor?' · R$ '+Number(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})+(d.valorPeriodo?' no período':'/mês'):'')+(d.obs?' — '+d.obs:'');
     const l=leads.find(x=>x&&x.produto===d.produto&&x.estagio!=='perdido'&&fNormNome(x.nome)===k);
     if(l){
       const ult=(l.historico||[]).slice(-1)[0];
@@ -13855,7 +13855,7 @@ function leadFilaProcessar(){
     }
     const m=MODULES.find(x=>x.id===d.produto);
     if(m&&m.items.some(it=>fNormNome(it)===k)) return;     // já é cliente (unidade no módulo): não vira lead
-    leads.push({id:leadNextId++, nome, tel:'', responsavel:'', funcao:'', cnpj:'', email:'', produto:d.produto, origem:'Outro', valor:d.valor||0, lembrete:'', obs:d.obs||'', estagio:'novo', historico:[{data:dataTxt,texto}], itemCriado:null, calEventId:null, criado:leadHoje()});
+    leads.push({id:leadNextId++, nome, tel:'', responsavel:'', funcao:'', cnpj:'', email:'', produto:d.produto, origem:(LEAD_ORIGENS.includes(d.origem)?d.origem:'Outro'), valor:d.valor||0, lembrete:'', obs:d.obs||'', estagio:'novo', historico:[{data:dataTxt,texto}], itemCriado:null, calEventId:null, criado:leadHoje()});
     criados++;
   });
   if(!criados&&!atualizados) return;

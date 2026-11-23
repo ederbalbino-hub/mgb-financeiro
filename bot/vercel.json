@@ -13,7 +13,7 @@
       "maxDuration": 60
     },
     "api/assistente.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/rede.js": {
       "maxDuration": 30
