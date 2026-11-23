@@ -2057,16 +2057,9 @@ async function buscarCNPJ(cnpj) {
       cep: d.cep ? String(d.cep).replace(/\D/g,'') : '',
       telefone: d.ddd_telefone_1 || '', email: d.email || ''
     })),
-    () => fetch('https://api.cnpja.com/office/' + cnpj + '?strategy=CACHE_IF_FRESH', {
-      headers: { Authorization: 'b8af4bd1-ede5-4069-a7a8-98040e7ab9e0-a1218490-e3ef-4ca9-9e56-a9a34fc29048' }
-    }).then(r => r.ok ? r.json() : Promise.reject()).then(d => ({
-      nome: d.company?.name || '', fantasia: d.alias || '',
-      logradouro: d.address?.street || '', numero: d.address?.number || '',
-      complemento: d.address?.details || '', bairro: d.address?.district || '',
-      cidade: d.address?.city || '', uf: d.address?.state || '',
-      cep: (d.address?.zip || '').replace(/\D/g,''),
-      telefone: d.phones?.[0]?.number || '', email: d.emails?.[0]?.address || ''
-    }))
+    // CNPJá (pago): pela API do hub, a chave fica só no servidor
+    () => (parent.fetch||fetch)('https://mgb-financeiro.vercel.app/api/cnpj?cnpj=' + cnpj)
+      .then(r => r.ok ? r.json() : Promise.reject()).then(j => j.ok ? j.dados : Promise.reject())
   ];
 
   for (const api of apis) {
@@ -5096,16 +5089,17 @@ carregarMySQL();
 <script>
 
 
-function getGroqKey(){
-  let k=localStorage.getItem('GROQ_KEY');
-  if(!k){
-    k=prompt('Cole sua chave Groq API (gsk_...) — fica salva só no seu navegador:');
-    if(k && k.startsWith('gsk_')) localStorage.setItem('GROQ_KEY', k);
-    else return '';
-  }
-  return k;
+// Gera texto (posts e spots) pela API do hub (/api/assistente), com o login de sempre.
+// Antes usava o Groq com uma chave colada no navegador; agora a chave fica só no servidor.
+async function gerarTextoIA(prompt, maxTokens){
+  const r = await fetch('https://mgb-financeiro.vercel.app/api/assistente', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ gerarTexto:{ prompt, maxTokens } })
+  });
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok || !d.ok) throw new Error(d.erro || d.error || ('erro '+r.status));
+  return d.texto;
 }
-// Lazy — só pede a chave quando o usuário clica em gerar (não no load)
 let tipoSelecionado = 'visibilidade';
 
 const TIPOS = {
@@ -5200,18 +5194,7 @@ INSTRUÇÕES:
 4. Máximo 150 palavras no post principal`;
 
   try {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getGroqKey()},
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages:[{role:'user',content:prompt}],
-        temperature: 0.8,
-        max_tokens: 800
-      })
-    });
-    const data = await r.json();
-    const txt = data.choices?.[0]?.message?.content || 'Erro ao gerar. Tente novamente.';
+    const txt = await gerarTextoIA(prompt, 800).catch(e => 'Erro ao gerar: ' + e.message + '. Tente novamente.');
 
     const postMatch = txt.match(/\[POST\]([\s\S]*?)\[\/POST\]/);
     const ganchosMatch = txt.match(/\[GANCHOS\]([\s\S]*?)\[\/GANCHOS\]/);
@@ -5358,17 +5341,9 @@ async function gerarSpot() {
   const load=document.getElementById('g-loading');
   const res=document.getElementById('g-result');
   const txt=document.getElementById('g-texto');
-  const key = getGroqKey();
-  if(!key){ txt.textContent='Chave Groq não informada. Clique em gerar novamente e cole sua chave gsk_...'; res.classList.add('show'); return; }
   btn.disabled=true; load.style.display='flex'; res.classList.remove('show');
   try {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1000,messages:[{role:'user',content:prompt}]})
-    });
-    const d = await r.json();
-    txt.textContent = d.choices?.[0]?.message?.content || ('Erro da API: '+(d.error?.message||'sem resposta')+'. Verifique sua chave Groq.');
+    txt.textContent = await gerarTextoIA(prompt, 1000).catch(e => 'Não consegui gerar agora: ' + e.message);
     res.classList.add('show');
   } catch(e) {
     txt.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
@@ -5585,7 +5560,7 @@ function copiarSpot() {
     <div class="page-hdr">
       <div><div class="page-title">🎯 CRM</div><div class="page-sub">Funil de clientes — do primeiro contato até o fechamento</div></div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-        <a id="leads-sheet-link" href="#" target="_blank" class="anunc-btn" style="display:none;text-decoration:none">📊 Abrir planilha</a>
+        <button id="leads-excel-btn" type="button" class="anunc-btn" onclick="leadsBaixarExcel()" title="Baixa os leads da tela numa planilha do Excel">📊 Baixar Excel</button>
         <button class="anunc-btn" onclick="openLeadModal('add')" style="color:var(--green);border-color:rgba(17,138,93,.4);font-weight:700">＋ Novo lead</button>
       </div>
     </div>
@@ -13344,11 +13319,6 @@ function buildLeadsBadge(){
 
 // ── Filtros do CRM (produto / mês+ano / período) ────────────────────────
 function initLeadsFiltros(){
-  const sheetLink=g('leads-sheet-link');
-  if(sheetLink){
-    if(LEADS_SHEET_OPEN_URL){ sheetLink.href=LEADS_SHEET_OPEN_URL; sheetLink.style.display=''; }
-    else sheetLink.style.display='none';
-  }
   const pSel=g('leads-f-prod');
   if(pSel && !pSel.options.length){
     pSel.innerHTML='<option value="">Todos os produtos</option>'+leadProdutos().map(m=>`<option value="${m.id}">${m.icon} ${m.label.split('—')[0].trim()}</option>`).join('');
@@ -13954,8 +13924,6 @@ const STATUS_API_URL = 'https://mgb-financeiro.vercel.app/api/status';
 // Deixe vazio até fazer o deploy — o CRM funciona normalmente sem isso, só não sincroniza com a Agenda.
 const CALENDAR_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWInbOz8YzmYVDxWSUqEAtaAtTN5T9615q-_D7Mm360FsU4_2-BHPTW7ImbIH1Q4Vt/exec';
 // Apps Script separado (planilha "MGB CRM - Leads") que exporta os leads em colunas, pra visualizar fora do app.
-const LEADS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyVELtnG_j0jRYeBr0ko9HA7aUSqZK7zf-coKXzxvXx9LtpBXFSifjF77Mfv6X8ojdd7g/exec';
-const LEADS_SHEET_OPEN_URL = 'https://docs.google.com/spreadsheets/d/1OFDF0tfzv8v1OBebwhpE1EnHSc2md8WKp7qf4VA47sU/edit?gid=1037406421#gid=1037406421';
 
 let saveTimer = null;
 let syncStatus = 'idle';
@@ -14679,39 +14647,37 @@ function elevAjustarPorTela(){
 // Salva com debounce — espera 2s após última mudança
 function scheduleSave(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(function(){ saveToSheets(); leadsExportToSheet(); }, 2000);
+  saveTimer = setTimeout(function(){ saveToSheets(); }, 2000);
 }
 
-// Exporta os leads pra uma planilha à parte, em colunas — pra dar uma olhada fora do app.
-async function leadsExportToSheet(){
-  if(!LEADS_SHEET_URL || !_cargaInicialCompleta || !_cargaSheetsOk) return;
-  try{
-    const payload = leads.map(l=>{
-      const m=leadModPor(l.produto);
-      const st=leadStage(l.estagio);
-      return {
-        nome: l.nome||'',
-        tel: l.tel||'',
-        responsavel: l.responsavel||'',
-        funcao: l.funcao||'',
-        cnpj: l.cnpj||'',
-        email: l.email||'',
-        produto: m?m.label.split('—')[0].trim():(l.produto||''),
-        origem: l.origem||'',
-        estagio: st.label.replace(/[✅❌]/g,'').trim(),
-        valor: l.valor||0,
-        followup: leadFmtLembrete(l),
-        obs: l.obs||'',
-        criado: l.criado||'',
-        unidade: l.itemCriado||''
-      };
-    });
-    await fetch(LEADS_SHEET_URL, {
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({leads:payload})
-    });
-  }catch(e){ console.error('Erro ao exportar leads pra planilha:', e); }
+// Baixa os leads numa planilha do Excel, em colunas — pra dar uma olhada fora do app.
+// Substitui a planilha do Google que era reescrita a cada salvamento (Apps Script à parte).
+function leadsBaixarExcel(){
+  if(typeof XLSX==='undefined'){ alert('A ferramenta de planilha ainda está carregando. Tente de novo em alguns segundos.'); return; }
+  const linhas = leads.map(l=>{
+    const m=leadModPor(l.produto);
+    const st=leadStage(l.estagio);
+    return {
+      'Nome': l.nome||'',
+      'WhatsApp': l.tel||'',
+      'Responsável': l.responsavel||'',
+      'Função': l.funcao||'',
+      'CNPJ': l.cnpj||'',
+      'E-mail': l.email||'',
+      'Produto': m?m.label.split('—')[0].trim():(l.produto||''),
+      'Origem': l.origem||'',
+      'Etapa': st.label.replace(/[✅❌]/g,'').trim(),
+      'Valor (R$/mês)': Number(l.valor)||0,
+      'Follow-up': leadFmtLembrete(l),
+      'Observações': l.obs||'',
+      'Criado em': l.criado||'',
+      'Unidade': l.itemCriado||''
+    };
+  });
+  if(!linhas.length){ alert('Nenhum lead para baixar.'); return; }
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas), 'Leads');
+  XLSX.writeFile(wb, 'leads-mgb-'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
 // ── HOME ──────────────────────────────────────────────────────────────────

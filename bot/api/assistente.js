@@ -8,6 +8,9 @@
 //   body { pesquisaTaroba: { etapa:"texto"|"mercado", nome, segmento, site, pracas, periodo, frentes:[] } }
 //   -> { ok:true, dados:{...} } | { ok:false, erro:"..." }
 //
+// E gera textos curtos (posts e spots de rádio) no lugar do Groq, que exigia uma chave no navegador:
+//   body { gerarTexto: { prompt:"...", maxTokens?: 800 } }   -> { ok:true, texto:"..." }
+//
 // Só informa e orienta — não executa nada no hub. Chave: ANTHROPIC_API_KEY (a mesma do bot do WhatsApp).
 // Só responde para quem está logado no hub (token válido).
 
@@ -42,6 +45,9 @@ export default async function handler(req, res) {
 
   // Pesquisa do Planejamento Tarobá (lê o site do cliente / dados do setor com busca na web).
   if (body && body.pesquisaTaroba) return pesquisaTaroba(res, body.pesquisaTaroba);
+
+  // Gerador de posts e de spots (antes no Groq, com a chave guardada no navegador).
+  if (body && body.gerarTexto) return gerarTexto(res, body.gerarTexto);
 
   const mensagens = (Array.isArray(body.mensagens) ? body.mensagens : [])
     .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
@@ -168,3 +174,19 @@ async function pesqClaude(prompt, tools, maxTokens) {
   }
   return texto;
 }
+
+const MAX_CHARS_PROMPT = 12000;
+async function gerarTexto(res, { prompt, maxTokens } = {}, { criarCliente = () => new Anthropic() } = {}) {
+  const texto = typeof prompt === "string" ? prompt.trim().slice(0, MAX_CHARS_PROMPT) : "";
+  if (!texto) return res.status(400).json({ ok: false, erro: "Pedido vazio." });
+  const max = Math.min(Math.max(Number(maxTokens) || 800, 100), 1500);
+  try {
+    const r = await criarCliente().messages.create({ model: MODELO, max_tokens: max, messages: [{ role: "user", content: texto }] });
+    const saida = (r.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+    if (!saida) return res.status(502).json({ ok: false, erro: "Sem resposta. Tente de novo." });
+    return res.status(200).json({ ok: true, texto: saida });
+  } catch (err) {
+    return res.status(502).json({ ok: false, erro: "Não consegui gerar agora: " + String((err && err.message) || err).slice(0, 200) });
+  }
+}
+export { gerarTexto };

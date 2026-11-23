@@ -1,6 +1,6 @@
 # Hub MGB — como o sistema funciona
 
-Documento de referência para quem for manter o hub. Atualizado em 18/11/2026. Para o passo a passo da troca de segurança, ver [`seguranca-fase0.md`](seguranca-fase0.md).
+Documento de referência para quem for manter o hub. Atualizado em 23/11/2026. Para o passo a passo da troca de segurança, ver [`seguranca-fase0.md`](seguranca-fase0.md).
 
 ## Visão geral
 
@@ -15,6 +15,8 @@ Documento de referência para quem for manter o hub. Atualizado em 18/11/2026. P
                                          /api/banco ────────────────▶ Pluggy (Open Finance)
                                          /api/email ────────────────▶ Resend
                                          /api/rede (pública) ───────▶ lista de condomínios da Tela Vertical
+                                         /api/cnpj ─────chave──────▶ CNPJá (consulta de CNPJ paga)
+                                         /api/assistente ───────────▶ Anthropic (Zuma, posts e spots)
                                          /api/asaas-webhook ◀──────── Asaas (pagamentos)
  estudio.html (Cleiton) ─▶ modo Estúdio do mesmo index.html
                                                                       fat_* (espelho do Faturamento)
@@ -58,6 +60,25 @@ O navegador nunca fala com o banco, com os Apps Scripts nem com o Asaas: só com
 | Contratos assinados | Assinafy + Google Drive ("MGB contratos") | |
 | Blocos de rádio | servidor `agenciamgb.com.br/contratos/api_blocos.php` | fora deste projeto |
 | Rádio Ops | Apps Script próprio, com chave | fora deste projeto |
+
+## Integrações externas
+
+Objetivo: o hub depender só dele mesmo. Cada ligação com o mundo de fora tem um destino.
+
+| Ligação | Hoje | Destino |
+|---|---|---|
+| Rádio Ops (painel, relatórios, pós-venda, portal do Moinho) | Apps Script chamado do navegador, com a chave do usuário | **Entrar no hub** (Supabase), conforme o desenho do Rádio Moinho. Antes disso, passar pela API |
+| Contratos Mercadão e Elevador (`SHEETS_URL`) | Apps Script chamado do navegador; o contrato também fica no hub (`mgbSalvarContrato`) | **Desligar**, se ninguém usar a planilha |
+| Google Agenda dos follow-ups do CRM | Apps Script chamado do navegador | Continua no Google, **atrás da API** |
+| Blocos de rádio (`agenciamgb.com.br/contratos/api_blocos.php`) | Servidor PHP sem login | **Supabase**, atrás do login |
+| Plano de Caixa (app pessoal do Eder) | Aberto em iframe; o sync já passa por `/api/plano-caixa` | Continua externo: é pessoal, não da empresa |
+| Faturamento | `/api/faturamento` → Apps Script → planilha | Supabase (etapas do Faturamento, acima) |
+| Assinafy | `/api/assinafy` → Apps Script → Assinafy e Drive | Mais tarde: API direto no Assinafy, sem Apps Script |
+| CNPJá | ✅ `/api/cnpj` (a chave saiu do HTML em 11/2026) | Fica atrás da API |
+| Gerador de posts e spots | ✅ `/api/assistente` (o Groq saiu em 11/2026) | Fica atrás da API |
+| Exportação de leads para planilha | ✅ Botão "📊 Baixar Excel" no CRM (o Apps Script saiu em 11/2026) | — |
+| Asaas, Pluggy, Resend, 4YouSee, Anthropic | Atrás da API | Continuam externos: são os serviços em si |
+| CNPJ/CEP públicos (cnpj.ws, BrasilAPI, ViaCEP) | Direto do navegador, sem chave | Continuam como estão |
 
 Tabelas e funções do banco estão versionadas em [`supabase/migrations/`](../supabase/migrations/).
 
@@ -130,7 +151,7 @@ A gravação no banco nunca atrapalha o hub: se falhar, só vai para o log, e a 
 cd bot && npm test
 ```
 
-São 101 testes: login e papéis, visibilidade por papel, trava de versão, funil, aviso de fechamento, pontes e regras das telas.
+São 135 testes: login e papéis, visibilidade por papel, trava de versão, funil, aviso de fechamento, pontes, integrações e regras das telas.
 
 ### Variáveis do Vercel (só os nomes)
 
@@ -142,7 +163,7 @@ São 101 testes: login e papéis, visibilidade por papel, trava de versão, funi
 | Contratos | `ASSINAFY_GS_URL`, `ASSINAFY_GS_SECRET` |
 | Plano de Caixa | `PLANO_CAIXA_URL`, `PLANO_CAIXA_TOKEN`, `PLANO_CAIXA_TOKEN_NOVO` (durante a troca) |
 | E-mail | `RESEND_API_KEY`, `RESEND_FROM`, `AVISO_FECHAMENTO_PARA` |
-| Outros | `PLUGGY_CLIENT_ID`, `PLUGGY_CLIENT_SECRET`, `ANTHROPIC_API_KEY`, `FOURYOUSEE_TOKEN` |
+| Outros | `PLUGGY_CLIENT_ID`, `PLUGGY_CLIENT_SECRET`, `ANTHROPIC_API_KEY`, `FOURYOUSEE_TOKEN`, `CNPJA_TOKEN` |
 
 Segredos da Edge Function `espelho-faturamento`: `FATURAMENTO_API_URL` e `FATURAMENTO_SECRET`. O segredo do agendamento fica no Vault do banco e nunca sai dele.
 
@@ -151,7 +172,8 @@ Segredos da Edge Function `espelho-faturamento`: `FATURAMENTO_API_URL` e `FATURA
 - **Voltar o estado do hub a uma versão anterior:** ver "Voltar uma versão do estado" em [`seguranca-fase0.md`](seguranca-fase0.md).
 
 ## Pendências conhecidas
-- Apps Scripts ainda chamados direto do navegador: exportação de leads, Google Agenda do CRM e o `SHEETS_URL` dos contratos Mercadão e Elevador. É preciso o código `.gs` de cada um.
+- Apps Scripts ainda chamados direto do navegador: Rádio Ops, Google Agenda do CRM e o `SHEETS_URL` dos contratos Mercadão e Elevador (ver "Integrações externas").
+- Os blocos de rádio (`api_blocos.php`) aceitam gravação sem login.
 - A chave do portal do Rádio Moinho está escrita no `index.html`: trocar e tirar do HTML.
 - O webhook do WhatsApp não valida a assinatura da Meta. O bot não está ativo (faltam `WHATSAPP_*` e `WHITELIST`).
 - O repositório ainda é público.
