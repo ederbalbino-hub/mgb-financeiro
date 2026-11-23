@@ -117,6 +117,16 @@
       '<h1>' + saudacao(hoje.getHours()) + (u.nome ? ', ' + esc(u.nome) : '') + '</h1></div>' +
       '<button type="button" class="ini-btn ini-btn2" data-ini="valores">' + (ver ? 'Ocultar valores' : 'Mostrar valores') + '</button></header>';
 
+    // Acesso rápido (pedido do Eder, 23/11): um cartão por área que o perfil vê, como atalho.
+    var atalhos = ATALHOS.filter(function (a) { var n = doc.getElementById(a.nav); return n && !n.hasAttribute('data-mgb-bloq'); });
+    if (atalhos.length) {
+      h += '<section aria-labelledby="ini-rapido"><h2 class="ini-h2" id="ini-rapido">Acesso rápido</h2><div class="ini-rapido">' +
+        atalhos.map(function (a) {
+          var n = doc.getElementById(a.nav), ico = n && n.querySelector('svg') ? n.querySelector('svg').outerHTML : '';
+          return '<button type="button" data-ini="ir:' + a.id + '"><span class="ini-rapido-ico" aria-hidden="true">' + ico + '</span><b>' + a.nome + '</b><span>' + a.desc + '</span></button>';
+        }).join('') + '</div></section>';
+    }
+
     h += '<section class="ini-card" aria-labelledby="ini-pend"><div class="ini-cab"><h2 id="ini-pend">Precisa de você hoje</h2><span>' +
       (itens.length ? plural(itens.length, 'assunto', 'assuntos') : 'tudo em dia') + '</span></div>' +
       (itens.length ? itens.join('') : '<p class="ini-vazio">Nada pendente agora.</p>') +
@@ -190,6 +200,19 @@
     if (renov && slot && renov.parentNode !== slot) slot.appendChild(renov);
   }
 
+  var ATALHOS = [
+    { id: 'fat', nav: 'nav-contabilidade', nome: 'Faturamento', desc: 'dia 5, notas e boletos', ir: function () { global.fatAbrirFaturamento(); } },
+    { id: 'cobranca', nav: 'nav-relatorios', nome: 'Cobrança mensal', desc: 'relatório dos anunciantes', ir: function () { global.goPage('relatorios'); } },
+    { id: 'fin', nav: 'nav-custos', nome: 'Financeiro', desc: 'resumo do mês e módulos', ir: function () { global.goPage('overview'); try { global.switchOvTab('visao'); } catch (e) {} } },
+    { id: 'contas', nav: 'nav-custos', nome: 'Contas do mês', desc: 'o que pagar e o que já foi pago', ir: function () { global.goPage('overview'); global.switchOvTab('desp'); } },
+    { id: 'caixa', nav: 'nav-pessoal', nome: 'Plano de Caixa', desc: 'caixa e pessoal', ir: function () { global.goPage('planocaixa'); } },
+    { id: 'funil', nav: 'nav-leads', nome: 'Funil de vendas', desc: 'leads e retornos', ir: function () { global.goPage('leads'); } },
+    { id: 'contratos', nav: 'nav-contratos', nome: 'Clientes e contratos', desc: 'contratos e assinaturas', ir: function () { global.goOperacional('contratos'); } },
+    { id: 'tv', nav: 'nav-telavertical', nome: 'Tela Vertical', desc: 'condomínios, anunciantes, sócios', ir: function () { global.goOperacional('telavertical'); } },
+    { id: 'moinho', nav: 'nav-radioops', nome: 'Rádio Moinho', desc: 'campanhas e resumo', ir: function () { global.goPage('radioops'); } },
+    { id: 'ferr', nav: 'nav-ferramentas', nome: 'Ferramentas', desc: 'PDF, imagem, QR, etiquetas', ir: function () { global.goPage('ferramentas'); } },
+  ];
+
   function clique(ev) {
     var b = ev.target.closest('[data-ini]');
     if (!b) return;
@@ -205,6 +228,7 @@
       else if (acao === 'despesa') global.MGBLancar.despesa();
       else if (acao === 'receita') global.MGBLancar.receita();
       else if (acao.indexOf('mod:') === 0) global.drillMod(acao.slice(4));
+      else if (acao.indexOf('ir:') === 0) { var at = ATALHOS.filter(function (x) { return x.id === acao.slice(3); })[0]; if (at) at.ir(); }
     } catch (e) { console.error('inicio:', acao, e); }
   }
 
@@ -237,6 +261,11 @@
       '.ini-funil{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.ini-funil div{display:flex;flex-direction:column;gap:6px}' +
       '.ini-funil span{font-size:13px;font-weight:600;color:#5D5868}.ini-funil b{font-size:28px}.ini-funil i{height:8px;border-radius:999px}' +
       '.ini-numeros{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.ini-numeros b{font-size:24px}' +
+      '.ini-rapido{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}' +
+      '.ini-rapido button{all:unset;box-sizing:border-box;cursor:pointer;min-height:112px;padding:16px;border:1px solid #E4DFF0;border-radius:16px;background:#fff;display:flex;flex-direction:column;gap:4px;color:#241A38;font-family:"DM Sans",system-ui,sans-serif}' +
+      '.ini-rapido button:hover{border-color:#CFC7E6;background:#FBFAFE}.ini-rapido button:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
+      '.ini-rapido b{font-size:16px}.ini-rapido button>span:last-child{font-size:13.5px;color:#5D5868}' +
+      '.ini-rapido-ico{width:40px;height:40px;border-radius:12px;background:#ECE8FA;color:#4E38B2;display:flex;align-items:center;justify-content:center;margin-bottom:6px}.ini-rapido-ico svg{width:22px;height:22px;opacity:1}' +
       '.ini-atalhos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}' +
       '.ini-atalho{min-height:64px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:10px 18px;border-radius:14px;border:1px solid #E4DFF0;background:#fff;color:#241A38;font-family:"DM Sans",system-ui,sans-serif;cursor:pointer;text-align:left}' +
       '.ini-atalho b{font-size:16px}.ini-atalho span{font-size:13px;color:#5D5868}.ini-atalho:hover{border-color:#4E38B2}' +

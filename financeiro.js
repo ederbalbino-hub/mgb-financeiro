@@ -567,6 +567,17 @@
     envolver('buildReceitas', function () { if (doc.getElementById('fin2-modulo')) desenharModulo(); });
     envolver('goPage', function (p) { if (p !== 'custos') fecharPainel(); });
     envolver('switchMod', function () { fecharPainel(); desenharModulo(); });
+    // Empresa: botão de lançar despesa (pedido do Eder, 23/11)
+    envolver('buildVisaoEmpresa', function () {
+      var hdr = doc.querySelector('#ov-sub-emp .page-hdr');
+      if (!hdr || doc.getElementById('fin2-emp-lancar')) return;
+      var b = doc.createElement('button');
+      b.type = 'button'; b.id = 'fin2-emp-lancar'; b.className = 'fin2-btn'; b.textContent = 'Lançar despesa';
+      b.style.fontFamily = '"DM Sans",system-ui,sans-serif';
+      b.addEventListener('click', function () { if (global.MGBLancar && global.MGBLancar.despesa) global.MGBLancar.despesa(); });
+      var alvo = hdr.lastElementChild && hdr.children.length > 1 ? hdr.lastElementChild : hdr;
+      alvo.appendChild(b);
+    });
     // nomes das abas do Financeiro MGB
     var t1 = doc.getElementById('ov-tab-visao'), t2 = doc.getElementById('ov-tab-desp');
     if (t1) t1.textContent = 'Resumo do mês';

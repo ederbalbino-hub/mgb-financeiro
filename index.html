@@ -3927,12 +3927,12 @@ vCalc();
     <div id="elev-invest-section" style="display:none">
       <div class="acc-hdr open" id="acc-hdr-einvest" onclick="toggleAcc('einvest')">
         <div style="display:flex;align-items:center;gap:10px">
-          <div class="sec-title">💰 Investimento — Instalação (sócios)</div>
+          <div class="sec-title">💰 Investimento e despesas pagas pelos sócios</div>
           <span style="font-size:10px;color:var(--hint)" id="einvest-sum"></span>
         </div>
         <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
           <button class="anunc-btn" onclick="elevRelatorioMensal()" style="color:var(--sky,#6FC7E8);border-color:rgba(111,199,232,.4)">📄 Relatório mensal</button>
-          <button class="anunc-btn" onclick="toggleElevInvestForm()" style="color:var(--gold,#C0A062);border-color:rgba(192,160,98,.4)">＋ Novo investimento</button>
+          <button class="anunc-btn" onclick="toggleElevInvestForm()" style="color:var(--gold,#C0A062);border-color:rgba(192,160,98,.4)">＋ Lançar despesa ou investimento</button>
           <span class="acc-toggle">›</span>
         </div>
       </div>
@@ -3941,7 +3941,7 @@ vCalc();
         <div class="anunc-form" id="einvest-form">
           <div class="anunc-form-row">
             <div class="anunc-form-field" style="width:170px">
-              <label class="anunc-form-lbl">Condomínio</label>
+              <label class="anunc-form-lbl">Condomínio (ou Geral)</label>
               <select class="anunc-form-inp" id="ei-item" style="width:100%"></select>
             </div>
             <div class="anunc-form-field" style="flex:1;min-width:160px">
@@ -3951,6 +3951,13 @@ vCalc();
             <div class="anunc-form-field" style="width:120px">
               <label class="anunc-form-lbl">Valor (R$)</label>
               <input class="anunc-form-inp" id="ei-valor" type="number" step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="anunc-form-field" style="width:150px">
+              <label class="anunc-form-lbl" for="ei-tipo">É</label>
+              <select class="anunc-form-inp" id="ei-tipo" style="width:100%">
+                <option value="investimento">Investimento (ex.: instalar telas)</option>
+                <option value="despesa">Despesa (ex.: gasolina)</option>
+              </select>
             </div>
             <div class="anunc-form-field" style="width:110px">
               <label class="anunc-form-lbl">Pago por</label>
@@ -9420,7 +9427,9 @@ let notaConfig = { aliquotaMes: null }; // alíquota ISS do Simples Nacional, at
 let despesasComp = [];
 let despCompId = 1;
 // ── INVESTIMENTO · INSTALAÇÃO (sócios Jadson/Eder — Elevadores/Tela Vertical) ────────────
-// elevInvestimentos = [{id, item, descricao, valor, pagoPor:'jadson'|'eder', data, criadoEm}]
+// elevInvestimentos = [{id, item, descricao, valor, pagoPor:'jadson'|'eder', data, criadoEm, tipo:'investimento'|'despesa'}]
+// 23/11/2026 (Eder): todo lançamento pago do bolso vai para a conta do sócio (CC). tipo 'despesa' (ex.: gasolina)
+// também entra como despesa do mês da Tela Vertical; 'investimento' (instalar telas) não. Sem tipo = investimento.
 // Substitui a planilha Excel de controle (CC Jadson × CC Eder) — alimentado na mão aqui
 // ou automaticamente pela skill /novo-condominio (ver ELEV_INVEST_NOVOS mais abaixo).
 let elevInvestimentos = [];
@@ -10622,6 +10631,15 @@ function coletaDespesasMes(selAno,selMes){
 
   // Despesas compartilhadas (Elevadores): rateio entre condomínios
   const elevMod=MODULES.find(m=>m.id==='elev');
+  // Despesa paga do bolso por um sócio (23/11): entra no mês da data, além de ir para a CC dele
+  if(elevMod){
+    (typeof elevInvestimentos!=='undefined'?elevInvestimentos:[]).forEach(x=>{
+      if(x.tipo!=='despesa'||!x.valor||!/^\d{4}-\d{2}/.test(x.data||'')) return;
+      if(+x.data.slice(0,4)!==selAno||+x.data.slice(5,7)-1!==selMes) return;
+      out.push({ m:elevMod, item:x.item||'Geral', idx:'_socio_'+x.id, r:{d:x.descricao||'Despesa', f:x.pagoPor==='jadson'?'Jadson (do bolso)':'Eder (do bolso)'},
+        vlrMes:x.valor, tipoLbl:'Paga pelo sócio', mes:selMes, ano:selAno });
+    });
+  }
   if(elevMod){
     despesasComp.forEach(dc=>{
       if(!dc.inicio||!dc.telas||!dc.telas.length) return;
@@ -12256,9 +12274,11 @@ function tvPainelRender(){
 }
 // ── INVESTIMENTO · INSTALAÇÃO (sócios) ───────────────────────────────────────
 function elevInvestTotais(){
+  // CC de cada sócio = tudo que ele pagou do bolso (investimento + despesa). "total" = só investimento.
   const jadson=elevInvestimentos.filter(x=>x.pagoPor==='jadson').reduce((a,x)=>a+(x.valor||0),0);
   const eder=elevInvestimentos.filter(x=>x.pagoPor==='eder').reduce((a,x)=>a+(x.valor||0),0);
-  return {jadson,eder,total:jadson+eder,dif:jadson-eder};
+  const despesas=elevInvestimentos.filter(x=>x.tipo==='despesa').reduce((a,x)=>a+(x.valor||0),0);
+  return {jadson,eder,total:jadson+eder-despesas,despesas,dif:jadson-eder};
 }
 // Excedente: quando a despesa do mês no Elevadores passa da receita, a diferença é custo do Eder (acumula mês a mês).
 function elevMesResumo(ano,mes){
@@ -12289,7 +12309,7 @@ function elevRelatorioMensal(anoArg,mesArg){
     '.k{display:flex;gap:12px;margin:10px 0}.k div{flex:1;border:1px solid #d8d2c0;border-radius:8px;padding:10px 12px}.k b{display:block;font-size:17px;margin-top:3px}.neg{color:#B42318}.pos{color:#118A5D}.dest{background:#FBF6E8}'+
     '@media print{body{padding:12px}}</style></head><body>'+
     '<div style="height:70px;margin:-10px 0 4px -14px">'+TV_LOGO_NAVY.replace('<svg ','<svg style="height:70px;width:auto;display:block" ')+'</div><h1>Relatório mensal</h1><div class="sub">Relatório mensal aos sócios · '+NOMES[mes]+' de '+ano+' · '+tvTelasAtivas()+' telas</div>'+
-    '<h2>Investimento dos sócios (valores)</h2><div class="k"><div>Eder<b>'+f(t.eder)+'</b></div><div>Jadson<b>'+f(t.jadson)+'</b></div><div>Total investido<b>'+f(t.total)+'</b></div></div>'+
+    '<h2>Conta de cada sócio (investimento + despesas pagas do bolso)</h2><div class="k"><div>Eder<b>'+f(t.eder)+'</b></div><div>Jadson<b>'+f(t.jadson)+'</b></div><div>Total investido<b>'+f(t.total)+'</b></div><div>Despesas pagas pelos sócios<b>'+f(t.despesas)+'</b></div></div>'+
     '<div class="sub">Meta: '+ELEV_TELAS_QTD+' telas × '+f(ELEV_INVEST_POR_TELA)+' = '+f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)+'</div>'+
     '<h2>Resultado de '+NOMES[mes]+'</h2><div class="k"><div>Receita<b>'+f(r.rec)+'</b></div><div>Despesas<b>'+f(r.desp)+'</b></div><div>Resultado<b class="'+(r.resultado>=0?'pos':'neg')+'">'+(r.resultado>=0?'':'−')+f(Math.abs(r.resultado))+'</b></div></div>'+
     '<h2>Despesas do mês</h2><table><tr><th>Descrição</th><th>Item</th><th>Tipo</th><th class="n">Valor</th></tr>'+linhasDesp+'</table>'+
@@ -12307,13 +12327,14 @@ function buildElevInvest(){
   const sel=g('ei-item'); const elevMod=MODULES.find(m=>m.id==='elev');
   if(sel && elevMod){
     const atual=sel.value;
-    sel.innerHTML=elevMod.items.map(it=>`<option value="${it.replace(/"/g,'&quot;')}">${it}</option>`).join('');
-    if(elevMod.items.includes(atual)) sel.value=atual;
+    sel.innerHTML='<option value="Geral">Geral (Tela Vertical)</option>'+elevMod.items.map(it=>`<option value="${it.replace(/"/g,'&quot;')}">${it}</option>`).join('');
+    if(atual==='Geral'||elevMod.items.includes(atual)) sel.value=atual;
   }
   const t=elevInvestTotais(); const exc=elevExcedenteHistorico();
-  g('einvest-sum').textContent=elevInvestimentos.length?`${elevInvestimentos.length} lançamento(s) · ${f(t.total)} investido`:'';
+  g('einvest-sum').textContent=elevInvestimentos.length?`${elevInvestimentos.length} lançamento(s) · ${f(t.total)} investido`+(t.despesas?` · ${f(t.despesas)} em despesas pagas pelos sócios`:''):'';
   g('einvest-totais').innerHTML=`
     <div class="kpi"><div class="kpi-lbl">Investido até agora</div><div class="kpi-val">${f(t.total)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Despesas pagas pelos sócios</div><div class="kpi-val">${f(t.despesas)}</div></div>
     <div class="kpi"><div class="kpi-lbl">CC Jadson</div><div class="kpi-val">${f(t.jadson)}</div></div>
     <div class="kpi"><div class="kpi-lbl">CC Eder</div><div class="kpi-val">${f(t.eder)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Meta ${ELEV_TELAS_QTD} telas × ${f(ELEV_INVEST_POR_TELA)}</div><div class="kpi-val">${f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)}</div></div>
@@ -12330,7 +12351,7 @@ function buildElevInvest(){
         <div class="anunc-nome">${x.item}</div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:4px">${x.descricao||''}</div>
         <div class="anunc-valor" style="color:${cor}">${f(x.valor)}</div>
-        <div class="anunc-info">${x.pagoPor==='jadson'?'Jadson':'Eder'} · ${dataLbl}</div>
+        <div class="anunc-info">${x.tipo==='despesa'?'Despesa':'Investimento'} · pago por ${x.pagoPor==='jadson'?'Jadson':'Eder'} · ${dataLbl}</div>
         <div class="anunc-actions" style="margin-top:8px">
           <button class="anunc-btn" onclick="editElevInvest(${x.id})">✎ Editar</button>
           <button class="anunc-btn del" onclick="delElevInvest(${x.id})">✕ Remover</button>
@@ -12346,7 +12367,7 @@ function toggleElevInvestForm(){
   form.classList.toggle('open',!open);
   if(!open){
     buildElevInvest();
-    g('ei-desc').value='Instalação (telas, cabos, kits)'; g('ei-valor').value=''; g('ei-pagopor').value='jadson';
+    g('ei-desc').value='Instalação (telas, cabos, kits)'; g('ei-valor').value=''; g('ei-pagopor').value='jadson'; g('ei-tipo').value='investimento';
     g('ei-data').value=new Date().toISOString().slice(0,10);
   }
 }
@@ -12361,7 +12382,7 @@ function editElevInvest(id){
   g('einvest-form').classList.add('open');
   buildElevInvest();
   g('ei-item').value=x.item; g('ei-desc').value=x.descricao||''; g('ei-valor').value=x.valor;
-  g('ei-pagopor').value=x.pagoPor; g('ei-data').value=x.data||'';
+  g('ei-pagopor').value=x.pagoPor; g('ei-data').value=x.data||''; g('ei-tipo').value=x.tipo==='despesa'?'despesa':'investimento';
 }
 function saveElevInvest(){
   const item=g('ei-item').value;
@@ -12369,20 +12390,22 @@ function saveElevInvest(){
   const valor=parseFloat(g('ei-valor').value)||0;
   const pagoPor=g('ei-pagopor').value;
   const data=g('ei-data').value;
+  const tipo=g('ei-tipo').value==='despesa'?'despesa':'investimento';
   if(!item||!valor||!data){ alert('Preencha condomínio, valor e data.'); return; }
   if(editElevInvestId){
     const x=elevInvestimentos.find(v=>v.id===editElevInvestId);
-    if(x) Object.assign(x,{item,descricao,valor,pagoPor,data});
+    if(x) Object.assign(x,{item,descricao,valor,pagoPor,data,tipo});
   } else {
-    elevInvestimentos.push({id:elevInvestId++, item, descricao, valor, pagoPor, data, criadoEm:new Date().toISOString()});
+    elevInvestimentos.push({id:elevInvestId++, item, descricao, valor, pagoPor, data, tipo, criadoEm:new Date().toISOString()});
   }
+  try{ syncFinanceiro(); }catch(e){}
   editElevInvestId=null;
   g('einvest-form').classList.remove('open');
   buildElevInvest();
   scheduleSave();
 }
 function delElevInvest(id){
-  if(!confirm('Remover esse investimento?')) return;
+  if(!confirm('Remover esse lançamento?')) return;
   elevInvestimentos=elevInvestimentos.filter(x=>x.id!==id);
   buildElevInvest();
   scheduleSave();
@@ -16495,9 +16518,9 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 <script src="lancar.js"></script>
 <script src="novo.js?v=20261103"></script>
 <script src="acesso.js?v=20261119b"></script>
-<script src="inicio.js?v=20261119"></script>
+<script src="inicio.js?v=20261123"></script>
 <script src="faturamento.js?v=20261119b"></script>
-<script src="financeiro.js?v=20261119"></script>
+<script src="financeiro.js?v=20261123"></script>
 <script src="menu.js?v=20261123"></script>
 <script src="assistente.js?v=20261029b"></script>
 </body>
