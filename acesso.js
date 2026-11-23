@@ -24,7 +24,7 @@
 
   var TODAS = ['home', 'overview', 'custos', 'pessoal', 'contabilidade', 'operacional:contratos', 'operacional:estudio',
     'relatorios', 'ferramentas', 'gerador', 'midiakit', 'apresmgb', 'sindicos', 'leads', 'propvaapty', 'planotaroba', 'radioops', 'planocaixa',
-    'operacional:telavertical'];
+    'operacional:telavertical', 'clientes'];
 
   // extras: partes da tela que não são uma página
   //   valores   métricas e rodapé de Receita/Despesa/Lucro
@@ -45,7 +45,7 @@
       rotulo: 'Meu dia',
       // 11/10: Cobrança Mensal (aba Tela Vertical = relatório ao sócio) e Contratos voltam ao Meu dia.
       paginas: ['home', 'leads', 'midiakit', 'apresmgb', 'sindicos', 'propvaapty', 'planotaroba', 'overview', 'custos',
-        'contabilidade', 'operacional:contratos', 'operacional:telavertical', 'relatorios', 'radioops', 'planocaixa', 'pessoal'],
+        'contabilidade', 'operacional:contratos', 'operacional:telavertical', 'relatorios', 'radioops', 'planocaixa', 'pessoal', 'clientes'],
       extras: ['valores', 'pessoal', 'ropsResumo', 'ropsPainel', 'ropsAlerta', 'renovacao', 'novo']
     },
     // Revisão do Eder (10/10): Rádio Ops só o resumo do mês; Ferramentas só o Backup;
@@ -54,7 +54,7 @@
       rotulo: 'Karen',
       // 11/10: módulo Tela Vertical inteiro para a Karen (operação, propostas e síndicos).
       paginas: ['home', 'overview', 'custos', 'contabilidade', 'operacional:contratos', 'operacional:telavertical',
-        'relatorios', 'gerador', 'radioops', 'ferramentas', 'midiakit', 'sindicos'],
+        'relatorios', 'gerador', 'radioops', 'ferramentas', 'midiakit', 'sindicos', 'clientes'],
       extras: ['valores', 'ropsResumo', 'ropsAlerta', 'renovacao', 'novo'],
       abas: { ferramentas: ['backup'] },
       // Revisão de 11/10: Rádio Ops e "Rádio Moinho (Bureau)" abriam a mesma tela. Fica só o módulo Moinho.

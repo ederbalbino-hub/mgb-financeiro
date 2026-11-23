@@ -207,7 +207,7 @@
     { id: 'contas', nav: 'nav-custos', nome: 'Contas do mês', desc: 'o que pagar e o que já foi pago', ir: function () { global.goPage('overview'); global.switchOvTab('desp'); } },
     { id: 'caixa', nav: 'nav-pessoal', nome: 'Plano de Caixa', desc: 'caixa e pessoal', ir: function () { global.goPage('planocaixa'); } },
     { id: 'funil', nav: 'nav-leads', nome: 'Funil de vendas', desc: 'leads e retornos', ir: function () { global.goPage('leads'); } },
-    { id: 'contratos', nav: 'nav-contratos', nome: 'Clientes e contratos', desc: 'contratos e assinaturas', ir: function () { global.goOperacional('contratos'); } },
+    { id: 'clientes', nav: 'nav-clientes', nome: 'Clientes', desc: 'ficha de cada cliente e contratos', ir: function () { global.goPage('clientes'); } },
     { id: 'tv', nav: 'nav-telavertical', nome: 'Tela Vertical', desc: 'condomínios, anunciantes, sócios', ir: function () { global.goOperacional('telavertical'); } },
     { id: 'moinho', nav: 'nav-radioops', nome: 'Rádio Moinho', desc: 'campanhas e resumo', ir: function () { global.goPage('radioops'); } },
     { id: 'ferr', nav: 'nav-ferramentas', nome: 'Ferramentas', desc: 'PDF, imagem, QR, etiquetas', ir: function () { global.goPage('ferramentas'); } },
