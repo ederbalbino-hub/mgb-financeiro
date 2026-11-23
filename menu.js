@@ -101,7 +101,10 @@
     s.textContent =
       '#sidebar.menu2{background:#fff;border-right:1px solid #E4DFF0;font-family:"DM Sans",system-ui,sans-serif}' +
       '#sidebar.menu2 .logo-area{padding:22px 20px 14px;border-bottom:0}#sidebar.menu2 .logo-sub{display:none}#sidebar.menu2 .logo-name{font-size:13px;color:#5D5868;font-weight:600}' +
-      '#sidebar.menu2 .sb-scroll{padding:6px 12px 12px}' +
+      '#sidebar.menu2 .sb-scroll{padding:6px 12px 12px;flex:1 1 auto;min-height:0;overflow-y:auto}' +
+      // pé do menu (resumo do mês + conta) com altura própria: em tela baixa só a lista de áreas rola (bug de 24/11)
+      '#sidebar.menu2 .logo-area,#sidebar.menu2 .sb-footer,#sidebar.menu2>#mgb-pill{flex-shrink:0}' +
+      '@media (max-height:760px){#sidebar.menu2 .logo-area{padding:14px 20px 8px}#sidebar.menu2 .sb-footer{padding:8px 4px 4px}#sidebar.menu2 .sb-footer #sb-mes-lbl{margin-bottom:4px!important}#sidebar.menu2>#mgb-pill{padding:6px 12px}}' +
       '#sidebar.menu2 .sb-lbl{display:none}' +
       '#sidebar.menu2 .sb-nav-item,#sidebar.menu2 .menu2-cab{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;margin:0 0 2px;border-radius:10px;font:600 15px "DM Sans",system-ui,sans-serif;color:#3A3446;box-shadow:none;cursor:pointer}' +
       '#sidebar.menu2 .sb-nav-item svg,#sidebar.menu2 .menu2-cab svg{width:20px;height:20px;flex:none;opacity:1;color:currentColor}' +
