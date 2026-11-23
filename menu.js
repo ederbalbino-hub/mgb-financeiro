@@ -116,7 +116,13 @@
       '#sidebar.menu2 .menu2-varios.menu2-aberto>.sb-nav-item:not([data-mgb-bloq]){display:flex}' +
       '#sidebar.menu2 .menu2-varios>.sb-nav-item{min-height:38px;padding-left:44px;font-size:14px;font-weight:500}#sidebar.menu2 .menu2-varios>.sb-nav-item svg{display:none}' +
       '#sidebar.menu2 .menu2-varios>#sb-modules{padding-left:32px}#sidebar.menu2 #sb-modules .mod-item{font-size:13.5px;min-height:34px}' +
-      '#sidebar.menu2 .sb-footer>*:not(#sync-status){display:none!important}#sidebar.menu2 .menu2-unico>.menu2-cab{display:none!important}#sidebar.menu2 .sb-footer{border-top:0;padding:4px 16px}' +
+      '#sidebar.menu2 .menu2-unico>.menu2-cab{display:none!important}' +
+      // resumo do mês sempre à vista no pé do menu (pedido do Eder, 23/11)
+      '#sidebar.menu2 .sb-footer{border-top:1px solid #E4DFF0;margin:0 12px;padding:12px 4px 8px;font-family:"DM Sans",system-ui,sans-serif}' +
+      '#sidebar.menu2 .sb-footer #sb-mes-lbl{font-size:11px!important;font-weight:700;color:#5D5868!important;letter-spacing:.06em!important;margin-bottom:8px!important}' +
+      '#sidebar.menu2 .sb-footer span[style*="font-size:9px"]{font-size:13px!important}' +
+      '#sidebar.menu2 .sb-footer #sb-rec-mes,#sidebar.menu2 .sb-footer #sb-desp-mes,#sidebar.menu2 .sb-footer #sb-lucro-mes{font-size:14px!important}' +
+      '#sidebar.menu2 .sb-footer>div[style*="justify-content"]{margin-bottom:6px!important}' +
       '#sidebar.menu2>#mgb-pill{position:relative;right:auto;bottom:auto;margin:0;padding:12px;border-top:1px solid #E4DFF0}' +
       '#sidebar.menu2>#mgb-pill>button{width:100%;height:auto;min-height:48px;border:0;box-shadow:none;border-radius:10px;padding:6px 8px;background:none;text-align:left;font-size:14px}' +
       '#sidebar.menu2>#mgb-pill>button:hover{background:#F6F4FA}#sidebar.menu2>#mgb-pill .av{width:36px;height:36px;background:#2A1760;font-size:14px;flex:none}' +

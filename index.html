@@ -1552,19 +1552,12 @@ body{-webkit-font-smoothing:antialiased}
   </div>
 
   <!-- PAGE: PROPOSTA TELA VERTICAL (telavertical/02-comercial/midia-kit-tela-vertical.html embutida) -->
-  <div id="page-midiakit" style="display:none">
-    <iframe id="midiakit-frame" style="width:100%;height:calc(100vh - 4px);border:none;display:block;background:#FDFBFF"></iframe>
-  </div>
 
   <!-- PAGE: APRESENTAÇÃO INSTITUCIONAL MGB (apresentacao-mgb.html embutida) -->
   <div id="page-apresmgb" style="display:none">
     <iframe id="apresmgb-frame" style="width:100%;height:calc(100vh - 4px);border:none;display:block;background:#FDFBFF"></iframe>
   </div>
 
-  <!-- PAGE: APRESENTAÇÃO SÍNDICOS (telavertical/05-operacao/apresentacao-sindicos-tela-vertical.html embutida) -->
-  <div id="page-sindicos" style="display:none">
-    <iframe id="sindicos-frame" style="width:100%;height:calc(100vh - 4px);border:none;display:block;background:#FDFBFF"></iframe>
-  </div>
 
   <div id="page-propvaapty" style="display:none">
     <iframe id="propvaapty-frame" style="width:100%;height:calc(100vh - 4px);border:none;display:block;background:#0D0520"></iframe>
@@ -1604,8 +1597,6 @@ body{-webkit-font-smoothing:antialiased}
       <div class="hub-tab" data-tab="pasta" onclick="showOpPanel('pasta',this)">Contratos Salvos</div>
       <div class="hub-tab" data-tab="gerador" onclick="showOpPanel('gerador',this)">Gerador de Spots</div>
       <div class="hub-tab" data-tab="blocos" onclick="showOpPanel('blocos',this)">Blocos Rádio</div>
-      <div class="hub-tab" data-tab="linkedin-gerar" onclick="showOpPanel('linkedin-gerar',this)">Gerar Post</div>
-      <div class="hub-tab" data-tab="linkedin-plano" onclick="showOpPanel('linkedin-plano',this)">Plano Semanal</div>
     </div>
   </div>
 <div id="panel-mercadao" class="hub-panel active">
@@ -4830,320 +4821,7 @@ carregarMySQL();
 </div>
 
 <!-- ══════════════════════ PASTA CONTRATOS ══════════════════════ -->
-<div id="panel-linkedin-gerar" class="hub-panel linkedin-section">
-<div class="wrap">
-
-  <!-- TIPO DE POST -->
-  <div class="gfs">
-    <label class="glabel">Objetivo do post</label>
-    <div class="tipos-grid">
-      <div class="tipo-card selected" onclick="selecionaTipo(this,'visibilidade')">
-        <span class="tipo-emoji">📡</span>
-        <div class="tipo-nome">Visibilidade</div>
-        <div class="tipo-desc">Mostrar o que a MGB faz</div>
-      </div>
-      <div class="tipo-card" onclick="selecionaTipo(this,'credibilidade')">
-        <span class="tipo-emoji">🏆</span>
-        <div class="tipo-nome">Credibilidade</div>
-        <div class="tipo-desc">Case, resultado, bastidor</div>
-      </div>
-      <div class="tipo-card" onclick="selecionaTipo(this,'conexao')">
-        <span class="tipo-emoji">🤝</span>
-        <div class="tipo-nome">Conexão</div>
-        <div class="tipo-desc">Reunião, parceria, evento</div>
-      </div>
-      <div class="tipo-card" onclick="selecionaTipo(this,'engajamento')">
-        <span class="tipo-emoji">💬</span>
-        <div class="tipo-nome">Engajamento</div>
-        <div class="tipo-desc">Gerar comentários e debate</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- INPUT -->
-  <div class="gfs">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-      <label class="glabel" style="margin-bottom:0;">O que aconteceu / o que você quer contar</label>
-      <button id="btn-mic" onclick="toggleMic()" title="Gravar por voz" style="background:rgba(232,25,125,.1);border:0.5px solid rgba(232,25,125,.28);border-radius:8px;padding:6px 12px;color:#D6367F;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:5px;">
-        🎙️ <span id="mic-label">Gravar</span>
-      </button>
-    </div>
-    <!-- STATUS GRAVAÇÃO -->
-    <div id="mic-status" style="display:none;align-items:center;gap:8px;background:rgba(232,25,125,.08);border:0.5px solid rgba(232,25,125,.25);border-radius:8px;padding:10px 13px;margin-bottom:8px;">
-      <span style="width:8px;height:8px;background:#e8197d;border-radius:50%;display:inline-block;animation:pulse 1s infinite;flex-shrink:0;"></span>
-      <span style="font-size:12px;color:#D6367F;font-family:'DM Sans',sans-serif;">Ouvindo... fala o que aconteceu. Clique em Parar quando terminar.</span>
-    </div>
-    <textarea id="input-conteudo" class="gtextarea" placeholder="Fala do jeito que falar mesmo...
-
-Ex: 'Fui na reunião da Vaapty hoje, fechamos a parceria, foi tenso mas deu certo. Levei 3 meses pra chegar nessa reunião.'
-
-Ou clique em 🎙️ Gravar e fale direto."></textarea>
-    <div class="ghint">Quanto mais detalhe você der, melhor fica o post.</div>
-  </div>
-
-  <!-- BOTÃO -->
-  <button class="gbtn" id="btn-gerar" onclick="gerarPost()">🚀 Gerar Post</button>
-
-  <!-- LOADING -->
-  <div class="gloading" id="loading">
-    <span class="gdot"></span><span class="gdot"></span><span class="gdot"></span>
-    Gerando seu post...
-  </div>
-
-  <!-- RESULTADO -->
-  <div class="gresult" id="resultado">
-
-    <!-- Preview estilo LinkedIn -->
-    <div class="post-preview">
-      <div class="post-header">
-        <div class="post-avatar">E</div>
-        <div>
-          <div class="post-nome">Eder Balbino</div>
-          <div class="post-cargo">Fundador MGB Mídia · DAF Câmara Municipal de Londrina</div>
-        </div>
-        <div class="post-in">in</div>
-      </div>
-      <div class="post-body" id="post-principal"></div>
-    </div>
-
-    <!-- Ganchos alternativos -->
-    <div class="ganchos-box" id="box-ganchos" style="display:none">
-      <div class="ganchos-lbl">Ganchos alternativos</div>
-      <div class="ganchos-txt" id="post-ganchos"></div>
-    </div>
-
-    <!-- Ações -->
-    <div class="gbtn-row">
-      <button class="gcopy" id="btn-copy" onclick="copiarPost()">📋 Copiar post</button>
-      <button class="gvar" onclick="gerarPost()">✨ Gerar variação</button>
-      <button class="gnovo" onclick="novoPost()">🔄 Novo</button>
-    </div>
-
-  </div>
-
-</div>
-</div>
-
-
-<!-- ═══════════════════════════════ TAB: PLANO ═══════════════════════════════ -->
-<div id="panel-linkedin-plano" class="hub-panel linkedin-section">
-<div class="wrap">
-
-  <p style="font-size:13px;color:rgba(58,38,94,0.87);line-height:1.6;margin-bottom:20px;">
-    Sua rotina de 3 posts por semana. Cada dia tem um objetivo diferente para criar momentum no algoritmo do LinkedIn.
-  </p>
-
-  <div class="dia-card">
-    <div class="dia-icon">📡</div>
-    <div class="dia-info">
-      <div class="dia-nome">Terça-feira</div>
-      <div class="dia-tipo">Visibilidade</div>
-      <div class="dia-desc">Alcançar quem ainda não conhece a MGB Mídia</div>
-    </div>
-    <button class="dia-btn" onclick="irGerar('visibilidade')">Criar →</button>
-  </div>
-
-  <div class="dia-card">
-    <div class="dia-icon">🏆</div>
-    <div class="dia-info">
-      <div class="dia-nome">Quinta-feira</div>
-      <div class="dia-tipo">Credibilidade</div>
-      <div class="dia-desc">Case real, bastidor, aprendizado — posicionar como especialista</div>
-    </div>
-    <button class="dia-btn" onclick="irGerar('credibilidade')">Criar →</button>
-  </div>
-
-  <div class="dia-card">
-    <div class="dia-icon">💬</div>
-    <div class="dia-info">
-      <div class="dia-nome">Sábado</div>
-      <div class="dia-tipo">Engajamento</div>
-      <div class="dia-desc">Pergunta, opinião ou contra-argumento — gerar comentários</div>
-    </div>
-    <button class="dia-btn" onclick="irGerar('engajamento')">Criar →</button>
-  </div>
-
-  <div class="dica-box">
-    <div class="dica-lbl">💡 Como sustentar a consistência</div>
-    <div class="dica-txt">
-      • Reserve 30 min na segunda para planejar os 3 posts da semana<br>
-      • Anote no celular quando algo relevante acontecer (reunião, resultado, aprendizado)<br>
-      • Cola aqui, gera, revisa em 5 min e publica<br>
-      • Não precisa ser perfeito — precisa ser consistente
-    </div>
-  </div>
-
-
-  <div class="divider"></div>
-  <div class="sec-lbl">Prompts estratégicos</div>
-
-  <!-- PROMPT 0 -->
-  <div class="prompt-card">
-    <div class="prompt-head">
-      <div class="prompt-num" style="background:rgba(74,106,122,.2);border:0.5px solid rgba(74,106,122,.3);color:#4a6a7a;">0</div>
-      <div class="prompt-meta">
-        <div class="prompt-fase" style="color:#4a6a7a;">ANTES DE COMEÇAR</div>
-        <div class="prompt-titulo">Diagnóstico de Gargalo</div>
-      </div>
-      <div class="prompt-quando">Use uma vez, hoje</div>
-    </div>
-    <div class="prompt-body">
-      <pre class="prompt-pre" id="p0">Analise meu perfil atual no LinkedIn.
-
-Meu contexto: Fundador da MGB Mídia (mídia indoor: telas em elevadores, rádio interna, TV corporativa) em Londrina/PR. Também Diretor Administrativo na Câmara Municipal de Londrina.
-
-Estatísticas atuais:
-- Seguidores: [X]
-- Impressões médias: [X]
-- Taxa de engajamento: [X%]
-- Frequência atual de posts: [X/semana]
-
-Últimos 3 posts: [cole aqui]
-
-Minha meta em 100 dias: gerar reuniões com síndicos, administradoras e gestores de empresas em Londrina.
-
-Identifique:
-1) O maior bloqueador de crescimento hoje
-2) O formato de conteúdo que devo priorizar
-3) Um hábito que devo eliminar imediatamente</pre>
-      <button class="prompt-copiar" onclick="copiarPrompt('p0',this)">📋 Copiar prompt</button>
-    </div>
-  </div>
-
-  <!-- PROMPT 1 -->
-  <div class="prompt-card">
-    <div class="prompt-head">
-      <div class="prompt-num" style="background:rgba(0,119,181,.15);border:0.5px solid rgba(0,119,181,.3);color:#0077b5;">1</div>
-      <div class="prompt-meta">
-        <div class="prompt-fase" style="color:#0077b5;">MÊS 1</div>
-        <div class="prompt-titulo">Plano de Visibilidade</div>
-      </div>
-      <div class="prompt-quando">Início do Mês 1</div>
-    </div>
-    <div class="prompt-body">
-      <pre class="prompt-pre" id="p1">Crie um plano de conteúdo de 30 dias para fazer pessoas de Londrina e região descobrirem a MGB Mídia.
-
-Meu nicho: mídia indoor — telas digitais em elevadores de condomínios, rádio interna para supermercados e empresas, TV corporativa
-Meu POV: comunicação no lugar certo, na hora certa, para quem decide comprar
-Público-alvo: síndicos, administradoras, donos de redes locais, gestores de RH
-Frequência: 3 posts/semana (terça, quinta, sábado)
-Cases disponíveis: Mercadão Prochet, Leo Cosméticos, Móveis Brasília
-
-Inclua: tópicos de post, formatos, ganchos e métricas para acompanhar</pre>
-      <button class="prompt-copiar" onclick="copiarPrompt('p1',this)">📋 Copiar prompt</button>
-    </div>
-  </div>
-
-  <!-- PROMPT 2 -->
-  <div class="prompt-card">
-    <div class="prompt-head">
-      <div class="prompt-num" style="background:rgba(122,63,181,.15);border:0.5px solid rgba(122,63,181,.3);color:#9b1dcc;">2</div>
-      <div class="prompt-meta">
-        <div class="prompt-fase" style="color:#9b1dcc;">MÊS 2</div>
-        <div class="prompt-titulo">Plano de Credibilidade</div>
-      </div>
-      <div class="prompt-quando">Início do Mês 2</div>
-    </div>
-    <div class="prompt-body">
-      <pre class="prompt-pre" id="p2">Quero ser reconhecido como referência em comunicação indoor no Paraná.
-
-Minha especialidade: telas em elevadores, rádio interna, TV corporativa para condomínios e empresas
-Maior equívoco do mercado: achar que propaganda em elevador é coisa de grande empresa ou que só funciona para condomínios de luxo
-
-Cases reais: Mercadão Prochet (rádio interna), Leo Cosméticos (Dia das Mães), Móveis Brasília (12 lojas)
-
-Monte um plano de 4 semanas com:
-- Posts que desafiam suposições do mercado
-- 1 post âncora por semana (mais profundo, para fixar no perfil)
-- Como mostrar bastidor sem revelar dados do cliente</pre>
-      <button class="prompt-copiar" onclick="copiarPrompt('p2',this)">📋 Copiar prompt</button>
-    </div>
-  </div>
-
-  <!-- PROMPT 3 -->
-  <div class="prompt-card">
-    <div class="prompt-head">
-      <div class="prompt-num" style="background:rgba(181,63,63,.15);border:0.5px solid rgba(181,63,63,.3);color:#e8197d;">3</div>
-      <div class="prompt-meta">
-        <div class="prompt-fase" style="color:#e8197d;">MÊS 3</div>
-        <div class="prompt-titulo">Plano de Monetização</div>
-      </div>
-      <div class="prompt-quando">Início do Mês 3</div>
-    </div>
-    <div class="prompt-body">
-      <pre class="prompt-pre" id="p3">Quero transformar engajamento no LinkedIn em reuniões reais.
-
-Objetivo: 5 reuniões qualificadas por mês com síndicos ou gestores de empresas em Londrina/PR
-O que ofereço: telas digitais em elevadores (modelo comodato), rádio interna para estabelecimentos, TV corporativa
-
-Me dê:
-1) CTAs suaves que posso incluir naturalmente nos posts
-2) Sequência de alcance para quem curtiu ou comentou meus posts
-3) Estratégia para o post fixado do meu perfil
-4) Indicadores para saber se está funcionando</pre>
-      <button class="prompt-copiar" onclick="copiarPrompt('p3',this)">📋 Copiar prompt</button>
-    </div>
-  </div>
-
-  <!-- PROMPT 4 -->
-  <div class="prompt-card">
-    <div class="prompt-head">
-      <div class="prompt-num" style="background:rgba(10,122,79,.15);border:0.5px solid rgba(10,122,79,.3);color:#4dbb7a;">4</div>
-      <div class="prompt-meta">
-        <div class="prompt-fase" style="color:#4dbb7a;">TODA SEMANA</div>
-        <div class="prompt-titulo">Fluxo Semanal Sustentável</div>
-      </div>
-      <div class="prompt-quando">Semana 1 — revisita mensal</div>
-    </div>
-    <div class="prompt-body">
-      <pre class="prompt-pre" id="p4">Crie uma rotina semanal de LinkedIn que eu consiga manter com minha agenda atual.
-
-Minha realidade: tenho a MGB Mídia (agência) + cargo de diretor na Câmara Municipal de Londrina
-Tempo disponível: [X horas/semana para LinkedIn]
-Frequência: 3 posts/semana (terça, quinta, sábado)
-
-Quero um fluxo com:
-- Quando capturar ideias durante a semana
-- Quando escrever (bloco fixo de tempo)
-- Quando engajar com outros posts
-- Como reaproveitar um conteúdo em mais de um formato
-
-Simples o suficiente para não precisar pensar. Só seguir.</pre>
-      <button class="prompt-copiar" onclick="copiarPrompt('p4',this)">📋 Copiar prompt</button>
-    </div>
-  </div>
-
-  <!-- PROMPT 5 -->
-  <div class="prompt-card">
-    <div class="prompt-head">
-      <div class="prompt-num" style="background:rgba(122,122,10,.15);border:0.5px solid rgba(122,122,10,.3);color:#c4c420;">5</div>
-      <div class="prompt-meta">
-        <div class="prompt-fase" style="color:#c4c420;">TODA SEMANA</div>
-        <div class="prompt-titulo">Motor de Conteúdo</div>
-      </div>
-      <div class="prompt-quando">Use toda semana</div>
-    </div>
-    <div class="prompt-body">
-      <pre class="prompt-pre" id="p5">Transforme essa ideia em 3 posts de alto desempenho no LinkedIn para esta semana.
-
-Nicho: mídia indoor em Londrina/PR (telas em elevadores, rádio interna, TV corporativa)
-Tom: direto, sem coach, sem corporativo — jeito de empreendedor do interior do Paraná
-
-O que aconteceu / ideia da semana: [DESCREVA AQUI]
-
-Crie:
-- 1 post de visibilidade (alcançar quem não me conhece)
-- 1 post de credibilidade (mostrar profundidade/case)
-- 1 post de engajamento (gerar comentário/debate)
-
-Para cada post: gancho forte na 1ª linha, parágrafos curtos, CTA leve no final, máximo 150 palavras, máximo 3 hashtags</pre>
-
-      <button class="prompt-copiar" onclick="copiarPrompt('p5',this)">📋 Copiar prompt</button>
-    </div>
-  </div>
-
-</div>
-</div>
+<!-- LinkedIn (Gerar Post e Plano Semanal) retirado em 23/11/2026, decisão do Eder no mapa do hub -->
 
 <!-- ── Gerador de Apresentação (overlay integrado, mesma aba) ── -->
 <div id="gerador-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(10,6,22,.88);backdrop-filter:blur(4px)">
@@ -10284,7 +9962,7 @@ function toggleSidebarCollapse(){
 
 // ── PAGES ─────────────────────────────────────────────────────────────────
 // Grupos do hub operacional: contratos × estúdio de conteúdo
-var OP_GROUPS={contratos:['mercadao','vaapty','pasta'],telavertical:['tvpainel','tvcondos','tvanunc','tvdespesas','elevador','parceria','tvproposta','tvsindicos'],estudio:['gerador','blocos','linkedin-gerar','linkedin-plano']};
+var OP_GROUPS={contratos:['mercadao','vaapty','pasta'],telavertical:['tvpainel','tvcondos','tvanunc','tvdespesas','elevador','parceria','tvproposta','tvsindicos'],estudio:['gerador','blocos']};
 var curOpGroup='contratos';
 function applyOpGroup(){
   var grp=OP_GROUPS[curOpGroup]||OP_GROUPS.contratos;
@@ -10336,6 +10014,8 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 });
 function goPage(p){
+  // 23/11/2026 (mapa do hub): Pessoal antigo, Mídia kit e Síndicos antigo saíram. Pessoal vai para o Plano de Caixa.
+  if(p==='pessoal'){ p='planocaixa'; } else if(p==='midiakit'||p==='sindicos'){ p='home'; }
   if(p==='custos'&&typeof curMod!=='undefined'&&curMod==='elev'){ goOperacional('telavertical','tvcondos'); return; } // Tela Vertical mora na operação
   curPage=p;
   ['home','overview','custos','pessoal','contabilidade','operacional','relatorios','ferramentas','gerador','midiakit','apresmgb','sindicos','leads','propvaapty','planotaroba','radioops','planocaixa'].forEach(id=>{
@@ -16818,7 +16498,7 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 <script src="inicio.js?v=20261119"></script>
 <script src="faturamento.js?v=20261119b"></script>
 <script src="financeiro.js?v=20261119"></script>
-<script src="menu.js?v=20261119"></script>
+<script src="menu.js?v=20261123"></script>
 <script src="assistente.js?v=20261029b"></script>
 </body>
 </html>
