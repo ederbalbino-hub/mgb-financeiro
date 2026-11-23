@@ -340,8 +340,15 @@ async function chamaPesquisa(etapa){
     periodo: sp.txt + (sp.meses>1?' de '+sp.ano+' ('+sp.meses+' meses: cobrir o período inteiro, sem focar em um mês só)':''), frentes: frasesFrentes(g)};
   const tok = hubToken();
   if(tok){
-    const r = await fetch(API_PESQUISA, {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok}, body:JSON.stringify({pesquisaTaroba:dados})});
+    let r;
+    try{
+      r = await fetch(API_PESQUISA, {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok}, body:JSON.stringify({pesquisaTaroba:dados})});
+    }catch(e){
+      /* fetch que cai aqui = rede/CORS (inclui a Vercel matando a função por tempo) */
+      throw new Error('A conexão com o servidor do hub caiu no meio da pesquisa. Tente de novo em instantes; se repetir, me avise.');
+    }
     if(r.status===401) throw new Error('Sessão do hub vencida — saia e entre de novo no hub.');
+    if(r.status===504 || r.status===524) throw new Error('A pesquisa demorou demais e o servidor desistiu. Tente de novo.');
     let j; try{ j = await r.json(); }catch(e){ throw new Error('Resposta inesperada do servidor do hub.'); }
     if(!j.ok) throw new Error(j.erro || 'Falha na pesquisa.');
     return j.dados;
@@ -383,12 +390,14 @@ async function pesquisarAuto(){
   _pesqConfirmaSeg = '';
   bt.disabled = true;
   try{
-    st.textContent = '① Lendo o site e entendendo a empresa… (até 1 min)';
+    st.textContent = '① Lendo o site e entendendo a empresa… (pode levar uns minutos)';
     const t = await chamaPesquisa('texto');
-    st.textContent = '② Pesquisando dados do setor com fontes… (até 1 min)';
+    st.textContent = '② Pesquisando dados do setor com fontes… (pode levar uns minutos)';
     const m = await chamaPesquisa('mercado');
     aplicarObj(Object.assign({}, t, {mercado: m.mercado || m}));
     leadCRM('planejamento');
+    st.textContent = '✔ Pronto! Textos e dados preenchidos — confira e ajuste o que quiser.';
+    bt.disabled = false;
   }catch(e){
     st.textContent = '⚠ ' + e.message; bt.disabled = false;
   }
