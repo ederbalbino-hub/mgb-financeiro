@@ -165,7 +165,7 @@ function catPadrao(){
       P('vai-3','Tarobá Vai às Compras · 3 produtos','Julho a outubro',61560,63612,VAI)
     ],
     operacoes:[
-      P('op-pdv','Operação Tarobá no PDV','Valor mensal · 1 ação por semana',2496,2496,['1 ação por semana na loja do grupo | Frequência','2 promotoras + coordenador, com degustação do produto na gôndola | PDV','Inflável Tarobá, carro plotado e windbanner na porta da loja | Visual','Flashes ao vivo na rádio direto da loja | Ao vivo','15 chamadas de 5" anunciando a ação (bonificadas) | Bônus'],{un:'mês',mensal:true})
+      P('op-pdv','Operação Tarobá no PDV','Valor mensal · 1 ação por semana',2496,2496,['1 ação por semana na loja do grupo | Frequência','2 promotoras + coordenador, trabalhando a conversão na gôndola | PDV','Inflável Tarobá, carro plotado e windbanner na porta da loja | Visual','Flashes ao vivo na rádio direto da loja | Ao vivo','15 chamadas de 5" anunciando a ação (bonificadas) | Bônus'],{un:'mês',mensal:true})
     ],
     conteudo:[
       P('podcast','Podcast · episódio mensal','1 episódio por mês',4000,0,['Versão estendida do conteúdo da marca, com especialistas e convidados da região','Publicado nas plataformas de áudio e vídeo, com cortes para as redes e o portal Tarobá News','Conteúdo que fica no ar: a marca vira referência no tema na praça'],{un:'episódio'}),
@@ -319,20 +319,51 @@ let iaOpen = false;
 const CFG_KEY = 'tarobaPesquisaCfg';
 function cfgPesq(){ try{ return JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); }catch(e){ return {}; } }
 function cfgSalva(k,v){ const c = cfgPesq(); c[k] = String(v).trim(); try{ localStorage.setItem(CFG_KEY, JSON.stringify(c)); }catch(e){} }
+/* Dentro do hub a pesquisa usa o servidor do próprio hub (login já dá o acesso — nada a configurar).
+   O Apps Script com URL+token (⚙) fica como alternativa pra quem usa o montador fora do hub. */
+const API_PESQUISA = 'https://mgb-financeiro.vercel.app/api/assistente';
+function hubToken(){
+  try{ const sb = JSON.parse(localStorage.getItem('mgb_sb_sessao')||'null'); if(sb && sb.access_token) return sb.access_token; }catch(e){}
+  try{ const s = JSON.parse(localStorage.getItem('mgb_sessao')||'null'); if(s && s.token) return s.token; }catch(e){}
+  return '';
+}
 async function chamaPesquisa(etapa){
-  const cfg = cfgPesq(), g = frentesSel(), sp = periodo(), c = S.cli;
-  const body = {token:cfg.token, etapa, nome:c.nome, segmento:c.segmento, site:c.site,
+  const g = frentesSel(), sp = periodo(), c = S.cli;
+  const dados = {etapa, nome:c.nome, segmento:c.segmento, site:c.site,
     pracas: ativas().length===2 ? 'Londrina e Cascavel (interior do Paraná)' : PR[ativas()[0]]+' (Paraná)',
     periodo: sp.txt + (sp.meses>1?' de '+sp.ano+' ('+sp.meses+' meses: cobrir o período inteiro, sem focar em um mês só)':''), frentes: frasesFrentes(g)};
+  const tok = hubToken();
+  if(tok){
+    const r = await fetch(API_PESQUISA, {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok}, body:JSON.stringify({pesquisaTaroba:dados})});
+    if(r.status===401) throw new Error('Sessão do hub vencida — saia e entre de novo no hub.');
+    let j; try{ j = await r.json(); }catch(e){ throw new Error('Resposta inesperada do servidor do hub.'); }
+    if(!j.ok) throw new Error(j.erro || 'Falha na pesquisa.');
+    return j.dados;
+  }
+  const cfg = cfgPesq();
+  const body = Object.assign({token:cfg.token}, dados);
   const r = await fetch(cfg.url, {method:'POST', body:JSON.stringify(body)});
   let j; try{ j = await r.json(); }catch(e){ throw new Error('Resposta inesperada do Apps Script (confira a URL e se a implantação está como "qualquer pessoa").'); }
   if(!j.ok) throw new Error(j.erro || 'Falha na pesquisa.');
   return j.dados;
 }
+/* CRM do hub: o planejamento entra sozinho no funil como prospecção (fila mgb_lead_fila —
+   o hub processa, deduplica por nome+produto e só acrescenta histórico se o lead já existir). */
+function leadCRM(acao){
+  const nome = S.cli.nome.trim(); if(!nome) return;
+  let tot = 0; try{ tot = ativas().reduce((s,p)=>s+totais(p).neg,0); }catch(e){}
+  const sp = periodo();
+  const obs = 'Planejamento Tarobá · '+(sp.txt||'')+(sp.ano?' '+sp.ano:'')+' · '+ativas().map(p=>PR[p]).join(' e ');
+  try{
+    const fila = JSON.parse(localStorage.getItem('mgb_lead_fila')||'[]');
+    fila.push({cliente:nome, produto:'taroba', acao, valor:Math.round(tot*100)/100, obs, origem:'Prospecção ativa', valorPeriodo:true});
+    localStorage.setItem('mgb_lead_fila', JSON.stringify(fila));
+  }catch(e){}
+}
 async function pesquisarAuto(){
   const cfg = cfgPesq(), st = $('#pesqStatus'), bt = $('#bPesq');
   if(!S.cli.nome.trim()){ alert('Preencha o nome do cliente primeiro.'); return; }
-  if(!cfg.url || !cfg.token){ alert('Configure a URL e o token da pesquisa (⚙ logo abaixo do botão).'); $('#cfgPesq').open = true; return; }
+  if(!hubToken() && (!cfg.url || !cfg.token)){ alert('Abra o planejamento por dentro do hub (logado) — a pesquisa usa o servidor do hub, sem configurar nada.\n\nFora do hub, configure a URL e o token do Apps Script (⚙ logo abaixo do botão).'); $('#cfgPesq').open = true; return; }
   const segAtual = S.cli.segmento.trim();
   if(segAtual && !confirm('Pesquisar "'+S.cli.nome.trim()+'" no segmento "'+segAtual+'"?\n\nSe esse segmento for do cliente ANTERIOR, cancele e corrija o campo "Segmento do cliente" (ou apague-o, que a pesquisa descobre sozinha).')) return;
   bt.disabled = true;
@@ -342,6 +373,7 @@ async function pesquisarAuto(){
     st.textContent = '② Pesquisando dados do setor com fontes… (até 1 min)';
     const m = await chamaPesquisa('mercado');
     aplicarObj(Object.assign({}, t, {mercado: m.mercado || m}));
+    leadCRM('planejamento');
   }catch(e){
     st.textContent = '⚠ ' + e.message; bt.disabled = false;
   }
@@ -364,7 +396,7 @@ function frentesSel(){
   const g = new Set(); ativas().forEach(p => linhas(p).forEach(l => g.add(l.g))); return g;
 }
 function frasesFrentes(g){
-  return [g.has('projetos')?'nos maiores projetos do calendário Tarobá':'', g.has('radio')?'todos os dias no rádio':'', g.has('operacoes')?'dentro do supermercado, com degustação':'', g.has('conteudo')?'com conteúdo próprio':''].filter(Boolean);
+  return [g.has('projetos')?'nos maiores projetos do calendário Tarobá':'', g.has('radio')?'todos os dias no rádio':'', g.has('operacoes')?'dentro do supermercado, na conversão da gôndola':'', g.has('conteudo')?'com conteúdo próprio':''].filter(Boolean);
 }
 function textosAuto(){
   const C = S.cli.nome.trim() || 'Sua marca';
@@ -453,7 +485,7 @@ function secCliente(){
   + '<label>Segmento do cliente<input data-b="cli" data-f="segmento" value="'+esc(c.segmento)+'" placeholder="Ex.: alimentos saudáveis, supermercado, óticas, imobiliário"></label>'
   + '<label>Site ou informações do cliente <span class="hint">(usado no pedido para a IA)</span><input data-b="cli" data-f="site" value="'+esc(c.site)+'" placeholder="www.cliente.com.br ou uma frase sobre o que a empresa faz"></label>'
   + '</div><div class="chips"><button type="button" class="add pri" style="margin:0" data-act="pesq" id="bPesq">🔎 Pesquisar e preencher tudo (automático)</button> <span class="hint" id="pesqStatus"></span></div>'
-  + '<details class="sub" id="cfgPesq"'+(cfgPesq().url?'':' open')+'><summary>⚙ Configurar conexão da pesquisa <span class="hint">(uma vez só)</span></summary><div class="grid2">'
+  + '<details class="sub" id="cfgPesq"'+((cfgPesq().url||hubToken())?'':' open')+'><summary>⚙ Configurar conexão da pesquisa <span class="hint">(só fora do hub — dentro do hub, logado, não precisa de nada)</span></summary><div class="grid2">'
   + '<label>URL do Apps Script<input data-b="cfg" data-f="url" value="'+esc(cfgPesq().url||'')+'" placeholder="https://script.google.com/macros/s/.../exec"></label>'
   + '<label>Token<input data-b="cfg" data-f="token" type="password" value="'+esc(cfgPesq().token||'')+'" placeholder="a mesma senha configurada no script"></label></div></details>'
   + '<div class="chips"><button type="button" class="add" style="margin:0" data-act="auto">✨ Gerar texto automático</button>'
@@ -762,10 +794,10 @@ function buildDoc(forPrint){
     + '<div class="eco-row"><div class="eco-card"><div class="eco-icon">📣</div><strong>'+esc(C)+' anuncia</strong><span>TV, rádio e projetos '+(A.length===2?'nas 2 praças':'em '+PR[A[0]])+'</span></div><div class="eco-arrow">→</div>'
     + '<div class="eco-card"><div class="eco-icon">👀</div><strong>O paranaense vê e ouve</strong><span>Todos os dias, na rotina</span></div><div class="eco-arrow">→</div>'
     + '<div class="eco-card"><div class="eco-icon">🛒</div><strong>Entra no Muffato</strong><span>'+lojas+' lojas '+regTxt+'</span></div><div class="eco-arrow">→</div>'
-    + '<div class="eco-card gold"><div class="eco-icon">🥄</div><strong>Prova e leva</strong><span>'+(acoes?'Degustação na gôndola, toda semana':'Presença na loja do grupo')+'</span></div></div>'
+    + '<div class="eco-card gold"><div class="eco-icon">🏷️</div><strong>Converte na gôndola</strong><span>'+(acoes?'Ação no PDV, toda semana':'Presença na loja do grupo')+'</span></div></div>'
     + '<div class="muffato-stats"><div class="muffato-stat"><span class="muffato-stat-num">1982</span><span class="muffato-stat-lbl">TV Tarobá no Grupo Muffato</span></div>'
     + '<div class="muffato-stat"><span class="muffato-stat-num">'+lojas+'</span><span class="muffato-stat-lbl">lojas Super Muffato e Max'+(A.length===2?' · '+lojasP('ldb')+' região de Londrina + '+lojasP('cvl')+' região de Cascavel':' · região de '+PR[A[0]])+'</span></div>'
-    + (acoes?'<div class="muffato-stat"><span class="muffato-stat-num">'+acoes+'</span><span class="muffato-stat-lbl">'+(opMes?(acoes===1?'mês':'meses')+' de operação · 1 ação por semana':'ações com degustação no período')+'</span></div>':'')
+    + (acoes?'<div class="muffato-stat"><span class="muffato-stat-num">'+acoes+'</span><span class="muffato-stat-lbl">'+(opMes?(acoes===1?'mês':'meses')+' de operação · 1 ação por semana':'ações no PDV no período')+'</span></div>':'')
     + '<div class="muffato-stat"><span class="muffato-stat-num">Max</span><span class="muffato-stat-lbl">Atacadista · mesma rede do grupo</span></div></div>'+band(3,120)+'</div>');
 
   /* por que agora */
@@ -795,7 +827,7 @@ function buildDoc(forPrint){
   if(proj.length) frentes.push({k:'proj', tag:'★ TV + Multiplataforma', title:'Projetos<br>Especiais '+sp.ano, desc:'A marca dentro dos maiores projetos do calendário Tarobá — reality, campanhas e especiais com exibição na TV, rádio, portal e redes.', li:proj.map(x=>x.pr.nome), foot:proj.length+(proj.length>1?' projetos':' projeto')+(sp.txt?' · '+sp.txt:'')});
   if(rad.length) frentes.push({k:'rad', tag:'Rádio Tarobá FM', title:'No ar<br>todos os dias', desc:'Presença diária na programação da Rádio Tarobá FM 101.7, com a frequência que constrói a primeira lembrança de marca.', li:rad.map(r=>r.nome+' · '+A.map(p=>fmt(r.q[p]||0)).filter((x,i)=>r.q[A[i]]).join(' + ')+' ins.'), foot:fmt(rad.reduce((s,r)=>s+A.reduce((t,p)=>t+(r.q[p]||0),0),0))+' inserções no período'});
   else if(proj.length) frentes.push({k:'rad', tag:'Rádio Tarobá FM', title:'No ar<br>com os projetos', desc:RADIO_PROJ, li:['Material exclusivo nos meses de patrocínio dos projetos','Rádio Tarobá FM 101.7 · '+praçasTxt], foot:'Rádio incluída nos projetos'});
-  if(ops.length) frentes.push({k:'ops', tag:'Ponto de venda', title:'Operação<br>Tarobá', desc:'A marca fisicamente dentro do supermercado: promotoras, inflável, degustação na gôndola e flashes ao vivo na rádio direto da loja.', li:ops.map(o=>o.pr.nome+' · '+A.map(p=>o.q[p]).filter(Boolean).join(' + ')+(o.pr.mensal?' meses':' '+(o.pr.un||'ação')+'s')), foot:acTxt(acoes)+' com degustação no Muffato'});
+  if(ops.length) frentes.push({k:'ops', tag:'Ponto de venda', title:'Operação<br>Tarobá', desc:'A marca fisicamente dentro do supermercado: promotoras, inflável, conversão na gôndola e flashes ao vivo na rádio direto da loja.', li:ops.map(o=>o.pr.nome+' · '+A.map(p=>o.q[p]).filter(Boolean).join(' + ')+(o.pr.mensal?' meses':' '+(o.pr.un||'ação')+'s')), foot:acTxt(acoes)+' no PDV do Muffato'});
   if(cont.length) frentes.push({k:'cont', tag:'Extensões de conteúdo', title:'Conteúdo e<br>patrocínios', desc:'Formatos que estendem a marca além do intervalo comercial: conteúdo próprio, programas e patrocínios editoriais.', li:cont.map(x=>x.pr.nome), foot:cont.length+(cont.length>1?' formatos':' formato')});
   frentes.forEach((f,i)=>f.n = ('0'+(i+1)).slice(-2));
   const numOf = k => (frentes.find(f=>f.k===k)||{}).n || '';
@@ -879,7 +911,7 @@ function buildDoc(forPrint){
   /* total */
   const gTab = A.reduce((s,p)=>s+T[p].tab,0), gNeg = A.reduce((s,p)=>s+T[p].neg,0);
   const foraT = []; A.forEach(p=>T[p].L.filter(l=>l.fora).forEach(l=>foraT.push(l.nome+' '+PR[p]+' '+brl(l.neg!=null?l.neg:l.tab)+'/mês')));
-  const frentesTxt = [proj.length?'nos projetos especiais do calendário':'', rad.length?'todos os dias no rádio':'', ops.length?'dentro do supermercado com degustação':'', cont.length?'com conteúdo próprio':''].filter(Boolean);
+  const frentesTxt = [proj.length?'nos projetos especiais do calendário':'', rad.length?'todos os dias no rádio':'', ops.length?'dentro do supermercado, na gôndola':'', cont.length?'com conteúdo próprio':''].filter(Boolean);
   slides.push('<div class="section-white">'+hdr('Investimento · Consolidado','O pacote completo.',false)
     + '<div class="invest-resumo" style="margin-top:24px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center"><div><div class="tag">Plano completo · '+esc(praçasTxt)+'</div><h3 style="margin-bottom:8px">'+esc(C)+' presente de ponta a ponta.</h3>'
     + '<p style="margin-bottom:0">'+(frentesTxt.length?'Marca presente '+frentesTxt.join(', ')+'. ':'')+esc(S.cond)+'</p></div>'
@@ -927,7 +959,7 @@ function mostra(tab){
   window.scrollTo(0,0);
 }
 $$('.tabs button').forEach(b => b.addEventListener('click', ()=>mostra(b.dataset.tab)));
-$('#bHtml').addEventListener('click', ()=>baixar('proposta-taroba-'+slug(S.cli.nome)+'.html', buildDoc(), 'text/html'));
+$('#bHtml').addEventListener('click', ()=>{ baixar('proposta-taroba-'+slug(S.cli.nome)+'.html', buildDoc(), 'text/html'); leadCRM('html'); });
 function aviso(txt, ok){
   let t = $('#toastPdf'); if(!t){ t = document.createElement('div'); t.id = 'toastPdf'; t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:99;max-width:90vw;padding:12px 18px;border-radius:8px;font:600 14px system-ui,sans-serif;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.35)'; document.body.appendChild(t); }
   t.style.background = ok ? '#1f7a3d' : '#8c1d2c'; t.textContent = txt; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(()=>{ t.hidden = true; }, 7000);
@@ -937,6 +969,7 @@ function imprimir(){ mostra('previa'); setTimeout(()=>{ const w=$('#fr').content
 /* serviço local (Propostas Taroba/servidor-pdf): gera o PDF e grava em Propostas Taroba/<cliente>/ */
 $('#bPdf').addEventListener('click', async ()=>{
   if(!S.cli.nome.trim()){ aviso('Preencha o nome do cliente para salvar na pasta dele.', false); return imprimir(); }
+  leadCRM('pdf');
   const b = $('#bPdf'), txt = b.textContent; b.disabled = true; b.textContent = '⏳ Gerando PDF…';
   try{
     const r = await fetch(PDF_SRV+'/pdf', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cliente:S.cli.nome.trim(), html:buildDoc(), estado:S})});
