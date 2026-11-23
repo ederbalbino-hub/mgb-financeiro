@@ -1,0 +1,82 @@
+/* Hub MGB — padronização visual das telas antigas (23/11/2026).
+ *
+ * Carregado no FIM do <body>, depois de todos os <style> do index.html, para valer sobre eles.
+ * Não muda nada de lugar nem de funcionamento: só cores, tipografia e componentes repetidos
+ * (cabeçalho de página, abas, botões, cartões, tabelas, campos), com os tokens do desenho aprovado
+ * (roxo #4E38B2, logo #2A1760, fundo #F6F4FA, texto #241A38, secundário #5D5868, borda #E4DFF0, DM Sans).
+ * As telas novas (Início, Faturamento, Financeiro, menu) usam classes próprias e não são afetadas.
+ */
+
+/* ── Tokens: as telas antigas já usam estas variáveis ─────────────────── */
+:root{
+  --bg:#F6F4FA; --surface:#FFFFFF; --surface2:#F6F4FA; --surface3:#ECE8FA;
+  --border:#E4DFF0; --border2:#CFC7E6;
+  --text:#241A38; --muted:#5D5868; --hint:#7A7486;
+  --purple:#4E38B2; --pd:#ECE8FA;
+  --green:#15803D; --gd:#E8F6EE;
+  --amber:#B45309; --ad:#FDF2E3;
+  --red:#B42318; --rd:#FDECEA;
+}
+body{background:var(--bg);color:var(--text);font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+
+/* ── Cabeçalho das páginas ───────────────────────────────────────────── */
+.page-hdr{padding:24px 28px 4px!important;gap:12px!important;align-items:center!important}
+.page-title{font-size:26px!important;font-weight:700!important;letter-spacing:-.01em;color:var(--text)!important}
+.page-sub{font-size:14px!important;color:var(--muted)!important;margin-top:4px!important}
+.date-chip{font-size:13px!important;color:var(--muted)!important}
+
+/* ── Abas ────────────────────────────────────────────────────────────── */
+.mtab,.ltab,.hub-tab,.ferr-tab{font-size:14px!important;font-weight:600!important;color:var(--muted)!important;padding:13px 14px!important}
+.mtab:hover,.ltab:hover,.hub-tab:hover,.ferr-tab:hover{color:var(--text)!important}
+.mtab.on,.ltab.on,.hub-tab.active,.ferr-tab.on,.ferr-tab.active{color:var(--purple)!important;border-bottom-color:var(--purple)!important}
+
+/* ── Botões ──────────────────────────────────────────────────────────── */
+.badd,.ferr-btn{min-height:40px;padding:0 16px!important;border-radius:10px!important;font:700 14px "DM Sans",system-ui,sans-serif!important;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.badd{background:var(--purple)!important;color:#fff!important}
+.ferr-btn:not([style*="background:transparent"]){background:var(--purple)}
+.ferr-btn[style*="background:transparent"]{color:var(--purple)!important;border:1px solid var(--border2)!important;background:#fff!important;font-weight:600!important}
+.badd:hover,.ferr-btn:hover{filter:brightness(.92)}
+.anunc-btn,.ltab-btn{min-height:34px;padding:0 12px!important;border-radius:8px!important;font:600 13px "DM Sans",system-ui,sans-serif!important;border:1px solid var(--border2)!important;background:#fff!important;color:var(--purple)!important}
+.anunc-btn.del{color:var(--red)!important;border-color:#F3C2BD!important}
+.anunc-btn:hover,.ltab-btn:hover{background:var(--pd)!important}
+button:focus-visible,.mtab:focus-visible,.hub-tab:focus-visible,.ferr-tab:focus-visible,a:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}
+
+/* ── Cartões ─────────────────────────────────────────────────────────── */
+.ferr-card,.tcard,.kpi,.anunc-card,.rec-card,.cc,.pb-card,.ov-card{border-radius:16px!important;border:1px solid var(--border)!important;box-shadow:none!important}
+.ferr-card{padding:20px 22px!important}
+.anunc-card{background:#fff!important}
+.ferr-t,.ttitle,.sec-title{font-size:17px!important;font-weight:700!important;color:var(--text)!important}
+.ferr-d{font-size:14px!important;line-height:1.5!important;color:var(--muted)!important}
+.thead3{padding:16px 18px 12px!important}
+.kpi{padding:16px 18px!important}
+.kpi-lbl{font-size:12px!important;letter-spacing:.05em!important;color:var(--muted)!important}
+.kpi-val{font-size:20px!important}
+.acc-hdr{padding:14px 28px!important}
+.acc-toggle{font-size:18px}
+
+/* ── Tabelas ─────────────────────────────────────────────────────────── */
+table{font-size:14px}
+th{font-size:12px!important;padding:10px 12px!important;color:var(--muted)!important;letter-spacing:.05em!important;background:#fff!important}
+td{padding:11px 12px!important;border-top:1px solid #EFEBF7}
+.bp{font-size:12.5px!important;padding:3px 10px!important;border-radius:999px!important}
+.foot{font-size:14px;padding:12px 18px!important}
+
+/* ── Campos ──────────────────────────────────────────────────────────── */
+.ferr-in,.anunc-form-inp,.modal-input,.rec-input,#page-operacional input[type=text],#page-operacional input[type=number],#page-operacional select,#page-relatorios input,#page-relatorios select{
+  font:15px "DM Sans",system-ui,sans-serif!important;min-height:42px;border:1px solid var(--border2)!important;border-radius:10px!important;background:#fff!important;color:var(--text)!important;padding:8px 12px!important}
+.ferr-in:focus,.anunc-form-inp:focus,.rec-input:focus{border-color:var(--purple)!important;outline:2px solid var(--pd)}
+.ferr-lbl,.anunc-form-lbl{font-size:13px!important;font-weight:600!important;color:#3A3446!important;margin-bottom:6px!important;text-transform:none!important;letter-spacing:0!important}
+select[id$="-mes-sel"],select[id$="-ano-sel"]{font-size:14px!important;min-height:38px;padding:0 10px!important;border-radius:10px!important;border:1px solid var(--border2)!important;background:#fff!important}
+
+/* ── Letras muito pequenas escritas direto no HTML das telas antigas ─── */
+.main [style*="font-size:8px"],.main [style*="font-size:8.5px"],.main [style*="font-size:9px"],.main [style*="font-size:9.5px"]{font-size:12px!important}
+.main [style*="font-size:10px"],.main [style*="font-size:10.5px"]{font-size:12.5px!important}
+.main [style*="font-size:11px"],.main [style*="font-size:11.5px"]{font-size:13.5px!important}
+.main [style*="font-size:12px"],.main [style*="font-size:12.5px"]{font-size:14px!important}
+
+/* ── Celular ─────────────────────────────────────────────────────────── */
+@media (max-width:760px){
+  .page-hdr{padding:18px 16px 4px!important}
+  .page-title{font-size:22px!important}
+  .acc-hdr{padding:12px 16px!important}
+}
