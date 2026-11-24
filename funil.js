@@ -38,6 +38,12 @@
   function pill(p) { var x = PROD[p] || [p || '—', '#5D5868', '#EFEBF7']; return '<span class="fun2-pill" style="color:' + x[1] + ';background:' + x[2] + '">' + esc(x[0]) + '</span>'; }
   var verLista = false;
 
+  // Ícones de linha do Design System (situação vira chip com ícone + palavra, nunca só cor)
+  var ICO_SIT = {
+    erro: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+    atencao: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    ok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>'
+  };
   // Cartão novo (substitui leadCardHtml; mesmos gatilhos de arrastar e abrir)
   function cartao(l) {
     var venc = false; try { venc = global.leadLembreteVencido(l); } catch (e) {}
@@ -57,7 +63,7 @@
       '<b class="fun2-nome">' + esc(l.nome) + '</b>' +
       (l.responsavel ? '<span class="fun2-resp">' + esc(l.responsavel) + (l.funcao ? ' · ' + esc(l.funcao) : '') + '</span>' : '') +
       '<div class="fun2-linha">' + pill(l.produto) + '<span class="fun2-valor">' + (l.valor ? brl(l.valor) : '—') + (l.formaPg === 'permuta' ? ' · permuta' : '') + '</span></div>' +
-      (s ? '<span class="fun2-sit fun2-' + s.tom + '">' + esc(s.txt) + (l.lembrete && String(l.lembrete).indexOf('T') > 0 && s.txt.indexOf('Retorno') === 0 ? ' às ' + esc(String(l.lembrete).slice(11, 16)) : '') + '</span>' : '') +
+      (s ? '<span class="fun2-sit fun2-' + s.tom + '">' + (ICO_SIT[s.tom] || '') + esc(s.tom === 'erro' ? s.txt.replace(/^Retorno /, 'Retorno era ') : s.txt) + (l.lembrete && String(l.lembrete).indexOf('T') > 0 && s.txt.indexOf('Retorno') === 0 ? ' às ' + esc(String(l.lembrete).slice(11, 16)) : '') + '</span>' : '') +
       avisos +
       '<div class="fun2-acoes"><label class="fun2-oculto" for="fun2-st-' + l.id + '">Mover ' + esc(l.nome) + '</label><select id="fun2-st-' + l.id + '" class="fun2-mover" onclick="event.stopPropagation()" onchange="leadChangeStage(' + l.id + ',this.value)">' + etapas + '</select>' +
       (tel ? '<a class="fun2-wa" href="https://wa.me/55' + tel + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">WhatsApp</a>' : '') + '</div></div>';
@@ -154,11 +160,14 @@
       '#page-leads.fun2 .lead-col>div[title]{font-size:13px!important;color:#5D5868!important;margin:-4px 2px 10px!important;font-weight:600!important}' +
       '.fun2-card{background:#fff!important;border:1px solid #E4DFF0!important;border-radius:12px!important;padding:12px!important;margin-bottom:8px!important;display:flex;flex-direction:column;gap:6px;box-shadow:none!important}' +
       '.fun2-card:hover{border-color:#CFC7E6!important}.fun2-card:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
-      '.fun2-card.overdue{box-shadow:inset 3px 0 0 #B42318!important}' +
+      '.fun2-card.overdue{box-shadow:none!important}' +
       '.fun2-nome{font-size:14.5px;line-height:1.25}.fun2-resp{font-size:12.5px;color:#5D5868}' +
       '.fun2-linha{display:flex;justify-content:space-between;align-items:center;gap:6px}.fun2-valor{font:13px "DM Mono",ui-monospace,monospace;white-space:nowrap}' +
       '.fun2-pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}' +
-      '.fun2-sit{font-size:12.5px;font-weight:600;color:#5D5868}.fun2-sit.fun2-erro{color:#B42318}.fun2-sit.fun2-atencao{color:#8A4B08}.fun2-sit.fun2-ok{color:#15803D}' +
+      '.fun2-sit{font-size:12.5px;font-weight:600;color:#5D5868}' +
+      '.fun2-sit.fun2-erro,.fun2-sit.fun2-atencao,.fun2-sit.fun2-ok{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;line-height:16px}' +
+      '.fun2-sit svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
+      '.fun2-sit.fun2-erro{color:#B42318;background:#FDECEA}.fun2-sit.fun2-atencao{color:#8A4B08;background:#FDF2E3}.fun2-sit.fun2-ok{color:#15803D;background:#E8F6EE}' +
       '.fun2-av{font-size:12px;color:#5D5868}.fun2-av.fun2-ok{color:#15803D;font-weight:600}.fun2-av.fun2-erro{color:#B42318;font-weight:600}' +
       '.fun2-acoes{display:flex;gap:6px;align-items:center;margin-top:2px}' +
       '.fun2-mover{flex:1;min-width:0;height:32px!important;min-height:32px!important;padding:0 6px!important;font-size:12.5px!important;border:1px solid #E4DFF0!important;border-radius:8px!important;color:#5D5868!important;background:#fff!important}' +
