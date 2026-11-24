@@ -1,0 +1,67 @@
+# Funções declaradas sem nenhuma referência fora da própria declaração/corpo
+# corpus: 60 arquivos (index.html, *.js raiz, *.html raiz e telavertical/**) — comentários removidos
+# ATENÇÃO: análise por nome (identificadores iguais em escopos diferentes contam como uso); conservadora.
+# nome	arquivo:linha	bytes	escopo	motivo
+selecionaTipo	index.html:5153	182	global	sem referência
+setTab	index.html:5159	333	global	sem referência
+irGerar	index.html:5168	494	global	sem referência
+gerarPost	index.html:5180	2451	global	sem referência
+copiarPost	index.html:5245	369	global	sem referência
+novoPost	index.html:5255	243	global	sem referência
+toggleMic	index.html:5266	285	global	sem referência
+iniciarGravacao	index.html:5278	1433	global	só chamada por funções mortas
+pararGravacao	index.html:5319	486	global	só chamada por funções mortas
+copiarPrompt	index.html:5333	299	global	sem referência
+fFatAlvoHub	index.html:7925	133	global	sem referência
+pesParsePDF	index.html:8981	2044	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+brNum	index.html:8994	72	aninhada	só alcançável pelo HTML de #page-pessoal (inalcançável)
+pesCatSelectHTML	index.html:9046	399	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+importExtratoOpen	index.html:9054	658	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+importExtratoClose	index.html:9055	157	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+importExtratoFile	index.html:9057	760	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+importExtratoShow	index.html:9069	3617	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+pesImpTotais	index.html:9104	256	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+pesAprender	index.html:9106	320	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+importExtratoLancar	index.html:9109	1788	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+finGet	index.html:9308	51	global	sem referência
+autoFillFinReceita	index.html:9381	319	global	sem referência
+pessoalSaldoMes	index.html:9544	91	global	sem referência
+initLancamentos	index.html:9609	587	global	sem referência
+buildLancamentos	index.html:9621	8966	global	só chamada por funções mortas
+atrasadoFn	index.html:9626	102	aninhada	só chamada por funções mortas
+buildLancDesp	index.html:9808	4675	global	só chamada por funções mortas
+atrasadoFn	index.html:9862	135	aninhada	só chamada por funções mortas
+toggleDespPago	index.html:9917	415	global	só chamada por funções mortas
+togglePagoMod	index.html:9928	402	global	só chamada por funções mortas
+enviarFormIframe_	index.html:10173	672	global	sem referência
+puxarStatusEmpresaDoPlanoDeCaixa	index.html:10194	1325	global	sem referência
+sbClick	index.html:10222	78	global	sem referência
+toggleRecPago	index.html:10406	321	global	sem referência
+gerarRelContador	index.html:10447	4417	global	sem referência
+bancoModalClose	index.html:11013	156	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+bancoImportLancar	index.html:11096	599	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+pessoalZerar	index.html:11210	835	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+bancoConnect	index.html:11265	1286	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+importExtratoBancoOpen	index.html:11276	1195	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+importExtratoBancoFetch	index.html:11287	646	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+initAcc	index.html:11932	295	global	sem referência
+syncDespComp	index.html:11979	984	global	sem referência
+changeYear	index.html:13193	120	global	sem referência
+togglePesRepasseForm	index.html:15106	277	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+cancelPesRepasse	index.html:15111	74	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+savePesRepasse	index.html:15112	734	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+pesMesSelecionado	index.html:15130	215	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+togglePesRecForm	index.html:15135	416	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+cancelPesRec	index.html:15147	85	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+savePesRec	index.html:15148	1076	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+togglePesDespForm	index.html:15219	478	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+cancelPesDesp	index.html:15232	88	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+savePesDesp	index.html:15233	1181	global	só alcançável pelo HTML de #page-pessoal (inalcançável)
+# ── Outros itens mortos (não-função) ──
+# index.html:4875-5095	7.7KB	2ª cópia idêntica do IIFE mgb_blocos_v4 (diff = 1 linha em branco); roda render()+carregarMySQL() 2x
+# index.html:4871-4872	—	</body></html> perdidos no meio do arquivo (tudo depois cai em "after body")
+# index.html:5112-5150	~3KB	consts TIPOS/CONTEXT/tipoSelecionado do gerador LinkedIn (só usados pelas funções mortas acima)
+# index.html:809-810,843-844	9.1KB	CSS .linkedin-section (tela removida em 23/11/2026, comentário index.html:4831)
+# index.html:5710-5936	14.5KB	HTML #page-pessoal: goPage('pessoal') é redirecionado para planocaixa (index.html:10027); ramo index.html:10073 inalcançável
+# index.html:10030/10036	—	ids page-midiakit, page-sindicos, nav-midiakit, nav-sindicos listados em goPage mas redirecionados para home (10027)
+# index.html:958-1142 + inicio.js:240	11.7KB	.home-page legada: ainda renderizada por buildHome e escondida fora da tela pelo Hub v2 (não é morta, é "sombra")
