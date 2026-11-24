@@ -1,6 +1,6 @@
 // Conferência diária do Faturamento (hub × planilha), com aviso por e-mail.
 //
-//   GET /api/conferencia                 -> roda a conferência (Vercel Cron, 1x por dia às 8h de Brasília)
+//   GET /api/conferencia                 -> roda a conferência (o Vercel Cron chama pela /api/rotina, 8h07 de Brasília)
 //   GET /api/conferencia?enviar=nao      -> só mostra o resultado, sem mandar e-mail (admin/financeiro logado)
 //
 // Lê public.fat_conferencia (Supabase). Se houver divergência de gravidade "erro" ou "atencao", manda um
@@ -16,7 +16,7 @@ import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../http.js";
 const HUB = "https://ederbalbino-hub.github.io/mgb-financeiro/";
 const LEMBRETE_MS = 7 * 24 * 60 * 60 * 1000;
 
-function ehCron(req, env) {
+export function ehCron(req, env) {
   const s = env.CRON_SECRET;
   const h = req.headers.authorization || "";
   if (!s || !h.startsWith("Bearer ")) return false;
@@ -25,7 +25,7 @@ function ehCron(req, env) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-async function sb(env, fetchFn, caminho, opcoes = {}) {
+export async function sb(env, fetchFn, caminho, opcoes = {}) {
   const url = String(env.SUPABASE_URL || "").replace(/\/+$/, "");
   const chave = env.SUPABASE_SECRET_KEY;
   if (!url || !chave) throw new Error("Servidor sem SUPABASE_URL/SUPABASE_SECRET_KEY.");

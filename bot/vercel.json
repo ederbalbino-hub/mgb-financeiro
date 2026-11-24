@@ -45,11 +45,19 @@
     {
       "source": "/api/csp",
       "destination": "/api/ponte?alvo=csp"
+    },
+    {
+      "source": "/api/resumo",
+      "destination": "/api/ponte?alvo=resumo"
+    },
+    {
+      "source": "/api/rotina",
+      "destination": "/api/ponte?alvo=rotina"
     }
   ],
   "crons": [
     {
-      "path": "/api/conferencia",
+      "path": "/api/rotina",
       "schedule": "7 11 * * *"
     }
   ]

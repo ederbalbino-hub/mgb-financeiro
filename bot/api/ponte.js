@@ -1,5 +1,5 @@
 // Uma função só para as pontes com os Apps Scripts (Faturamento, Plano de Caixa, Assinafy)
-// e para a conferência diária do Faturamento (Vercel Cron).
+// e para a rotina diária do Vercel Cron (conferência do Faturamento + resumo por e-mail).
 //
 // O plano Hobby do Vercel aceita no máximo 12 funções por deploy; cada ponte em seu próprio
 // arquivo estourava o limite. O vercel.json reescreve as URLs públicas para cá, então o hub
@@ -13,8 +13,9 @@ import planoCaixa from "../lib/pontes/plano-caixa.js";
 import assinafy from "../lib/pontes/assinafy.js";
 import conferencia from "../lib/pontes/conferencia.js";
 import csp from "../lib/pontes/csp.js";
+import resumo, { rotina } from "../lib/pontes/resumo.js";
 
-const PONTES = { faturamento, "plano-caixa": planoCaixa, assinafy, conferencia, csp };
+const PONTES = { faturamento, "plano-caixa": planoCaixa, assinafy, conferencia, csp, resumo, rotina };
 
 export default async function handler(req, res) {
   const alvo = String(req.query?.alvo || "");

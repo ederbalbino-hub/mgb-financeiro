@@ -103,7 +103,7 @@ order by case gravidade when 'erro' then 1 when 'atencao' then 2 else 3 end, com
 | Hub cadastra cliente (`incluir`) ou marca emitido (`marcar-emitido`) | planilha **e** `fat_clientes`, na hora (`bot/lib/faturamentoDb.js`) |
 | Asaas avisa pagamento | planilha **e** `fat_clientes`, na hora |
 | De hora em hora | a planilha inteira é relida para `fat_clientes` (Edge Function `espelho-faturamento`), pegando também o que foi digitado direto na planilha |
-| Todo dia às 8h07 | `/api/conferencia` compara os lados e manda e-mail se houver divergência nova |
+| Todo dia às 8h07 | o Vercel Cron chama `/api/rotina`, que roda a conferência (`/api/conferencia`): compara os lados e manda e-mail se houver divergência nova |
 
 A gravação no banco nunca atrapalha o hub: se falhar, só vai para o log, e a conferência mostra a diferença.
 
@@ -114,6 +114,24 @@ A gravação no banco nunca atrapalha o hub: se falhar, só vai para o log, e a 
 3. ✅ (3a) Gravação em paralelo: planilha e banco ao mesmo tempo, planilha ainda oficial.
 4. Depois do faturamento de 05/12/2026, se a conferência estiver limpa: o hub passa a **ler** do banco e a planilha vira só cópia (3b).
 5. Desligar a planilha e o Apps Script do Faturamento.
+
+## Resumo diário por e-mail
+
+De segunda a sexta, às 8h07, a mesma `/api/rotina` manda o resumo "Precisa de você hoje": um e-mail para a Karen e outro para o Eder, e só quando há algo pendente. As regras ficam em `bot/lib/resumo.js` e o envio em `bot/lib/pontes/resumo.js`. Ele só lê o banco, não grava nada.
+
+| Seção | De onde vem | Quem recebe |
+|---|---|---|
+| Boletos vencidos | `fatEmissoes` + `fat_emissoes` (webhook do Asaas); pago em qualquer um dos dois = pago | Karen e Eder |
+| Notas do mês sem número | `fatEmissoes` (mesma regra do Início) | Karen e Eder |
+| Contas a pagar | contas com dia de vencimento (`despPagamentos._contas`) atrasadas, de hoje ou dos próximos 3 dias, não marcadas como pagas | Karen e Eder |
+| Contratos para renovar | este mês e o próximo, ainda não encaminhados (`clientesInfo._renovacoes`, mesma regra do acesso.js) | Karen; o Eder vê também os encaminhados a ele |
+| Clientes fechados esperando cadastro | `leads` | Karen e Eder |
+| Retornos do funil | `leads[].lembrete` de hoje ou atrasado (data de Brasília) | só o Eder |
+| Repasses Mercadão e Vaapty | `notaConfig.*.enviado`, do dia 25 ao dia 10 | Karen e Eder |
+
+- **Variáveis no Vercel:** `RESUMO_PARA_FINANCEIRO` (Karen) e `RESUMO_PARA_ADMIN` (Eder). Sem elas, o resumo não é enviado.
+- **Prévia sem enviar** (admin ou financeiro logado): `/api/resumo?ver=karen`, `/api/resumo?ver=eder`, ou `/api/resumo` (JSON).
+- **Fica de fora:** Connectmix e a comissão do Rádio Moinho, que dependem de dados que só o navegador carrega. O valor do imposto também não aparece; só o lembrete do dia 20.
 
 ## Operação
 
