@@ -178,7 +178,7 @@
     if (soTabela && doc.getElementById('cli2-lista')) { doc.getElementById('cli2-lista').innerHTML = tabela; return; }
     pg.innerHTML =
       '<header class="cli2-cab"><div><span class="cli2-sub">Clientes e contratos</span><h2>Clientes</h2></div>' +
-        '<div class="cli2-acoes"><button type="button" class="cli2-btn2" data-cli2="contratos">Gerar contrato</button><button type="button" class="cli2-btn" data-cli2="novo">Novo cliente</button></div></header>' +
+        '<div class="cli2-acoes"><button type="button" class="cli2-btn2" data-cli2="assinar-lista">Quem falta assinar</button><button type="button" class="cli2-btn2" data-cli2="contratos" aria-haspopup="menu">Gerar contrato</button><button type="button" class="cli2-btn" data-cli2="novo">Novo cliente</button></div></header>' +
       '<div class="cli2-filtros"><label class="cli2-oculto" for="cli2-busca">Buscar cliente</label><input id="cli2-busca" type="search" placeholder="Buscar por nome ou CNPJ" value="' + esc(busca) + '" autocomplete="off">' +
         [['todos', 'Todos · ' + L.length], ['vencido', 'Com vencido · ' + nVenc], ['assinar', 'Aguardando assinatura · ' + nAss]].concat(Object.keys(mods).sort().map(function (m) { return ['mod:' + m, m + ' · ' + mods[m]]; })).map(function (c) {
           return '<button type="button" class="cli2-chip' + (filtro === c[0] ? ' cli2-on' : '') + '" aria-pressed="' + (filtro === c[0]) + '" data-cli2="filtro:' + esc(c[0]) + '">' + esc(c[1]) + '</button>'; }).join('') + '</div>' +
@@ -206,7 +206,7 @@
       '<header class="cli2-cab"><div><h2>' + esc(g.nome) + '</h2><span class="cli2-sub">' + esc([g.razao, g.cnpj ? 'CNPJ ' + g.cnpj : 'sem CNPJ no cadastro', g.origem ? 'veio por ' + g.origem.toLowerCase() : ''].filter(Boolean).join(' · ')) + '</span>' +
         '<div class="cli2-tags">' + g.modulos.map(function (m) { return pill(m, 'acao'); }).join('') + (g.vencidos ? pill(g.vencidos === 1 ? '1 mês vencido' : g.vencidos + ' meses vencidos', 'erro') : '') + '</div></div>' +
         '<div class="cli2-acoes">' + (tel ? '<a class="cli2-btn2" href="https://wa.me/55' + tel + '" target="_blank" rel="noopener">WhatsApp</a>' : '') +
-          '<button type="button" class="cli2-btn2" data-cli2="contratos">Novo contrato</button>' + (g.leadId ? '<button type="button" class="cli2-btn2" data-cli2="lead:' + g.leadId + '">Ver no funil</button>' : '') + '</div></header>' +
+          '<button type="button" class="cli2-btn2" data-cli2="contrato-de:' + esc(g.contratos[0] ? g.contratos[0].mod + '|' + g.contratos[0].item : '') + '">Novo contrato</button>' + (g.leadId ? '<button type="button" class="cli2-btn2" data-cli2="lead:' + g.leadId + '">Ver no funil</button>' : '') + '</div></header>' +
       '<div class="cli2-nums">' +
         '<div><span>Paga por mês</span><b>' + brl(g.pagaPorMes) + '</b><small>' + esc(g.contratos.length === 1 ? g.contratos[0].modRot : g.contratos.length + ' contratos') + '</small></div>' +
         '<div><span>Em aberto</span><b class="' + (g.emAberto ? 'cli2-vermelho' : '') + '">' + brl(g.emAberto) + '</b><small>' + (g.vencidos ? 'boleto vencido' : 'nada vencido') + '</small></div>' +
@@ -256,7 +256,10 @@
       else if (acao === 'cancelar-contato') { editContato = false; desenharFicha(); }
       else if (acao === 'salvar-contato') salvarContato();
       else if (acao === 'filtro') { filtro = arg; desenharLista(); }
-      else if (acao === 'contratos') global.goOperacional('contratos');
+      else if (acao === 'contratos') escolherContrato(b);
+      else if (acao === 'contrato-de') contratoDoCliente(arg);
+      else if (acao === 'gc') { var gc = doc.getElementById('cli2-gc'); if (gc) gc.remove(); abrirGerador(arg); }
+      else if (acao === 'assinar-lista') { if (global.MGBFluxos && global.MGBFluxos.abrirListaAssinaturas) global.MGBFluxos.abrirListaAssinaturas(); }
       else if (acao === 'novo') global.MGBNovo.abrir();
       else if (acao === 'lead') { global.goPage('leads'); setTimeout(function () { try { global.openLeadModal('edit', isNaN(+arg) ? arg : +arg); } catch (e) {} }, 150); }
       else if (acao === 'modulo') abrirNoModulo(arg);
@@ -277,6 +280,33 @@
     var d = diasAte(f.data), txt = f.data.split('-').reverse().join('/');
     if (d < 0) return pill('Terminou em ' + txt, 'erro');
     return pill('Termina em ' + txt, d <= 60 ? 'atencao' : 'neutro');
+  }
+  // Onde gerar o contrato de cada produto (27/11, Usabilidade item 6): antes "Gerar contrato" abria sempre no Mercadão
+  var GERADORES = [
+    ['mercadao', 'Loja do Mercadão', 'contratos|mercadao'],
+    ['vaapty', 'Unidade Vaapty', 'contratos|vaapty'],
+    ['anunciante', 'Anunciante Tela Vertical', 'telavertical|elevador'],
+    ['condominio', 'Condomínio (parceria)', 'telavertical|parceria'],
+    ['radio', 'Rádio interna', 'novo|radio'],
+    ['tv', 'TV interna', 'novo|tv']
+  ];
+  function abrirGerador(id) {
+    var x = GERADORES.filter(function (g) { return g[0] === id; })[0]; if (!x) return;
+    var p = x[2].split('|');
+    if (p[0] === 'novo') { if (global.MGBNovo && global.MGBNovo.escolher) global.MGBNovo.escolher(p[1]); else global.MGBNovo.abrir(); }   // rádio/TV: contrato sai no Novo cliente
+    else global.goOperacional(p[0], p[1]);
+  }
+  function escolherContrato(botao) {
+    var velho = doc.getElementById('cli2-gc'); if (velho) { velho.remove(); return; }
+    var m = doc.createElement('div'); m.id = 'cli2-gc'; m.className = 'cli2-gc'; m.setAttribute('role', 'menu');
+    m.innerHTML = '<b>Contrato de qual produto?</b>' + GERADORES.map(function (g) { return '<button type="button" role="menuitem" data-cli2="gc:' + g[0] + '">' + esc(g[1]) + (g[2].indexOf('novo|') === 0 ? ' <span>pelo Novo cliente</span>' : '') + '</button>'; }).join('');
+    botao.parentNode.appendChild(m);
+    var f = m.querySelector('button'); if (f) f.focus();
+  }
+  function contratoDoCliente(arg) {
+    var p = arg.split('|'), mod = p[0], item = p.slice(1).join('|'), ci = ler('clientesInfo', {}) || {};
+    var id = mod === 'vaapty' ? 'vaapty' : mod === 'elev' ? 'anunciante' : mod === 'tv' ? 'tv' : mod === 'radio' ? ((ci.mercadao || {})[item] ? 'mercadao' : 'radio') : null;
+    if (id) abrirGerador(id); else escolherContrato(doc.querySelector('[data-cli2^="contrato-de"]'));
   }
   // "Abrir no módulo" já no cliente (27/11): antes caía no painel do módulo, na primeira unidade
   function abrirNoModulo(arg) {
@@ -361,7 +391,7 @@
       '.cli2-voltar{align-self:flex-start;background:none;border:0;padding:0;color:#4E38B2;font:600 14px "DM Sans",system-ui,sans-serif;cursor:pointer;min-height:32px}' +
       '.cli2-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}' +
       '.cli2-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.cli2-nums>div{background:#fff;border:1px solid #E4DFF0;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:4px}' +
-      '.cli2-nums span{font-size:14px;color:#5D5868}.cli2-nums b{font:600 26px "DM Mono",ui-monospace,monospace}.cli2-nums small{font-size:13.5px;color:#5D5868}.cli2-vermelho{color:#B42318}.cli2-laranja{color:#B45309;font-weight:700}' +
+      '.cli2-nums span{font-size:14px;color:#5D5868}.cli2-nums b{font:600 26px "DM Mono",ui-monospace,monospace}.cli2-nums small{font-size:13.5px;color:#5D5868}.cli2-vermelho{color:#B42318}.cli2-laranja{color:#B45309;font-weight:700}.cli2-acoes{position:relative}.cli2-gc{position:absolute;right:0;top:calc(100% + 6px);z-index:50;background:#fff;border:1px solid #E4DFF0;border-radius:12px;box-shadow:0 12px 30px rgba(36,26,56,.14);padding:10px;display:flex;flex-direction:column;gap:4px;min-width:250px}.cli2-gc b{font-size:13px;color:#5D5868;padding:4px 8px}.cli2-gc button{all:unset;cursor:pointer;padding:9px 10px;border-radius:8px;font:600 14px "DM Sans",system-ui,sans-serif;color:#241A38}.cli2-gc button:hover,.cli2-gc button:focus-visible{background:#ECE8FA}.cli2-gc button span{font-weight:400;color:#7A7486;font-size:12px}' +
       '.cli2-item{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:13px 0;border-top:1px solid #EFEBF7}.cli2-item-txt{flex:1 1 320px;display:flex;flex-direction:column;gap:3px}.cli2-item-txt b{font-size:16px}.cli2-item-txt span{font-size:14px;color:#5D5868}' +
       '.cli2-mes{display:grid;grid-template-columns:10px 110px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #EFEBF7;font-size:15px}' +
       '.cli2-ponto{width:10px;height:10px;border-radius:50%}.cli2-mono{font-family:"DM Mono",ui-monospace,monospace;font-size:14px}.cli2-link{color:#4E38B2;font-weight:600;font-size:14px}' +

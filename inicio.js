@@ -171,7 +171,7 @@
     var assin = aguardandoAssinatura(ler('clientesInfo', {}), hoje);
     if (assin.length) itens.push(item('#B45309', plural(assin.length, 'contrato aguardando assinatura', 'contratos aguardando assinatura'),
       esc(assin.slice(0, 4).map(function (a) { return a.nome + (a.tipo === 'aditivo' ? ' (aditivo)' : '') + (a.dias != null ? ' · ' + (a.dias === 1 ? '1 dia' : a.dias + ' dias') : ''); }).join(', ')) + (assin.length > 4 ? '…' : '') +
-      ' · o hub confere sozinho de tempos em tempos', 'Conferir agora', 'assin'));
+      ' · o hub confere sozinho de tempos em tempos', 'Ver lista', 'assinlista'));
     var contas = []; try { contas = global.MGBFinanceiro && global.MGBFinanceiro.contasAvisar ? global.MGBFinanceiro.contasAvisar(hoje) : []; } catch (e) { contas = []; }
     var contasVenc = contas.filter(function (c) { return c.venc.dias <= 0; });
     if (contas.length) itens.push(item(contasVenc.length ? '#B42318' : '#B45309',
@@ -310,6 +310,7 @@
         var pend = global.MGBNovo.pendentesCadastro ? global.MGBNovo.pendentesCadastro() : [];
         if (pend.length === 1 && global.MGBNovo.abrirLead) global.MGBNovo.abrirLead(pend[0].id); else global.MGBNovo.abrir();
       }
+      else if (acao === 'assinlista') { if (global.MGBFluxos && global.MGBFluxos.abrirListaAssinaturas) global.MGBFluxos.abrirListaAssinaturas(); }
       else if (acao === 'assin') {
         b.disabled = true; b.textContent = 'Conferindo…';
         var fim = function (n) { b.disabled = false; b.textContent = n ? (n === 1 ? '1 assinado' : n + ' assinados') : 'Nenhum novo'; setTimeout(function () { try { montar(); } catch (e) {} }, n ? 400 : 2500); };

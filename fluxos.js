@@ -491,6 +491,48 @@
     nova.__fluxos = true; global.mgbConferirAssinaturas = nova;
   }
 
+  // Lista única de quem falta assinar (27/11, Usabilidade item 9): contratos e aditivos de todos os cadastros
+  // (clientes, condomínios, lojas do Mercadão), com dias desde o envio, contato e "Conferir agora".
+  var ROT_MOD = { elev: 'Tela Vertical', mercadao: 'Mercadão', radio: 'Rádio interna', tv: 'TV interna', vaapty: 'Vaapty', mb: 'Móveis Brasília', radioops: 'Rádio Moinho', taroba: 'Tarobá' };
+  function abrirListaAssinaturas() {
+    var antigo = document.getElementById('flx-assin'); if (antigo) antigo.remove();
+    var w = document.createElement('div'); w.id = 'flx-assin'; w.className = 'flx-fundo';
+    w.innerHTML = '<div class="flx-caixa flx-larga" role="dialog" aria-modal="true" aria-labelledby="flx-assin-t"><div class="flx-cab"><h2 id="flx-assin-t">Quem falta assinar</h2><button type="button" class="flx-link" data-fa="fechar">Fechar</button></div><div id="flx-assin-c"></div></div>';
+    document.body.appendChild(w);
+    function fechar() { w.remove(); }
+    function desenhar(msg) {
+      var ci = ler('clientesInfo') || {}, L = global.MGBInicio && global.MGBInicio.aguardandoAssinatura ? global.MGBInicio.aguardandoAssinatura(ci, new Date()) : [];
+      var linhas = L.map(function (a, i) {
+        var info = (ci[a.mod] || {})[a.nome] || {}, tel = String(info.tel || '').replace(/\D/g, ''), url = a.tipo === 'aditivo' ? '' : info.contratoEnviadoUrl;
+        var dias = a.dias == null ? 'data de envio não registrada' : a.dias === 0 ? 'enviado hoje' : 'enviado há ' + (a.dias === 1 ? '1 dia' : a.dias + ' dias');
+        return '<div class="flx-lin' + (a.dias != null && a.dias >= 7 ? ' flx-velho' : '') + '"><div><b>' + esc(a.nome) + '</b><span>' + esc(ROT_MOD[a.mod] || a.mod) + ' · ' + (a.tipo === 'aditivo' ? 'aditivo de renovação' : 'contrato') + ' · ' + esc(dias) +
+          (info.email ? ' · ' + esc(info.email) : '') + '</span></div><div class="flx-acs">' +
+          (tel ? '<a class="flx-btn2" href="https://wa.me/55' + tel + '?text=' + encodeURIComponent('Olá! Passando para lembrar do ' + (a.tipo === 'aditivo' ? 'aditivo' : 'contrato') + ' da MGB que enviamos para assinatura por e-mail (Assinafy). Qualquer dúvida, estou à disposição.') + '" target="_blank" rel="noopener">Lembrar no WhatsApp</a>' : '') +
+          (url && /^https:\/\//.test(url) ? '<a class="flx-btn2" href="' + esc(url) + '" target="_blank" rel="noopener">Ver documento</a>' : '') +
+          '<button type="button" class="flx-btn2" data-fa="ficha:' + i + '">Ficha</button></div></div>';
+      }).join('');
+      document.getElementById('flx-assin-c').innerHTML = '<p class="flx-sub">' + (L.length ? L.length + (L.length === 1 ? ' documento enviado à Assinafy ainda sem todas as assinaturas.' : ' documentos enviados à Assinafy ainda sem todas as assinaturas.') + ' O hub confere sozinho a cada 30 minutos.' : 'Nenhum documento aguardando assinatura.') + '</p>' +
+        '<div class="flx-bts"><button type="button" class="flx-btn" data-fa="conferir">Conferir agora</button><span class="flx-sub" role="status">' + esc(msg || '') + '</span></div>' +
+        (L.length ? '<div class="flx-lista">' + linhas + '</div>' : '');
+      w.__lista = L;
+    }
+    w.addEventListener('click', function (ev) {
+      if (ev.target === w) return fechar();
+      var b = ev.target.closest('[data-fa]'); if (!b) return;
+      var a = b.getAttribute('data-fa');
+      if (a === 'fechar') fechar();
+      else if (a === 'conferir') {
+        b.disabled = true; b.textContent = 'Conferindo…';
+        Promise.resolve(global.mgbConferirAssinaturas ? global.mgbConferirAssinaturas() : 0).then(function (n) {
+          desenhar(n ? (n === 1 ? '1 documento foi assinado.' : n + ' documentos foram assinados.') : 'Nenhuma assinatura nova.'); redesenharInicio();
+        }, function () { desenhar('Não consegui conferir agora. Tente de novo em instantes.'); });
+      } else if (a.indexOf('ficha:') === 0) { var x = (w.__lista || [])[+a.slice(6)]; fechar(); if (x && global.MGBClientes) global.MGBClientes.abrirPorNome(x.nome); }
+    });
+    w.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') fechar(); });
+    desenhar();
+    setTimeout(function () { var f = w.querySelector('[data-fa="conferir"]'); if (f) f.focus(); }, 0);
+  }
+
   // Formulário rápido de anunciante (sem CRM), aberto pelo Novo cliente → "Não está no CRM?"
   var formDireto = false;
   function formAnuncianteRapido() {
@@ -519,6 +561,10 @@
       '.flx-caixa h2{margin:0 0 6px;font-size:19px}.flx-sub{color:#5D5868;font-size:14px;margin:0 0 14px}.flx-campos{display:grid;gap:10px}' +
       '.flx-campos label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#5D5868}.flx-campos input{min-height:40px;border:1px solid #CFC7E6;border-radius:10px;padding:0 12px;font:400 15px "DM Sans",system-ui,sans-serif;color:#241A38}' +
       '.flx-prev{margin:14px 0 4px;padding:10px 12px;background:#ECE8FA;border-radius:10px;font-size:14px}.flx-erro{color:#B42318;font-size:13px;min-height:18px;margin:4px 0}.flx-bts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}' +
+      '.flx-larga{max-width:760px;max-height:86vh;overflow:auto}.flx-cab{display:flex;justify-content:space-between;align-items:center;gap:12px}' +
+      '.flx-lista{display:flex;flex-direction:column;margin-top:12px;border-top:1px solid #E4DFF0}.flx-lin{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #E4DFF0}' +
+      '.flx-lin>div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}.flx-lin b{font-size:15px}.flx-lin span{font-size:13px;color:#5D5868}.flx-velho b::after{content:" · há mais de uma semana";color:#B45309;font-weight:600;font-size:12.5px}' +
+      '.flx-acs{display:flex;gap:6px;flex-wrap:wrap}.flx-acs .flx-btn2{padding:7px 12px;font-size:12.5px;text-decoration:none;color:#4E38B2;border-color:#CFC7E6}' +
       '.flx-dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media (max-width:480px){.flx-dupla{grid-template-columns:1fr}}' +
       '.flx-caixa .flx-btn{background:#4E38B2}.flx-caixa .flx-btn2{color:#4E38B2;border-color:#CFC7E6}';
     document.head.appendChild(st);
@@ -562,6 +608,6 @@
     andarPagamentosAoRemover('tvCondoDespRemover', function () { return { mod: 'elev', item: ler('tvCondoSel') }; });
   }
 
-  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, formAnuncianteRapido: formAnuncianteRapido, repasseDoMes: repasseDoMes, coberturas: coberturas, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
+  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, formAnuncianteRapido: formAnuncianteRapido, abrirListaAssinaturas: abrirListaAssinaturas, repasseDoMes: repasseDoMes, coberturas: coberturas, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);
