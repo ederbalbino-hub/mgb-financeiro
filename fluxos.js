@@ -291,7 +291,8 @@
   // Painel da Tela Vertical: repasse 50/50, "Marcar relatório como enviado", "Nova despesa"
   // Repasse do mês (ano, mes0) com a regra de devolução, a partir do histórico da Tela Vertical
   var COBRE_DESDE = '2026-11';   // antes disso, mês no vermelho já era do Eder (não pergunta)
-  function tvCobre() { var r = ler('relAjustes'); if (!r || typeof r !== 'object') return {}; r.tvCobre = r.tvCobre || {}; return r.tvCobre; }
+  // Leitura não cria a chave: só olhar a tela não pode alterar os dados (auditoria 27/11). criar=true só ao gravar.
+  function tvCobre(criar) { var r = ler('relAjustes'); if (!r || typeof r !== 'object') return {}; if (!criar) return r.tvCobre || {}; r.tvCobre = r.tvCobre || {}; return r.tvCobre; }
   function repasseDoMes(ano, mes) {
     var h = []; try { h = global.elevExcedenteHistorico(); } catch (e) { return null; }
     var k = ano + '-' + String(mes + 1).padStart(2, '0');
@@ -304,7 +305,7 @@
     var L = repasseHistorico(h.map(function (x) { return { k: x.ano + '-' + String(x.mes + 1).padStart(2, '0'), resultado: x.resultado }; }), tvCobre(), COBRE_DESDE);
     return L.length ? L[L.length - 1].investidoCobrindo : { eder: 0, jadson: 0 };
   }
-  function tvEnviados() { var r = ler('relAjustes'); if (!r || typeof r !== 'object') return {}; r.tvEnviado = r.tvEnviado || {}; return r.tvEnviado; }
+  function tvEnviados(criar) { var r = ler('relAjustes'); if (!r || typeof r !== 'object') return {}; if (!criar) return r.tvEnviado || {}; r.tvEnviado = r.tvEnviado || {}; return r.tvEnviado; }
   function decorarPainelTV() {
     var root = document.getElementById('tvp-root'); if (!root || root.querySelector('.flx-socio')) return;
     var mesIso = ler('tvpMes'); var mm = /^(\d{4})-(\d{2})$/.exec(mesIso || ''); if (!mm) return;
@@ -324,9 +325,9 @@
     if (alvo && alvo.parentNode) alvo.parentNode.insertBefore(box, alvo.nextSibling); else root.appendChild(box);
     box.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-flx]'); if (!b) return;
-      var E = tvEnviados(), u = global.MGBAcesso && global.MGBAcesso.usuario ? (global.MGBAcesso.usuario() || {}) : {};
+      var E = tvEnviados(true), u = global.MGBAcesso && global.MGBAcesso.usuario ? (global.MGBAcesso.usuario() || {}) : {};
       var acao = b.getAttribute('data-flx');
-      if (acao.indexOf('cobre:') === 0) { tvCobre()[mesIso] = acao.slice(6); try { global.buildElevInvest(); } catch (e) {} }
+      if (acao.indexOf('cobre:') === 0) { tvCobre(true)[mesIso] = acao.slice(6); try { global.buildElevInvest(); } catch (e) {} }
       else if (acao === 'enviado') E[mesIso] = { em: new Date().toLocaleDateString('pt-BR'), por: u.nome || '' };
       else delete E[mesIso];
       if (typeof global.scheduleSave === 'function') global.scheduleSave();

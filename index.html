@@ -11717,7 +11717,7 @@ function buildReceitas(){
     const isElev=curMod==='elev';
     grid.innerHTML=items().map(item=>{
       const custo=totalOf(curMod,item);
-      const valorMes=isTaroba?recTarobaGetMes(item,selAno,selMes):recObj(curMod,item).valor;
+      const valorMes=isTaroba?recTarobaGetMes(item,selAno,selMes):isElev?(recOfMes('elev',item,selAno,selMes)||0):recObj(curMod,item).valor; // Tela Vertical: receita dos anunciantes no mês escolhido
       const mesesPb=valorMes>0?custo/valorMes:null;
       const cls=mesesPb?pbClass(mesesPb):'pb-neu';
       const pbStr=mesesPb?mesesPb.toFixed(1)+' meses':'sem receita';
@@ -12671,19 +12671,11 @@ function buildAnunciantes(){
   syncAnuncReceita();
 }
 
-function syncAnuncReceita(){
-  // Distribui receita dos anunciantes para rec[elev][tela]
-  const byTela=anuncRecByTela();
-  const elevMod=MODULES.find(m=>m.id==='elev');
-  if(!elevMod) return;
-  elevMod.items.forEach(tela=>{
-    if(!rec['elev']) rec['elev']={};
-    const existing=rec['elev'][tela]||{valor:0,inicio:'',meses:12};
-    // Só sobrescreve o valor, mantém inicio/meses se já configurados
-    rec['elev'][tela]={...existing, valor:byTela[tela]||0};
-  });
-  syncFinanceiro();
-}
+// Auditoria 27/11: antes, cada vez que a lista de anunciantes era desenhada, isto regravava em rec.elev[tela].valor
+// a receita de HOJE de cada condomínio. A receita da Tela Vertical é calculada na hora pelos anunciantes
+// (recOfMes → anuncRecByTelaMes) e ninguém lê mais esse valor; regravar só fazia "abrir a tela" alterar os dados
+// e disparar uma gravação da seção rec inteira (que podia passar por cima da mudança de outra pessoa).
+function syncAnuncReceita(){ /* não grava mais nada — ver comentário acima */ }
 
 function toggleTela(el){
   el.classList.toggle('selected');
@@ -16568,7 +16560,7 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 <script src="telas2.js?v=20261124"></script>
 <script src="painel.js?v=20261127d"></script>
 <script src="historico.js?v=20261127"></script>
-<script src="fluxos.js?v=20261127g"></script>
+<script src="fluxos.js?v=20261127aud"></script>
 <script src="assistente.js?v=20261029b"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261123">
 </body>
