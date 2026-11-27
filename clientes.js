@@ -351,10 +351,10 @@
       '.cli2-chip{min-height:40px;padding:0 14px;border:1px solid #CFC7E6;border-radius:999px;background:#fff;color:#3A3446;font:600 14px "DM Sans",system-ui,sans-serif;cursor:pointer}.cli2-chip.cli2-on{background:#4E38B2;border-color:#4E38B2;color:#fff}' +
       '.cli2-bloco{background:#fff;border:1px solid #E4DFF0;border-radius:18px;padding:20px 22px}.cli2-sem-pad{padding:0;overflow:hidden}' +
       '.cli2-rolar{overflow-x:auto;position:relative}.cli2-tab{width:100%;border-collapse:collapse;min-width:620px;font-size:14.5px}' +
-      '.cli2-tab th{text-align:left;padding:12px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5D5868!important;background:#fff!important}.cli2-tab th:first-child,.cli2-tab td:first-child{padding-left:20px!important}' +
+      '.cli2-tab th{text-align:left;padding:12px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#5D5868!important;background:#fff!important}.cli2-tab th:first-child,.cli2-tab td:first-child{padding-left:20px!important}' +
       '.cli2-tab td{padding:12px!important;border-top:1px solid #EFEBF7;white-space:normal!important}.cli2-n{text-align:right!important;font-family:"DM Mono",ui-monospace,monospace;white-space:nowrap!important}' +
       '.cli2-linha{cursor:pointer}.cli2-linha:hover td{background:#FBFAFE}.cli2-linha:focus-visible{outline:3px solid #6C55DB;outline-offset:-3px}.cli2-vazio{padding:18px 20px!important;color:#5D5868}' +
-      '.cli2-pill{display:inline-block;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}' +
+      '.cli2-pill{display:inline-block;font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}' +
       '.cli2-ok{color:#15803D;background:#E8F6EE}.cli2-erro{color:#B42318;background:#FDECEA}.cli2-atencao{color:#8A4B08;background:#FDF2E3}.cli2-acao{color:#4E38B2;background:#ECE8FA}.cli2-neutro{color:#5D5868;background:#EFEBF7}' +
       '.cli2-ficha{display:flex;flex-wrap:wrap;gap:0;max-width:1240px;margin:-28px auto 0}.cli2-ficha>main{flex:999 1 600px;min-width:0;padding:28px 24px 28px 0;display:flex;flex-direction:column;gap:16px}' +
       '.cli2-ficha>aside{flex:1 1 320px;max-width:100%;background:#fff;border-left:1px solid #E4DFF0;padding:28px;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;margin-right:-28px}' +
