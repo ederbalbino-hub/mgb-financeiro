@@ -18,9 +18,12 @@
     if (l.estagio === 'fechado') return (l.itemCriado && l.itemCriado !== 'None') ? { txt: 'cliente', tom: 'ok' } : { txt: 'esperando cadastro', tom: 'atencao' };
     if (l.estagio === 'perdido') return null;
     if (!l.lembrete) return { txt: 'sem retorno marcado', tom: 'neutro' };
-    var d = String(l.lembrete).slice(0, 10).split('-').reverse().slice(0, 2).join('/');
+    var dia = String(l.lembrete).slice(0, 10), d = dia.split('-').reverse().slice(0, 2).join('/');
+    // 27/11 (usabilidade): retorno de hoje aparecia como "Retorno era 27/11" (atrasado) no próprio dia
+    if (dia === hojeISO()) return { txt: 'Retorno hoje', tom: 'atencao' };
     return { txt: 'Retorno ' + d, tom: vencido ? 'erro' : 'neutro' };
   }
+  function hojeISO() { var h = new Date(); return h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0') + '-' + String(h.getDate()).padStart(2, '0'); }
   function resumoFunil(leads) {
     var r = { total: leads.length, porProduto: {}, negociando: 0, fechados: 0 };
     leads.forEach(function (l) {
@@ -131,7 +134,9 @@
       else {
         var datas = pend.map(function (l) { return String(l.lembrete || '').slice(0, 10); }).filter(Boolean).sort();
         var antigo = datas.length ? datas[0].split('-').reverse().slice(0, 2).join('/') : '';
-        hoje.innerHTML = '<section class="fun2-retornos"><div class="fun2-ret-cab"><b>' + pend.length + (pend.length === 1 ? ' retorno atrasado' : ' retornos atrasados') + (antigo ? ' · o mais antigo é de ' + antigo : '') + '</b>' +
+        var hj = hojeISO(), nHoje = datas.filter(function (x) { return x === hj; }).length, nAtr = pend.length - nHoje;
+        var titulo = [nHoje ? nHoje + (nHoje === 1 ? ' retorno para hoje' : ' retornos para hoje') : '', nAtr ? nAtr + (nAtr === 1 ? ' atrasado' : ' atrasados') + (antigo && antigo !== hj.split('-').reverse().slice(0, 2).join('/') ? ' (o mais antigo é de ' + antigo + ')' : '') : ''].filter(Boolean).join(' · ');
+        hoje.innerHTML = '<section class="fun2-retornos"><div class="fun2-ret-cab"><b>' + titulo + '</b>' +
           '<button type="button" class="fun2-btn" id="fun2-ver-lista" aria-expanded="' + verLista + '">' + (verLista ? 'Esconder a lista' : 'Ver a lista de retornos') + '</button></div>' +
           (verLista ? '<ul>' + pend.map(function (l) {
             var tel = String(l.tel || '').replace(/\D/g, ''), q = ''; try { q = global.leadFmtLembrete(l); } catch (e) {}
@@ -194,7 +199,8 @@
       '.fun2-prox{display:block;width:100%;margin-top:8px;min-height:34px;border:0;border-radius:8px;background:#4E38B2;color:#fff;font:700 13px "DM Sans",system-ui,sans-serif;cursor:pointer}' +
       '.fun2-prox2{background:#fff;color:#4E38B2;border:1px solid #CFC7E6}.fun2-prox:focus-visible{outline:2px solid #2A1760;outline-offset:2px}' +
       '.fun2-oculto{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}' +
-      '@media (hover:hover) and (min-width:900px){.fun2-mover{opacity:.0;transition:opacity .15s}.fun2-card:hover .fun2-mover,.fun2-mover:focus{opacity:1}}' +
+      // 27/11 (usabilidade): o seletor de etapa ficava invisível até passar o mouse; agora fica sempre à vista
+
       '@media (max-width:760px){#fun2-barra,#page-leads.fun2 #leads-hoje{padding-left:16px;padding-right:16px;margin-left:0!important;margin-right:0!important}#page-leads.fun2 .leads-board{padding:8px 16px 24px!important}.fun2-resumo{margin-left:0;width:100%}}';
     doc.head.appendChild(s);
   }

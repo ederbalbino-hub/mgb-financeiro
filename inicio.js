@@ -26,11 +26,12 @@
   function competencia(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
 
   function resumoFaturamento(emissoes, comp) {
-    var r = { total: 0, valor: 0, pagos: 0, pendentes: 0, vencidos: 0, semStatus: 0, vencidosNomes: [], semNota: [] };
+    var r = { total: 0, valor: 0, pagos: 0, pendentes: 0, vencidos: 0, semStatus: 0, vencidosNomes: [], semNota: [], erros: [] };
     Object.keys(emissoes || {}).forEach(function (k) {
       var i = k.lastIndexOf('|');
       if (i < 0 || k.slice(i + 1) !== comp) return;
       var e = emissoes[k] || {};
+      if (e.status === 'erro') { r.erros.push(e.cliente || k.slice(0, i)); return; } // não foi cobrado: vira pendência, não "sem status"
       r.total++;
       r.valor += Number(e.valor) || 0;
       var pg = e.pgManual ? 'pago' : e.pg;
@@ -140,6 +141,8 @@
     var itens = [];
     if (fat.vencidos) itens.push(item('#B42318', plural(fat.vencidos, 'boleto de ' + nomeMes + ' vencido', 'boletos de ' + nomeMes + ' vencidos'),
       'Cobrar ou dar baixa se o cliente pagou por fora · ' + esc(fat.vencidosNomes.slice(0, 4).join(', ')) + (fat.vencidosNomes.length > 4 ? '…' : ''), 'Ver boletos', 'fat', true));
+    if (fat.erros.length) itens.push(item('#B42318', plural(fat.erros.length, 'cobrança de ' + nomeMes + ' deu erro', 'cobranças de ' + nomeMes + ' deram erro'),
+      esc(fat.erros.slice(0, 4).join(', ')) + (fat.erros.length > 4 ? '…' : '') + ' · não foi cobrado; corrija os dados e emita de novo', 'Ver', 'fat', !fat.vencidos));
     var antes = vencidosAnteriores(emissoes, comp, 3);
     if (antes.length) itens.push(item('#B42318', plural(antes.length, 'boleto vencido de mês anterior', 'boletos vencidos de meses anteriores'),
       esc(antes.slice(0, 4).map(function (v) { return v.cliente + ' (' + MESES[+v.comp.slice(5) - 1] + ')'; }).join(', ')) + (antes.length > 4 ? '…' : '') + ' · ainda sem pagamento no Asaas',
@@ -165,7 +168,7 @@
       esc(fat.semNota.slice(0, 4).join(', ')) + (fat.semNota.length > 4 ? '…' : '') + ' · o boleto saiu, a nota não voltou da prefeitura', 'Conferir', 'fat'));
     if (funil.semCadastro) itens.push(item('#4E38B2', plural(funil.semCadastro, 'cliente fechado esperando cadastro', 'clientes fechados esperando cadastro'),
       eder ? 'A Karen recebe e-mail e cadastra pelo Novo cliente' : 'Entrar em contato, fechar o contrato e cadastrar pelo Novo cliente', eder ? '' : 'Cadastrar', 'novo'));
-    if (retornos) itens.push(item('#4E38B2', plural(retornos, 'retorno do funil para hoje', 'retornos do funil para hoje'), 'Leads com lembrete vencido', 'Abrir funil', 'funil', !fat.vencidos));
+    if (retornos) itens.push(item('#4E38B2', plural(retornos, 'retorno do funil para hoje ou atrasado', 'retornos do funil para hoje ou atrasados'), 'Contatos com retorno marcado até hoje', 'Abrir funil', 'funil', !fat.vencidos));
 
     var h = '';
     h += '<header class="ini-topo"><div><span class="ini-data">' + esc(hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })) + '</span>' +
@@ -207,7 +210,7 @@
       var est = [['Novo', funil.novo, '#8C7BD6'], ['Contatado', funil.contatado, '#6C55DB'], ['Negociando', funil.negociando, '#4E38B2'], ['Fechado', funil.fechado, '#15803D'], ['Perdido', funil.perdido, '#CFC7E6']];
       h += '<section class="ini-card"><div class="ini-cab"><h2>Funil de vendas</h2><button type="button" class="ini-link" data-ini="funil">Abrir o funil</button></div>' +
         '<div class="ini-funil">' + est.map(function (e) { return '<div><span>' + e[0] + '</span><b>' + e[1] + '</b><i style="background:' + e[2] + '"></i></div>'; }).join('') + '</div>' +
-        (funil.semCadastro ? '<p class="ini-nota">' + funil.semCadastro + ' dos ' + funil.fechado + ' fechados ainda esperam a Karen cadastrar. Ao marcar um lead como Fechado, a Karen e você recebem e-mail com os dados de contato.</p>' : '') +
+        (funil.semCadastro ? '<p class="ini-nota">' + (funil.semCadastro === funil.fechado ? (funil.fechado === 1 ? 'O cliente fechado ainda espera' : 'Os ' + funil.fechado + ' clientes fechados ainda esperam') : funil.semCadastro + ' dos ' + funil.fechado + ' clientes fechados ainda ' + (funil.semCadastro === 1 ? 'espera' : 'esperam')) + ' a Karen cadastrar. Ao marcar um lead como Fechado, a Karen e você recebem e-mail com os dados de contato.</p>' : '') +
         '</section>';
 
       var a = hoje.getFullYear(), m = hoje.getMonth(), rec = 0, desp = 0, pes = null;
@@ -339,6 +342,8 @@
       '.ini-carteira button{all:unset;cursor:pointer;padding:18px 20px;display:flex;flex-direction:column;gap:4px;border-right:1px solid #EFEBF7}' +
       '.ini-carteira b{font-size:26px}.ini-carteira span{font-size:14px;color:#5D5868}.ini-carteira button:hover{background:#F6F4FA}' +
       '#ini-outros>div,#ini-renov>section{margin:10px 0 0!important;background:#fff!important;border:1px solid #E4DFF0!important;border-left:0!important;border-radius:12px!important;color:#241A38!important;box-shadow:none!important;font-family:"DM Sans",system-ui,sans-serif!important}' +
+      // 27/11 (usabilidade): no celular, "Precisa de você hoje" e o faturamento vêm antes dos atalhos (antes ficavam abaixo da primeira tela)
+      '@media (max-width:640px){#inicio{display:flex;flex-direction:column}#inicio>*{order:4}#inicio>.ini-topo{order:0}#inicio>[aria-labelledby="ini-pend"]{order:1}#inicio>.ini-duas{order:2}#inicio>[aria-labelledby="ini-rapido"]{order:3}}' +
       '@media (max-width:640px){#inicio{padding:22px 16px 48px}#inicio h1{font-size:27px}.ini-item{flex-wrap:wrap}.ini-item .ini-btn{width:100%}.ini-funil{grid-template-columns:repeat(3,minmax(0,1fr))}}';
     doc.head.appendChild(s);
   }

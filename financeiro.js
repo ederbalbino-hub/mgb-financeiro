@@ -383,7 +383,7 @@
     var azul = res >= 0;
     var subTopo = (rec || desp) ? ('Receita ' + (Math.abs(rec - recA) < 0.005 ? 'igual a ' : rec < recA ? 'menor que ' : 'maior que ') + nomeAnt + ', despesa ' + (Math.abs(desp - despA) < 0.005 ? 'igual' : desp < despA ? 'menor' : 'maior') +
       (falta.length ? ' e ' + falta.length + (falta.length === 1 ? ' coisa' : ' coisas') + ' para lançar antes de fechar o mês.' : '.')) : 'Ainda não há lançamentos neste mês.';
-    var faltaTxt = falta.length ? (tarobaPend ? 'faltam as comissões da Tarobá' : 'falta lançar ' + falta.length) : 'tudo lançado';
+    var faltaTxt = falta.length ? (tarobaPend ? '1 pendência: comissões da Tarobá' : falta.length + (falta.length === 1 ? ' pendência de lançamento' : ' pendências de lançamento')) : 'tudo lançado';
 
     // dados extras do painel compacto (27/11, referência do painel do Eder)
     var cli = tenta('coletaClientesMes', ano, mes) || [];
@@ -425,7 +425,7 @@
 
       '<section class="fin2-hero" aria-label="Resultado de ' + esc(MESES_N[mes]) + '"><div class="fin2-hero-txt">' +
         '<span class="fin2-hero-chip">Resultado de ' + esc(MESES_N[mes]) + ' · ' + esc(faltaTxt) + '</span>' +
-        '<div><h3>' + (azul ? 'Sobraram ' : 'Faltaram ') + '<span class="fin2-mono" style="color:' + (azul ? DESTAQUE : '#FCA5A5') + '">R$ ' + brl(Math.abs(res)) + '</span></h3>' +
+        '<div><h3>' + (azul ? 'Sobraram ' : 'Prejuízo de ') + '<span class="fin2-mono" style="color:' + (azul ? DESTAQUE : '#FCA5A5') + '">R$ ' + brl(Math.abs(res)) + '</span></h3>' +
         '<p>Receita <b>R$ ' + brl(rec) + '</b> · despesa <b>R$ ' + brl(desp) + '</b> · ' + esc(dif(recA, rec)) + '</p></div>' +
         '<div class="fin2-hero-nums fin2-hero-4">' +
           '<div><b class="fin2-mono">' + curto(recebido) + '</b><small>recebido de ' + curto(prevCli) + '</small></div>' +
@@ -692,8 +692,11 @@
       var atual = dp[d.m.id][d.item][d.idx][C.dKey] || { pago: false, obs: '' };
       dp[d.m.id][d.item][d.idx][C.dKey] = Object.assign({}, atual, { pago: novo, dataPago: novo ? hoje : '' });
     });
+    // 27/11 (usabilidade): a linha sumia para "Pagas" sem aviso; agora diz o que fez e deixa desfazer
+    if (typeof global.mgbAcao === 'function') global.mgbAcao((novo ? 'Conta paga: ' : 'Conta voltou para a pagar: ') + g.titulo + ' (' + brl(g.total) + ')');
     tenta('scheduleSave');
     desenharContas();
+    if (typeof global.mgbAviso === 'function') global.mgbAviso((novo ? g.titulo + ' paga em ' + hoje : g.titulo + ' voltou para "A pagar"'), { rotulo: 'Desfazer', acao: function () { marcarConta(chave); } });
   }
   function salvarDia(chave, valor) {
     var dp = ler('despPagamentos', null);
@@ -716,12 +719,15 @@
     var pago = L.reduce(function (a, g) { return a + g.itens.filter(function (d) { return estaPago(d, C.dKey); }).reduce(function (b, d) { return b + d.vlrMes; }, 0); }, 0);
     var nLanc = L.reduce(function (a, g) { return a + g.itens.length; }, 0);
     var aPagar = L.filter(function (g) { return !g.pago; }), pagas = L.filter(function (g) { return g.pago; });
-    var lista = filtroContas === 'pagas' ? pagas : aPagar;
+    var lista = filtroContas === 'pagas' ? pagas : aPagar.slice().sort(function (a, b) { // vencidas e as que vencem antes em cima
+      var va = situacaoVenc(a.dia, s.ano, s.mes), vb = situacaoVenc(b.dia, s.ano, s.mes);
+      return (va ? va.dias : 99) - (vb ? vb.dias : 99) || (a.dia || 99) - (b.dia || 99);
+    });
     var pct = total > 0 ? Math.min(100, pago / total * 100) : 0;
     var linhas = lista.map(function (g) {
       var k = esc(g.chave), aberto = !!abertas[g.chave];
       var dia = editandoDia === g.chave
-        ? '<label class="fin2-oculto" for="fin2-dia">Dia de vencimento de ' + esc(g.titulo) + '</label><input id="fin2-dia" class="fin2-dia" inputmode="numeric" maxlength="2" value="' + (g.dia || '') + '" data-fin2-dia="' + k + '">'
+        ? '<label class="fin2-dia-rot" for="fin2-dia">Vence todo dia</label><input id="fin2-dia" class="fin2-dia" inputmode="numeric" maxlength="2" placeholder="10" value="' + (g.dia || '') + '" data-fin2-dia="' + k + '"><button type="button" class="fin2-link fin2-dia-ok" data-fin2="dia-ok:' + k + '">OK</button>'
         : '<button type="button" class="fin2-link" data-fin2="dia:' + k + '" aria-label="Dia de vencimento de ' + esc(g.titulo) + '">' + (g.dia ? 'dia ' + g.dia : 'definir dia') + '</button>';
       var sv = !g.pago && editandoDia !== g.chave ? situacaoVenc(g.dia, s.ano, s.mes) : null;
       if (sv) dia += ' ' + chip(sv.txt, sv.tom);
@@ -891,6 +897,7 @@
       else if (acao === 'filtro') { filtroContas = arg; desenharContas(); }
       else if (acao === 'abrir') { abertas[arg] = !abertas[arg]; desenharContas(); }
       else if (acao === 'dia') { editandoDia = arg; desenharContas(); }
+      else if (acao === 'dia-ok') { var di = doc.getElementById('fin2-dia'); if (editandoDia && di) salvarDia(arg, di.value); }
       else if (acao === 'lancar-despesa') { if (global.MGBLancar && global.MGBLancar.despesa) global.MGBLancar.despesa(); }
       else if (acao === 'cliente') { aberto = arg; desenharModulo(); desenharPainel(); }
       else if (acao === 'encerrados') { mostrarEnc = !mostrarEnc; desenharModulo(); }
@@ -963,6 +970,7 @@
       '.fin2-conta-cab{border-top:0;padding-top:12px;padding-bottom:8px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5D5868;font-weight:700}' +
       '.fin2-conta-txt{display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;min-width:0}.fin2-conta-txt b{font-size:16px}.fin2-conta-txt span{font-size:14px;color:#5D5868}' +
       '.fin2-paga .fin2-conta-txt b,.fin2-paga .fin2-valor{color:#5D5868;text-decoration:line-through}.fin2-venc{font-size:14px;color:#5D5868}.fin2-valor{text-align:right;font-size:15px}' +
+      '.fin2-dia-rot{font-size:13px;color:#5D5868;margin-right:6px}.fin2-dia-ok{margin-left:6px;min-height:36px}' +
       '.fin2-dia{width:56px;height:36px;border:1px solid #4E38B2;border-radius:8px;padding:0 8px;font:15px "DM Mono",monospace}' +
       '.fin2-seta{width:36px;height:36px;border:0;border-radius:8px;background:none;color:#5D5868;cursor:pointer;display:flex;align-items:center;justify-content:center}.fin2-seta:hover{background:#ECE8FA}.fin2-girada svg{transform:rotate(90deg)}' +
       '.fin2-det{background:#FBFAFE;padding:6px 20px 14px 56px;display:flex;flex-direction:column}.fin2-det>div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #EFEBF7;font-size:14px}.fin2-det-l{color:#5D5868;font-size:13.5px!important}.fin2-det-l i{font-style:normal;font-size:12px;color:#8A8494}.fin2-det p{margin:8px 0 0}' +

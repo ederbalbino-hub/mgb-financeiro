@@ -407,8 +407,9 @@
       if (!e) continue;
       var pago = e.pgManual || e.pg === 'pago';
       hist.push('<li><span class="fat2-ponto" style="background:' + (pago ? '#15803D' : e.pg === 'vencido' ? '#B42318' : '#E0A458') + '"></span><div><b>' +
-        esc(nomeMes(mc).charAt(0).toUpperCase() + nomeMes(mc).slice(1)) + ' · ' + (pago ? 'pago' : e.pg === 'vencido' ? 'vencido' : (e.pg || e.status || 'emitido')) + '</b>' +
-        '<span>' + (e.boleto ? 'Boleto R$ ' + brl(e.boleto) + ' · ' : '') + (e.nf ? 'NF ' + esc(e.nf) : (e.modo === 'boleto' ? 'sem nota' : 'nota sem número')) + (e.em ? ' · emitido em ' + new Date(e.em).toLocaleDateString('pt-BR') : '') + '</span></div></li>');
+        esc(nomeMes(mc).charAt(0).toUpperCase() + nomeMes(mc).slice(1)) + ' · ' + (pago ? 'pago' : e.pg === 'vencido' ? 'vencido' : (e.status === 'erro' ? 'erro ao emitir' : (e.pg || e.status || 'emitido'))) + '</b>' +
+        (e.status === 'erro' ? '<span>Deu erro em ' + (e.em ? new Date(e.em).toLocaleDateString('pt-BR') : '') + ': nada foi cobrado</span></div></li>' :
+        '<span>' + (e.boleto ? 'Boleto R$ ' + brl(e.boleto) + ' · ' : '') + (e.nf ? 'NF ' + esc(e.nf) : (e.modo === 'boleto' ? 'sem nota' : 'nota sem número')) + (e.em ? ' · emitido em ' + new Date(e.em).toLocaleDateString('pt-BR') : '') + '</span></div></li>'));
     }
     var a = i.anterior;
     p.innerHTML =
@@ -421,7 +422,12 @@
           return '<button type="button" aria-pressed="' + (r.modo === o[0]) + '" data-fat2="modo:' + id + ':' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>') +
         '<div class="fat2-p-num"><div><span>Nota</span><b>' + brl(r.valor) + '</b></div><div><span>Boleto</span><b>' + (r.modo === 'nota' ? '—' : brl(boleto(r))) + '</b></div>' +
         (r.modo === 'nota' || em ? '' : '<label>Vence dia<input data-fat2-venc="' + id + '" inputmode="numeric" value="' + esc((function () { try { return global.fFatVencDia(r); } catch (e2) { return ''; } })()) + '"></label>') + '</div>' +
-        (r.erro ? '<p class="fat2-msgerro">' + esc(r.erro) + '</p>' : '') + '</section>' +
+        // 27/11 (usabilidade): o valor do mês só dava para mudar na planilha; agora muda aqui enquanto não foi emitido
+        (em ? '' : '<label class="fat2-valor-mes">Valor deste mês (R$)<input data-fat2-valor="' + id + '" inputmode="decimal" autocomplete="off" value="' + (Number(r.valor) > 0 ? brl(r.valor) : '') + '" placeholder="0,00"></label>' +
+          '<p class="fat2-sub">Vale só para ' + esc(nomeMes(c)) + '. O valor do contrato continua o mesmo.</p>') +
+        (r.erro ? '<div class="fat2-msgerro" role="alert"><b>Não foi emitido.</b> ' + esc(erroClaro(r.erro)) +
+          '<div class="fat2-erro-acoes"><button type="button" class="fat2-btn2" data-fat2="editar:' + id + '">Corrigir dados</button><button type="button" class="fat2-btn" data-fat2="reemitir:' + id + '">Emitir de novo</button></div>' +
+          '<details><summary>Mensagem do Asaas</summary>' + esc(r.erro) + '</details></div>' : '') + '</section>' +
       (hist.length ? '<section><h4>Histórico</h4><ol class="fat2-hist">' + hist.join('') + '</ol></section>' : '') +
       '<section class="fat2-p-acoes"><h4>Ações</h4>' +
         (r.boletoUrl && r.modo !== 'nota' ? '<button type="button" class="fat2-btn" data-fat2="whats:' + id + '">Enviar boleto por WhatsApp</button><a class="fat2-btn2" href="' + esc(r.boletoUrl) + '" target="_blank" rel="noopener">Abrir boleto</a>' : '') +
@@ -431,6 +437,27 @@
         (r.paymentId || r.invoiceId ? '<button type="button" class="fat2-btn2 fat2-perigo" data-fat2="cancelar:' + id + '">Cancelar esta cobrança</button>' : '') +
       '</section>' +
       '<p class="fat2-sub">Último mês faturado na planilha: ' + esc(r.ultimoMesFaturado ? String(r.ultimoMesFaturado).slice(0, 7) : '—') + '</p>';
+  }
+
+  // Erro do Asaas em português simples (a mensagem original fica em "Mensagem do Asaas")
+  function erroClaro(m) {
+    m = String(m || '');
+    if (/cpf|cnpj/i.test(m)) return 'O CNPJ ou CPF do cliente está errado. Corrija em "Corrigir dados" e emita de novo.';
+    if (/e-?mail/i.test(m)) return 'O e-mail do cliente está errado. Corrija em "Corrigir dados" e emita de novo.';
+    if (/cep|endere|logradouro|bairro|munic/i.test(m)) return 'O endereço do cliente está incompleto. Corrija em "Corrigir dados" e emita de novo.';
+    if (/servi[cç]o|c[oó]digo/i.test(m)) return 'O código de serviço da nota está faltando. Fale com o Eder antes de emitir de novo.';
+    if (/failed to fetch|network|conex/i.test(m)) return 'Sem conexão com o Asaas. Confira a internet e emita de novo.';
+    return 'O Asaas recusou a cobrança. Confira os dados do cliente e emita de novo.';
+  }
+  function reemitir(id) {
+    var r = linhas().filter(function (x) { return x.id === id; })[0];
+    if (!r || typeof global.fFatEmitirUma !== 'function') return;
+    if (!global.confirm('Emitir de novo a cobrança de ' + (r.apelido || r.cliente) + ' (R$ ' + brl(r.valor) + ')?')) return;
+    if (typeof global.mgbAcao === 'function') global.mgbAcao('Emitiu de novo a cobrança de ' + (r.apelido || r.cliente));
+    Promise.resolve(global.fFatEmitirUma(r)).then(function (st) {
+      if (st === 'aguardando-nota' && typeof global.fFatAguardarAutorizacao === 'function') global.fFatAguardarAutorizacao(r.id);
+      desenharLista();
+    });
   }
 
   // ── Eventos ──────────────────────────────────────────────────────────────
@@ -467,6 +494,7 @@
       else if (partes[0] === 'recibo') global.fFatRecibo(id);
       else if (partes[0] === 'editar') global.fFatEditar(id);
       else if (partes[0] === 'cancelar') global.fFatCancelar(id);
+      else if (partes[0] === 'reemitir') reemitir(id);
     } catch (e) { console.error('faturamento:', acao, e); }
   }
 
@@ -554,7 +582,9 @@
       '.fat2-p-num b{font:600 16px "DM Mono",ui-monospace,monospace;color:#241A38}.fat2-p-num input{height:32px;border:1px solid #CFC7E6;border-radius:8px;padding:0 8px;font:15px "DM Mono",ui-monospace,monospace;width:100%;box-sizing:border-box}' +
       '.fat2-hist{list-style:none;margin:0;padding:0}.fat2-hist li{display:flex;gap:12px;padding:10px 0;border-top:1px solid #EFEBF7}.fat2-hist div{display:flex;flex-direction:column;gap:2px}.fat2-hist span{font-size:13.5px;color:#5D5868}' +
       '.fat2-ponto{width:10px;height:10px;border-radius:50%;margin-top:6px;flex:none}.fat2-p-acoes{display:flex;flex-direction:column;gap:8px}.fat2-p-acoes .fat2-btn,.fat2-p-acoes .fat2-btn2{justify-content:flex-start;text-align:left;padding-top:8px;padding-bottom:8px}' +
-      '.fat2-msgerro{margin:10px 0 0;color:#B42318;font-size:14px}' +
+      '.fat2-msgerro{margin:12px 0 0;color:#7A1A12;background:#FDECEA;border:1px solid #F5C2BC;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.45}' +
+      '.fat2-msgerro b{color:#B42318}.fat2-erro-acoes{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}.fat2-msgerro details{font-size:12.5px;color:#5D5868}.fat2-msgerro summary{cursor:pointer}' +
+      '.fat2-valor-mes{display:flex;flex-direction:column;gap:4px;margin-top:10px;font-size:13px;color:#5D5868}.fat2-valor-mes input{height:44px;border:1px solid #CFC7E6;border-radius:10px;padding:0 12px;font:16px "DM Mono",ui-monospace,monospace;color:#241A38;max-width:220px}' +
       '.fat2-btn:focus-visible,.fat2-btn2:focus-visible,.fat2-aba:focus-visible,.fat2-icone:focus-visible,.fat2-mais:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
       '@media (max-width:700px){.fat2-etapas{grid-template-columns:repeat(2,minmax(0,1fr))}.fat2-busca{margin-left:0;width:100%}.fat2-busca input{width:100%}.fat2-mes h2{font-size:23px}}';
     doc.head.appendChild(s);

@@ -10,6 +10,7 @@ window.coi={shouldRegister:()=>localStorage.getItem('mgb_coi')==='1',shouldDereg
 <script src="coi-serviceworker.min.js"></script>
 <script src="vendor/supabase-js-2.49.4.min.js"></script>
 <script src="api-token.js?v=20261118b"></script>
+<script src="log.js?v=20261127a"></script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -923,7 +924,7 @@ body{-webkit-font-smoothing:antialiased}
     </div>
     <div class="sb-grupo">
     <div class="sb-lbl" style="margin-top:10px">Rádio Moinho</div>
-    <div class="sb-nav-item" id="nav-radioops" title="Rádio Ops" onclick="goPage('radioops')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M7 8l10-5"/><circle cx="9" cy="14.5" r="2.5"/><path d="M15 13h3M15 16h3"/></svg>Rádio Ops<span id="nav-rops-badge" style="display:none;margin-left:auto;font-size:10px;font-weight:800;background:#118A5D;color:#fff;border-radius:9px;padding:1px 7px">💰</span></div>
+    <div class="sb-nav-item" id="nav-radioops" title="Rádio Moinho" onclick="goPage('radioops')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M7 8l10-5"/><circle cx="9" cy="14.5" r="2.5"/><path d="M15 13h3M15 16h3"/></svg>Rádio Ops<span id="nav-rops-badge" style="display:none;margin-left:auto;font-size:10px;font-weight:800;background:#118A5D;color:#fff;border-radius:9px;padding:1px 7px">💰</span></div>
     </div>
     <div class="sb-grupo">
     <div class="sb-lbl" style="margin-top:10px">Ferramentas</div>
@@ -3946,15 +3947,16 @@ vCalc();
             </div>
             <div class="anunc-form-field" style="flex:1;min-width:160px">
               <label class="anunc-form-lbl">Descrição</label>
-              <input class="anunc-form-inp" id="ei-desc" placeholder="ex: Instalação (telas, cabos, kits)" style="width:100%">
+              <input class="anunc-form-inp" id="ei-desc" placeholder="ex.: gasolina da visita, instalação de telas" style="width:100%">
             </div>
             <div class="anunc-form-field" style="width:120px">
               <label class="anunc-form-lbl">Valor (R$)</label>
-              <input class="anunc-form-inp" id="ei-valor" type="number" step="0.01" min="0" placeholder="0,00">
+              <input class="anunc-form-inp" id="ei-valor" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00">
             </div>
             <div class="anunc-form-field" style="width:150px">
-              <label class="anunc-form-lbl" for="ei-tipo">É</label>
+              <label class="anunc-form-lbl" for="ei-tipo">Tipo</label>
               <select class="anunc-form-inp" id="ei-tipo" style="width:100%">
+                <option value="">Escolha…</option>
                 <option value="investimento">Investimento (ex.: instalar telas)</option>
                 <option value="despesa">Despesa (ex.: gasolina)</option>
               </select>
@@ -3962,6 +3964,7 @@ vCalc();
             <div class="anunc-form-field" style="width:110px">
               <label class="anunc-form-lbl">Pago por</label>
               <select class="anunc-form-inp" id="ei-pagopor" style="width:100%">
+                <option value="">Escolha…</option>
                 <option value="jadson">Jadson</option>
                 <option value="eder">Eder</option>
               </select>
@@ -5623,7 +5626,7 @@ function copiarSpot() {
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div class="anunc-form-field"><label class="anunc-form-lbl">Nome / empresa</label><input class="anunc-form-inp" id="lead-nome" placeholder="Ex: Condomínio Aurora" autocomplete="off" list="lead-nome-l" oninput="leadNomeEscolhido()" onchange="leadNomeEscolhido()" style="width:100%"><datalist id="lead-nome-l"></datalist></div>
-          <div class="anunc-form-field"><label class="anunc-form-lbl" id="lead-estagio-lbl">Estágio do lead</label><div id="lead-estagio-chips" role="radiogroup" aria-labelledby="lead-estagio-lbl" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+          <div class="anunc-form-field"><label class="anunc-form-lbl" id="lead-estagio-lbl">Etapa</label><div id="lead-estagio-chips" role="radiogroup" aria-labelledby="lead-estagio-lbl" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">WhatsApp (DDD + número)</label><input class="anunc-form-inp" id="lead-tel" name="telefone" type="tel" placeholder="43999998888" inputmode="numeric" autocomplete="tel" style="width:100%"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Responsável (contato)</label><input class="anunc-form-inp" id="lead-responsavel" placeholder="Ex: João Silva" autocomplete="off" style="width:100%"></div>
@@ -5685,14 +5688,14 @@ function copiarSpot() {
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Valor mensal estimado (R$)</label><input class="anunc-form-inp" id="lead-valor" type="number" step="0.01" min="0" placeholder="0,00" autocomplete="off" style="width:100%"></div>
             <div class="anunc-form-field" style="flex:1;min-width:140px"><label class="anunc-form-lbl">Pagamento</label><select class="anunc-form-inp" id="lead-formapg" style="width:100%" title="Permuta: o cliente paga em produto/serviço — cadastre o saldo em Cobrança Mensal › Tela Vertical › Permutas"><option value="faturamento">💰 Faturamento</option><option value="permuta">🔄 Permuta</option></select></div>
-            <div class="anunc-form-field" style="flex:1;min-width:180px"><label class="anunc-form-lbl">📅 Próximo follow-up (data e hora)</label><input class="anunc-form-inp" id="lead-lembrete" type="datetime-local" style="width:100%;color-scheme:light"></div>
+            <div class="anunc-form-field" style="flex:1;min-width:180px"><label class="anunc-form-lbl">📅 Próximo retorno (data e hora)</label><input class="anunc-form-inp" id="lead-lembrete" type="datetime-local" style="width:100%;color-scheme:light"></div>
           </div>
           <div class="anunc-form-field"><label class="anunc-form-lbl">Observações</label><textarea class="anunc-form-inp" id="lead-obs" rows="2" style="width:100%;resize:vertical;font-family:'DM Sans',sans-serif"></textarea></div>
           <div id="lead-historico-wrap" style="display:none">
             <label class="anunc-form-lbl">Histórico</label>
             <div style="display:flex;gap:6px;margin:4px 0 8px">
               <input class="anunc-form-inp" id="lead-nota" placeholder="Registrar contato/nota..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addLeadNota();}">
-              <button class="anunc-btn" onclick="addLeadNota()">+ nota</button>
+              <button class="anunc-btn" onclick="addLeadNota()" title="A anotação já fica salva no histórico">Adicionar (já fica salvo)</button>
             </div>
             <div id="lead-historico-list" style="max-height:120px;overflow:auto;display:flex;flex-direction:column;gap:5px"></div>
           </div>
@@ -8495,7 +8498,7 @@ async function fFatEmitirSelecionados(){
   // vencimento de CADA cliente (dia próprio na coluna "Dia venc."), não o 15 padrão
   const _vc={}; selecionados.filter(r=>r.modo!=='nota').forEach(r=>{ const v=fFatVenc(r).br; (_vc[v]=_vc[v]||[]).push(r.apelido||r.cliente); });
   const _vtxt=Object.keys(_vc).length?Object.keys(_vc).map(v=>'   · '+v+': '+_vc[v].join(', ')).join('\n'):'   · (nenhum boleto)';
-  if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' pra '+selecionados.length+' cliente(s):\n• '+nAmbos+' nota + boleto\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nVencimentos:\n'+_vtxt+'\n\nTotal em boletos: '+f(selecionados.filter(r=>r.modo!=='nota').reduce((a,r)=>a+fFatBoleto(r),0))+' (líquido do ISS retido, só nos que têm nota)\n\nConfirma?')) return;
+  if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' as cobranças de '+selecionados.length+(selecionados.length===1?' cliente':' clientes')+':\n• '+nAmbos+' nota + boleto\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nVencimentos:\n'+_vtxt+'\n\nTotal em boletos: '+f(selecionados.filter(r=>r.modo!=='nota').reduce((a,r)=>a+fFatBoleto(r),0))+' (líquido do ISS retido, só nos que têm nota)\n\nConfirma?')) return;
   const btn=document.getElementById('f-fat-btn-emitir'); const st=document.getElementById('f-fat-status');
   btn.disabled=true; btn.style.opacity='.6';
   let ok=0, falhas=0;
@@ -8505,8 +8508,12 @@ async function fFatEmitirSelecionados(){
     if(status==='erro') falhas++; else ok++;
     await new Promise(res=>setTimeout(res,400));
   }
-  st.innerHTML='<div class="ferr-info" style="color:'+(falhas?'var(--red)':'var(--green)')+'">✓ '+ok+' enviada(s) pra Asaas'+(falhas?', '+falhas+' com erro (veja a lista)':'')+'. Acompanhando autorização das notas…</div>';
+  // 27/11 (usabilidade): começava com "✓" mesmo com erro, em vermelho miúdo
+  st.innerHTML='<div class="ferr-info" style="font-size:14px;font-weight:600;color:'+(falhas?'var(--red)':'var(--green)')+'">'+(falhas?'⚠ '+ok+(ok===1?' cobrança emitida':' cobranças emitidas')+'. '+falhas+(falhas===1?' deu erro':' deram erro')+': abra a linha marcada "Erro ao emitir" para ver o que corrigir.':'✓ '+ok+(ok===1?' cobrança enviada':' cobranças enviadas')+' ao Asaas.')+' Acompanhando a autorização das notas…</div>';
+  try{ if(window.mgbAcao) mgbAcao('Emitiu o faturamento: '+ok+' cobrança(s)'+(falhas?', '+falhas+' com erro':'')); }catch(e){}
   btn.disabled=false; btn.style.opacity='1';
+  selecionados.forEach(r=>{ if(r.status==='erro') r.selecionado=false; }); // linha com erro não fica pronta para reenviar sem correção
+  try{ fFatLista(); }catch(e){}
   selecionados.filter(r=>r.invoiceId&&r.status!=='erro').forEach(r=>fFatAguardarAutorizacao(r.id));
 }
 /* ---- IMAGEM helpers ---- */
@@ -10315,7 +10322,7 @@ function buildLancRec(){
     return;
   }
 
-  g('lanc-rec-body').innerHTML=linhas.map((l,i)=>`<tr style="${l.pago?'opacity:.7':''}">
+  g('lanc-rec-body').innerHTML=linhas.map((l,i)=>`<tr data-pago="${l.pago?1:0}" data-busca="${(l.item+' '+l.modLabel+' '+(l.sub||'')).toLowerCase().replace(/"/g,'')}" style="${l.pago?'opacity:.7':''}">
     <td style="font-size:10px;color:var(--muted)">${l.modIcon} ${l.modLabel}</td>
     <td style="font-weight:500">${l.item}${l.sub?`<div style="font-size:9px;color:var(--hint);margin-top:2px">${l.sub}</div>`:''}</td>
     <td class="tr mono" style="color:var(--green);font-weight:700">${f(l.valor)}</td>
@@ -10409,10 +10416,12 @@ function recStatusAsaas(l){
     const ok=leoUnidades.filter(u=>u.status==='emitida'||u.status==='enviada').length;   // Léo: notas sem boleto, aba Nota Fiscal › Léo
     h=ok?chip('rgba(108,85,219,.12)','#6C55DB','Notas Léo: '+ok+' de '+leoUnidades.length,'Notas emitidas na aba Nota Fiscal › Léo (sem boleto no Asaas)'):chip('rgba(148,140,170,.12)','var(--hint)','Notas Léo não emitidas','Aba Nota Fiscal › Léo');
   }
+  else if(l.pago) h=chip('var(--gd)','var(--green)','✓ Recebido','Marcado como recebido');
   else if(l.fatId) h=chip('rgba(148,140,170,.12)','var(--hint)','Ainda não emitido','Está na planilha do dia 5 ('+l.fatId+'), mas a cobrança deste mês ainda não foi emitida no Asaas.');
   else h=chip('rgba(148,140,170,.12)','var(--hint)','Fora da planilha de faturamento','Este cliente não está na planilha "MGB Faturamento - Clientes", então não tem boleto/nota no dia 5. Se ele deve pagar por boleto, inclua na planilha (ou lance pelo Novo cliente).');
   if(a&&a.boletoUrl) h+=` <a href="${a.boletoUrl}" target="_blank" rel="noopener" style="font-size:10px">boleto</a>`;
-  if(!(a&&a.st==='pago')) h+=` <a href="#" onclick="event.preventDefault();recBaixaManual('${l.modId}','${it}','${l.key}')" style="font-size:9px;color:var(--hint);margin-left:4px">${l.fonte==='manual'&&l.pago?'desfazer':'baixa manual'}</a>`;
+  // 27/11 (usabilidade): era um link cinza de 9 px ("baixa manual") que a Karen não achava
+  if(!(a&&a.st==='pago') && !(l.pago&&l.fonte!=='manual')) h+=` <button type="button" class="usab-recebi${l.fonte==='manual'&&l.pago?' desfazer':''}" onclick="recBaixaManual('${l.modId}','${it}','${l.key}')">${l.fonte==='manual'&&l.pago?'Desfazer baixa':'Recebi (Pix/dinheiro)'}</button>`;
   return h;
 }
 function toggleRecPago(modId,item,key,idx){
@@ -12357,8 +12366,8 @@ function buildElevInvest(){
   g('einvest-totais').innerHTML=`
     <div class="kpi"><div class="kpi-lbl">Investido até agora</div><div class="kpi-val">${f(t.total)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Despesas pagas pelos sócios</div><div class="kpi-val">${f(t.despesas)}</div></div>
-    <div class="kpi"><div class="kpi-lbl">CC Jadson</div><div class="kpi-val">${f(t.jadson)}</div></div>
-    <div class="kpi"><div class="kpi-lbl">CC Eder</div><div class="kpi-val">${f(t.eder)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Conta do sócio Jadson</div><div class="kpi-val">${f(t.jadson)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Conta do sócio Eder</div><div class="kpi-val">${f(t.eder)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Meta ${ELEV_TELAS_QTD} telas × ${f(ELEV_INVEST_POR_TELA)}</div><div class="kpi-val">${f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Meses no vermelho (somados ao investido de quem cobriu)</div><div class="kpi-val" style="color:var(--red)">${f(exc.reduce((a,x)=>a+x.excedente,0))}</div></div>`;
   g('einvest-exc').innerHTML=exc.length?'<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="color:var(--muted);font-size:10.5px;text-transform:uppercase"><th style="text-align:left;padding:4px 6px">Mês</th><th style="text-align:right;padding:4px 6px">Receita</th><th style="text-align:right;padding:4px 6px">Despesa</th><th style="text-align:right;padding:4px 6px">Excedente (Eder)</th></tr>'+exc.map(x=>'<tr><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+MESES[x.mes]+'/'+x.ano+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right">'+f(x.rec)+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right">'+f(x.desp)+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;color:'+(x.excedente>0?'var(--red)':'var(--muted)')+'">'+f(x.excedente)+'</td></tr>').join('')+'</table>':'';
@@ -12389,7 +12398,7 @@ function toggleElevInvestForm(){
   form.classList.toggle('open',!open);
   if(!open){
     buildElevInvest();
-    g('ei-desc').value='Instalação (telas, cabos, kits)'; g('ei-valor').value=''; g('ei-pagopor').value='jadson'; g('ei-tipo').value='investimento';
+    g('ei-desc').value=''; g('ei-valor').value=''; g('ei-pagopor').value=''; g('ei-tipo').value=''; // 27/11 (usabilidade): nada pré-escolhido — gasolina do Eder entrava como investimento do Jadson
     g('ei-data').value=new Date().toISOString().slice(0,10);
   }
 }
@@ -12403,17 +12412,19 @@ function editElevInvest(id){
   editElevInvestId=id;
   g('einvest-form').classList.add('open');
   buildElevInvest();
-  g('ei-item').value=x.item; g('ei-desc').value=x.descricao||''; g('ei-valor').value=x.valor;
+  g('ei-item').value=x.item; g('ei-desc').value=x.descricao||''; g('ei-valor').value=Number(x.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   g('ei-pagopor').value=x.pagoPor; g('ei-data').value=x.data||''; g('ei-tipo').value=x.tipo==='despesa'?'despesa':'investimento';
 }
 function saveElevInvest(){
   const item=g('ei-item').value;
   const descricao=g('ei-desc').value.trim();
-  const valor=parseFloat(g('ei-valor').value)||0;
+  const valor=(window.mgbNumBR?mgbNumBR(g('ei-valor').value):parseFloat(g('ei-valor').value))||0;
   const pagoPor=g('ei-pagopor').value;
   const data=g('ei-data').value;
-  const tipo=g('ei-tipo').value==='despesa'?'despesa':'investimento';
-  if(!item||!valor||!data){ alert('Preencha condomínio, valor e data.'); return; }
+  const tipo=g('ei-tipo').value;
+  const falta=[!item&&'condomínio',!(valor>0)&&'valor',!tipo&&'tipo',!pagoPor&&'quem pagou',!data&&'data'].filter(Boolean);
+  if(falta.length){ alert('Falta preencher: '+falta.join(', ')+'.'+(!(valor>0)&&g('ei-valor').value?'\nValor: use só números, por exemplo 85,50.':'')); return; }
+  if(window.mgbAcao) mgbAcao((tipo==='despesa'?'Despesa':'Investimento')+' '+f(valor)+' paga por '+(pagoPor==='jadson'?'Jadson':'Eder')+(descricao?' ('+descricao+')':'')+' · Tela Vertical');
   if(editElevInvestId){
     const x=elevInvestimentos.find(v=>v.id===editElevInvestId);
     if(x) Object.assign(x,{item,descricao,valor,pagoPor,data,tipo});
@@ -15810,6 +15821,8 @@ function fatAbrirFaturamento(comp){
   setTimeout(function(){ try{
     const t=[].slice.call(document.querySelectorAll('#page-contabilidade .ferr-tab')).find(x=>((x.getAttribute('onclick')||'').indexOf("'fat'")>-1));
     showContabTab('fat',t);
+    // 27/11 (usabilidade): a lista ficava ~900 px abaixo do topo; abre já na aba, e no celular a aba ativa aparece na fileira
+    if(t){ try{ t.scrollIntoView({block:'start',inline:'center'}); }catch(e){ t.scrollIntoView(); } }
     // Veio de um aviso da Home com mês marcado (ex.: pendência de 10/26): já abre naquela competência
     // e carrega a lista, pra pendência aparecer na tela com o link "💵 baixa" em cada linha.
     if(comp&&/^\d{4}-\d{2}$/.test(comp)){ const c=document.getElementById('f-fat-comp'); if(c) c.value=comp; fFatCarregar(); }
@@ -16539,18 +16552,19 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 </script>
 <script src="lancar.js?v=20261127f"></script>
 <script src="novo.js?v=20261127b"></script>
-<script src="acesso.js?v=20261127d"></script>
-<script src="inicio.js?v=20261127g"></script>
-<script src="faturamento.js?v=20261119b"></script>
-<script src="financeiro.js?v=20261127e"></script>
-<script src="funil.js?v=20261127d"></script>
-<script src="clientes.js?v=20261127e"></script>
-<script src="menu.js?v=20261124"></script>
+<script src="acesso.js?v=20261127u"></script>
+<script src="inicio.js?v=20261127u"></script>
+<script src="faturamento.js?v=20261127u"></script>
+<script src="financeiro.js?v=20261127u"></script>
+<script src="funil.js?v=20261127u"></script>
+<script src="clientes.js?v=20261127u"></script>
+<script src="menu.js?v=20261127u"></script>
 <script src="telas2.js?v=20261124"></script>
-<script src="painel.js?v=20261127d"></script>
+<script src="painel.js?v=20261127u"></script>
 <script src="historico.js?v=20261127"></script>
 <script src="fluxos.js?v=20261127g"></script>
 <script src="assistente.js?v=20261029b"></script>
+<script src="usabilidade.js?v=20261127a"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261123">
 </body>
 </html>

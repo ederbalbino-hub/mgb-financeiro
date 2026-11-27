@@ -12,6 +12,7 @@
 //           e-mail só, com um PDF anexado por nota. Devolve {enviados, falharam:[...]}
 
 import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../lib/http.js";
+import { registrarLog } from "../lib/log.js";
 
 const BASE = {
   sandbox: "https://api-sandbox.asaas.com/v3",
@@ -40,10 +41,11 @@ async function buscarPdfBase64(ambiente, invoiceId) {
   return { base64: buf.toString("base64"), numero: j.number || invoiceId };
 }
 
-export default async function handler(req, res) {
+export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   // CORS só pro hub + login obrigatório (admin/financeiro): manda e-mail em nome da MGB.
   if (cors(req, res, { metodos: "GET,POST,OPTIONS" })) return;
-  if (!(await exigirLogin(req, res, PAPEIS_FINANCEIRO))) return;
+  const usuario = await exigirLogin(req, res, PAPEIS_FINANCEIRO);
+  if (!usuario) return;
 
   const action = req.query.action || "";
 
@@ -98,6 +100,12 @@ export default async function handler(req, res) {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.message || `Resend respondeu ${r.status}`);
 
+      // Registro de ações (hub_log). Nunca derruba a resposta.
+      await registrarLog(env, fetchFn, {
+        usuario, origem: "email",
+        acao: `Enviou e-mail com ${anexos.length} nota(s) para ${para}${falharam.length ? ` · ${falharam.length} não anexada(s)` : ""}`,
+        detalhe: { para, assunto: assunto || null, enviados: anexos.length, falharam: falharam.map((x) => x.invoiceId), notas: notas.map((n) => n.invoiceId).slice(0, 30), resendId: j.id || null },
+      });
       return res.status(200).json({ enviados: anexos.length, falharam, resendId: j.id || null });
     }
 

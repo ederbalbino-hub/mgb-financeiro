@@ -239,7 +239,9 @@
       '#mgb-login button{min-height:48px;border:0;border-radius:10px;background:#4E38B2;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}#mgb-login button:hover{background:#2A1760}' +
       '#mgb-login button[disabled]{opacity:.6;cursor:wait}#mgb-login .erro:not(:empty){color:#B42318;background:#FDECEA;border-radius:10px;padding:10px 12px;font-size:14px}' +
       '@media (max-width:640px){#mgb-login .mgb-marca{padding:28px 24px;min-height:0}#mgb-login .mgb-marca h2{font-size:28px}#mgb-login form{padding:28px 22px}}' +
-      '#mgb-login .ok{color:#15803D;background:#E8F6EE;border-radius:10px;padding:10px 12px;font-size:14px}#mgb-login .link{background:none;border:0;min-height:0;height:auto;padding:0;color:#4E38B2;font-weight:600;font-size:13px;text-decoration:underline;cursor:pointer;align-self:flex-start}' +
+      '#mgb-login .ok{color:#15803D;background:#E8F6EE;border-radius:10px;padding:10px 12px;font-size:14px}#mgb-login .link{background:none;border:0;min-height:0;height:auto;padding:0;color:#4E38B2;font-weight:600;font-size:13px;text-decoration:underline;cursor:pointer;align-self:flex-start;padding:10px 0;min-height:40px}' +
+      '#mgb-login .mgb-senha-cx{position:relative;display:block}#mgb-login .mgb-senha-cx input{width:100%;box-sizing:border-box;padding-right:96px}' +
+      '#mgb-login .mgb-ver{position:absolute;right:6px;top:6px;min-height:36px;height:36px;padding:0 12px;background:#F1EEFA;color:#3E2B9E;font-size:14px;font-weight:600}#mgb-login .mgb-ver:hover{background:#E4DEF7}' +
       '#mgb-pill{position:fixed;right:16px;bottom:16px;z-index:9000;font-family:"DM Sans",system-ui,sans-serif}' +
       '@media (max-width:768px){#mgb-pill{bottom:84px;right:12px}}' +
       '#mgb-pill>button{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 6px;border-radius:999px;border:1px solid #ddd8ce;background:#fff;box-shadow:0 4px 16px rgba(36,26,56,.12);cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;color:#241a38}' +
@@ -252,7 +254,9 @@
       '#mgb-painel select{height:38px;border:1px solid #cfc9bd;border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit}' +
       '#mgb-painel .sair{height:38px;border:1px solid #ddd8ce;border-radius:9px;background:#fff;font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;color:#b42318}' +
       '#mgb-vercomo{position:fixed;top:0;left:0;right:0;z-index:9500;background:#7a3e00;color:#fff;font:600 13px "DM Sans",system-ui,sans-serif;padding:8px 16px;display:flex;justify-content:center;gap:12px;align-items:center;flex-wrap:wrap}' +
-      '#mgb-vercomo button{background:#fff;color:#7a3e00;border:0;border-radius:7px;padding:5px 10px;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer}';
+      '#mgb-vercomo button{background:#fff;color:#7a3e00;border:0;border-radius:7px;padding:5px 10px;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer;min-height:32px}' +
+      // a faixa empurra a página para baixo em vez de cobrir o topo (no celular cobria o botão do menu)
+      'body.mgb-com-faixa{padding-top:var(--mgb-faixa,0px)}body.mgb-com-faixa .mobile-topbar{top:var(--mgb-faixa,0px)}';
     var st = doc.createElement('style');
     st.id = 'mgb-acesso-css';
     st.textContent = css;
@@ -609,10 +613,11 @@
         var m = modo();
         h += '<div class="t">Modo</div><div class="seg" role="group" aria-label="Modo">' +
           '<button type="button" data-acao="modo" data-v="meudia" class="' + (m === 'meudia' ? 'on' : '') + '">Meu dia</button>' +
-          '<button type="button" data-acao="modo" data-v="geral" class="' + (m === 'geral' ? 'on' : '') + '">Visão geral</button></div>';
+          '<button type="button" data-acao="modo" data-v="geral" class="' + (m === 'geral' ? 'on' : '') + '">Visão geral</button></div>' +
+          '<div style="font-size:12.5px;color:#6b6578;line-height:1.4;margin-top:-4px">' + (m === 'meudia' ? 'Meu dia: só as telas que você usa no dia a dia.' : 'Visão geral: todas as telas do hub.') + '</div>';
         h += '<label class="t" for="mgb-vercomo-sel">Ver como</label><select id="mgb-vercomo-sel" data-acao="vercomo">' +
           '<option value="">Eu mesmo</option>' +
-          ['financeiro', 'bureau', 'programacao'].map(function (p) {
+          ['financeiro', 'programacao'].map(function (p) { // Guina (bureau) saiu em 19/11: fora do "Ver como" (Diego, 27/11)
             return '<option value="' + p + '"' + (verComo === p ? ' selected' : '') + '>' + PERFIS[p].rotulo + '</option>';
           }).join('') + '</select>';
       }
@@ -623,10 +628,12 @@
 
   function montarFaixaVerComo() {
     var f = doc.getElementById('mgb-vercomo');
-    if (!verComo) { if (f) f.remove(); return; }
+    if (!verComo) { if (f) f.remove(); doc.body.classList.remove('mgb-com-faixa'); return; }
     if (!f) { f = doc.createElement('div'); f.id = 'mgb-vercomo'; doc.body.appendChild(f); }
     f.innerHTML = '<span>Você está vendo o hub como ' + PERFIS[verComo].rotulo + '. O que você mudar aqui vale de verdade.</span>' +
       '<button type="button" data-acao="voltar">Voltar para mim</button>';
+    doc.documentElement.style.setProperty('--mgb-faixa', f.offsetHeight + 'px');
+    doc.body.classList.add('mgb-com-faixa');
   }
 
   doc.addEventListener('click', function (e) {
@@ -640,7 +647,11 @@
     if (a === 'sair') sair();
   });
   doc.addEventListener('change', function (e) {
-    if (e.target && e.target.getAttribute('data-acao') === 'vercomo') { verComo = e.target.value; definirPerfil(); }
+    if (e.target && e.target.getAttribute('data-acao') === 'vercomo') {
+      verComo = e.target.value;
+      var pl = doc.getElementById('mgb-pill'); if (pl) pl.setAttribute('data-aberto', '0'); // fecha o painel ao escolher
+      definirPerfil();
+    }
   });
 
   // ── Login ──────────────────────────────────────────────────────────────
@@ -664,11 +675,18 @@
     var el = formulario(
       '<div style="display:flex;flex-direction:column;gap:6px"><h1>Entrar</h1><p>Use o e-mail e a senha do seu convite.</p></div>' +
       '<label for="mgb-usuario">E-mail<input id="mgb-usuario" name="email" type="email" autocomplete="username" autocapitalize="none" required></label>' +
-      '<label for="mgb-senha">Senha<input id="mgb-senha" name="senha" type="password" autocomplete="current-password" required></label>' +
+      '<label for="mgb-senha">Senha<span class="mgb-senha-cx"><input id="mgb-senha" name="senha" type="password" autocomplete="current-password" required>' +
+        '<button type="button" class="mgb-ver" id="mgb-ver-senha" aria-pressed="false" aria-label="Mostrar a senha">Mostrar</button></span></label>' +
       '<div class="erro" role="alert" id="mgb-erro">' + esc(aviso || '') + '</div>' +
       '<button type="submit">Entrar</button>' +
       '<button type="button" class="link" id="mgb-esqueci">Esqueci minha senha</button>');
     var u = doc.getElementById('mgb-usuario');
+    doc.getElementById('mgb-ver-senha').addEventListener('click', function () {
+      var s1 = doc.getElementById('mgb-senha'), ver = s1.type === 'password';
+      s1.type = ver ? 'text' : 'password';
+      this.textContent = ver ? 'Esconder' : 'Mostrar'; this.setAttribute('aria-pressed', String(ver));
+      this.setAttribute('aria-label', ver ? 'Esconder a senha' : 'Mostrar a senha');
+    });
     u.value = ler(K_ULTIMO) || '';
     (u.value ? doc.getElementById('mgb-senha') : u).focus();
     el.querySelector('form').addEventListener('submit', function (e) {
@@ -687,7 +705,9 @@
 
     if (usuario.indexOf('@') !== -1 && sb()) {
       sb().auth.signInWithPassword({ email: usuario, password: senha }).then(function (r) {
-        if (r.error) return falhou(/invalid/i.test(r.error.message) ? 'E-mail ou senha incorretos.' : 'Não foi possível entrar: ' + r.error.message);
+        if (r.error) return falhou(/invalid/i.test(r.error.message) ? 'E-mail ou senha incorretos. Se esqueceu a senha, toque em "Esqueci minha senha" aqui embaixo.'
+          : /fetch|network|conex/i.test(r.error.message) ? 'Sem conexão com a internet. Confira o Wi-Fi ou os dados e tente de novo.'
+          : 'Não foi possível entrar: ' + r.error.message);
         gravar(K_ULTIMO, usuario);
         global.location.reload(); // recarrega para buscar os dados já com o login
       }).catch(function () { falhou('Sem conexão com o servidor. Tente de novo.'); });
@@ -705,7 +725,7 @@
         gravar(K_SESSAO, JSON.stringify({ token: res.j.token, usuario: res.j.usuario }));
         global.location.reload();
       })
-      .catch(function (e) { falhou(e.message === 'Failed to fetch' ? 'Sem conexão com o servidor. Tente de novo.' : e.message); });
+      .catch(function (e) { falhou(e.message === 'Failed to fetch' ? 'Sem conexão com a internet. Confira o Wi-Fi ou os dados e tente de novo.' : e.message); });
   }
 
   function mostrarEsqueci(email) {
@@ -768,7 +788,7 @@
     gravar(K_SESSAO, null);
     sessao = null; perfilAtual = null; verComo = '';
     var p = doc.getElementById('mgb-pill'); if (p) p.remove();
-    var f = doc.getElementById('mgb-vercomo'); if (f) f.remove();
+    var f = doc.getElementById('mgb-vercomo'); if (f) f.remove(); doc.body.classList.remove('mgb-com-faixa');
     var fim = function () { mostrarLogin(); };
     if (sb()) sb().auth.signOut().then(fim, fim); else fim();
   }

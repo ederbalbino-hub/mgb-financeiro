@@ -44,3 +44,10 @@ test("saudação pela hora", () => {
   assert.equal(I.saudacao(14), "Boa tarde");
   assert.equal(I.saudacao(20), "Boa noite");
 });
+
+test("faturamento do mês: cobrança com erro vira pendência, não 'sem status'", () => {
+  const r = I.resumoFaturamento({ "a|2026-11": { valor: 100, status: "erro", cliente: "Loja A" }, "b|2026-11": { valor: 50, pg: "pago" } }, "2026-11");
+  assert.deepEqual(r.erros, ["Loja A"]);
+  assert.equal(r.total, 1);
+  assert.equal(r.semStatus, 0);
+});

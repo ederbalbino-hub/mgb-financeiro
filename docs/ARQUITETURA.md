@@ -134,6 +134,44 @@ Mapa aprovado pelo Diego: https://claude.ai/artifact/3xiWpn4fCh3xXh2A32GjoT. O `
 
 Testes: `bot/test/fluxos.test.js` e `bot/test/notificacao.test.js`.
 
+## Registro de ações (hub_log)
+
+Pedido do Diego em 27/11/2026: tudo o que a Karen fizer fica registrado no banco para consulta. Vale para todos os usuários.
+
+- **Tabela:** `public.hub_log`, criada pela migração `20261127200000_hub_log.sql`. Só o servidor grava, pela função `registrar_log`. O navegador não lê nem escreve nessa tabela.
+- **Sem poda:** o registro fica guardado para sempre. Cada linha é pequena, porque o estado inteiro de cada versão já fica em `hub_estado_historico`.
+- **O que entra:** uma linha por ação que altera algo. Consultas não entram.
+
+| Origem | Quando | O que guarda |
+|---|---|---|
+| `estado` | cada salvamento (`bot/api/estado.js`) | as seções que mudaram; nas listas, quantos itens antes e depois e os ids incluídos, removidos e alterados; a versão gravada |
+| `asaas` | emitir e cancelar | cliente, valor, ids do boleto e da nota, status |
+| `email` | envio das notas do Léo | para quem e quantas notas |
+| `faturamento` | incluir e marcar como emitido na planilha | cliente, id e mês |
+| `assinafy` | mandar documento para assinatura | nome do documento e signatários (nunca o texto do contrato) |
+
+- **Frases legíveis:** as telas podem chamar `window.mgbLog('Baixa manual: Saul Elkind · nov/2026')`, definido em `log.js`. A frase vai no próximo salvamento, no campo `_acoes`. O servidor tira esse campo antes de gravar o estado e guarda a frase na coluna `acao`. Sem frase, a coluna `acao` recebe um resumo automático ("Salvou: leads, anunciantes").
+- **O log nunca atrapalha o trabalho:** se o banco não responder, ou se a tabela ainda não existir, o salvamento e a emissão continuam normalmente. A falha só aparece no console do Vercel.
+
+Como consultar (SQL Editor do Supabase):
+
+```sql
+-- O que a Karen fez nos últimos 7 dias
+select em at time zone 'America/Sao_Paulo' as quando, origem, acao, secoes
+from public.hub_log
+where login = 'karen' and em > now() - interval '7 days'
+order by em desc;
+
+-- Quem removeu anunciantes neste mês
+select em, nome, acao, detalhe->'anunciantes' as anunciantes
+from public.hub_log
+where 'anunciantes' = any(secoes) and detalhe->'anunciantes' ? 'removidos'
+  and em >= date_trunc('month', now())
+order by em desc;
+```
+
+Para ver o estado exato antes e depois de uma linha, procure a mesma versão (`versao`) em `hub_estado_historico`, considerando a poda de 30 dias que vale para essa tabela.
+
 ## Operação
 
 ### Publicar
