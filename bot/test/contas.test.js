@@ -83,3 +83,22 @@ test("ninguém voltou a usar toISOString() para o mês ou o dia de hoje no front
   }
   assert.deepEqual(achados, []);
 });
+
+test("Faturamento: regravar a emissão (sincronizar com o Asaas) não apaga a baixa manual", () => {
+  let salvou = 0;
+  const c = novoCtx({
+    document: { getElementById: (id) => (id === "f-fat-comp" ? { value: "2026-11" } : null) },
+    fatEmissoes: { "c7|2026-11": { status: "aguardando-nota", paymentId: "pay_1", pgManual: true } },
+    scheduleSave: () => { salvou++; },
+  });
+  // a nota foi autorizada: a sincronização regrava o registro com o status novo
+  c.fFatGuardar({ id: "c7", status: "emitida", modo: "ambos", valor: 500, paymentId: "pay_1", nfNumero: "123", emitidoEm: "2026-11-05T12:00:00Z" });
+  const e = c.fatEmissoes["c7|2026-11"];
+  assert.equal(e.status, "emitida");
+  assert.equal(e.nf, "123");
+  assert.equal(e.pgManual, true);
+  assert.equal(salvou, 1);
+  // sem baixa manual antes, continua sem
+  c.fFatGuardar({ id: "c8", status: "emitida", modo: "ambos", valor: 300 });
+  assert.equal(c.fatEmissoes["c8|2026-11"].pgManual, undefined);
+});

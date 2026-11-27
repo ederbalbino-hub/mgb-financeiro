@@ -7862,9 +7862,13 @@ function fFatGuardar(r){
   const em=r.emitidoEm||new Date().toISOString();
   // status de pagamento mais velho que a emissão = sobra do mês anterior — não entra no registro novo
   const pgOk=r.statusPagamento&&!(r.statusPagamentoEm&&(new Date(r.statusPagamentoEm)<new Date(em)));
+  const ant=fatEmissoes[fFatKey(r)];
   fatEmissoes[fFatKey(r)]={ status:r.status, modo:r.modo, valor:r.valor, boleto:fFatBoleto(r), paymentId:r.paymentId||null, invoiceId:r.invoiceId||null,
     boletoUrl:r.boletoUrl||null, erro:r.erro||null, em:em, nf:r.nfNumero||null, cliente:r.apelido||r.cliente||null,
     pg:pgOk?(r.statusPagamento||null):null, pgEm:pgOk?(r.statusPagamentoEm||null):null };
+  // auditoria 27/11: a baixa manual (dinheiro, Pix direto) é marcada só aqui; regravar o registro (ex.: sincronizar
+  // com o Asaas quando a nota é autorizada) não pode apagá-la, senão a cobrança volta como pendente no Início.
+  if(ant&&ant.pgManual) fatEmissoes[fFatKey(r)].pgManual=true;
   try{ scheduleSave(); }catch(e){}
 }
 function fFatAplicarHistorico(){

@@ -21,7 +21,7 @@ function linha(nome) { const m = new RegExp('^function ' + nome + '\\s*\\(', 'm'
 
 const FUNCS = ['mesLocal', 'diaLocal', 'ymKey', 'impostoIss', 'impostoSimples', 'impostoAliq', 'impostoRotulo', 'pesValorNoMes', 'pesPulou', 'pessoalRecMes', 'pessoalDespMes',
   'anuncRecByTelaMes', 'recOfMes', 'recModMes', 'finYear', 'finGetRecPrevista', 'receitaOficialMes', 'finGetRec', 'despPagKey',
-  'coletaDespesasMes', 'despesaTotalMes', 'despesaTotalMesMod', 'finGetDesp', 'elevInvestTotais', 'elevInvestidoDoItem', 'elevMesResumo', 'fFatBoleto', 'fFatNoContrato',
+  'coletaDespesasMes', 'despesaTotalMes', 'despesaTotalMesMod', 'finGetDesp', 'elevInvestTotais', 'elevInvestidoDoItem', 'elevMesResumo', 'fFatBoleto', 'fFatKey', 'fFatGuardar', 'fFatNoContrato',
   'relAnualDados', 'despCompIsAtivo', 'contratosLista', 'recTarobaGetMes', 'tarobaRecMap', 'recPagKey', 'recDefault', 'coletaClientesMes'];
 
 function novoCtx(estado) {
