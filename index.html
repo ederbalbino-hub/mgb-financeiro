@@ -11969,7 +11969,8 @@ function initAcc(id, openByDefault=true){
 let editDespCompId = null;
 
 // ── Mensalidade do Sistema TV (4YouSee) por condomínio — espelho (só leitura) dos custos do módulo Elevadores ──
-function tvSistemaCusto(item){ return ((db.elev||{})[item]||[]).find(x=>x&&x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||''))); }
+// Auditoria 27/11: a linha mais recente vale (mesma regra de tvTelasDoItem, usada no banner e na lista de condomínios).
+function tvSistemaCusto(item){ const rs=((db.elev||{})[item]||[]).filter(x=>x&&x.t==='Recorrente'&&(/sistema tv|4 ?you ?see/i.test(x.d||'')||/4 ?you ?see/i.test(x.f||''))); rs.sort((a,b)=>String(b.dataInicio||'').localeCompare(String(a.dataInicio||''))); return rs[0]; }
 function buildTvSistema(){
   const grid=g('tv-sistema-grid'); if(!grid) return;
   const m=MODULES.find(x=>x.id==='elev');
@@ -11978,11 +11979,15 @@ function buildTvSistema(){
   const com=linhas.filter(l=>l.c).sort((a,b)=>a.it.localeCompare(b.it,'pt-BR')), sem=linhas.filter(l=>!l.c);
   let telas=0,total=0;
   const td='padding:5px 8px;border-top:1px solid var(--border2)';
+  const breve=new Set(((window.TV_REDE&&TV_REDE.REDE.condos)||[]).filter(c=>c.breve).map(c=>c.hub));
   const rows=com.map(l=>{
     const q=l.c.q||0,u=l.c.u||0,v=q*u; telas+=q; total+=v;
-    return `<tr><td style="${td}">${l.it}</td><td style="${td};text-align:center">${q}</td><td style="${td};text-align:right">${f(u)}</td><td style="${td};text-align:right;font-weight:700;color:var(--red)">${f(v)}</td><td style="${td};text-align:center;color:var(--muted)">${l.c.dataInicio?fmtMes(l.c.dataInicio):'—'}</td></tr>`;
+    return `<tr><td style="${td}">${l.it}${breve.has(l.it)?' <span style="font-size:10px;color:var(--muted)">· ainda fora do ar</span>':''}</td><td style="${td};text-align:center">${q}</td><td style="${td};text-align:right">${f(u)}</td><td style="${td};text-align:right;font-weight:700;color:var(--red)">${f(v)}</td><td style="${td};text-align:center;color:var(--muted)">${l.c.dataInicio?fmtMes(l.c.dataInicio):'—'}</td></tr>`;
   }).join('');
-  const sum=g('tv-sistema-sum'); if(sum) sum.textContent=com.length?com.length+' cond. · '+telas+' telas · '+f(total)+'/mês':'';
+  // Condomínio "breve" (ainda fora do ar) pode já ter licença paga: entra no custo, mas fica fora do banner e da rede.
+  // O resumo diz quantos são, para os números baterem com "N condomínios · N telas" do painel (auditoria 27/11).
+  const comBreve=com.filter(l=>breve.has(l.it)), telasBreve=comBreve.reduce((a,l)=>a+(l.c.q||0),0);
+  const sum=g('tv-sistema-sum'); if(sum) sum.textContent=com.length?com.length+' cond. · '+telas+' telas · '+f(total)+'/mês'+(comBreve.length?' (inclui '+comBreve.length+' ainda fora do ar, '+telasBreve+' tela(s))':''):'';
   grid.innerHTML = com.length
     ? `<table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:520px">
         <tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em"><th style="text-align:left;padding:4px 8px">Condomínio</th><th style="padding:4px 8px">Telas</th><th style="text-align:right;padding:4px 8px">R$/tela</th><th style="text-align:right;padding:4px 8px">R$/mês</th><th style="padding:4px 8px">Desde</th></tr>
