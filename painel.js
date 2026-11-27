@@ -506,7 +506,7 @@
       '<label class="pnl-rep-larga">Observação<input name="obs" value="' + esc(c.obs || '') + '" placeholder="ex.: repasse até o dia 10, mandar comprovante por WhatsApp"></label>' +
       '<div class="pnl-rep-acoes"><button type="button" class="pnl-bt" data-pnl-rep="salvar:' + id + '">Salvar dados</button><button type="button" class="pnl-bt2" data-pnl-rep="cancelar:' + id + '">Cancelar</button></div></form>' : '';
     return '<section class="pnl-rep" aria-label="' + esc(tit) + '"><div class="pnl-rep-cab"><div><span class="pnl-rep-rot">' + esc(tit) + '</span><b>' + esc(c.favorecido || '—') + '</b><small>' + linhaV + '</small></div>' +
-      (dadosOk ? chip('dados de pagamento ok', 'ok') : chip('falta a forma de repasse', 'atencao')) + '</div>' +
+      (dadosOk ? chip('dados de pagamento ok', 'ok') : chip('dados a preencher', '')) + '</div>' +
       (dados.length ? '<div class="pnl-rep-dados">' + dados.map(function (d) { return '<div><span>' + esc(d[0]) + '</span><b' + (d[2] ? ' class="pnl-mono"' : '') + '>' + esc(d[1]) + '</b>' + (d[2] ? '<button type="button" class="pnl-copiar" data-pnl-copiar="' + esc(d[1]) + '" aria-label="Copiar ' + esc(d[0]) + '">Copiar</button>' : '') + '</div>'; }).join('') + '</div>'
         : '<p class="pnl-vazio">Ainda não há forma de repasse cadastrada para ' + esc(c.favorecido) + '. Clique em "Preencher dados" e informe PIX ou conta.</p>') +
       (c.origemDoc && c.doc && !c.atualizadoEm ? '<span class="pnl-nota">CNPJ: ' + esc(c.origemDoc) + '. Confira antes do primeiro repasse.</span>' : '') +

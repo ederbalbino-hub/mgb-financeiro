@@ -149,11 +149,95 @@
       }
     }
     // Rótulos das colunas sem emoji e com o total da coluna
+    abasEtapas(pg);
     pg.querySelectorAll('.lead-col-hdr').forEach(function (h) {
       Array.prototype.forEach.call(h.childNodes, function (n) { if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*[✅❌]/g, ''); });
     });
   }
 
+  // 27/11 (design/usabilidade): no celular as colunas ficavam cortadas; agora uma aba por etapa e só a coluna escolhida aparece
+  var etapaSel = null;
+  function abasEtapas(pg) {
+    var board = doc.getElementById('leads-board'); if (!board) return;
+    var cols = Array.prototype.slice.call(board.querySelectorAll('.lead-col[data-stage]')); if (!cols.length) return;
+    var info = cols.map(function (c) {
+      var h = c.querySelector('.lead-col-hdr'), n = c.querySelector('.lead-col-count');
+      var nome = h ? Array.prototype.filter.call(h.childNodes, function (x) { return x.nodeType === 3; }).map(function (x) { return x.textContent; }).join('').replace(/\s*[✅❌]/g, '').trim() : c.getAttribute('data-stage');
+      return { id: c.getAttribute('data-stage'), nome: nome, n: n ? +n.textContent || 0 : 0 };
+    });
+    if (!etapaSel || !info.some(function (x) { return x.id === etapaSel; })) { var c1 = info.filter(function (x) { return x.n; })[0]; etapaSel = (c1 || info[0]).id; }
+    var abas = doc.getElementById('fun2-etapas');
+    if (!abas) {
+      abas = doc.createElement('div'); abas.id = 'fun2-etapas'; abas.setAttribute('role', 'tablist'); abas.setAttribute('aria-label', 'Etapas do funil');
+      board.parentNode.insertBefore(abas, board);
+      abas.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-fun2-etapa]'); if (!b) return;
+        etapaSel = b.getAttribute('data-fun2-etapa'); abasEtapas(pg);
+        try { b.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {}
+      });
+    }
+    abas.innerHTML = info.map(function (x) {
+      var on = x.id === etapaSel;
+      return '<button type="button" role="tab" aria-selected="' + on + '" class="fun2-etapa' + (on ? ' fun2-on' : '') + '" data-fun2-etapa="' + esc(x.id) + '">' + esc(x.nome) + ' <span>' + x.n + '</span></button>';
+    }).join('');
+    cols.forEach(function (c) { c.classList.toggle('fun2-col-on', c.getAttribute('data-stage') === etapaSel); });
+  }
+  // 27/11 (design/usabilidade): "Registrar contato" no topo do lead — o que conversou + quando falar de novo, num clique.
+  // Reaproveita o campo #lead-nota e o addLeadNota() do index (o Salvar continua levando a nota junto, usabilidade.js).
+  var retornoSel = '';
+  function isoMais(d) { var x = new Date(); x.setDate(x.getDate() + d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); }
+  function blocoContato(modo) {
+    var modal = doc.getElementById('lead-modal'), inp = doc.getElementById('lead-nota');
+    if (!modal || !inp) return;
+    var box = doc.getElementById('fun2-contato');
+    if (!box) {
+      box = doc.createElement('div'); box.id = 'fun2-contato';
+      box.innerHTML = '<label for="lead-nota" class="fun2-ct-t">Registrar contato</label><div class="fun2-ct-campo"></div>' +
+        '<div class="fun2-ct-ret" role="group" aria-label="Falar de novo"><span>Falar de novo:</span>' +
+        [['1', 'Amanhã'], ['3', 'Em 3 dias'], ['7', 'Em 1 semana'], ['', 'Sem data']].map(function (o) { return '<button type="button" data-fun2-ret="' + o[0] + '" aria-pressed="false">' + o[1] + '</button>'; }).join('') +
+        '</div><div class="fun2-ct-pe"><span class="fun2-ct-msg" role="status"></span><button type="button" class="fun2-btn" data-fun2-reg>Registrar</button></div>';
+      var linhaAntiga = inp.parentNode; // linha antiga (campo + "Adicionar") — o campo vem para cá
+      box.querySelector('.fun2-ct-campo').appendChild(inp);
+      if (linhaAntiga) linhaAntiga.style.display = 'none';
+      inp.placeholder = 'O que vocês conversaram?';
+      inp.removeAttribute('onkeydown');
+      inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); registrar(); } });
+      var form = modal.querySelector('.modal > div:nth-child(2)');
+      if (form) form.insertBefore(box, form.firstChild);
+      box.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-fun2-ret]');
+        if (b) { var v = b.getAttribute('data-fun2-ret'); retornoSel = retornoSel === v ? null : v; marcar(); return; }
+        if (ev.target.closest('[data-fun2-reg]')) registrar();
+      });
+    }
+    retornoSel = null; marcar(); box.querySelector('.fun2-ct-msg').textContent = '';
+    box.style.display = modo === 'edit' ? '' : 'none';
+  }
+  function marcar() {
+    Array.prototype.forEach.call(doc.querySelectorAll('#fun2-contato [data-fun2-ret]'), function (b) { var on = b.getAttribute('data-fun2-ret') === retornoSel; b.classList.toggle('fun2-on', on); b.setAttribute('aria-pressed', String(on)); });
+  }
+  function registrar() {
+    var id = ler('curLeadId', null), L = ler('leads', []) || [], l = L.filter(function (x) { return x.id === id; })[0];
+    var inp = doc.getElementById('lead-nota'), msg = doc.querySelector('#fun2-contato .fun2-ct-msg');
+    if (!l || !inp) return;
+    var texto = inp.value.trim();
+    if (!texto && retornoSel == null) { msg.textContent = 'Escreva o que conversou ou escolha quando falar de novo.'; inp.focus(); return; }
+    var dRet = retornoSel ? isoMais(+retornoSel) : '';
+    if (retornoSel != null) {
+      l.lembrete = dRet;
+      var campo = doc.getElementById('lead-lembrete');
+      if (campo) campo.value = typeof global.leadNormalizaLembreteInput === 'function' ? global.leadNormalizaLembreteInput(dRet) : dRet;
+      if (typeof global.leadSyncCalendar === 'function') try { Promise.resolve(global.leadSyncCalendar(l)).then(function () { try { global.buildLeads(); } catch (e) {} }); } catch (e) {}
+    }
+    var resumo = retornoSel == null ? '' : (dRet ? 'Próximo retorno: ' + dRet.split('-').reverse().slice(0, 2).join('/') : 'Sem data de retorno');
+    inp.value = (texto || 'Contato registrado') + (resumo ? ' · ' + resumo : '');
+    if (typeof global.addLeadNota === 'function') global.addLeadNota(); else { try { global.scheduleSave(); } catch (e) {} }
+    try { global.Function('if(typeof leadFormSnap==="function")_leadSnap=leadFormSnap()')(); } catch (e) {} // não acusar "alteração não salva"
+    try { global.buildLeads(); } catch (e) {}
+    if (typeof global.mgbAcao === 'function') try { global.mgbAcao('Registrou contato com ' + l.nome); } catch (e) {}
+    retornoSel = null; marcar();
+    msg.textContent = 'Registrado no histórico' + (resumo ? ' · ' + resumo.toLowerCase() : '') + '.';
+  }
   function estilos() {
     if (doc.getElementById('fun2-css')) return;
     var s = doc.createElement('style');
@@ -201,6 +285,18 @@
       '.fun2-oculto{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}' +
       // 27/11 (usabilidade): o seletor de etapa ficava invisível até passar o mouse; agora fica sempre à vista
 
+      '#fun2-etapas{display:none}' +
+      '#fun2-contato{background:#F6F4FA;border:1px solid #E4DFF0;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:4px}' +
+      '.fun2-ct-t{font:700 15px "DM Sans",system-ui,sans-serif;color:#241A38}.fun2-ct-campo input{width:100%;min-height:44px;box-sizing:border-box;font-size:15px!important}' +
+      '.fun2-ct-ret{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.fun2-ct-ret span{font-size:13.5px;color:#5D5868;margin-right:2px}' +
+      '.fun2-ct-ret button{min-height:36px;padding:0 12px;border:1px solid #CFC7E6;border-radius:999px;background:#fff;color:#3A3446;font:600 13.5px "DM Sans",system-ui,sans-serif;cursor:pointer}' +
+      '.fun2-ct-ret button.fun2-on{background:#4E38B2;border-color:#4E38B2;color:#fff}' +
+      '.fun2-ct-pe{display:flex;align-items:center;gap:10px;justify-content:flex-end}.fun2-ct-msg{flex:1;font-size:13.5px;color:#15803D}' +
+      '@media (max-width:760px){#fun2-etapas{display:flex;gap:8px;overflow-x:auto;padding:6px 16px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}#fun2-etapas::-webkit-scrollbar{display:none}' +
+      '.fun2-etapa{flex:none;min-height:44px;padding:0 14px;border:1px solid #CFC7E6;border-radius:12px;background:#fff;color:#3A3446;font:600 14px "DM Sans",system-ui,sans-serif;cursor:pointer;white-space:nowrap}' +
+      '.fun2-etapa span{display:inline-block;min-width:22px;margin-left:4px;padding:1px 6px;border-radius:999px;background:#EFEBF7;color:#2A1760;font-size:13px}' +
+      '.fun2-etapa.fun2-on{background:#4E38B2;border-color:#4E38B2;color:#fff}.fun2-etapa.fun2-on span{background:rgba(255,255,255,.2);color:#fff}' +
+      '#page-leads.fun2 .leads-board{display:block!important;overflow:visible!important}#page-leads.fun2 .lead-col{display:none!important;min-width:0!important}#page-leads.fun2 .lead-col.fun2-col-on{display:block!important}}' +
       '@media (max-width:760px){#fun2-barra,#page-leads.fun2 #leads-hoje{padding-left:16px;padding-right:16px;margin-left:0!important;margin-right:0!important}#page-leads.fun2 .leads-board{padding:8px 16px 24px!important}.fun2-resumo{margin-left:0;width:100%}}';
     doc.head.appendChild(s);
   }
@@ -212,6 +308,11 @@
     if (typeof b === 'function' && !b.__v2) {
       var nb = function () { var r = b.apply(this, arguments); try { decorar(); } catch (e) { console.error('funil:', e); } return r; };
       nb.__v2 = true; global.buildLeads = nb;
+    }
+    var abre = global.openLeadModal;
+    if (typeof abre === 'function' && !abre.__v2) {
+      var na = function (modo) { var r = abre.apply(this, arguments); try { blocoContato(modo); } catch (e) { console.error('funil contato:', e); } return r; };
+      na.__v2 = true; global.openLeadModal = na;
     }
     doc.addEventListener('keydown', function (ev) { var t = ev.target; if (ev.key === 'Enter' && t && t.classList && t.classList.contains('fun2-card')) t.click(); });
   }
