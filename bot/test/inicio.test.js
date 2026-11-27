@@ -51,3 +51,10 @@ test("faturamento do mês: cobrança com erro vira pendência, não 'sem status'
   assert.equal(r.total, 1);
   assert.equal(r.semStatus, 0);
 });
+
+test("promessas de pagamento: lembra no dia e depois, some quando paga", () => {
+  const prom = { "a|2026-11": { data: "2026-11-27", cliente: "Loja A" }, "b|2026-11": { data: "2026-11-25", cliente: "Loja B" }, "c|2026-11": { data: "2026-11-30" }, "d|2026-10": { data: "2026-11-20" } };
+  const em = { "d|2026-10": { pg: "pago" } };
+  const r = I.promessasDoDia(prom, em, "2026-11-27");
+  assert.deepEqual(r.map((x) => [x.cliente, x.atrasada]), [["Loja B", true], ["Loja A", false]]);
+});

@@ -76,6 +76,19 @@
     return out.sort(function (a, b) { return a.comp < b.comp ? -1 : a.comp > b.comp ? 1 : a.cliente.localeCompare(b.cliente, 'pt-BR'); });
   }
 
+  // Promessas de pagamento (27/11): as que chegaram no dia (ou passaram) e o boleto ainda não foi pago.
+  function promessasDoDia(promessas, emissoes, hojeISO) {
+    var out = [];
+    Object.keys(promessas || {}).forEach(function (k) {
+      var p = promessas[k] || {}, e = (emissoes || {})[k] || {};
+      if (!p.data || p.data > hojeISO) return;
+      if (e.pgManual || e.pg === 'pago' || e.status === 'cancelada') return;
+      var i = k.lastIndexOf('|');
+      out.push({ cliente: p.cliente || e.cliente || k.slice(0, i), comp: k.slice(i + 1), data: p.data, atrasada: p.data < hojeISO });
+    });
+    return out.sort(function (a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : 0; });
+  }
+
   // Contratos enviados à Assinafy que ainda não voltaram assinados (contrato e aditivo de renovação).
   function aguardandoAssinatura(info, agora) {
     var out = [], t = (agora || new Date()).getTime();
@@ -98,7 +111,7 @@
   function saudacao(hora) { return hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'; }
 
   var regras = { resumoFaturamento: resumoFaturamento, proximoFaturamento: proximoFaturamento, contarFunil: contarFunil, saudacao: saudacao,
-    vencidosAnteriores: vencidosAnteriores, aguardandoAssinatura: aguardandoAssinatura };
+    vencidosAnteriores: vencidosAnteriores, aguardandoAssinatura: aguardandoAssinatura, promessasDoDia: promessasDoDia };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (!doc) return;
 
@@ -143,6 +156,14 @@
       'Cobrar ou dar baixa se o cliente pagou por fora · ' + esc(fat.vencidosNomes.slice(0, 4).join(', ')) + (fat.vencidosNomes.length > 4 ? '…' : ''), 'Ver boletos', 'fat', true));
     if (fat.erros.length) itens.push(item('#B42318', plural(fat.erros.length, 'cobrança de ' + nomeMes + ' deu erro', 'cobranças de ' + nomeMes + ' deram erro'),
       esc(fat.erros.slice(0, 4).join(', ')) + (fat.erros.length > 4 ? '…' : '') + ' · não foi cobrado; corrija os dados e emita de novo', 'Ver', 'fat', !fat.vencidos));
+    var hISO = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+    var prom = promessasDoDia((ler('notaConfig', {}) || {}).promessas, emissoes, hISO);
+    if (prom.length) {
+      var promAtr = prom.filter(function (p) { return p.atrasada; }).length;
+      itens.push(item(promAtr ? '#B42318' : '#B45309', plural(prom.length, 'promessa de pagamento para conferir', 'promessas de pagamento para conferir'),
+        esc(prom.slice(0, 4).map(function (p) { return p.cliente + ' (' + (p.atrasada ? 'prometeu ' + p.data.slice(8, 10) + '/' + p.data.slice(5, 7) : 'hoje') + ')'; }).join(', ')) + (prom.length > 4 ? '…' : '') +
+        ' · veja se o dinheiro caiu e dê baixa, ou cobre de novo', 'Ver boletos', 'fat:' + prom[0].comp));
+    }
     var antes = vencidosAnteriores(emissoes, comp, 3);
     if (antes.length) itens.push(item('#B42318', plural(antes.length, 'boleto vencido de mês anterior', 'boletos vencidos de meses anteriores'),
       esc(antes.slice(0, 4).map(function (v) { return v.cliente + ' (' + MESES[+v.comp.slice(5) - 1] + ')'; }).join(', ')) + (antes.length > 4 ? '…' : '') + ' · ainda sem pagamento no Asaas',

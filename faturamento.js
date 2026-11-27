@@ -415,8 +415,8 @@
     p.innerHTML =
       '<div class="fat2-p-cab"><div><h3>' + esc(r.apelido || r.cliente) + '</h3><span class="fat2-sub">' + esc(r.modulo || '') + (r.issRetido ? ' · ISS retido pelo cliente' : '') + '</span></div>' +
         '<button type="button" class="fat2-icone" data-fat2="fechar" aria-label="Fechar painel">×</button></div>' +
-      (em && r.statusPagamento === 'vencido' && !baixaFeita(r) ? '<div class="fat2-aviso"><b>O boleto de ' + esc(nomeMes(c)) + ' venceu.</b> Cobre pelo WhatsApp ou dê baixa se o cliente pagou por fora.</div>' : '') +
-      (!em && a && a.st === 'vencido' ? '<div class="fat2-aviso"><b>' + esc(cap(a.mes || nomeMes(mesAnterior(c)))) + ' está em aberto.</b> ' + (em ? '' : 'Este mês sai normalmente; ') + 'cobre pelo WhatsApp ou dê baixa se pagou por fora.</div>' : '') +
+      (em && r.statusPagamento === 'vencido' && !baixaFeita(r) ? '<div class="fat2-aviso"><b>O boleto de ' + esc(nomeMes(c)) + ' venceu.</b> Cobre pelo WhatsApp ou dê baixa se o cliente pagou por fora.' + blocoPromessa(r, c) + '</div>' : '') +
+      (!em && a && a.st === 'vencido' ? '<div class="fat2-aviso"><b>' + esc(cap(a.mes || nomeMes(mesAnterior(c)))) + ' está em aberto.</b> ' + (em ? '' : 'Este mês sai normalmente; ') + 'cobre pelo WhatsApp ou dê baixa se pagou por fora.' + blocoPromessa(r, mesAnterior(c)) + '</div>' : '') +
       '<section><h4>' + esc(nomeMes(c).charAt(0).toUpperCase() + nomeMes(c).slice(1)) + ' · ' + esc(s.rotulo) + '</h4>' +
         (em ? '' : '<div class="fat2-seg" role="group" aria-label="Forma de cobrança">' + [['ambos', 'Nota + boleto'], ['boleto', 'Só boleto'], ['nota', 'Só nota']].map(function (o) {
           return '<button type="button" aria-pressed="' + (r.modo === o[0]) + '" data-fat2="modo:' + id + ':' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>') +
@@ -437,6 +437,38 @@
         (r.paymentId || r.invoiceId ? '<button type="button" class="fat2-btn2 fat2-perigo" data-fat2="cancelar:' + id + '">Cancelar esta cobrança</button>' : '') +
       '</section>' +
       '<p class="fat2-sub">Último mês faturado na planilha: ' + esc(r.ultimoMesFaturado ? String(r.ultimoMesFaturado).slice(0, 7) : '—') + '</p>';
+  }
+
+  // ── Promessa de pagamento (aprovada pelo Diego em 27/11) ────────────────
+  // Fica em notaConfig.promessas['<id>|<AAAA-MM>'] = {data:'AAAA-MM-DD', por, em}. O Início lembra no dia (e depois, se não pagou).
+  function promessas() { var nc = ler('notaConfig', null); if (!nc) return null; nc.promessas = nc.promessas || {}; return nc.promessas; }
+  function dataBR(iso) { return String(iso || '').split('-').reverse().join('/'); }
+  function blocoPromessa(r, mesRef) {
+    var P = promessas() || {}, k = r.id + '|' + mesRef, p = P[k], id = esc(r.id) + ':' + esc(mesRef);
+    if (p && p.data && !editPromessa) return '<div class="fat2-promessa"><span>🤝 Prometeu pagar em <b>' + esc(dataBR(p.data)) + '</b>' + (p.por ? ' · anotado por ' + esc(p.por) : '') + '</span>' +
+      '<button type="button" class="fat2-btn2" data-fat2="promessa-mudar:' + id + '">Mudar</button><button type="button" class="fat2-btn2" data-fat2="promessa-apagar:' + id + '">Apagar</button></div>';
+    var hoje = new Date(), min = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+    return '<div class="fat2-promessa"><label>Prometeu pagar em<input type="date" id="fat2-prom-data" min="' + min + '" value="' + esc(p && p.data || '') + '"></label>' +
+      '<button type="button" class="fat2-btn" data-fat2="promessa-salvar:' + id + '">Anotar promessa</button></div>';
+  }
+  var editPromessa = false;
+  function salvarPromessa(id, mesRef, apagar) {
+    var P = promessas(); if (!P) return;
+    var r = linhas().filter(function (x) { return x.id === id; })[0], nome = r ? (r.apelido || r.cliente) : id, k = id + '|' + mesRef;
+    if (apagar) {
+      if (!global.confirm('Apagar a promessa de pagamento de ' + nome + '?')) return;
+      delete P[k];
+      if (typeof global.mgbAcao === 'function') global.mgbAcao('Apagou a promessa de pagamento de ' + nome);
+    } else {
+      var d = (doc.getElementById('fat2-prom-data') || {}).value || '';
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { global.alert('Escolha a data em que o cliente prometeu pagar.'); return; }
+      var u = null; try { u = global.MGBAcesso && global.MGBAcesso.usuario && global.MGBAcesso.usuario(); } catch (e) {}
+      P[k] = { data: d, cliente: nome, por: (u && u.nome) || '', em: new Date().toISOString() };
+      if (typeof global.mgbAcao === 'function') global.mgbAcao('Promessa de pagamento de ' + nome + ' para ' + dataBR(d));
+    }
+    editPromessa = false;
+    try { global.scheduleSave(); } catch (e) {}
+    desenharPainel();
   }
 
   // Erro do Asaas em português simples (a mensagem original fica em "Mensagem do Asaas")
@@ -486,7 +518,7 @@
       else if (partes[0] === 'vista') { vista = id; desenharLista(); }
       else if (acao === 'desmarcar') global.fFatLimparSelecao();
       else if (acao === 'emitir') { vista = null; global.fFatEmitirSelecionados(); }
-      else if (partes[0] === 'abrir') { aberto = id; desenharLista(); desenharPainel(); }
+      else if (partes[0] === 'abrir') { aberto = id; editPromessa = false; desenharLista(); desenharPainel(); }
       else if (acao === 'fechar') { aberto = null; var p = doc.getElementById('fat2-painel'); if (p) p.remove(); desenharLista(); }
       else if (partes[0] === 'modo') global.fFatModo(id, partes[2]);
       else if (partes[0] === 'whats') global.fFatEnviarWhats(id);
@@ -495,6 +527,9 @@
       else if (partes[0] === 'editar') global.fFatEditar(id);
       else if (partes[0] === 'cancelar') global.fFatCancelar(id);
       else if (partes[0] === 'reemitir') reemitir(id);
+      else if (partes[0] === 'promessa-salvar') salvarPromessa(id, partes[2]);
+      else if (partes[0] === 'promessa-apagar') salvarPromessa(id, partes[2], true);
+      else if (partes[0] === 'promessa-mudar') { editPromessa = true; desenharPainel(); }
     } catch (e) { console.error('faturamento:', acao, e); }
   }
 
@@ -584,6 +619,8 @@
       '.fat2-ponto{width:10px;height:10px;border-radius:50%;margin-top:6px;flex:none}.fat2-p-acoes{display:flex;flex-direction:column;gap:8px}.fat2-p-acoes .fat2-btn,.fat2-p-acoes .fat2-btn2{justify-content:flex-start;text-align:left;padding-top:8px;padding-bottom:8px}' +
       '.fat2-msgerro{margin:12px 0 0;color:#7A1A12;background:#FDECEA;border:1px solid #F5C2BC;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.45}' +
       '.fat2-msgerro b{color:#B42318}.fat2-erro-acoes{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}.fat2-msgerro details{font-size:12.5px;color:#5D5868}.fat2-msgerro summary{cursor:pointer}' +
+      '.fat2-promessa{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(122,62,0,.25)}.fat2-promessa>span{flex:1 1 200px;font-size:14px}' +
+      '.fat2-promessa label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}.fat2-promessa input{height:40px;border:1px solid #CFC7E6;border-radius:8px;padding:0 10px;font:15px "DM Sans",system-ui,sans-serif}' +
       '.fat2-valor-mes{display:flex;flex-direction:column;gap:4px;margin-top:10px;font-size:13px;color:#5D5868}.fat2-valor-mes input{height:44px;border:1px solid #CFC7E6;border-radius:10px;padding:0 12px;font:16px "DM Mono",ui-monospace,monospace;color:#241A38;max-width:220px}' +
       '.fat2-btn:focus-visible,.fat2-btn2:focus-visible,.fat2-aba:focus-visible,.fat2-icone:focus-visible,.fat2-mais:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
       '@media (max-width:700px){.fat2-etapas{grid-template-columns:repeat(2,minmax(0,1fr))}.fat2-busca{margin-left:0;width:100%}.fat2-busca input{width:100%}.fat2-mes h2{font-size:23px}}';
