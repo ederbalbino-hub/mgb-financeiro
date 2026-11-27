@@ -122,7 +122,7 @@
       '#sidebar.menu2 .menu2-unico>.menu2-cab{display:none!important}' +
       // resumo do mês sempre à vista no pé do menu (pedido do Eder, 23/11)
       '#sidebar.menu2 .sb-footer{border-top:1px solid #E4DFF0;margin:0 12px;padding:12px 4px 8px;font-family:"DM Sans",system-ui,sans-serif}' +
-      '#sidebar.menu2 .sb-footer #sb-mes-lbl{font-size:11px!important;font-weight:700;color:#5D5868!important;letter-spacing:.06em!important;margin-bottom:8px!important}' +
+      '#sidebar.menu2 .sb-footer #sb-mes-lbl{font-size:12px!important;font-weight:700;color:#5D5868!important;letter-spacing:.06em!important;margin-bottom:8px!important}' +
       '#sidebar.menu2 .sb-footer span[style*="font-size:9px"]{font-size:13px!important}' +
       '#sidebar.menu2 .sb-footer #sb-rec-mes,#sidebar.menu2 .sb-footer #sb-desp-mes,#sidebar.menu2 .sb-footer #sb-lucro-mes{font-size:14px!important}' +
       '#sidebar.menu2 .sb-footer>div[style*="justify-content"]{margin-bottom:6px!important}' +

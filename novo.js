@@ -29,7 +29,7 @@
   }
 
   function leadsPendentes(lista) {
-    return (lista || []).filter(function (l) { return l && l.estagio === 'fechado' && !l.itemCriado; });
+    return (lista || []).filter(function (l) { return l && l.estagio === 'fechado' && (!l.itemCriado || l.itemCriado === 'None'); }); // "None": leads antigos importados
   }
 
   function normalizar(s) {
@@ -902,8 +902,17 @@
     }).then(function (r) { return r.json(); }).then(function (j) {
       if (!j || j.erro) throw new Error((j && j.erro) || 'resposta vazia');
       try {
-        var info = clientesInfo[modId] && clientesInfo[modId][nome];  // eslint-disable-line no-undef
-        if (info) { info.assinafyDocId = j.docId; info.pastaDrive = pastaDrive(modId, nome); if (j.urlEnviado) info.contratoEnviadoUrl = j.urlEnviado; scheduleSave(); } // eslint-disable-line no-undef
+        // Mesmo caminho das abas antigas de Contratos (27/11): acha o cadastro pelo nome aproximado ou cria,
+        // zera o "assinado" anterior e anota na jornada. Antes, sem cadastro com o nome exato, o docId se perdia.
+        var info = typeof global.mgbContratoEnviado === 'function' ? global.mgbContratoEnviado(modId, nome, j.docId) : null;
+        if (!info) {
+          if (!clientesInfo[modId]) clientesInfo[modId] = {};                                    // eslint-disable-line no-undef
+          info = clientesInfo[modId][nome] || (clientesInfo[modId][nome] = { fantasia: nome }); // eslint-disable-line no-undef
+          info.assinafyDocId = j.docId; info.assinadoEm = null;
+        }
+        info.assinafyEnviadoEm = new Date().toISOString(); info.pastaDrive = pastaDrive(modId, nome);
+        if (j.urlEnviado) info.contratoEnviadoUrl = j.urlEnviado;
+        scheduleSave(); // eslint-disable-line no-undef
       } catch (e) {}
       return j;
     });

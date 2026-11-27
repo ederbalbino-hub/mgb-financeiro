@@ -33,7 +33,7 @@
   }
   function montarClientes(f, ano, mes) {
     var porChave = {}, lista = [];
-    var info = f.clientesInfo || {}, rp = f.recPagamentos || {};
+    var info = f.clientesInfo || {}, rp = f.recPagamentos || {}, fe = f.fatEmissoes || {};
     var refHoje = ano * 12 + mes;
     function grupo(nome, i) {
       var d = dig(i.cnpj), k = d.length >= 11 ? 'd' + d : 'n' + norm(nome);
@@ -71,10 +71,12 @@
           var pg = ((rp[m.id] || {})[item] || {})[a2 + '-' + m2];
           var v = m.id === 'elev' ? (ativoNoMes(c, ref) ? c.valor : 0) : (f.recOfMes ? (Number(f.recOfMes(m.id, item, a2, m2)) || 0) : c.valor);
           if (pg && pg.asaas && Number(pg.asaas.valor) > 0) v = Number(pg.asaas.valor);   // valor do boleto (já sem ISS retido)
-          meses.push({ ano: a2, mes: m2, valor: v, status: statusMes(pg, v, k > 0), nf: pg && pg.asaas && pg.asaas.nf || '', boletoUrl: pg && pg.asaas && pg.asaas.boletoUrl || '' });
+          var em = padrao.fatId ? fe[padrao.fatId + '|' + a2 + '-' + String(m2 + 1).padStart(2, '0')] : null;   // linha do dia 5 deste mês
+          var semNota = !!(em && (em.modo === 'ambos' || em.modo === 'nota') && !em.nf && em.status !== 'cancelada' && (em.paymentId || em.invoiceId));
+          meses.push({ ano: a2, mes: m2, valor: v, status: statusMes(pg, v, k > 0), nf: pg && pg.asaas && pg.asaas.nf || '', boletoUrl: pg && pg.asaas && pg.asaas.boletoUrl || '', semNota: semNota });
         }
         g.contratos.push({ mod: m.id, modRot: rotMod(m), item: item, valor: c.valor, doMes: doMes, inicio: c.inicio, meses: c.meses, telas: c.telas,
-          assinadoEm: i.assinadoEm || '', assinafy: !!i.assinafyDocId, issRetido: !!i.issRetido, jornada: i.jornada || [], obs: i.obsFicha || '', historico: meses });
+          assinadoEm: i.assinadoEm || '', assinafy: !!i.assinafyDocId, aditivoPendente: !!(i.aditivo && i.aditivo.docId && !i.aditivo.assinadoEm), modLabel: m.label || m.id, issRetido: !!i.issRetido, jornada: i.jornada || [], obs: i.obsFicha || '', historico: meses });
       });
     });
     (f.leads || []).forEach(function (l) {
@@ -96,6 +98,21 @@
     var ini = +m[1] * 12 + (+m[2] - 1), dur = c.meses || 12;
     return ref >= ini && (dur >= 120 || ref <= ini + dur - 1);
   }
+  // Fim do contrato (Diego, 27/11): conta da data da assinatura; sem assinatura no hub, do mês em que
+  // começa a pagar (como antes). Contrato de 120 meses ou mais não acaba. Devolve a data do último dia.
+  function fimContrato(c) {
+    var dur = Number(c && c.meses) || 12; if (dur >= 120) return null;
+    var a = c && c.assinadoEm ? new Date(c.assinadoEm) : null, base;
+    if (a && !isNaN(a)) base = { ano: a.getFullYear(), mes: a.getMonth(), dia: a.getDate(), de: 'assinatura' };
+    else { var m = /^(\d{4})-(\d{2})/.exec((c && c.inicio) || ''); if (!m) return null; base = { ano: +m[1], mes: +m[2] - 1, dia: 1, de: 'inicio' }; }
+    var d = new Date(base.ano, base.mes + dur, base.dia - 1);
+    var iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    return { data: iso, ref: d.getFullYear() * 12 + d.getMonth(), de: base.de };
+  }
+  function diasAte(iso, hoje) {
+    var p = iso.split('-'), h = hoje || new Date();
+    return Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - new Date(h.getFullYear(), h.getMonth(), h.getDate())) / 86400000);
+  }
   function vigencia(c) {
     var m = /^(\d{4})-(\d{2})/.exec(c.inicio || '');
     if (!m) return 'sem data de início';
@@ -104,7 +121,7 @@
     return 'desde ' + r(ini) + ((c.meses || 12) >= 120 ? ', sem data para acabar' : ' até ' + r(fim));
   }
 
-  var regras = { montarClientes: montarClientes, statusMes: statusMes, ativoNoMes: ativoNoMes, vigencia: vigencia };
+  var regras = { montarClientes: montarClientes, statusMes: statusMes, ativoNoMes: ativoNoMes, vigencia: vigencia, fimContrato: fimContrato, diasAte: diasAte };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (!doc) return;
 
@@ -116,7 +133,7 @@
     return montarClientes({
       modulos: (ler('MODULES', []) || []).filter(function (m) { return m.id !== 'taroba'; }),
       rec: ler('rec', {}), clientesInfo: ler('clientesInfo', {}), anunciantes: ler('anunciantes', []),
-      recPagamentos: ler('recPagamentos', {}), leads: ler('leads', []),
+      recPagamentos: ler('recPagamentos', {}), leads: ler('leads', []), fatEmissoes: ler('fatEmissoes', {}),
       recOfMes: typeof global.recOfMes === 'function' ? global.recOfMes : null,
     }, h.getFullYear(), h.getMonth());
   }
@@ -193,17 +210,19 @@
       '<section class="cli2-bloco"><h3>Contratos</h3>' + g.contratos.map(function (c) {
         return '<div class="cli2-item"><div class="cli2-item-txt"><b>' + esc(c.modRot) + (c.item !== g.nome ? ' · ' + esc(c.item) : '') + '</b><span>' +
           esc([brl(c.valor) + '/mês', vigencia(c), c.telas.length ? c.telas.join(', ') : '', c.issRetido ? 'ISS retido pelo cliente' : ''].filter(Boolean).join(' · ')) + '</span></div>' +
+          pillFim(c) +
           (c.assinadoEm ? pill('Assinado em ' + new Date(c.assinadoEm).toLocaleDateString('pt-BR'), 'ok') : c.assinafy ? pill('Aguardando assinatura', 'atencao') : pill('Sem assinatura no hub', 'neutro')) +
+          (c.aditivoPendente ? pill('Aditivo aguardando assinatura', 'atencao') : podeRenovar(c) ? '<button type="button" class="cli2-btn cli2-peq" data-cli2="renovar:' + esc(c.mod) + '|' + esc(c.item) + '">Renovar (aditivo)</button>' : '') +
           '<button type="button" class="cli2-btn2 cli2-peq" data-cli2="modulo:' + esc(c.mod) + '">Abrir no módulo</button></div>';
       }).join('') + '</section>' +
       '<section class="cli2-bloco"><h3>Faturamento</h3>' + g.contratos.map(function (c) {
         return (g.contratos.length > 1 ? '<h4>' + esc(c.modRot) + '</h4>' : '') + c.historico.map(function (x) {
           return '<div class="cli2-mes"><span class="cli2-ponto" style="background:' + COR[x.status] + '"></span><b>' + esc(MESES[x.mes].charAt(0).toUpperCase() + MESES[x.mes].slice(1)) + '</b>' +
-            '<span class="cli2-sub">' + esc(x.status) + (x.nf ? ' · NF ' + esc(x.nf) : '') + '</span>' +
+            '<span class="cli2-sub">' + esc(x.status) + (x.nf ? ' · NF ' + esc(x.nf) : x.semNota ? ' · <b class="cli2-laranja">nota sem número</b>' : '') + '</span>' +
             (x.boletoUrl && /^https:\/\//.test(x.boletoUrl) && x.status !== 'pago' ? '<a class="cli2-link" href="' + esc(x.boletoUrl) + '" target="_blank" rel="noopener">boleto</a>' : '<span></span>') +
             '<span class="cli2-mono">' + (x.valor ? brl(x.valor) : '—') + '</span></div>';
         }).join('');
-      }).join('') + '<div class="cli2-acoes"><button type="button" class="cli2-btn" data-cli2="faturamento">Abrir no Faturamento</button></div></section>' +
+      }).join('') + '<div class="cli2-acoes"><button type="button" class="cli2-btn" data-cli2="faturamento:' + esc(g.contratos[0] ? g.contratos[0].item : g.nome) + '">Ver no Faturamento</button></div></section>' +
       '</main><aside>' +
       '<section><h3>Contato</h3><dl><dt>Responsável</dt><dd>' + esc(g.responsavel || '—') + (g.cargo ? ' · ' + esc(g.cargo) : '') + '</dd><dt>WhatsApp</dt><dd>' + esc(g.tel || '—') + '</dd><dt>E-mail</dt><dd>' + esc(g.email || '—') + '</dd></dl></section>' +
       '<section><h3>Histórico</h3>' + (eventos.length ? eventos.slice(-12).reverse().map(function (e) { return '<div class="cli2-ev"><b>' + esc(e.t) + '</b><span>' + esc(e.em) + '</span></div>'; }).join('') : '<p class="cli2-sub">Sem eventos registrados.</p>') + '</section>' +
@@ -224,9 +243,43 @@
       else if (acao === 'novo') global.MGBNovo.abrir();
       else if (acao === 'lead') { global.goPage('leads'); setTimeout(function () { try { global.openLeadModal('edit', isNaN(+arg) ? arg : +arg); } catch (e) {} }, 150); }
       else if (acao === 'modulo') global.drillMod(arg);
-      else if (acao === 'faturamento') global.fatAbrirFaturamento();
+      else if (acao === 'faturamento') { global.fatAbrirFaturamento(); buscarNoFaturamento(arg); }
       else if (acao === 'salvar-obs') salvarObs();
+      else if (acao === 'renovar') renovar(arg);
     } catch (e) { console.error('clientes:', acao, e); }
+  }
+  // "Ver no Faturamento" já filtrado no cliente: espera a lista nova aparecer e preenche a busca
+  function buscarNoFaturamento(nome, tentativas) {
+    if (!nome) return;
+    var n = tentativas == null ? 25 : tentativas, el = doc.getElementById('fat2-busca');
+    if (el) { el.value = nome; el.dispatchEvent(new global.Event('input', { bubbles: true })); return; }
+    if (n > 0) setTimeout(function () { buscarNoFaturamento(nome, n - 1); }, 200);
+  }
+  function pillFim(c) {
+    var f = fimContrato(c); if (!f) return '';
+    var d = diasAte(f.data), txt = f.data.split('-').reverse().join('/');
+    if (d < 0) return pill('Terminou em ' + txt, 'erro');
+    return pill('Termina em ' + txt, d <= 60 ? 'atencao' : 'neutro');
+  }
+  // Renovar pela ficha: contrato que termina em até 60 dias (ou terminou há menos de 30) gera o aditivo
+  function podeRenovar(c) {
+    if (!global.MGBFluxos || !global.MGBFluxos.abrirAditivo) return false;
+    var f = fimContrato(c); if (!f) return false;
+    var d = diasAte(f.data); return d <= 60 && d >= -30;
+  }
+  function renovar(arg) {
+    var p = arg.split('|'), mod = p[0], item = p.slice(1).join('|');
+    var g = dados().filter(function (x) { return x.chave === aberto; })[0]; if (!g) return;
+    var c = g.contratos.filter(function (x) { return x.mod === mod && x.item === item; })[0]; if (!c) return;
+    var f = fimContrato(c), info = ((ler('clientesInfo', {}) || {})[mod] || {})[item] || {};
+    var origem = mod === 'elev' ? 'Tela Vertical' : c.modLabel;
+    global.MGBFluxos.abrirAditivo({ origem: origem, nome: item, valor: c.valor, inicio: c.inicio, meses: c.meses, fimKey: f.ref, fimData: f.data },
+      { contato: Object.assign({}, info, { email: info.email || g.email, responsavel: info.responsavel || g.responsavel }), aoEnviar: function () { setTimeout(desenharFicha, 300); } });
+  }
+  // Abre a ficha pelo nome do item (vindo do funil, do Faturamento…)
+  function abrirPorNome(nome) {
+    var n = norm(nome), g = dados().filter(function (x) { return norm(x.nome) === n || x.contratos.some(function (c) { return norm(c.item) === n; }); })[0];
+    aberto = g ? g.chave : null; global.goPage('clientes');
   }
   function salvarObs() {
     var g = dados().filter(function (x) { return x.chave === aberto; })[0], ci = ler('clientesInfo', null);
@@ -266,7 +319,7 @@
       '.cli2-voltar{align-self:flex-start;background:none;border:0;padding:0;color:#4E38B2;font:600 14px "DM Sans",system-ui,sans-serif;cursor:pointer;min-height:32px}' +
       '.cli2-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}' +
       '.cli2-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.cli2-nums>div{background:#fff;border:1px solid #E4DFF0;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:4px}' +
-      '.cli2-nums span{font-size:14px;color:#5D5868}.cli2-nums b{font:600 26px "DM Mono",ui-monospace,monospace}.cli2-nums small{font-size:13.5px;color:#5D5868}.cli2-vermelho{color:#B42318}' +
+      '.cli2-nums span{font-size:14px;color:#5D5868}.cli2-nums b{font:600 26px "DM Mono",ui-monospace,monospace}.cli2-nums small{font-size:13.5px;color:#5D5868}.cli2-vermelho{color:#B42318}.cli2-laranja{color:#B45309;font-weight:700}' +
       '.cli2-item{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:13px 0;border-top:1px solid #EFEBF7}.cli2-item-txt{flex:1 1 320px;display:flex;flex-direction:column;gap:3px}.cli2-item-txt b{font-size:16px}.cli2-item-txt span{font-size:14px;color:#5D5868}' +
       '.cli2-mes{display:grid;grid-template-columns:10px 110px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #EFEBF7;font-size:15px}' +
       '.cli2-ponto{width:10px;height:10px;border-radius:50%}.cli2-mono{font-family:"DM Mono",ui-monospace,monospace;font-size:14px}.cli2-link{color:#4E38B2;font-weight:600;font-size:14px}' +
@@ -307,6 +360,7 @@
     doc.addEventListener('keydown', function (ev) { var t = ev.target; if (ev.key === 'Enter' && t && t.classList && t.classList.contains('cli2-linha')) t.click(); });
   }
 
-  global.MGBClientes = Object.assign({ desenhar: desenhar, abrir: function (chave) { aberto = chave; global.goPage('clientes'); } }, regras);
+  global.MGBClientes = Object.assign({ desenhar: desenhar, abrir: function (chave) { aberto = chave; global.goPage('clientes'); },
+    fichaAberta: function () { return aberto; }, fechar: function () { aberto = null; }, abrirPorNome: abrirPorNome, dados: function () { try { return dados(); } catch (e) { return []; } } }, regras);
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);

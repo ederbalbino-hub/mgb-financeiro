@@ -115,6 +115,25 @@ A gravação no banco nunca atrapalha o hub: se falhar, só vai para o log, e a 
 4. Depois do faturamento de 05/12/2026, se a conferência estiver limpa: o hub passa a **ler** do banco e a planilha vira só cópia (3b).
 5. Desligar a planilha e o Apps Script do Faturamento.
 
+## Fluxos entre telas (fluxos.js, 27/11/2026)
+
+Mapa aprovado pelo Diego: https://claude.ai/artifact/3xiWpn4fCh3xXh2A32GjoT. O `fluxos.js` carrega por último e só envelopa funções do `index.html`.
+
+| Fluxo | Como funciona agora |
+|---|---|
+| Lead fechado → cadastro | Cartão do funil tem "Cadastrar cliente" (abre o Novo cliente com o lead). O e-mail de aviso leva a `?cadastrar=<id>`, que abre o mesmo cadastro depois do login. |
+| Assinatura | O envio à Assinafy sempre passa por `mgbContratoEnviado` (acha ou cria o cadastro). O hub confere as assinaturas a cada 30 min com o hub aberto. O Início mostra "aguardando assinatura" com "Conferir agora". |
+| Pagamento | A conferência com o Asaas roda no máximo 1 vez por hora (era 6 h) e atualiza também os meses anteriores (`atualizarMesesAnteriores`). O Início mostra os vencidos dos 3 meses anteriores. |
+| Ficha do cliente | Fim do contrato contado da assinatura (`fimContrato`), "nota sem número" no mês, "Ver no Faturamento" já filtrado, "Renovar (aditivo)". |
+| Renovação | O aviso chega cerca de 60 dias antes. "Renovou" gera o aditivo de prorrogação, com campo de % de reajuste ou novo valor, e o envia à Assinafy. Com valor novo, o novo período vira o contrato "X (renovação)", que o Faturamento cobra na linha de "X". Quando todos assinam, o contrato e os custos que acabavam junto são prorrogados. Estado: `clientesInfo[mod][item].aditivo` e `aditivos`. |
+| Despesa da Tela Vertical | "Quem pagou" tem MGB, Eder e Jadson. Pago do bolso de um sócio é um lançamento só em `elevInvestimentos` (tipo `despesa`): entra uma vez no resultado do mês e fica como aporte na conta de quem pagou (`ELEV_SOCIO_NO_RESULTADO=true`, visão contábil). |
+| Repasse ao sócio | Sobra do mês: 50% para cada sócio. Mês no vermelho: o painel pergunta quem cobriu (Eder ou Jadson, em `relAjustes.tvCobre`), e o valor entra na soma do investido dessa pessoa (`coberturas`, somado em `elevInvestTotais`). Antes de nov/2026 conta como do Eder. "Marcar relatório como enviado" grava em `relAjustes.tvEnviado`, e o Início avisa o Eder (relatório não enviado ou mês sem quem cobriu). |
+| Contas do mês | Mostra "vencida", "vence hoje" e "vence em N dias" pelo dia de vencimento. O Início avisa as contas da semana. |
+| Anunciante | O cartão mostra o pagamento do mês e o fim do contrato. "+ Novo anunciante" abre o Novo cliente. Renomear uma unidade leva junto anunciantes, pagos, cadastro, cobranças e lead (`renomearNoEstado`). |
+| Dia 5 sem planilha | `FAT_ANUNC_TODOS` (desligado) inclui os anunciantes sem lead que não estão na planilha. Ligar só depois da conferência de 05/12. |
+
+Testes: `bot/test/fluxos.test.js` e `bot/test/notificacao.test.js`.
+
 ## Operação
 
 ### Publicar
@@ -130,7 +149,7 @@ A gravação no banco nunca atrapalha o hub: se falhar, só vai para o log, e a 
 cd bot && npm test
 ```
 
-São 101 testes: login e papéis, visibilidade por papel, trava de versão, funil, aviso de fechamento, pontes e regras das telas.
+São 149 testes: login e papéis, visibilidade por papel, trava de versão, funil, aviso de fechamento, pontes e regras das telas.
 
 ### Variáveis do Vercel (só os nomes)
 
