@@ -149,6 +149,7 @@
     if (!b) return;
     var v = b.getAttribute('data-pnl-ir');
     if (v.indexOf('mod:') === 0) { var id = v.slice(4); if (typeof global.drillMod === 'function') { global.drillMod(id); global.scrollTo(0, 0); } }
+    else if (v === 'fat' && typeof global.fatAbrirFaturamento === 'function') global.fatAbrirFaturamento();
   }
 
   // ── adaptadores por área ─────────────────────────────────────────────────
@@ -182,7 +183,7 @@
     var porResp = {}; abertos.forEach(function (l) { var r = l.responsavel || 'Sem responsável'; porResp[r] = porResp[r] || { n: 0, v: 0 }; porResp[r].n++; porResp[r].v += Number(l.valor) || 0; });
     var resp = Object.keys(porResp).map(function (r) { return { rot: r, valor: porResp[r].v, sub: porResp[r].n + ' em aberto' }; }).sort(function (a, b) { return b.valor - a.valor; }).slice(0, 6);
     return {
-      hero: { chip: 'Funil de vendas · ' + MESES_N[H.mes], titulo: 'Em negociação', valor: 'R$ ' + brl(valNeg) + '<small>/mês</small>', frase: neg.length + ' negócios em negociação · ' + abertos.length + ' em aberto somam R$ ' + brl(valAb) + '/mês.',
+      hero: { chip: 'Funil de vendas · ' + MESES_N[H.mes], titulo: 'Em negociação', valor: 'R$ ' + brl(valNeg) + '<small>/mês</small>', frase: neg.length + (neg.length === 1 ? ' negócio em negociação · ' : ' negócios em negociação · ') + abertos.length + ' em aberto somam R$ ' + brl(valAb) + '/mês.',
         nums: [['leads novos no mês', String(doMes.length)], ['fechados', String(fech.length), 'ticket ' + curto(ticket)], ['retornos atrasados', String(atras.length)], ['perdidos', String(perd.length)]],
         anel: [conv, 'conversão'] },
       cartoes: etapas,
@@ -212,7 +213,7 @@
     var ticket = ativos.length ? mensal / ativos.length : 0;
     return {
       hero: { chip: 'Carteira de clientes', titulo: 'Carteira', valor: 'R$ ' + brl(mensal) + '<small>/mês</small>', frase: ativos.length + ' clientes pagando este mês' + (venc.length ? ' · ' + venc.length + ' com boleto vencido' : ' · ninguém com boleto vencido') + '.',
-        nums: [['clientes ativos', String(ativos.length)], ['ticket médio', curto(ticket)], ['em aberto vencido', curto(emAb)], ['cadastrados', String(D.length)]],
+        nums: [['clientes ativos', String(ativos.length)], ['valor médio por cliente', curto(ticket)], ['em aberto vencido', curto(emAb)], ['cadastrados', String(D.length)]],
         anel: [pct(ativos.length - venc.length, ativos.length), 'em dia'] },
       cartoes: mods.slice(0, 6).map(function (m) { return { titulo: m.rot, valor: curto(m.valor), sub: Math.round(pct(m.valor, mensal)) + '% da carteira · ' + m.n + (m.n === 1 ? ' cliente' : ' clientes'), tom: 'neutro', barra: [pct(m.valor, mods[0].valor), '#4E38B2'], ir: idModulo(m.id) ? 'mod:' + idModulo(m.id) : '' }; }),
       blocos: [
@@ -298,16 +299,17 @@
     var rVal = rec.reduce(function (a, r) { return a + (Number(r.valor) || 0); }, 0);
     var leo = ler('leoUnidades', []) || [], leoOk = leo.filter(function (u) { return u.status === 'emitida' || u.status === 'enviada'; }).length;
     var fat = ler('fatEmissoes', {}) || {}, fk = Object.keys(fat).filter(function (kk) { return kk.split('|')[1] === comp; });
-    var fOk = fk.filter(function (kk) { return /emitid|autoriz|pago|enviad/i.test(fat[kk].status || ''); }).length, fErr = fk.filter(function (kk) { return /erro/i.test(fat[kk].status || ''); }).length;
+    var nFat = ((ler('fatLinhas', []) || []).filter(function (r) { return !r.soLeo; })).length; // 27/11: era "0/0" com 15 clientes na lista
+    var fOk = fk.filter(function (kk) { return /emitid|autoriz|pago|enviad|aguardando|boleto/i.test(fat[kk].status || ''); }).length, fErr = fk.filter(function (kk) { return /erro/i.test(fat[kk].status || ''); }).length;
     var recMes = tenta('finGetRec', H.ano, H.mes) || 0, fech = 0; try { fech = global.mesFechamentoNotas(comp).total || 0; } catch (e) {}
     var porSt = {}; notas.forEach(function (n) { var s = /autoriz|issued|emitid/i.test(n.status || '') ? 'Autorizada' : /erro|error|cancel/i.test(n.status || '') ? 'Com problema' : 'Processando'; porSt[s] = (porSt[s] || 0) + 1; });
     var COR_ST = { 'Autorizada': '#15803D', 'Processando': '#E0A458', 'Com problema': '#B42318' };
     return {
       hero: { chip: 'Contabilidade · ' + MESES_N[H.mes], titulo: 'Notas do mês', valor: 'R$ ' + brl(fech || nVal), frase: 'Notas fiscais com competência de ' + MESES_N[H.mes] + ' frente a uma receita de R$ ' + brl(recMes) + '.',
-        nums: [['notas avulsas', String(notas.length), curto(nVal)], ['Faturamento', fOk + ' de ' + fk.length, fErr ? fErr + ' com erro' : 'sem erro'], ['Léo', leoOk + ' de ' + leo.length, 'notas'], ['recibos', String(rec.length), curto(rVal)]],
+        nums: [['notas avulsas', String(notas.length), curto(nVal)], ['Faturamento', fOk + ' de ' + Math.max(fk.length, nFat), fErr ? fErr + ' com erro' : 'sem erro'], ['Léo', leoOk + ' de ' + leo.length, 'notas'], ['recibos', String(rec.length), curto(rVal)]],
         anel: [pct(fech || nVal, recMes), 'em notas'] },
       cartoes: [
-        { titulo: 'Faturamento do dia 5', valor: fOk + '/' + fk.length, sub: 'clientes emitidos', chip: fErr ? [fErr + ' com erro', 'erro'] : null, tom: fErr ? 'critico' : fk.length && fOk === fk.length ? 'saudavel' : 'atencao', barra: [pct(fOk, fk.length), '#15803D'] },
+        { titulo: 'Faturamento do dia 5', valor: fOk + ' de ' + Math.max(fk.length, nFat), sub: 'clientes emitidos · abrir a lista', ir: 'fat', chip: fErr ? [fErr + ' com erro', 'erro'] : null, tom: fErr ? 'critico' : fk.length && fOk === fk.length ? 'saudavel' : 'atencao', barra: [pct(fOk, fk.length), '#15803D'] },
         { titulo: 'Léo Cosméticos', valor: leoOk + '/' + leo.length, sub: 'unidades com nota', tom: leo.length && leoOk === leo.length ? 'saudavel' : 'atencao', barra: [pct(leoOk, leo.length), '#4E38B2'] },
         { titulo: 'Notas avulsas', valor: String(notas.length), sub: 'R$ ' + brl(nVal), tom: 'neutro' },
         { titulo: 'Recibos', valor: String(rec.length), sub: 'R$ ' + brl(rVal), tom: 'neutro' }
@@ -387,8 +389,12 @@
     return [
       { grupo: 'Contratos', tab: 'mercadao', ico: 'radio', nome: 'Contrato Mercadão', fato: '', sub: 'rádio indoor do Mercadão' },
       { grupo: 'Contratos', tab: 'vaapty', ico: 'contrato', nome: 'Contrato Vaapty', fato: '', sub: 'franqueados: comodato e gestão' },
-      { grupo: 'Contratos', tab: 'pasta', ico: 'pasta', nome: 'Contratos salvos', fato: String(noAr.length), sub: 'contratos no ar' }
+      // 27/11 (usabilidade): mostrava os contratos no ar (17) e a lista abria com "0"; agora conta os arquivos salvos da pasta
+      { grupo: 'Contratos', tab: 'pasta', ico: 'pasta', nome: 'Contratos salvos', fato: String(salvosNaPasta()), sub: 'gerados neste computador · ' + noAr.length + ' contratos no ar' }
     ];
+  }
+  function salvosNaPasta() {
+    try { var d = JSON.parse(global.localStorage.getItem('mgb_pasta_v2') || 'null') || {}; return ['mercadao', 'elevador', 'vaapty'].reduce(function (a, k) { return a + ((d[k] || []).length); }, 0); } catch (e) { return 0; }
   }
   function secoes() {
     var pg = doc.getElementById('page-operacional');
@@ -424,6 +430,15 @@
     if (!b) return;
     var t = b.getAttribute('data-pnl-secao'), el = doc.querySelector('#page-operacional .hub-tab[data-tab="' + t + '"]');
     if (typeof global.showOpPanel === 'function') global.showOpPanel(t, el);
+    rolarAte(doc.getElementById('panel-' + t)); // 27/11 (usabilidade): o conteúdo abria embaixo e parecia que nada acontecia
+  }
+  function rolarAte(alvo) {
+    if (!alvo) return;
+    setTimeout(function () {
+      if (!alvo.offsetParent) return;
+      var y = alvo.getBoundingClientRect().top + (global.scrollY || 0) - (global.innerWidth <= 760 ? 64 : 16);
+      try { global.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { global.scrollTo(0, y); }
+    }, 80);
   }
 
   // ── Cobrança mensal: cartões no lugar das abas + forma de repasse de cada fluxo (27/11) ──
@@ -520,7 +535,7 @@
     if (!t) return;
     if (t.hasAttribute('data-pnl-rel')) {
       var id = t.getAttribute('data-pnl-rel'), el = doc.querySelector('#page-relatorios .rel-tab[data-reltab="' + id + '"]');
-      editRep = null; if (typeof global.showRelTab === 'function') global.showRelTab(id, el); return;
+      editRep = null; if (typeof global.showRelTab === 'function') global.showRelTab(id, el); rolarAte(doc.getElementById('rel-sub-' + id)); return;
     }
     if (t.hasAttribute('data-pnl-copiar')) {
       var txt = t.getAttribute('data-pnl-copiar');

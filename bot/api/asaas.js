@@ -22,6 +22,7 @@
 // produção pra emitir de verdade. Nunca misturar chave de um ambiente com URL do outro.
 
 import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../lib/http.js";
+import { registrarLog } from "../lib/log.js";
 
 const BASE = {
   sandbox: "https://api-sandbox.asaas.com/v3",
@@ -157,10 +158,13 @@ async function acharOuCriarCliente(ambiente, tomador) {
   return novo.id;
 }
 
-export default async function handler(req, res) {
+export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   // CORS só pro hub + login obrigatório (admin/financeiro): emite nota e boleto de verdade.
   if (cors(req, res, { metodos: "GET,POST,OPTIONS" })) return;
-  if (!(await exigirLogin(req, res, PAPEIS_FINANCEIRO))) return;
+  const usuario = await exigirLogin(req, res, PAPEIS_FINANCEIRO);
+  if (!usuario) return;
+  // Registro de ações (hub_log): emissão e cancelamento. Nunca derruba a resposta.
+  const log = (acao, detalhe) => registrarLog(env, fetchFn, { usuario, origem: "asaas", acao, detalhe: { ambiente, ...detalhe } });
 
   const action = req.query.action || "";
   const ambiente = (req.query.ambiente || req.body?.ambiente || "producao") === "sandbox" ? "sandbox" : "producao";
@@ -233,6 +237,11 @@ export default async function handler(req, res) {
       else if (semNota) status = "boleto_sem_nota"; // só boleto, de propósito — não é "pendente"
       else status = payment ? "boleto_ok_nota_pendente" : "nota_pendente";
 
+      const oQue = semNota ? "boleto" : semCobranca ? "nota" : "nota + boleto";
+      await log(
+        `Emitiu ${oQue}${ambiente === "sandbox" ? " (teste)" : ""}: ${tomador.nome} · R$ ${Number(valores.total).toFixed(2).replace(".", ",")}${invoiceErro ? " · nota com erro" : ""}`,
+        { cliente: tomador.nome, valor: Number(valores.total), cobranca: payment ? valorCobranca : null, referencia: referencia || null, paymentId: payment?.id || null, invoiceId: invoice?.id || null, status, invoiceErro: invoiceErro ? String(invoiceErro).slice(0, 200) : null }
+      );
       return res.status(202).json({
         ambiente,
         customerId,
@@ -279,6 +288,7 @@ export default async function handler(req, res) {
         }
       }
       const ok = (!invoiceId || (out.invoice && out.invoice.ok)) && (!paymentId || (out.payment && out.payment.ok));
+      await log(`Cancelou no Asaas${ok ? "" : " (em parte)"}: ${[invoiceId && "nota", paymentId && "boleto"].filter(Boolean).join(" + ")}`, { paymentId: paymentId || null, invoiceId: invoiceId || null, ok, invoice: out.invoice, payment: out.payment });
       return res.status(ok ? 200 : 409).json({ ok, ...out });
     }
 

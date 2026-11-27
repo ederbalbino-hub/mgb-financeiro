@@ -127,7 +127,8 @@
 
   // ── Tela ─────────────────────────────────────────────────────────────────
   function ler(nome, padrao) { try { var v = global.eval('typeof ' + nome + "!=='undefined'?" + nome + ':undefined'); return v === undefined ? padrao : v; } catch (e) { return padrao; } }
-  var aberto = null, busca = '', filtro = 'todos';
+  var aberto = null, busca = '', filtro = 'todos', editContato = false;
+  function faltaAssinar(g) { return g.contratos.some(function (c) { return (c.assinafy && !c.assinadoEm) || c.aditivoPendente; }); }
   function dados() {
     var h = new Date();
     return montarClientes({
@@ -160,23 +161,26 @@
     var q = norm(busca);
     var vis = L.filter(function (g) {
       if (filtro === 'vencido' && g.situacao !== 'vencido') return false;
+      if (filtro === 'assinar' && !faltaAssinar(g)) return false;
       if (filtro.indexOf('mod:') === 0 && g.modulos.indexOf(filtro.slice(4)) === -1) return false;
       return !q || norm(g.nome + ' ' + g.razao).indexOf(q) !== -1 || (dig(busca).length >= 3 && dig(g.cnpj).indexOf(dig(busca)) !== -1);
     });
     var mods = {}; L.forEach(function (g) { g.modulos.forEach(function (m) { mods[m] = (mods[m] || 0) + 1; }); });
     var nVenc = L.filter(function (g) { return g.situacao === 'vencido'; }).length;
+    var nAss = L.filter(faltaAssinar).length; // 27/11 (usabilidade): quem espera assinatura aparecia só como "Em dia"
     var tabela = '<div class="cli2-rolar"><table class="cli2-tab"><thead><tr><th scope="col">Cliente</th><th scope="col">Produtos</th><th scope="col" class="cli2-n">Paga por mês</th><th scope="col">Situação</th></tr></thead><tbody>' +
       (vis.length ? vis.map(function (g) {
         return '<tr class="cli2-linha" tabindex="0" data-cli2="abrir:' + esc(g.chave) + '"><td><b>' + esc(g.nome) + '</b>' + (g.razao ? '<br><span class="cli2-sub">' + esc(g.razao) + '</span>' : '') + '</td>' +
           '<td>' + esc(g.modulos.join(', ')) + '</td><td class="cli2-n">' + (g.pagaPorMes ? brl(g.pagaPorMes) : '—') + '</td>' +
-          '<td>' + (g.situacao === 'vencido' ? pill(g.vencidos === 1 ? '1 mês vencido' : g.vencidos + ' meses vencidos', 'erro') : g.situacao === 'em dia' ? pill('Em dia', 'ok') : pill('Sem receita no mês', 'neutro')) + '</td></tr>';
+          '<td>' + (g.situacao === 'vencido' ? pill(g.vencidos === 1 ? '1 mês vencido' : g.vencidos + ' meses vencidos', 'erro') : g.situacao === 'em dia' ? pill('Em dia', 'ok') : pill('Sem receita no mês', 'neutro')) +
+            (faltaAssinar(g) ? ' ' + pill('Falta assinar', 'atencao') : '') + '</td></tr>';
       }).join('') : '<tr><td colspan="4" class="cli2-vazio">Nenhum cliente com esse filtro.</td></tr>') + '</tbody></table></div>';
     if (soTabela && doc.getElementById('cli2-lista')) { doc.getElementById('cli2-lista').innerHTML = tabela; return; }
     pg.innerHTML =
       '<header class="cli2-cab"><div><span class="cli2-sub">Clientes e contratos</span><h2>Clientes</h2></div>' +
         '<div class="cli2-acoes"><button type="button" class="cli2-btn2" data-cli2="contratos">Gerar contrato</button><button type="button" class="cli2-btn" data-cli2="novo">Novo cliente</button></div></header>' +
       '<div class="cli2-filtros"><label class="cli2-oculto" for="cli2-busca">Buscar cliente</label><input id="cli2-busca" type="search" placeholder="Buscar por nome ou CNPJ" value="' + esc(busca) + '" autocomplete="off">' +
-        [['todos', 'Todos · ' + L.length], ['vencido', 'Com vencido · ' + nVenc]].concat(Object.keys(mods).sort().map(function (m) { return ['mod:' + m, m + ' · ' + mods[m]]; })).map(function (c) {
+        [['todos', 'Todos · ' + L.length], ['vencido', 'Com vencido · ' + nVenc], ['assinar', 'Aguardando assinatura · ' + nAss]].concat(Object.keys(mods).sort().map(function (m) { return ['mod:' + m, m + ' · ' + mods[m]]; })).map(function (c) {
           return '<button type="button" class="cli2-chip' + (filtro === c[0] ? ' cli2-on' : '') + '" aria-pressed="' + (filtro === c[0]) + '" data-cli2="filtro:' + esc(c[0]) + '">' + esc(c[1]) + '</button>'; }).join('') + '</div>' +
       '<section class="cli2-bloco cli2-sem-pad" id="cli2-lista">' + tabela + '</section>';
   }
@@ -206,7 +210,7 @@
       '<div class="cli2-nums">' +
         '<div><span>Paga por mês</span><b>' + brl(g.pagaPorMes) + '</b><small>' + esc(g.contratos.length === 1 ? g.contratos[0].modRot : g.contratos.length + ' contratos') + '</small></div>' +
         '<div><span>Em aberto</span><b class="' + (g.emAberto ? 'cli2-vermelho' : '') + '">' + brl(g.emAberto) + '</b><small>' + (g.vencidos ? 'boleto vencido' : 'nada vencido') + '</small></div>' +
-        '<div><span>Recebido em ' + anoAtual + '</span><b>' + brl(recebidoAno) + '</b><small>nos últimos 4 meses · ' + nCob + (nCob === 1 ? ' cobrança' : ' cobranças') + '</small></div></div>' +
+        '<div><span>Recebido nos últimos 4 meses</span><b>' + brl(recebidoAno) + '</b><small>' + nCob + (nCob === 1 ? ' cobrança paga' : ' cobranças pagas') + ' em ' + anoAtual + '</small></div></div>' +
       '<section class="cli2-bloco"><h3>Contratos</h3>' + g.contratos.map(function (c) {
         return '<div class="cli2-item"><div class="cli2-item-txt"><b>' + esc(c.modRot) + (c.item !== g.nome ? ' · ' + esc(c.item) : '') + '</b><span>' +
           esc([brl(c.valor) + '/mês', vigencia(c), c.telas.length ? c.telas.join(', ') : '', c.issRetido ? 'ISS retido pelo cliente' : ''].filter(Boolean).join(' · ')) + '</span></div>' +
@@ -224,7 +228,17 @@
         }).join('');
       }).join('') + '<div class="cli2-acoes"><button type="button" class="cli2-btn" data-cli2="faturamento:' + esc(g.contratos[0] ? g.contratos[0].item : g.nome) + '">Ver no Faturamento</button></div></section>' +
       '</main><aside>' +
-      '<section><h3>Contato</h3><dl><dt>Responsável</dt><dd>' + esc(g.responsavel || '—') + (g.cargo ? ' · ' + esc(g.cargo) : '') + '</dd><dt>WhatsApp</dt><dd>' + esc(g.tel || '—') + '</dd><dt>E-mail</dt><dd>' + esc(g.email || '—') + '</dd></dl></section>' +
+      (editContato
+        // 27/11 (usabilidade): o contato era só leitura; corrigir telefone ou e-mail obrigava a ir ao Faturamento
+        ? '<section><h3>Contato</h3><form class="cli2-contato" data-cli2-form="contato">' +
+            '<label>Responsável<input id="cli2-c-resp" value="' + esc(g.responsavel) + '" autocomplete="off"></label>' +
+            '<label>WhatsApp<input id="cli2-c-tel" type="tel" inputmode="tel" value="' + esc(g.tel) + '" placeholder="(43) 99999-0000" autocomplete="off"></label>' +
+            '<label>E-mail de cobrança<input id="cli2-c-email" type="email" inputmode="email" autocapitalize="none" value="' + esc(g.email) + '" autocomplete="off"></label>' +
+            '<p class="cli2-erro" id="cli2-c-erro" role="alert"></p>' +
+            '<div class="cli2-acoes"><button type="button" class="cli2-btn" data-cli2="salvar-contato">Salvar contato</button><button type="button" class="cli2-btn2" data-cli2="cancelar-contato">Cancelar</button></div>' +
+            '<p class="cli2-sub">Vale para a nota, o boleto e o WhatsApp de cobrança.</p></form></section>'
+        : '<section><h3>Contato</h3><dl><dt>Responsável</dt><dd>' + esc(g.responsavel || '—') + (g.cargo ? ' · ' + esc(g.cargo) : '') + '</dd><dt>WhatsApp</dt><dd>' + esc(g.tel || '—') + '</dd><dt>E-mail</dt><dd>' + esc(g.email || '—') + '</dd></dl>' +
+            '<button type="button" class="cli2-btn2 cli2-peq" data-cli2="editar-contato">Editar contato</button></section>') +
       '<section><h3>Histórico</h3>' + (eventos.length ? eventos.slice(-12).reverse().map(function (e) { return '<div class="cli2-ev"><b>' + esc(e.t) + '</b><span>' + esc(e.em) + '</span></div>'; }).join('') : '<p class="cli2-sub">Sem eventos registrados.</p>') + '</section>' +
       '<section><h3><label for="cli2-obs">Observações</label></h3><textarea id="cli2-obs" placeholder="Ex.: prefere receber o boleto pelo WhatsApp">' + esc(obsC ? obsC.obs : '') + '</textarea>' +
         '<button type="button" class="cli2-btn2" data-cli2="salvar-obs">Salvar observação</button><span class="cli2-sub" id="cli2-obs-st" role="status"></span></section>' +
@@ -236,8 +250,11 @@
     if (!b) return;
     var a = b.getAttribute('data-cli2'), i = a.indexOf(':'), acao = i < 0 ? a : a.slice(0, i), arg = i < 0 ? '' : a.slice(i + 1);
     try {
-      if (acao === 'abrir') { aberto = arg; desenharFicha(); global.scrollTo(0, 0); }
-      else if (acao === 'voltar') { aberto = null; desenharLista(); }
+      if (acao === 'abrir') { aberto = arg; editContato = false; desenharFicha(); global.scrollTo(0, 0); }
+      else if (acao === 'voltar') { aberto = null; editContato = false; desenharLista(); }
+      else if (acao === 'editar-contato') { editContato = true; desenharFicha(); var ic = doc.getElementById('cli2-c-tel'); if (ic) ic.focus(); }
+      else if (acao === 'cancelar-contato') { editContato = false; desenharFicha(); }
+      else if (acao === 'salvar-contato') salvarContato();
       else if (acao === 'filtro') { filtro = arg; desenharLista(); }
       else if (acao === 'contratos') global.goOperacional('contratos');
       else if (acao === 'novo') global.MGBNovo.abrir();
@@ -290,12 +307,28 @@
     var n = norm(nome), g = dados().filter(function (x) { return norm(x.nome) === n || x.contratos.some(function (c) { return norm(c.item) === n; }); })[0];
     aberto = g ? g.chave : null; global.goPage('clientes');
   }
+  function salvarContato() {
+    var g = dados().filter(function (x) { return x.chave === aberto; })[0], ci = ler('clientesInfo', null);
+    if (!g || !ci || !g.contratos.length) return;
+    var v = function (id) { return String((doc.getElementById(id) || {}).value || '').trim(); };
+    var resp = v('cli2-c-resp'), tel = v('cli2-c-tel'), email = v('cli2-c-email').toLowerCase(), erro = doc.getElementById('cli2-c-erro');
+    if (tel && dig(tel).length < 10) { erro.textContent = 'O WhatsApp precisa ter DDD e número, por exemplo (43) 99999-0000.'; return; }
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { erro.textContent = 'O e-mail parece incompleto. Confira, por exemplo nome@empresa.com.br.'; return; }
+    g.contratos.forEach(function (c) {
+      ci[c.mod] = ci[c.mod] || {}; var i = ci[c.mod][c.item] = ci[c.mod][c.item] || {};
+      i.responsavel = resp; i.tel = tel; i.email = email;
+    });
+    if (typeof global.mgbAcao === 'function') global.mgbAcao('Contato de ' + g.nome + ' atualizado');
+    try { global.scheduleSave(); } catch (e) {}
+    editContato = false; desenharFicha();
+  }
   function salvarObs() {
     var g = dados().filter(function (x) { return x.chave === aberto; })[0], ci = ler('clientesInfo', null);
     if (!g || !ci || !g.contratos.length) return;
     var c = g.contratos[0], txt = (doc.getElementById('cli2-obs') || {}).value || '';
     ci[c.mod] = ci[c.mod] || {}; ci[c.mod][c.item] = ci[c.mod][c.item] || {};
     ci[c.mod][c.item].obsFicha = txt.slice(0, 2000);
+    if (typeof global.mgbAcao === 'function') global.mgbAcao('Observação de ' + g.nome + ' salva');
     try { global.scheduleSave(); } catch (e) {}
     var st = doc.getElementById('cli2-obs-st'); if (st) st.textContent = 'Salvo.';
   }
@@ -337,6 +370,14 @@
       '#cli2-obs{width:100%;min-height:90px;border:1px solid #CFC7E6;border-radius:10px;padding:10px 12px;font:14px "DM Sans",system-ui,sans-serif;box-sizing:border-box;margin-bottom:8px}' +
       '.cli2-oculto{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}' +
       '.cli2-btn:focus-visible,.cli2-btn2:focus-visible,.cli2-chip:focus-visible,.cli2-voltar:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
+      '.cli2-contato{display:flex;flex-direction:column;gap:10px}.cli2-contato label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5D5868;font-weight:600}' +
+      '.cli2-contato input{height:44px;border:1px solid #CFC7E6;border-radius:10px;padding:0 12px;font:16px "DM Sans",system-ui,sans-serif;color:#241A38;box-sizing:border-box;width:100%}' +
+      '.cli2-erro:empty{display:none}.cli2-erro{margin:0;color:#B42318;background:#FDECEA;border-radius:8px;padding:8px 10px;font-size:14px}' +
+      // celular: cada cliente vira um cartão (a tabela de 620 px cortava "Paga por mês" e "Situação")
+      '@media (max-width:700px){.cli2-tab{min-width:0}.cli2-tab thead{display:none}.cli2-tab,.cli2-tab tbody,.cli2-tab tr,.cli2-tab td{display:block;width:auto}' +
+        '.cli2-tab tr.cli2-linha{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 14px;border-top:1px solid #EFEBF7}' +
+        '.cli2-tab tr.cli2-linha td{padding:0;border:0}.cli2-tab tr.cli2-linha td:nth-child(2){grid-column:1;color:#5D5868;font-size:13.5px}.cli2-tab tr.cli2-linha td:nth-child(3){grid-column:2;grid-row:1;text-align:right}' +
+        '.cli2-tab tr.cli2-linha td:nth-child(4){grid-column:1/-1}}' +
       '@media (max-width:760px){#page-clientes{padding:18px 16px 32px}.cli2-nums{grid-template-columns:1fr}.cli2-ficha{margin-top:-18px}.cli2-ficha>main{padding:18px 0}.cli2-ficha>aside{margin:0 -16px;border-left:0;border-top:1px solid #E4DFF0;padding:20px 16px}.cli2-mes{grid-template-columns:10px 90px minmax(0,1fr) auto;}.cli2-mes>a,.cli2-mes>span:nth-child(4){display:none}}';
     doc.head.appendChild(s);
   }

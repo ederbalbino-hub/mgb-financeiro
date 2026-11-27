@@ -146,7 +146,8 @@
         '.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.sb-nav-item.on)>.menu2-cab,.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.mod-item.on)>.menu2-cab{background:#ECE8FA;color:#2A1760}' +
         '.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.sb-nav-item.on)>.menu2-cab svg{color:#4E38B2}' +
         '.shell.sb-collapsed #sidebar.menu2>#mgb-pill>button>span:not(.av){display:none}.shell.sb-collapsed #sidebar.menu2>#mgb-pill{padding:8px 4px}' +
-        '.shell.sb-collapsed #sidebar.menu2>#mgb-pill #mgb-painel{left:8px;right:auto;width:260px}' +
+        // 27/11 (usabilidade): com o menu recolhido o painel ficava cortado dentro dos 60 px e "Visão geral", "Ver como" e "Sair" não recebiam clique
+        '.shell.sb-collapsed #sidebar.menu2>#mgb-pill #mgb-painel{position:fixed;left:68px;right:auto;bottom:16px;width:260px;z-index:1000}' +
       '}';
     doc.head.appendChild(s);
   }

@@ -11,6 +11,7 @@
 // Variáveis no Vercel: ASSINAFY_GS_URL e ASSINAFY_GS_SECRET (= Script Properties → GS_SECRET no Apps Script).
 
 import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../http.js";
+import { registrarLog } from "../log.js";
 
 const ACOES = { enviar: "POST", status: "GET", baixar: "GET" };
 
@@ -47,6 +48,17 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
       return res.status(502).json({ erro: "Assinafy (Apps Script) não devolveu JSON." });
     }
     if (j && j.erro === "forbidden") return res.status(502).json({ erro: "Apps Script do Assinafy recusou o segredo (ASSINAFY_GS_SECRET diferente?)." });
+    if (req.method === "POST") {
+      // Registro de ações (hub_log): nome do documento e para quantas pessoas; nunca o HTML do contrato.
+      let info = {};
+      try { info = typeof req.body === "object" && !Buffer.isBuffer(req.body) ? req.body || {} : JSON.parse(String(req.body || "{}")); } catch { info = {}; }
+      const sig = Array.isArray(info.signatarios) ? info.signatarios : [];
+      await registrarLog(env, fetchFn, {
+        usuario, origem: "assinafy",
+        acao: `Mandou para assinatura: ${info.nomeDoc || "documento"} · ${sig.length} signatário(s)`,
+        detalhe: { nomeDoc: info.nomeDoc || null, signatarios: sig.map((x) => x?.nome || null).slice(0, 10), docId: j?.docId || j?.id || null, ok: !j?.erro },
+      });
+    }
     return res.status(200).json(j);
   } catch (e) {
     console.error("assinafy:", e.message || e);

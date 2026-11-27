@@ -12,6 +12,7 @@ import { cors, exigirLogin } from "../lib/http.js";
 import { lerEstado, gravarEstado, ErroEstado } from "../lib/estado.js";
 import { filtrarLeitura, mesclarGravacao, veTudo } from "../lib/visibilidade.js";
 import { avisarFechamentos } from "../lib/notificacao.js";
+import { registrarLog, limparAcoes, compararEstados } from "../lib/log.js";
 
 export default async function handler(req, res, { env = process.env, fetchFn = fetch } = {}) {
   if (cors(req, res, { metodos: "GET,POST,OPTIONS", env })) return;
@@ -34,6 +35,9 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
       } catch {
         return res.status(400).json({ error: "Corpo não é JSON." });
       }
+      // Resumo das ações que o navegador mandou (log.js do front): vai só para o registro, nunca para o estado.
+      const acoes = limparAcoes(obj._acoes);
+      delete obj._acoes;
       // Quem salvou vem do login, não do navegador (e fica também no histórico do banco).
       obj._salvoPor = usuario.nome;
       obj._salvoLogin = usuario.login;
@@ -47,9 +51,19 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
         return res.status(409).json({ error: "Outra pessoa salvou antes. Recarregando para mesclar.", conflito: true, v: atual.versao });
       }
       const { doc, mudou } = mesclarGravacao(atual.estado, obj, usuario.papel);
-      if (!mudou) return res.status(200).json({ ok: true, v: atual.versao, semMudanca: true });
+      if (!mudou) {
+        if (acoes.length) await registrarLog(env, fetchFn, { usuario, origem: "estado", versao: atual.versao, acao: acoes.join(" · "), detalhe: { acoes, semMudanca: true } });
+        return res.status(200).json({ ok: true, v: atual.versao, semMudanca: true });
+      }
       const r = await gravarEstado(doc, atual.versao, usuario, env, fetchFn);
       console.log(`estado: salvo por ${usuario.login} (v${r.versao})`);
+      // Registro de ações (hub_log): 1 linha por salvamento, com as seções que mudaram. Nunca derruba o salvar.
+      const { secoes, detalhe } = compararEstados(atual.estado, doc);
+      await registrarLog(env, fetchFn, {
+        usuario, origem: "estado", versao: r.versao, secoes,
+        acao: acoes.length ? acoes.join(" · ") : "Salvou: " + (secoes.join(", ") || "sem mudança visível"),
+        detalhe: { ...detalhe, ...(acoes.length ? { acoes } : {}) },
+      });
       await avisarFechamentos(atual.estado.leads, doc.leads, usuario.nome, env, fetchFn);
       return res.status(200).json({ ok: true, v: r.versao });
     }

@@ -141,7 +141,7 @@ test("estado: POST grava com a versão lida e quem salvou vem do login", async (
   await estado(req({ method: "POST", token: tk("karen", "financeiro"), query: { v: "4" }, body: corpo }), r, { env: ENV_SB, fetchFn: f });
   assert.equal(r.statusCode, 200);
   assert.deepEqual(r.corpo, { ok: true, v: 5 });
-  const enviado = JSON.parse(f.chamadas.at(-1).opts.body);
+  const enviado = JSON.parse(f.chamadas.findLast((c) => c.url.endsWith("/rpc/salvar_estado")).opts.body);
   assert.equal(enviado.p_versao_esperada, 4);
   assert.equal(enviado.p_login, "karen");
   const dados = JSON.parse(enviado.p_dados);

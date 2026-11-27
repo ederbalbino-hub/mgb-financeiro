@@ -13,6 +13,7 @@
 
 import { cors, exigirLogin, PAPEIS_FINANCEIRO } from "../http.js";
 import { registrarInclusao, registrarEmissao } from "../faturamentoDb.js";
+import { registrarLog } from "../log.js";
 
 const ACOES = new Set(["listar", "incluir", "marcar-emitido"]);
 
@@ -50,6 +51,15 @@ export default async function handler(req, res, { env = process.env, fetchFn = f
       const params = Object.fromEntries(Object.entries(req.query || {}).filter(([k]) => k !== "s" && k !== "token" && k !== "alvo" && k !== "action").map(([k, v]) => [k, Array.isArray(v) ? String(v[0]) : String(v)]));
       if (action === "incluir") await registrarInclusao(params, usuario.login, env, fetchFn);
       if (action === "marcar-emitido") await registrarEmissao(params, usuario.login, env, fetchFn);
+      // Registro de ações (hub_log): só o que grava na planilha (listar é consulta).
+      if (action !== "listar") {
+        const quem = params.cliente || params.apelido || params.id || "?";
+        await registrarLog(env, fetchFn, {
+          usuario, origem: "faturamento",
+          acao: action === "incluir" ? `Incluiu no Faturamento: ${quem}` : `Marcou como emitido no Faturamento: ${quem}`,
+          detalhe: { action, id: params.id || null, cliente: params.cliente || null, mesRef: params.mesRef || null, valor: params.valor ? Number(params.valor) : null },
+        });
+      }
     }
     return res.status(200).json(j);
   } catch (e) {
