@@ -69,8 +69,8 @@
     return e;
   }
 
-  // Tela Vertical paga do bolso de um sócio (Diego, 27/11): vira lançamento na conta do sócio
-  // (elevInvestimentos), e só lá — sem linha em db.elev, para não contar duas vezes.
+  // Tela Vertical paga do bolso de um sócio (Diego, 27/11): um lançamento só, em elevInvestimentos (tipo despesa).
+  // Ele entra como despesa do mês da Tela Vertical e como aporte na conta do sócio; sem linha em db.elev.
   var TV = 'elev';
   function pagaPeloSocio(d) { return !!d && d.destino === TV && (d.quemPagou === 'eder' || d.quemPagou === 'jadson'); }
   function lancamentoSocio(d, id) {
@@ -401,7 +401,7 @@
       // Tela Vertical: os sócios pagam do bolso (vai para a conta do sócio); nos outros, Eder = reembolso
       var tv = area === TV, bj = el.querySelector('[data-quem="jadson"]');
       bj.hidden = !tv; el.querySelector('#lz-quem-eder').textContent = tv ? 'Eder pagou (do bolso)' : 'Eder pagou (reembolso)';
-      el.querySelector('#lz-quem-dica').textContent = tv ? 'Pago do bolso de um sócio: entra só na conta dele como investimento na Tela Vertical, e não como despesa da MGB.'
+      el.querySelector('#lz-quem-dica').textContent = tv ? 'Pago do bolso de um sócio: é despesa da Tela Vertical no mês (uma vez só) e fica como aporte na conta de quem pagou.'
         : 'Eder pagou: a MGB transfere para o Eder e a transferência fica marcada como reembolso, não como pró-labore.';
       if (!tv && estado.quemPagou === 'jadson') { estado.quemPagou = 'mgb'; marcar('data-quem', 'mgb'); }
       resumo();
@@ -443,7 +443,7 @@
         else txt += '<br>' + brl(v) + ' em ' + fmtMes(m);
       }
       var pagtoRot = { credito: 'crédito', debito: 'débito', pix: 'PIX', permuta: 'permuta' }[d.pagto] || '';
-      var quemRot = pagaPeloSocio(d) ? (d.quemPagou === 'jadson' ? 'Jadson' : 'Eder') + ' pagou do bolso · vai para a conta dele' : d.quemPagou === 'eder' ? 'Eder pagou (reembolso)' : 'conta da MGB';
+      var quemRot = pagaPeloSocio(d) ? (d.quemPagou === 'jadson' ? 'Jadson' : 'Eder') + ' pagou do bolso · aporte na conta dele' : d.quemPagou === 'eder' ? 'Eder pagou (reembolso)' : 'conta da MGB';
       txt += '<br><span class="hint">' + (pagaPeloSocio(d) ? 'Já paga' : d.jaPaga ? 'Já paga' : 'A pagar') + ' · ' + quemRot + (pagtoRot ? ' · ' + pagtoRot : '') + '</span>';
       el.querySelector('#lz-resumo').innerHTML = txt;
     }
@@ -515,7 +515,7 @@
       } else if (pagaPeloSocio(d)) {
         var ls = lancamentoSocio(d, elevInvestId++);                                         // eslint-disable-line no-undef
         elevInvestimentos.push(ls);                                                          // eslint-disable-line no-undef
-        onde = 'Tela Vertical › conta do ' + (d.quemPagou === 'jadson' ? 'Jadson' : 'Eder') + ' (investimento do sócio), ' + fmtMes(mesDe(d.data));
+        onde = 'Tela Vertical › ' + (d.item || 'Geral') + ', despesa de ' + fmtMes(mesDe(d.data)) + ', e aporte na conta do ' + (d.quemPagou === 'jadson' ? 'Jadson' : 'Eder');
       } else {
         var r = linhaDespesa(d);
         if (!db[d.destino]) db[d.destino] = {};                                             // eslint-disable-line no-undef

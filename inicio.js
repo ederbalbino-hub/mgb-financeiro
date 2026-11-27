@@ -156,6 +156,9 @@
       esc(contas.slice(0, 4).map(function (c) { return c.titulo + ' (' + c.venc.txt + ')'; }).join(', ')) + (contas.length > 4 ? '…' : ''), 'Ver contas', 'ir:contas'));
     // Relatório da Tela Vertical do mês anterior ainda não marcado como enviado ao Jadson (desde nov/2026)
     var mA = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1), kA = competencia(mA), rel = ler('relAjustes', {}) || {};
+    var rpA = null; try { rpA = eder && global.MGBFluxos && global.MGBFluxos.repasseDoMes ? global.MGBFluxos.repasseDoMes(mA.getFullYear(), mA.getMonth()) : null; } catch (e) { rpA = null; }
+    if (rpA && rpA.pendente) itens.push(item('#B42318', 'Tela Vertical fechou ' + MESES[mA.getMonth()] + ' no vermelho: quem cobriu?',
+      'Faltaram ' + (ver ? esc(reais(-rpA.resultado)) : 'R$ ••••') + ' · quem cobrir recebe de volta nas próximas sobras, antes da divisão 50/50', 'Decidir', 'tvrel:' + kA, true));
     if (eder && kA >= '2026-11' && !((rel.tvEnviado || {})[kA])) itens.push(item('#4E38B2', 'Relatório da Tela Vertical de ' + MESES[mA.getMonth()] + ' para o Jadson',
       'Ainda não marcado como enviado · o painel mostra o repasse de 50% para cada sócio', 'Abrir painel', 'tvrel:' + kA));
     if (fat.semNota.length) itens.push(item('#B45309', plural(fat.semNota.length, 'nota de ' + nomeMes + ' sem número', 'notas de ' + nomeMes + ' sem número'),

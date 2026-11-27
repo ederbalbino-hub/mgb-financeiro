@@ -88,6 +88,34 @@
     return { sobra: r > 0 ? r : 0, eder: metade, jadson: metade };
   }
 
+  // Repasse com devolução (Diego, 27/11): mês no vermelho → alguém cobre a diferença (Eder ou Jadson, marcado no
+  // painel). Nas sobras seguintes, primeiro devolve a quem cobriu (o mais antigo primeiro); o resto vai 50/50.
+  // meses: [{k:'AAAA-MM', resultado}] em ordem; cobre: {k: 'eder'|'jadson'}; antesDe: meses anteriores a esta
+  // competência sem marcação contam como do Eder (regra antiga: excedente na conta do Eder).
+  function repasseHistorico(meses, cobre, antesDe) {
+    var fila = [], devendo = { eder: 0, jadson: 0 }, r2 = function (x) { return Math.round(x * 100) / 100; };
+    return (meses || []).map(function (m) {
+      var res = r2(Number(m.resultado) || 0), o = { k: m.k, resultado: res, deficit: 0, cobre: null, pendente: false, devolve: { eder: 0, jadson: 0 }, dividir: 0, eder: 0, jadson: 0 };
+      if (res < 0) {
+        var quem = (cobre || {})[m.k];
+        o.pendente = !quem && !(antesDe && m.k < antesDe);
+        o.cobre = quem || 'eder'; o.deficit = -res;
+        fila.push({ quem: o.cobre, valor: -res }); devendo[o.cobre] = r2(devendo[o.cobre] - res);
+      } else if (res > 0) {
+        var resto = res;
+        while (resto > 0.004 && fila.length) {
+          var d = fila[0], x = r2(Math.min(d.valor, resto));
+          o.devolve[d.quem] = r2(o.devolve[d.quem] + x); devendo[d.quem] = r2(devendo[d.quem] - x); d.valor = r2(d.valor - x); resto = r2(resto - x);
+          if (d.valor <= 0.004) fila.shift();
+        }
+        o.dividir = resto; var metade = r2(resto / 2);
+        o.eder = r2(o.devolve.eder + metade); o.jadson = r2(o.devolve.jadson + metade);
+      }
+      o.devendo = { eder: devendo.eder, jadson: devendo.jadson };
+      return o;
+    });
+  }
+
   // Situação do anunciante no mês (cartão da Tela Vertical): recPagamentos.elev[nome]['ano-mês'] (jan=0)
   function situacaoAnunciante(pg) {
     if (pg && pg.pago) return { txt: 'Pago', tom: 'ok' };
@@ -111,7 +139,9 @@
   function fimDoMes(ref) { var d = new Date(Math.floor(ref / 12), ref % 12 + 1, 0); return isoDia(d); }
   function escH(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function documentoAditivo(d) {
-    var v = Number(d.valor) || 0, val = v ? 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+    var R = function (x) { return 'R$ ' + x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var v = Number(d.valor) || 0, val = v ? R(v) : '', vn = Number(d.valorNovo) || 0, muda = vn > 0 && Math.abs(vn - v) >= 0.005;
+    var novo = muda ? R(vn) : '', pct = muda && v ? ((vn / v - 1) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%' : '';
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Termo aditivo de prorrogação</title><style>' +
       'body{font-family:Arial,sans-serif;color:#1d1730;max-width:760px;margin:0 auto;padding:32px;line-height:1.55;font-size:14px}h1{font-size:19px;text-align:center;margin:0 0 4px;color:#2A1760}' +
       '.sub{text-align:center;color:#666;font-size:12px;margin-bottom:24px}h2{font-size:14px;margin:20px 0 6px;color:#2A1760}table{border-collapse:collapse;width:100%;font-size:13px}td{padding:5px 8px;border-bottom:1px solid #e4dff0;vertical-align:top}td:first-child{color:#5D5868;width:34%}' +
@@ -121,15 +151,29 @@
       '<tr><td>Contratante</td><td>' + escH(d.razao || d.nome) + (d.cnpj ? ' · CNPJ ' + escH(d.cnpj) : '') + '</td></tr></table>' +
       '<h2>Cláusula 1ª · Objeto</h2><p>As partes prorrogam o contrato de ' + escH(d.produto) + (d.assinadoEm ? ' assinado em ' + escH(brData(d.assinadoEm.slice(0, 10))) : '') +
         ' por mais <b>' + d.meses + ' ' + (d.meses === 1 ? 'mês' : 'meses') + '</b>, de <b>' + escH(brData(d.de)) + '</b> a <b>' + escH(brData(d.ate)) + '</b>.</p>' +
-      '<h2>Cláusula 2ª · Valor</h2><p>' + (val ? 'O valor mensal continua <b>' + val + '</b>, com as mesmas condições de pagamento do contrato.' : 'O valor e as condições de pagamento continuam os do contrato.') + '</p>' +
+      '<h2>Cláusula 2ª · Valor</h2><p>' + (novo ? 'A partir de <b>' + escH(brData(d.de)) + '</b>, o valor mensal passa de ' + val + ' para <b>' + novo + '</b>' + (pct ? ' (reajuste de ' + pct + ')' : '') + ', com as mesmas condições de pagamento do contrato.'
+        : val ? 'O valor mensal continua <b>' + val + '</b>, com as mesmas condições de pagamento do contrato.' : 'O valor e as condições de pagamento continuam os do contrato.') + '</p>' +
       '<h2>Cláusula 3ª · Demais condições</h2><p>Ficam mantidas todas as demais cláusulas e condições do contrato, que este termo passa a integrar.</p>' +
       '<p>Assinado eletronicamente pelas partes, pela plataforma Assinafy.</p>' +
       '<div class="ass"><div>' + escH(d.razao || d.nome) + '<br><span style="color:#888">CONTRATANTE</span></div><div>MGB Comunicação e Marketing Ltda.<br><span style="color:#888">CONTRATADA</span></div></div>' +
       '</body></html>';
   }
 
-  var regras = { periodoAditivo: periodoAditivo, documentoAditivo: documentoAditivo, fimDoMes: fimDoMes, reindexarPagamentos: reindexarPagamentos, atualizarMesesAnteriores: atualizarMesesAnteriores, leadDoEndereco: leadDoEndereco,
-    renomearNoEstado: renomearNoEstado, repasseSocios: repasseSocios, situacaoAnunciante: situacaoAnunciante };
+  // % ↔ novo valor (campos ligados da janela do aditivo)
+  function valorReajustado(valor, pct) { return Math.round((Number(valor) || 0) * (1 + (Number(pct) || 0) / 100) * 100) / 100; }
+  function pctReajuste(valor, novo) { var v = Number(valor) || 0; return v ? Math.round(((Number(novo) || 0) / v - 1) * 10000) / 100 : 0; }
+  // Nome do contrato que continua com valor novo: "X (renovação)"; se já existe, "X (renovação AAAA)"
+  var RX_RENOV = /\s*\(renova[cç][aã]o(?:\s+\d{4})?\)\s*$/i;
+  function nomeRenovacao(nome, existentes, ano) {
+    var base = String(nome || '').replace(RX_RENOV, ''), n1 = base + ' (renovação)';
+    if ((existentes || []).indexOf(n1) < 0) return n1;
+    var n2 = base + ' (renovação ' + ano + ')', i = 2;
+    while ((existentes || []).indexOf(n2) >= 0) n2 = base + ' (renovação ' + ano + '-' + (i++) + ')';
+    return n2;
+  }
+
+  var regras = { valorReajustado: valorReajustado, pctReajuste: pctReajuste, nomeRenovacao: nomeRenovacao, periodoAditivo: periodoAditivo, documentoAditivo: documentoAditivo, fimDoMes: fimDoMes, reindexarPagamentos: reindexarPagamentos, atualizarMesesAnteriores: atualizarMesesAnteriores, leadDoEndereco: leadDoEndereco,
+    renomearNoEstado: renomearNoEstado, repasseSocios: repasseSocios, repasseHistorico: repasseHistorico, situacaoAnunciante: situacaoAnunciante };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (typeof document === 'undefined') return;
 
@@ -254,24 +298,41 @@
   }
 
   // Painel da Tela Vertical: repasse 50/50, "Marcar relatório como enviado", "Nova despesa"
+  // Repasse do mês (ano, mes0) com a regra de devolução, a partir do histórico da Tela Vertical
+  var COBRE_DESDE = '2026-11';   // antes disso, mês no vermelho já era do Eder (não pergunta)
+  function tvCobre() { var r = ler('relAjustes'); if (!r || typeof r !== 'object') return {}; r.tvCobre = r.tvCobre || {}; return r.tvCobre; }
+  function repasseDoMes(ano, mes) {
+    var h = []; try { h = global.elevExcedenteHistorico(); } catch (e) { return null; }
+    var k = ano + '-' + String(mes + 1).padStart(2, '0');
+    var L = repasseHistorico(h.map(function (x) { return { k: x.ano + '-' + String(x.mes + 1).padStart(2, '0'), resultado: x.resultado }; }), tvCobre(), COBRE_DESDE);
+    return L.filter(function (x) { return x.k === k; })[0] || null;
+  }
   function tvEnviados() { var r = ler('relAjustes'); if (!r || typeof r !== 'object') return {}; r.tvEnviado = r.tvEnviado || {}; return r.tvEnviado; }
   function decorarPainelTV() {
     var root = document.getElementById('tvp-root'); if (!root || root.querySelector('.flx-socio')) return;
     var mesIso = ler('tvpMes'); var mm = /^(\d{4})-(\d{2})$/.exec(mesIso || ''); if (!mm) return;
     var ano = +mm[1], mes = +mm[2] - 1, r = null; try { r = global.elevMesResumo(ano, mes); } catch (e) { return; }
-    var rep = repasseSocios(r.resultado), env = tvEnviados()[mesIso];
+    var rep = repasseDoMes(ano, mes) || { resultado: r.resultado, devolve: { eder: 0, jadson: 0 }, dividir: 0, eder: 0, jadson: 0, devendo: { eder: 0, jadson: 0 } }, env = tvEnviados()[mesIso];
     var alvo = null; Array.prototype.forEach.call(root.querySelectorAll('div'), function (d) { if (!alvo && d.textContent === 'Para o sócio') alvo = d; });
     var vis = ler('valuesVisible'); var v = function (x) { return vis === false ? 'R$ ••••' : brl(x); };
     var box = document.createElement('div'); box.className = 'flx-socio';
-    box.innerHTML = '<div><b>Repasse de ' + MES_C[mes] + '/' + String(ano).slice(2) + ' · 50% para cada sócio</b><span>' +
-      (rep.sobra ? 'Sobra ' + v(rep.sobra) + ' → Eder ' + v(rep.eder) + ' · Jadson ' + v(rep.jadson) : 'Sem sobra no mês: não há repasse (a diferença fica como excedente do Eder).') + '</span></div>' +
+    var nm = MES_C[mes] + '/' + String(ano).slice(2), dev = rep.devolve.eder + rep.devolve.jadson, txt;
+    if (rep.resultado < 0) txt = 'Mês no vermelho: faltaram ' + v(-rep.resultado) + '. ' + (rep.pendente ? '<b class="flx-alerta">Quem cobriu?</b> ' : 'Coberto por ' + (rep.cobre === 'jadson' ? 'Jadson' : 'Eder') + ' (volta para ele nas próximas sobras). ') +
+      '<span class="flx-quem">' + ['eder', 'jadson'].map(function (q) { return '<button type="button" class="flx-chip' + (!rep.pendente && rep.cobre === q ? ' flx-on' : '') + '" data-flx="cobre:' + q + '">' + (q === 'eder' ? 'Eder cobriu' : 'Jadson cobriu') + '</button>'; }).join('') + '</span>';
+    else if (rep.resultado > 0) txt = 'Sobra ' + v(rep.resultado) + (dev ? ' → devolve primeiro ' + v(dev) + ' (' + [rep.devolve.eder ? 'Eder ' + v(rep.devolve.eder) : '', rep.devolve.jadson ? 'Jadson ' + v(rep.devolve.jadson) : ''].filter(Boolean).join(' · ') + ', que cobriu meses no vermelho)' : '') +
+      ' → divide ' + v(rep.dividir) + ' em 50/50. <b>Eder recebe ' + v(rep.eder) + ' · Jadson recebe ' + v(rep.jadson) + '</b>';
+    else txt = 'Mês empatado: sem repasse.';
+    var falta = rep.devendo.eder + rep.devendo.jadson;
+    box.innerHTML = '<div><b>Repasse de ' + nm + '</b><span>' + txt + '</span>' + (falta > 0.004 ? '<span>Ainda a devolver depois deste mês: ' + [rep.devendo.eder ? 'Eder ' + v(rep.devendo.eder) : '', rep.devendo.jadson ? 'Jadson ' + v(rep.devendo.jadson) : ''].filter(Boolean).join(' · ') + '</span>' : '') + '</div>' +
       (env ? '<span class="flx-ok">Relatório enviado em ' + esc(env.em) + (env.por ? ' por ' + esc(env.por) : '') + ' <button type="button" class="flx-link" data-flx="desenviar">desfazer</button></span>'
         : '<button type="button" class="flx-btn" data-flx="enviado">Marcar relatório como enviado</button>');
     if (alvo && alvo.parentNode) alvo.parentNode.insertBefore(box, alvo.nextSibling); else root.appendChild(box);
     box.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-flx]'); if (!b) return;
       var E = tvEnviados(), u = global.MGBAcesso && global.MGBAcesso.usuario ? (global.MGBAcesso.usuario() || {}) : {};
-      if (b.getAttribute('data-flx') === 'enviado') E[mesIso] = { em: new Date().toLocaleDateString('pt-BR'), por: u.nome || '' };
+      var acao = b.getAttribute('data-flx');
+      if (acao.indexOf('cobre:') === 0) { tvCobre()[mesIso] = acao.slice(6); }
+      else if (acao === 'enviado') E[mesIso] = { em: new Date().toLocaleDateString('pt-BR'), por: u.nome || '' };
       else delete E[mesIso];
       if (typeof global.scheduleSave === 'function') global.scheduleSave();
       global.tvPainelRender();
@@ -309,6 +370,8 @@
     w.innerHTML = '<div class="flx-caixa" role="dialog" aria-modal="true" aria-labelledby="flx-adit-t"><h2 id="flx-adit-t">Aditivo de prorrogação · ' + esc(c.nome) + '</h2>' +
       '<p class="flx-sub">' + esc(c.origem) + ' · contrato atual termina em ' + esc(brData(fim)) + '. O prazo do hub só aumenta quando o cliente e o Eder assinarem.</p>' +
       '<div class="flx-campos"><label>Prorrogar por (meses)<input id="flx-ad-m" type="number" min="1" max="60" value="' + (c.meses && c.meses < 120 ? c.meses : 12) + '"></label>' +
+      '<div class="flx-dupla"><label>Reajuste (%)<input id="flx-ad-pct" type="number" step="0.01" value="0" inputmode="decimal"></label>' +
+      '<label>Novo valor mensal (R$)<input id="flx-ad-v" type="number" step="0.01" min="0" value="' + (Number(c.valor) || '') + '" inputmode="decimal"></label></div>' +
       '<label>Quem assina pelo cliente<input id="flx-ad-n" value="' + esc(info.responsavel || '') + '" autocomplete="off"></label>' +
       '<label>E-mail de quem assina<input id="flx-ad-e" type="email" value="' + esc(info.email || '') + '" autocomplete="off"></label></div>' +
       '<div class="flx-prev" id="flx-ad-p"></div><div class="flx-erro" id="flx-ad-x" role="alert"></div>' +
@@ -317,12 +380,18 @@
     function dados() {
       var per = periodoAditivo(fim, document.getElementById('flx-ad-m').value) || {};
       return { nome: c.nome, razao: info.razao || '', cnpj: info.cnpj || '', produto: String(c.origem || '').split('—')[0].trim(), meses: per.meses, de: per.de, ate: per.ate,
-        valor: c.valor, assinadoEm: info.assinadoEm || '', signatario: document.getElementById('flx-ad-n').value.trim(), email: document.getElementById('flx-ad-e').value.trim() };
+        valor: c.valor, valorNovo: parseFloat(document.getElementById('flx-ad-v').value) || c.valor, assinadoEm: info.assinadoEm || '', signatario: document.getElementById('flx-ad-n').value.trim(), email: document.getElementById('flx-ad-e').value.trim() };
     }
-    function prev() { var d = dados(); document.getElementById('flx-ad-p').innerHTML = d.de ? 'Novo período: <b>' + esc(brData(d.de)) + '</b> a <b>' + esc(brData(d.ate)) + '</b> · ' + d.meses + ' meses' + (c.valor ? ' · ' + brl(c.valor) + '/mês (mesmo valor)' : '') : 'Não achei a data de fim do contrato.'; }
+    function prev() {
+      var d = dados(), muda = c.valor && Math.abs((d.valorNovo || 0) - c.valor) >= 0.005;
+      document.getElementById('flx-ad-p').innerHTML = d.de ? 'Novo período: <b>' + esc(brData(d.de)) + '</b> a <b>' + esc(brData(d.ate)) + '</b> · ' + d.meses + ' meses · ' +
+        (muda ? 'de ' + brl(c.valor) + ' para <b>' + brl(d.valorNovo) + '/mês</b> (' + String(pctReajuste(c.valor, d.valorNovo)).replace('.', ',') + '%) a partir de ' + esc(brData(d.de)) : brl(c.valor || 0) + '/mês (mesmo valor)') : 'Não achei a data de fim do contrato.';
+    }
     function fechar() { w.remove(); }
     prev();
     document.getElementById('flx-ad-m').addEventListener('input', prev);
+    document.getElementById('flx-ad-pct').addEventListener('input', function () { document.getElementById('flx-ad-v').value = valorReajustado(c.valor, this.value) || ''; prev(); });
+    document.getElementById('flx-ad-v').addEventListener('input', function () { document.getElementById('flx-ad-pct').value = pctReajuste(c.valor, this.value); prev(); });
     document.getElementById('flx-ad-c').addEventListener('click', fechar);
     w.addEventListener('click', function (ev) { if (ev.target === w) fechar(); });
     w.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') fechar(); });
@@ -333,20 +402,21 @@
       var d = dados(), x = document.getElementById('flx-ad-x'), b = this;
       if (!mod) { x.textContent = 'Não achei o módulo deste contrato.'; return; }
       if (!d.de) { x.textContent = 'Não achei a data de fim do contrato.'; return; }
+      if (!(d.valorNovo > 0)) { x.textContent = 'Informe o valor mensal do novo período.'; return; }
       if (!d.signatario || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) { x.textContent = 'Informe o nome e um e-mail válido de quem assina pelo cliente.'; return; }
       if (/^\s*treino\b/i.test(c.nome)) { x.textContent = 'Cliente de TREINO: o aditivo não é enviado (não gasta crédito da Assinafy).'; return; }
       x.textContent = ''; b.disabled = true; b.textContent = 'Enviando…';
       fetch(ASSINAFY + '?action=enviar', { method: 'POST', body: JSON.stringify({
         nomeDoc: 'Aditivo de prorrogação - ' + c.nome, html: documentoAditivo(d),
         signatarios: [{ nome: d.signatario, email: d.email }, { nome: 'Eder Balbino — MGB Comunicação e Marketing Ltda.', email: 'ederbalbino@gmail.com' }],
-        mensagem: 'Olá! Segue o aditivo de prorrogação do contrato de ' + d.produto + ' com a MGB (' + d.meses + ' meses, de ' + brData(d.de) + ' a ' + brData(d.ate) + '). É só assinar pelo link.',
+        mensagem: 'Olá! Segue o aditivo de prorrogação do contrato de ' + d.produto + ' com a MGB (' + d.meses + ' meses, de ' + brData(d.de) + ' a ' + brData(d.ate) + (Math.abs(d.valorNovo - (c.valor || 0)) >= 0.005 ? ', valor mensal de ' + brl(d.valorNovo) : '') + '). É só assinar pelo link.',
         pasta: (PASTA[mod] || 'Outros') + '/' + String(c.nome).trim()
       }) }).then(function (r) { return r.json(); }).then(function (j) {
         if (!j || j.erro || !j.docId) throw new Error((j && j.erro) || 'a Assinafy não devolveu o documento');
         var ci = ler('clientesInfo'); ci[mod] = ci[mod] || {};
         var i = ci[mod][c.nome] || (ci[mod][c.nome] = { fantasia: c.nome });
-        i.aditivo = { docId: j.docId, enviadoEm: new Date().toISOString(), meses: d.meses, de: d.de, ate: d.ate, valor: c.valor || 0, origem: c.origem, inicio: c.inicio || '', fimKey: c.fimKey, mesesAntes: c.meses || 12, assinadoEm: null };
-        (i.jornada = i.jornada || []).push({ em: i.aditivo.enviadoEm, texto: 'Aditivo de prorrogação enviado para assinatura (+' + d.meses + ' meses, até ' + brData(d.ate) + ')' });
+        i.aditivo = { docId: j.docId, enviadoEm: new Date().toISOString(), meses: d.meses, de: d.de, ate: d.ate, valor: c.valor || 0, valorNovo: d.valorNovo, origem: c.origem, inicio: c.inicio || '', fimKey: c.fimKey, mesesAntes: c.meses || 12, assinadoEm: null };
+        (i.jornada = i.jornada || []).push({ em: i.aditivo.enviadoEm, texto: 'Aditivo de prorrogação enviado para assinatura (+' + d.meses + ' meses, até ' + brData(d.ate) + (Math.abs(d.valorNovo - (c.valor || 0)) >= 0.005 ? ', novo valor ' + brl(d.valorNovo) + '/mês' : '') + ')' });
         if (typeof global.scheduleSave === 'function') global.scheduleSave();
         try { if (op.aoEnviar) op.aoEnviar(); } catch (e) {}
         w.querySelector('.flx-caixa').innerHTML = '<h2>Aditivo enviado</h2><p class="flx-sub">' + esc(c.nome) + ' recebe o link por e-mail. Quando todos assinarem, o hub prorroga o contrato sozinho e o Início deixa de mostrar o aviso.</p><div class="flx-bts"><button type="button" class="flx-btn" id="flx-ad-f">Fechar</button></div>';
@@ -364,13 +434,44 @@
     var fimCob = m ? +m[1] * 12 + (+m[2] - 1) + (a.mesesAntes || 12) - 1 : a.fimKey;
     var c = { origem: a.origem, nome: nome, inicio: a.inicio, fimKey: fimCob, meses: a.meses };
     var obj = A.objetoDoContrato ? A.objetoDoContrato(c) : null;
-    if (obj && A.estenderContrato) A.estenderContrato(obj, a.meses);
+    var mudaValor = obj && a.valorNovo > 0 && Math.abs(a.valorNovo - (Number(obj.valor) || 0)) >= 0.005, nomeNovo = null;
+    if (obj && mudaValor) nomeNovo = criarRenovacao(mod, nome, i, a, fimCob);      // valor novo: contrato "(renovação)" a partir do novo período
+    else if (obj && A.estenderContrato) A.estenderContrato(obj, a.meses);
     try { if (A.estenderCustos) A.estenderCustos(c); } catch (e) {}
     try { if (mod === 'elev' && global.syncAnuncReceita) global.syncAnuncReceita(); } catch (e) {}
     (i.aditivos = i.aditivos || []).push(a);
-    (i.jornada = i.jornada || []).push({ em: a.assinadoEm, texto: obj ? 'Aditivo assinado por todos ✅ · contrato prorrogado até ' + brData(a.ate) : 'Aditivo assinado ✅ · não achei o contrato no hub para prorrogar: ajuste a duração à mão' });
+    (i.jornada = i.jornada || []).push({ em: a.assinadoEm, texto: !obj ? 'Aditivo assinado ✅ · não achei o contrato no hub para prorrogar: ajuste a duração à mão'
+      : nomeNovo ? 'Aditivo assinado por todos ✅ · de ' + brData(a.de) + ' a ' + brData(a.ate) + ' com ' + brl(a.valorNovo) + '/mês (contrato "' + nomeNovo + '")'
+      : 'Aditivo assinado por todos ✅ · contrato prorrogado até ' + brData(a.ate) });
     try { var r = (ler('clientesInfo') || {})._renovacoes; if (r && A.chaveRenov) r[A.chaveRenov(c)] = { s: 'renovado', em: a.assinadoEm.slice(0, 10), por: 'aditivo', meses: a.meses }; } catch (e) {}
     return !!obj;
+  }
+  // Valor novo no aditivo: o hub guarda um valor por contrato, então o novo período vira o contrato "X (renovação)",
+  // que começa no mês seguinte ao fim da cobrança atual. O Faturamento já cobra "X (renovação)" na linha de "X".
+  function criarRenovacao(mod, nome, info, a, fimCob) {
+    var ini = fimCob + 1, inicio = Math.floor(ini / 12) + '-' + String(ini % 12 + 1).padStart(2, '0');
+    var ci = ler('clientesInfo'); ci[mod] = ci[mod] || {};
+    var copia = {}; Object.keys(info).forEach(function (k) { if (['aditivo', 'aditivos', 'jornada', 'assinafyDocId', 'assinadoEm', 'assinafyEnviadoEm', 'obsFicha'].indexOf(k) < 0) copia[k] = info[k]; });
+    copia.renovacaoDe = nome; copia.assinadoEm = a.assinadoEm; copia.assinafyDocId = a.docId;
+    copia.jornada = [{ em: a.assinadoEm, texto: 'Renovação de ' + nome + ' com valor novo (aditivo assinado) · unidade criada no Novo cliente' }];
+    var novoNome;
+    if (mod === 'elev') {
+      var an = ler('anunciantes') || [], orig = an.filter(function (x) { return x.nome === nome; })[0] || {};
+      novoNome = nomeRenovacao(nome, an.map(function (x) { return x.nome; }), Math.floor(ini / 12));
+      var id = ler('anuncId') || (an.reduce(function (m, x) { return Math.max(m, x.id || 0); }, 0) + 1);
+      an.push({ id: id, nome: novoNome, valor: a.valorNovo, inicio: inicio, meses: a.meses, telas: (orig.telas || []).slice() });
+      try { global.eval('anuncId=' + (id + 1)); } catch (e) {}
+    } else {
+      var m = (ler('MODULES') || []).filter(function (x) { return x.id === mod; })[0]; if (!m) return null;
+      novoNome = nomeRenovacao(nome, m.items, Math.floor(ini / 12));
+      m.items.push(novoNome);
+      var rec = ler('rec'), db = ler('db'), pg = ler('pagamentos');
+      rec[mod] = rec[mod] || {}; rec[mod][novoNome] = { valor: a.valorNovo, inicio: inicio, meses: a.meses };
+      if (db) { db[mod] = db[mod] || {}; db[mod][novoNome] = db[mod][novoNome] || []; }
+      if (pg) { pg[mod] = pg[mod] || {}; pg[mod][novoNome] = pg[mod][novoNome] || {}; }
+    }
+    ci[mod][novoNome] = copia;
+    return novoNome;
   }
   function ligarConferenciaAditivos() {
     var orig = global.mgbConferirAssinaturas;
@@ -403,6 +504,8 @@
       '.flx-socio div{display:flex;flex-direction:column;gap:2px;min-width:0}.flx-socio b{font:700 13.5px "DM Sans",system-ui,sans-serif;color:#16294F}.flx-socio span{font-size:12.5px;color:#5D5868}' +
       '.flx-btn{font:700 13px "DM Sans",system-ui,sans-serif;padding:9px 14px;border-radius:10px;border:0;background:#16294F;color:#fff;cursor:pointer}' +
       '.flx-btn2{font:700 13px "DM Sans",system-ui,sans-serif;padding:10px 16px;border-radius:10px;cursor:pointer;background:#fff;color:#16294F;border:1px solid #C0A062}' +
+      '.flx-quem{display:inline-flex;gap:6px;flex-wrap:wrap;margin-left:4px;vertical-align:middle}.flx-chip{font:700 12px "DM Sans",system-ui,sans-serif;padding:5px 10px;border-radius:999px;border:1px solid #C0A062;background:#fff;color:#16294F;cursor:pointer}' +
+      '.flx-chip.flx-on{background:#16294F;color:#fff;border-color:#16294F}.flx-alerta{color:#B42318!important}' +
       '.flx-ok{color:#15803D!important;font-weight:700}.flx-link{border:0;background:none;color:#4E38B2;text-decoration:underline;cursor:pointer;font:inherit;padding:0 0 0 6px}' +
       '.flx-btn:focus-visible,.flx-btn2:focus-visible,.flx-link:focus-visible{outline:2px solid #4E38B2;outline-offset:2px}' +
       '.flx-fundo{position:fixed;inset:0;background:rgba(36,26,56,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}' +
@@ -410,6 +513,7 @@
       '.flx-caixa h2{margin:0 0 6px;font-size:19px}.flx-sub{color:#5D5868;font-size:14px;margin:0 0 14px}.flx-campos{display:grid;gap:10px}' +
       '.flx-campos label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#5D5868}.flx-campos input{min-height:40px;border:1px solid #CFC7E6;border-radius:10px;padding:0 12px;font:400 15px "DM Sans",system-ui,sans-serif;color:#241A38}' +
       '.flx-prev{margin:14px 0 4px;padding:10px 12px;background:#ECE8FA;border-radius:10px;font-size:14px}.flx-erro{color:#B42318;font-size:13px;min-height:18px;margin:4px 0}.flx-bts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}' +
+      '.flx-dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media (max-width:480px){.flx-dupla{grid-template-columns:1fr}}' +
       '.flx-caixa .flx-btn{background:#4E38B2}.flx-caixa .flx-btn2{color:#4E38B2;border-color:#CFC7E6}';
     document.head.appendChild(st);
   }
@@ -451,6 +555,6 @@
     andarPagamentosAoRemover('tvCondoDespRemover', function () { return { mod: 'elev', item: ler('tvCondoSel') }; });
   }
 
-  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo }, regras);
+  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, repasseDoMes: repasseDoMes, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);

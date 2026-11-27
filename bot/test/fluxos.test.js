@@ -171,3 +171,31 @@ test("aditivo: documento com partes, prazo, mesmo valor e escape do nome", () =>
   assert.match(h, /assinado em 20\/11\/2026/);
   assert.match(h, /Loja &lt;Teste&gt;/);
 });
+
+test("repasse: quem cobriu mês no vermelho recebe de volta antes da divisão 50/50", () => {
+  const meses = [
+    { k: "2026-10", resultado: -300 },   // antes de nov/26: do Eder, sem perguntar
+    { k: "2026-11", resultado: -200 },   // Jadson cobriu
+    { k: "2026-12", resultado: 400 },    // devolve 300 ao Eder e 100 ao Jadson, nada a dividir
+    { k: "2027-01", resultado: 500 },    // devolve 100 ao Jadson, divide 400
+    { k: "2027-02", resultado: -50 },    // sem marcação: pendente
+  ];
+  const L = X.repasseHistorico(meses, { "2026-11": "jadson" }, "2026-11");
+  assert.equal(L[0].cobre, "eder"); assert.equal(L[0].pendente, false);
+  assert.equal(L[1].cobre, "jadson"); assert.deepEqual(L[1].devendo, { eder: 300, jadson: 200 });
+  assert.deepEqual(L[2].devolve, { eder: 300, jadson: 100 }); assert.equal(L[2].dividir, 0); assert.equal(L[2].eder, 300); assert.equal(L[2].jadson, 100);
+  assert.deepEqual(L[3].devolve, { eder: 0, jadson: 100 }); assert.equal(L[3].dividir, 400); assert.equal(L[3].eder, 200); assert.equal(L[3].jadson, 300);
+  assert.deepEqual(L[3].devendo, { eder: 0, jadson: 0 });
+  assert.equal(L[4].pendente, true);
+});
+
+test("aditivo com reajuste: % e novo valor ligados, documento e nome do contrato de renovação", () => {
+  assert.equal(X.valorReajustado(450, 10), 495);
+  assert.equal(X.pctReajuste(450, 495), 10);
+  assert.equal(X.pctReajuste(0, 495), 0);
+  assert.equal(X.nomeRenovacao("Loja", ["Loja"], 2027), "Loja (renovação)");
+  assert.equal(X.nomeRenovacao("Loja (renovação)", ["Loja", "Loja (renovação)"], 2028), "Loja (renovação 2028)");
+  const h = X.documentoAditivo({ nome: "Loja", produto: "Rádio Interna", meses: 12, de: "2027-01-01", ate: "2027-12-31", valor: 450, valorNovo: 495 });
+  assert.match(h, /A partir de <b>01\/01\/2027<\/b>, o valor mensal passa de R\$ 450,00 para <b>R\$ 495,00<\/b> \(reajuste de 10%\)/);
+  assert.match(X.documentoAditivo({ nome: "Loja", produto: "Rádio", meses: 12, de: "2027-01-01", ate: "2027-12-31", valor: 450, valorNovo: 450 }), /continua <b>R\$ 450,00<\/b>/);
+});
