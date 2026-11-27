@@ -19,7 +19,7 @@ function extrair(nome) {
 }
 function linha(nome) { const m = new RegExp('^function ' + nome + '\\s*\\(', 'm').exec(SRC); return SRC.slice(0, m.index).split('\n').length; }
 
-const FUNCS = ['ymKey', 'impostoIss', 'impostoSimples', 'impostoAliq', 'impostoRotulo', 'pesValorNoMes', 'pesPulou', 'pessoalRecMes', 'pessoalDespMes',
+const FUNCS = ['mesLocal', 'diaLocal', 'ymKey', 'impostoIss', 'impostoSimples', 'impostoAliq', 'impostoRotulo', 'pesValorNoMes', 'pesPulou', 'pessoalRecMes', 'pessoalDespMes',
   'anuncRecByTelaMes', 'recOfMes', 'recModMes', 'finYear', 'finGetRecPrevista', 'receitaOficialMes', 'finGetRec', 'despPagKey',
   'coletaDespesasMes', 'despesaTotalMes', 'despesaTotalMesMod', 'finGetDesp', 'elevInvestTotais', 'elevInvestidoDoItem', 'elevMesResumo', 'fFatBoleto', 'fFatNoContrato',
   'relAnualDados', 'despCompIsAtivo', 'contratosLista', 'recTarobaGetMes', 'tarobaRecMap', 'recPagKey', 'recDefault', 'coletaClientesMes'];

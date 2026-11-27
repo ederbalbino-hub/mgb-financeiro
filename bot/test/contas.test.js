@@ -55,3 +55,31 @@ test("Tela Vertical: 'Investido' do condomínio não soma despesa; total da CC n
   c.elevInvestimentos.push({ id: 5, item: "Geral", valor: 100, pagoPor: "", tipo: "despesa" });
   assert.equal(c.elevInvestTotais().total, 48800);
 });
+
+test("mês de hoje é o do horário de Brasília, não o UTC (30/11 às 21h30)", () => {
+  const tz = process.env.TZ;
+  process.env.TZ = "America/Sao_Paulo";
+  try {
+    const c = novoCtx();
+    const noite = new Date(2026, 10, 30, 21, 30); // 30/11/2026 21h30 local = 01/12 00h30 UTC
+    assert.equal(noite.toISOString().slice(0, 7), "2026-12"); // o jeito antigo errava
+    assert.equal(c.mesLocal(noite), "2026-11");
+    assert.equal(c.diaLocal(noite), "2026-11-30");
+  } finally {
+    if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz;
+  }
+});
+
+test("ninguém voltou a usar toISOString() para o mês ou o dia de hoje no front", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const raiz = path.resolve(import.meta.dirname, "../..");
+  const arquivos = ["index.html", ...fs.readdirSync(raiz).filter((n) => n.endsWith(".js"))];
+  const achados = [];
+  for (const n of arquivos) {
+    fs.readFileSync(path.join(raiz, n), "utf8").split("\n").forEach((l, i) => {
+      if (/new Date\(\)\.toISOString\(\)\.(slice\(0, ?(7|10)\)|split\('T'\))/.test(l) || /hoje\.toISOString\(\)\.slice\(0, ?7\)/.test(l)) achados.push(`${n}:${i + 1}`);
+    });
+  }
+  assert.deepEqual(achados, []);
+});

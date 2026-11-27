@@ -437,7 +437,7 @@
   function mudarMes(n) {
     var inp = doc.getElementById('f-fat-comp');
     if (!inp) return;
-    inp.value = somaMes(inp.value || new Date().toISOString().slice(0, 7), n);
+    inp.value = somaMes(inp.value || (function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })(new Date()), n);
     inp.dispatchEvent(new global.Event('change', { bubbles: true }));
     desenharLista();
   }

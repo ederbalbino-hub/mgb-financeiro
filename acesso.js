@@ -460,7 +460,7 @@
     function marcarR(i, s, extra) {
       var c = lista[i];
       var r = renovacoes();
-      r[chaveRenov(c)] = Object.assign({ s: s, em: new Date().toISOString().slice(0, 10), por: sessao ? sessao.usuario.login : '' }, extra || {});
+      r[chaveRenov(c)] = Object.assign({ s: s, em: (function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })(new Date()), por: sessao ? sessao.usuario.login : '' }, extra || {});
       salvar();
       montarAvisoRenovacao();
     }

@@ -806,7 +806,7 @@
         var totalInst = 0;
         insts.forEach(function (x) {
           elevInvestimentos.push({ id: elevInvestId++, item: d.nome, descricao: x.desc || ('Instalação ' + d.nome), valor: x.valor, // eslint-disable-line no-undef
-            pagoPor: x.por, data: new Date().toISOString().slice(0, 10), criadoEm: new Date().toISOString() });
+            pagoPor: x.por, data: (function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })(new Date()), criadoEm: new Date().toISOString() });
           totalInst += x.valor;
         });
         var p2 = doc.querySelector('#nv-p2 span');
@@ -1552,7 +1552,7 @@
       if (envio > 0) {                                                                       // custo de envio vira despesa à vista da unidade
         db.vaapty = db.vaapty || {}; db.vaapty[d.nome] = db.vaapty[d.nome] || [];          // eslint-disable-line no-undef
         var linha = { t: 'À vista', tipo: 'Envio', d: 'Envio do box' + (pat ? ' ' + pat : ''), f: 'Frete', q: 1, u: Math.round(envio * 100) / 100, cc: d.nome,
-          venc: new Date().toISOString().slice(0, 7), pago: false, dataPago: '', cat: 'envio', origem: 'novo', criadoEm: new Date().toISOString() };
+          venc: (function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })(new Date()), pago: false, dataPago: '', cat: 'envio', origem: 'novo', criadoEm: new Date().toISOString() };
         db.vaapty[d.nome].push(linha);                                                      // eslint-disable-line no-undef
         try { applyToFin(linha, +1); } catch (e) {}                                          // eslint-disable-line no-undef
         registrarJornada('vaapty', d.nome, 'Custo de envio do box lançado: R$ ' + envio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
@@ -1578,7 +1578,7 @@
     leadAtual = null;
     var veic = itensModulo('taroba');
     var hoje = new Date();
-    var mesAtual = hoje.toISOString().slice(0, 7);
+    var mesAtual = (function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })(hoje); // mês local, não UTC (auditoria 27/11)
     var el = moldura('Comissão Tarobá',
       '<div class="duas"><main>' +
       '<p class="sub">A comissão da Tarobá é lançada mês a mês, pelo valor do extrato. Não tem contrato nem cadastro de cliente.</p>' +

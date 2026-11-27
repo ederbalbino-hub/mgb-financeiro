@@ -5,6 +5,10 @@
 <script>
 // Isolação (COOP/COEP) só quando a ferramenta de Vídeo precisar (flag mgb_coi).
 // Isolada o tempo todo ela bloqueia widgets externos (ex.: Pluggy Connect do banco).
+// Mês e dia de HOJE no horário de Brasília (do aparelho). toISOString() é UTC: depois das 21h do último dia
+// do mês ele já dá o mês seguinte (auditoria 27/11). Use mesLocal()/diaLocal() em vez de toISOString().slice.
+function mesLocal(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function diaLocal(d){ d=d||new Date(); return mesLocal(d)+'-'+String(d.getDate()).padStart(2,'0'); }
 window.coi={shouldRegister:()=>localStorage.getItem('mgb_coi')==='1',shouldDeregister:()=>localStorage.getItem('mgb_coi')!=='1'};
 </script>
 <script src="coi-serviceworker.min.js"></script>
@@ -2357,7 +2361,7 @@ function enviarEmail() {
 
 // ── INIT ──
 renderPlanos();
-document.getElementById('data_inicio').value = new Date().toISOString().split('T')[0];
+document.getElementById('data_inicio').value = (function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})(new Date());
 </script>
 </body>
 </html>"></iframe>
@@ -3168,7 +3172,7 @@ function eSelecionarClienteCRM(nome){
 eRenderCondos();
 eRenderPlanos();
 eCarregarClientesCRM();
-document.getElementById('e-inicio').value=new Date().toISOString().split('T')[0];
+document.getElementById('e-inicio').value=(function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})(new Date());
 </script>
 </body>
 </html>"></iframe>
@@ -3786,7 +3790,7 @@ function vSelecionarClienteCRM(nome){
 }
 
 // INIT
-document.getElementById('v-inicio').value = new Date().toISOString().split('T')[0];
+document.getElementById('v-inicio').value = (function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})(new Date());
 vCarregarClientesCRM();
 vCalc();
 </script>
@@ -6903,10 +6907,10 @@ function fRecAno(){ const d=document.getElementById('f-rec-data'); const y=d&&d.
 function fRecProximoNum(){ const ano=fRecAno(); const n=recibos.filter(r=>String(r.numero||'').endsWith('/'+ano)).reduce((m,r)=>Math.max(m,parseInt(r.numero,10)||0),0)+1; return String(n).padStart(4,'0')+'/'+ano; }
 function fRecClientes(){ const out=[]; MODULES.forEach(m=>{ const itens=(m.id==='elev'&&typeof anunciantes!=='undefined')?anunciantes.map(a=>a.nome):m.items; (itens||[]).forEach(item=>out.push({mod:m.id,modLabel:m.label,item})); }); return out; }
 function fRecCompGet(){ const m=document.getElementById('f-rec-comp-m'), a=document.getElementById('f-rec-comp-a'); return (m&&a&&m.value!==''&&a.value)?(a.value+'-'+String(parseInt(m.value,10)+1).padStart(2,'0')):''; }
-function fRecCompSet(v){ const m=document.getElementById('f-rec-comp-m'), a=document.getElementById('f-rec-comp-a'); if(!m||!a) return; if(!v){ v=new Date().toISOString().slice(0,7); } m.value=String(parseInt(v.slice(5,7),10)-1); a.value=v.slice(0,4); }
+function fRecCompSet(v){ const m=document.getElementById('f-rec-comp-m'), a=document.getElementById('f-rec-comp-a'); if(!m||!a) return; if(!v){ v=mesLocal(); } m.value=String(parseInt(v.slice(5,7),10)-1); a.value=v.slice(0,4); }
 function fRecInit(){
   const sel=document.getElementById('f-rec-cli'); if(!sel) return;
-  const d=document.getElementById('f-rec-data'); if(!d.value) d.value=new Date().toISOString().slice(0,10);
+  const d=document.getElementById('f-rec-data'); if(!d.value) d.value=diaLocal();
   const cm=document.getElementById('f-rec-comp-m'), ca=document.getElementById('f-rec-comp-a');
   if(cm&&!cm.options.length){ const y=new Date().getFullYear(); cm.innerHTML=MESES.map((n,i)=>'<option value="'+i+'">'+n+'</option>').join(''); ca.innerHTML=[y-1,y,y+1].map(a=>'<option value="'+a+'">'+a+'</option>').join(''); fRecCompSet(''); }
   if(!document.getElementById('f-rec-num').value) document.getElementById('f-rec-num').value=fRecProximoNum();
@@ -7022,7 +7026,7 @@ function fRecColeta(){
   const v=g('f-rec-cli'); const [mod,item]=v?v.split('|'):['',''];
   const m=MODULES.find(x=>x.id===mod)||{};
   const livre=(document.getElementById('f-rec-cli')||{dataset:{}}).dataset.livre||'';
-  return { numero:g('f-rec-num').trim()||fRecProximoNum(), data:g('f-rec-data')||new Date().toISOString().slice(0,10), mod, modLabel:m.label||(livre?'CRM':''), cliente:item||livre,
+  return { numero:g('f-rec-num').trim()||fRecProximoNum(), data:g('f-rec-data')||diaLocal(), mod, modLabel:m.label||(livre?'CRM':''), cliente:item||livre,
     pagador:g('f-rec-pagador').trim(), doc:g('f-rec-doc').trim(), desc:g('f-rec-desc').trim(), comp:fRecCompGet(), valor:fRecParseValor(g('f-rec-valor')), forma:g('f-rec-forma')||'pix', obs:g('f-rec-obs').trim() };
 }
 function fRecDataExt(iso){ const d=new Date((iso||'')+'T12:00:00'); if(isNaN(d)) return iso||''; const M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; return d.getDate()+' de '+M[d.getMonth()]+' de '+d.getFullYear(); }
@@ -7127,7 +7131,7 @@ function fNotaInit(){
 function fNotaAliqInfo(){
   const el=document.getElementById('f-nota-aliq-info'); if(!el) return;
   if(notaConfig.aliquotaMes==null){ el.textContent=''; return; }
-  const mesAtual=new Date().toISOString().slice(0,7);
+  const mesAtual=mesLocal();
   el.innerHTML = notaConfig.atualizadaEm===mesAtual
     ? '<span style="color:var(--green)">✓ já atualizada este mês</span>'
     : '<span style="color:#B45309">⚠ essa alíquota é de um mês anterior — confira se ainda vale</span>';
@@ -7145,7 +7149,7 @@ function fSimplesSalvar(valorStr){
 }
 function fAliqSalvar(valorStr){
   const v=fRecParseValor(valorStr);
-  notaConfig={ ...notaConfig, aliquotaMes: v||null, atualizadaEm: new Date().toISOString().slice(0,7) };
+  notaConfig={ ...notaConfig, aliquotaMes: v||null, atualizadaEm: mesLocal() };
   try{ scheduleSave(); }catch(e){}
   // sincroniza os dois campos (Nota Fiscal e Faturamento) sem sobrescrever o que o usuário está digitando neles
   ['f-nota-aliq-mes','f-fat-aliq','f-leo-aliq'].forEach(id=>{
@@ -7370,7 +7374,7 @@ async function fNotaEmitir(){
     const r=await fetch(NOTA_API_URL+'?action=emitir&ambiente='+ambiente, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('Asaas respondeu '+r.status));
-    const nota={ id:notaId++, paymentId:j.paymentId, invoiceId:j.invoiceId, status:j.status||'processing', ambiente, mod, modLabel:m.label||'', cliente:item||nome, tomador:nome, valor, data:new Date().toISOString().slice(0,10), ts:Date.now(), boletoUrl:j.boletoUrl||null, invoiceUrl:j.invoiceUrl||null, pdfUrl:null, xmlUrl:null, erro:j.invoiceErro||null, semNota };
+    const nota={ id:notaId++, paymentId:j.paymentId, invoiceId:j.invoiceId, status:j.status||'processing', ambiente, mod, modLabel:m.label||'', cliente:item||nome, tomador:nome, valor, data:diaLocal(), ts:Date.now(), boletoUrl:j.boletoUrl||null, invoiceUrl:j.invoiceUrl||null, pdfUrl:null, xmlUrl:null, erro:j.invoiceErro||null, semNota };
     notas.push(nota);
     let msgReg='';
     if(mod!=='_avulsa'){                         // a nota vira receita no sistema (avulsa ou mensal) — cliente cadastrado ou não
@@ -7461,7 +7465,7 @@ function fLeoInit(){
 function fLeoItem(){ for(const m of MODULES){ const it=m.items.find(x=>/^leo cosm/i.test(x)); if(it) return {modId:m.id,item:it}; } return null; }
 function fLeoBaixaRender(){
   const inp=g('f-leo-baixa-mes'), info=g('f-leo-baixa-info'), btn=g('f-leo-baixa-btn'); if(!inp||!info) return;
-  if(!inp.value) inp.value=new Date().toISOString().slice(0,7);
+  if(!inp.value) inp.value=mesLocal();
   const li=fLeoItem(); if(!li){ info.textContent='Item "Leo Cosméticos" não encontrado nos módulos.'; if(btn) btn.disabled=true; return; }
   const [a,m]=inp.value.split('-').map(Number), key=recPagKey(a,m-1);
   const pg=((recPagamentos[li.modId]||{})[li.item]||{})[key];
@@ -7715,7 +7719,7 @@ function fFatContratosHub(rowsPlanilha){
 function fFatNoContrato(c,comp){ const [a,m]=comp.split('-').map(Number), [ai,mi]=c.inicio.split('-').map(Number); const k=(a*12+m)-(ai*12+mi); return k>=0&&k<(c.meses||12); }
 // Linhas do mês: contratos do hub que ainda não estão na planilha (os que já foram incluídos vêm da própria planilha).
 function fFatClientesDoHub(rowsPlanilha){
-  const comp=(document.getElementById('f-fat-comp')||{}).value||new Date().toISOString().slice(0,7);
+  const comp=(document.getElementById('f-fat-comp')||{}).value||mesLocal();
   return fFatContratosHub(rowsPlanilha).filter(c=>fFatNoContrato(c,comp)).filter(c=>{
     if(rowsPlanilha.some(r=>r.id===c.id)) return false;
     if(c.hubMod==='_avulsa') return !rowsPlanilha.some(r=>fSimNome(r.cliente,c.apelido)>=0.85&&Math.abs((+r.valor||0)-c.valor)<0.01);
@@ -8302,7 +8306,7 @@ function fFatLojasCadastrar(){
   const lista=fFatLojasParse(txt);
   if(!lista.length){ res.innerHTML='<div class="ferr-info" style="color:var(--red)">Não achei nenhuma loja no texto. Use: Nome - telefone - CNPJ.</div>'; return; }
   const mod=MODULES.find(m=>m.id==='radio'); const itens=((mod&&mod.items)||[]).filter(i=>!/\(pago/i.test(i));
-  const comp=(document.getElementById('f-fat-comp')||{}).value||new Date().toISOString().slice(0,7);
+  const comp=(document.getElementById('f-fat-comp')||{}).value||mesLocal();
   const mm=/^(\d{4})-(\d{2})$/.exec(comp); const key=mm?recPagKey(+mm[1],+mm[2]-1):null;
   clientesInfo.radio=clientesInfo.radio||{}; const linhas=[]; const naoAchei=[];
   lista.forEach(L=>{
@@ -8677,7 +8681,7 @@ function fEtqGerar(){
 
   const rec=etqBuscaOuCria(fEtqPatCode(patRaw));
   rec.patrimonio=patNum; rec.franqueado=franq; rec.player=player; rec.video=video;
-  rec.data = rec.data || new Date().toISOString().slice(0,10);
+  rec.data = rec.data || diaLocal();
   rec.ts = Date.now();
   buildEtiquetasList();
   scheduleSave();
@@ -8770,7 +8774,7 @@ function fCorGerar(){
   const rec=etqBuscaOuCria(patCode);
   rec.remNome=rem.nome.trim(); rec.remEndereco=rem.endereco.trim(); rec.remCidadeUf=rem.cidadeUf.trim(); rec.remCep=rem.cep.trim();
   rec.destNome=dest.nome.trim(); rec.destEndereco=dest.endereco.trim(); rec.destComplemento=dest.complemento.trim(); rec.destBairro=dest.bairro.trim(); rec.destCidadeUf=dest.cidadeUf.trim(); rec.destCep=dest.cep.trim();
-  rec.data = rec.data || new Date().toISOString().slice(0,10);
+  rec.data = rec.data || diaLocal();
   rec.ts = Date.now();
   buildEtiquetasList();
   scheduleSave();
@@ -9336,7 +9340,7 @@ function receitaOficialMes(y,m){
 function finGetRec(y,m){ return receitaOficialMes(y,m).valor; }
 function mesFechamentoNotas(comp){
   return MGBFinancas.somaNotasCompetencia({ comp, fatEmissoes, notas,
-    leo:(typeof leoUnidades!=='undefined'&&((document.getElementById('f-leo-comp')||{}).value||'').length&&comp===new Date().toISOString().slice(0,7))?leoUnidades:[] });
+    leo:(typeof leoUnidades!=='undefined'&&((document.getElementById('f-leo-comp')||{}).value||'').length&&comp===mesLocal())?leoUnidades:[] });
 }
 function fecharMesNotas(y,m){
   const comp=y+'-'+String(m+1).padStart(2,'0');
@@ -9344,7 +9348,7 @@ function fecharMesNotas(y,m){
   const txt=prompt('Fechar '+MESES[m]+'/'+y+' pelas notas emitidas.\n\nFaturamento: '+f(soma.faturamento)+'\nNotas avulsas: '+f(soma.avulsas)+'\nLéo: '+f(soma.leo)+(soma.soBoleto?'\nSó boleto, sem nota: '+f(soma.soBoleto)+' (incluído — confirmar com o contador)':'')+'\n\nConfira e ajuste o total se precisar (ex.: notas emitidas fora do hub):', String(soma.total.toFixed(2)).replace('.',','));
   if(txt==null) return;
   const total=fRecParseValor(txt);
-  notaConfig={...notaConfig, fechamentos:{...(notaConfig.fechamentos||{}), [comp]:{receitaNotas:total, calculado:soma.total, soBoleto:soma.soBoleto, em:new Date().toISOString().slice(0,10)}}};
+  notaConfig={...notaConfig, fechamentos:{...(notaConfig.fechamentos||{}), [comp]:{receitaNotas:total, calculado:soma.total, soBoleto:soma.soBoleto, em:diaLocal()}}};
   try{ scheduleSave(); }catch(e){}
   try{ buildSidebar(); }catch(e){}
   buildVisaoEmpresa();
@@ -9407,7 +9411,7 @@ function impostoAliq(){ return impostoSimples()/100; }
 function impostoRotulo(){ const fm=x=>x.toFixed(2).replace('.',','); return 'Simples '+fm(impostoSimples())+'%'+(impostoIss()?' (ISS '+fm(impostoIss())+' já incluso)':''); }
 // empresaDespesas = [{id, nome, valor, inicio:'YYYY-MM', ativo:true}]
 let empresaDespesas = [
-  {id:1, nome:'Contador', valor:300, inicio:new Date().toISOString().slice(0,7), ativo:true}
+  {id:1, nome:'Contador', valor:300, inicio:mesLocal(), ativo:true}
 ];
 let empresaDespId = 2;
 // empresaReceitas = aportes/entradas de caixa na MGB (ex: repasse do pessoal). NÃO entram no imposto.
@@ -10931,7 +10935,7 @@ function buildVisaoEmpresa(){
       </tr>`;
     }).join('');
   }
-  if(!g('empr-inicio').value){ g('empr-inicio').value=new Date().toISOString().slice(0,7); }
+  if(!g('empr-inicio').value){ g('empr-inicio').value=mesLocal(); }
 
   g('ov-emp-sum').textContent=`${despAtivas.length} despesa(s) ativa(s) · ${f(totalDespEmpresa)}/mês`;
   if(!empresaDespesas.length){
@@ -10975,7 +10979,7 @@ function buildVisaoEmpresa(){
 
   // Preenche mês corrente como sugestão de início
   if(!g('emp-inicio').value){
-    g('emp-inicio').value=new Date().toISOString().slice(0,7);
+    g('emp-inicio').value=mesLocal();
   }
 
   // ── Movimentações do banco (C6) — realizados importados, filtrados pelo mês selecionado ──
@@ -11309,7 +11313,7 @@ async function importExtratoBancoFetch(itemId){
 function addEmpresaDesp(){
   const nome=g('emp-nome').value.trim();
   const valor=parseFloat(g('emp-valor').value)||0;
-  const inicio=g('emp-inicio').value||new Date().toISOString().slice(0,7);
+  const inicio=g('emp-inicio').value||mesLocal();
   if(!nome){g('emp-nome').focus();return;}
   if(!valor){g('emp-valor').focus();return;}
   empresaDespesas.push({id:empresaDespId++, nome, valor, inicio, ativo:true});
@@ -11353,7 +11357,7 @@ function delEmpresaAvulsa(id){
 function addEmpresaRec(){
   const nome=g('empr-nome').value.trim();
   const valor=parseFloat(g('empr-valor').value)||0;
-  const inicio=g('empr-inicio').value||new Date().toISOString().slice(0,7);
+  const inicio=g('empr-inicio').value||mesLocal();
   if(!nome){g('empr-nome').focus();return;}
   if(!valor){g('empr-valor').focus();return;}
   empresaReceitas.push({id:empresaRecId++, nome, valor, inicio, ativo:true});
@@ -12192,7 +12196,7 @@ function tvCondosRender(){
         '<label style="'+lbl+'">Descrição<input id="tvc-id" value="Instalação '+tvEsc(sel.item)+'" style="'+inp+'"></label>'+
         '<label style="'+lbl+'">Valor (R$)<input id="tvc-iv" type="number" step="0.01" min="0" placeholder="0,00" style="'+inp+'"></label>'+
         '<label style="'+lbl+'">Pago por<select id="tvc-ip" style="'+inp+'"><option value="eder">Eder</option><option value="jadson">Jadson</option></select></label>'+
-        '<label style="'+lbl+'">Data<input id="tvc-idt" type="date" value="'+new Date().toISOString().slice(0,10)+'" style="'+inp+'"></label>'+
+        '<label style="'+lbl+'">Data<input id="tvc-idt" type="date" value="'+diaLocal()+'" style="'+inp+'"></label>'+
         '<button type="button" onclick="tvCondoInvestSalvar()" style="'+btn+'background:#fff;color:#16294F;border:1px solid #C0A062">Lançar investimento</button>'+
       '</div></div>';
   }
@@ -12401,7 +12405,7 @@ function toggleElevInvestForm(){
   if(!open){
     buildElevInvest();
     g('ei-desc').value='Instalação (telas, cabos, kits)'; g('ei-valor').value=''; g('ei-pagopor').value='jadson'; g('ei-tipo').value='investimento';
-    g('ei-data').value=new Date().toISOString().slice(0,10);
+    g('ei-data').value=diaLocal();
   }
 }
 function cancelElevInvest(){
@@ -13339,7 +13343,7 @@ function leadToast(msg){
   clearTimeout(window._leadToastTimer);
   window._leadToastTimer=setTimeout(()=>{ t.style.display='none'; },3200);
 }
-function leadHoje(){ return new Date().toISOString().slice(0,10); }
+function leadHoje(){ return diaLocal(); }
 // lembrete pode ser 'YYYY-MM-DD' (lembrete do dia, formato antigo) ou 'YYYY-MM-DDTHH:mm' (data+hora, reunião)
 function leadLembreteVencido(l){
   if(!l.lembrete || l.estagio==='fechado' || l.estagio==='perdido') return false;
@@ -13559,7 +13563,7 @@ window.mgbCriarUnidadeModulo=function(modId,nome,opts){
     db[modId][nome]=[];
     rec[modId][nome]={
       valor:opts.valor||0,
-      inicio:window._mgbPagaDesde||opts.inicio||new Date().toISOString().slice(0,7),   // Novo cliente: mês em que começa a pagar
+      inicio:window._mgbPagaDesde||opts.inicio||mesLocal(),   // Novo cliente: mês em que começa a pagar
       meses:opts.meses||12
     };
   }
@@ -13580,7 +13584,7 @@ window.mgbCriarUnidadeModulo=function(modId,nome,opts){
 // no contrato, nunca uma unidade nova.
 window.mgbCriarAnunciante=function(nome,valor,meses,inicio,telas,cliente){
   if(!nome || !valor || !telas || !telas.length) return null;
-  anunciantes.push({id:anuncId++, nome, valor, meses:meses||1, inicio:window._mgbPagaDesde||inicio||new Date().toISOString().slice(0,7), telas});
+  anunciantes.push({id:anuncId++, nome, valor, meses:meses||1, inicio:window._mgbPagaDesde||inicio||mesLocal(), telas});
   if(cliente){
     if(!clientesInfo['elev']) clientesInfo['elev']={};
     clientesInfo['elev'][nome]=cliente;
@@ -14375,7 +14379,7 @@ function recorrenteNovoValor(rows,r,novoU){
 // 11/10 (Eder): canaletas e cabos HDMI da instalação do Móveis Brasília já foram pagos — saem das despesas do mês.
 function mbInstalacaoPaga(){
   if(!_cargaSheetsOk || migracoes.mbInstalacaoPaga_202610) return;
-  const rx=/canaleta|cabo\s*hdmi|eletrocondu/i, hoje=new Date().toISOString().slice(0,10); let n=0;
+  const rx=/canaleta|cabo\s*hdmi|eletrocondu/i, hoje=diaLocal(); let n=0;
   Object.values((db&&db.mb)||{}).forEach(rows=>(rows||[]).forEach(r=>{
     if(r && r.t!=='Recorrente' && r.t!=='Parcelado' && !r.venc && !r.pago && (rx.test(r.d||'')||rx.test(r.f||''))){ r.pago=true; r.dataPago=r.dataPago||hoje; n++; }
   }));
@@ -14391,7 +14395,7 @@ function vaaptyLicencas(){
     const rows=db.vaapty[item]||(db.vaapty[item]=[]);
     if(rows.some(r=>r.t==='Recorrente'&&/4you/i.test((r.d||'')+(r.f||'')))) return;
     const r0=(rec.vaapty||{})[item]; if(!r0||!r0.valor) return;
-    const linha={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:CUSTO_NOTA.tela,cc:item,venc:'',pago:false,dataPago:'',mesesRec:r0.meses||12,dataInicio:(r0.inicio||new Date().toISOString().slice(0,7)).slice(0,7)};
+    const linha={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:1,u:CUSTO_NOTA.tela,cc:item,venc:'',pago:false,dataPago:'',mesesRec:r0.meses||12,dataInicio:(r0.inicio||mesLocal()).slice(0,7)};
     rows.push(linha); try{ applyToFin(linha,+1); }catch(e){} n++;
   });
   migracoes.vaaptyLicencas_20261012=true;
@@ -14617,7 +14621,7 @@ function elevMigrarCondos(){
         applyToFin(r,+1);
       }
     } else {
-      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:elevTelasDe(item)||1,u:ELEV_CUSTO_TV,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:ini[item]||new Date().toISOString().slice(0,7)};
+      const e={t:'Recorrente',tipo:'Licença',d:'Sistema TV',f:'4Yousee',q:elevTelasDe(item)||1,u:ELEV_CUSTO_TV,cc:item,venc:'',pago:false,dataPago:'',mesesRec:12,dataInicio:ini[item]||mesLocal()};
       applyToFin(e,+1);
       rows.push(e);
     }
@@ -15162,7 +15166,7 @@ function savePesRepasse(){
 // pra a entrada nova NÃO retroagir pro mês real e preservar o histórico.
 function pesMesSelecionado(){
   var m=parseInt(g('pes-mes-sel').value), y=parseInt(g('pes-ano-sel').value);
-  if(isNaN(m)||isNaN(y)) return NOW.toISOString().slice(0,7);
+  if(isNaN(m)||isNaN(y)) return mesLocal(NOW);
   return y+'-'+String(m+1).padStart(2,'0');
 }
 function togglePesRecForm(){
@@ -15487,7 +15491,7 @@ function relGerar(){
   const cota=relCotaVal();
   const rep=parseFloat(g('rel-repasse').value)||0;
   const ins=parseInt(g('rel-ins').value)||25;
-  const mesIso=g('rel-mes').value || new Date().toISOString().slice(0,7);
+  const mesIso=g('rel-mes').value || mesLocal();
   const [ano,mes]=mesIso.split('-').map(Number);
   const mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][mes-1];
   const totalCotas=sel.reduce((a,c)=>a+c.cotas,0);
@@ -15698,7 +15702,7 @@ function relPrint(){
   relPrintEl('rel-output','mgb mídia_relatório_radio mercadão_'+(g('rel-mes').value||''));
 }
 function initRelatorios(){
-  const isoAtual=new Date().toISOString().slice(0,7);
+  const isoAtual=mesLocal();
   // Pré-preenche mês atual nos três relatórios
   ['rel-mes','relv-mes','rele-mes'].forEach(id=>{ const el=g(id); if(el && !el.value) el.value=isoAtual; });
   const relAno=g('rele-ano'); if(relAno && !relAno.value) relAno.value=new Date().getFullYear();
@@ -15791,11 +15795,11 @@ function mercRepasseCalc(dados){
   return {base, pct:c.pct, valor:Math.round(base*c.pct)/100, n:lista.length};
 }
 function relEnviadoStatus(){
-  const iso=(g('rel-mes')||{}).value||new Date().toISOString().slice(0,7), el=g('rel-enviado'); if(!el) return;
+  const iso=(g('rel-mes')||{}).value||mesLocal(), el=g('rel-enviado'); if(!el) return;
   const d=mercCfg().enviado[iso]; el.textContent=d?'✓ '+iso.split('-').reverse().join('/')+' enviado em '+d:'';
 }
 function relMarcarEnviado(){
-  const iso=(g('rel-mes')||{}).value||new Date().toISOString().slice(0,7);
+  const iso=(g('rel-mes')||{}).value||mesLocal();
   mercCfg().enviado[iso]=new Date().toLocaleDateString('pt-BR'); try{ scheduleSave(); }catch(e){}
   relEnviadoStatus(); try{ mercadaoAvisoHome(); }catch(e){}
 }
@@ -15886,7 +15890,7 @@ function vaaptyAvisoHome(){
   box.onclick=()=>{ goPage('relatorios'); setTimeout(()=>{ try{ showRelTab('vaapty',document.querySelector('#page-relatorios .rel-tab:nth-child(2)')); g('relv-mes').value=k; relvResumo(); }catch(e){} },120); };
 }
 function relvMesAno(){
-  const iso=g('relv-mes').value || new Date().toISOString().slice(0,7);
+  const iso=g('relv-mes').value || mesLocal();
   const [ano,mes]=iso.split('-').map(Number);
   return {ano,mes:mes-1}; // mes 0-based
 }
@@ -15894,7 +15898,7 @@ function relvResumo(){
   const c=vaaptyCfg();
   if(g('relv-repasse')&&document.activeElement!==g('relv-repasse')) g('relv-repasse').value=c.pct;
   if(g('relv-email')&&document.activeElement!==g('relv-email')) g('relv-email').value=c.email||'';
-  if(g('relv-mes')&&!g('relv-mes').value) g('relv-mes').value=new Date().toISOString().slice(0,7);
+  if(g('relv-mes')&&!g('relv-mes').value) g('relv-mes').value=mesLocal();
   const ub=g('relv-unidades'); if(ub) ub.innerHTML=vaaptyRepasseItens().map(x=>{ const ch=(x.mod+'|'+x.item).replace(/'/g,"\\'"); return `<label style="display:inline-flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" ${x.incluido?'checked':''} onchange="vaaptyToggleItem('${ch}',this.checked)"> ${x.item}${x.mod!=='vaapty'?' <span style="color:var(--hint)">· '+x.modRot+'</span>':''}</label>`; }).join('')||'<span style="color:var(--hint)">Nenhuma unidade Vaapty cadastrada.</span>';
   const {ano,mes}=relvMesAno();
   const k=ano+'-'+String(mes+1).padStart(2,'0'); const ev=g('relv-enviado'); if(ev) ev.textContent=c.enviado[k]?'✓ Relatório de '+MESES[mes]+'/'+ano+' enviado em '+c.enviado[k]+'.':'';
@@ -16038,7 +16042,7 @@ function permutaUsoForm(id){
   const row=g('perm-uso-row-'+id); if(!row) return;
   const abrir=row.style.display==='none';
   document.querySelectorAll('[id^="perm-uso-row-"]').forEach(r=>r.style.display='none');
-  if(abrir){ row.style.display='table-row'; const d=g('perm-uso-data-'+id); if(d&&!d.value) d.value=new Date().toISOString().slice(0,10); }
+  if(abrir){ row.style.display='table-row'; const d=g('perm-uso-data-'+id); if(d&&!d.value) d.value=diaLocal(); }
 }
 function permutaUsoAdd(id){
   const p=permutas.find(x=>x.id===id); if(!p) return;
@@ -16047,7 +16051,7 @@ function permutaUsoAdd(id){
   const saldo=permutaSaldo(p);
   if(qtd>saldo && !confirm('Esse uso ('+qtd+') passa do saldo restante ('+saldo+'). Registrar mesmo assim?')) return;
   p.usos=p.usos||[];
-  p.usos.push({data:g('perm-uso-data-'+id).value||new Date().toISOString().slice(0,10), qtd, quem:g('perm-uso-quem-'+id).value.trim(), obs:g('perm-uso-obs-'+id).value.trim()});
+  p.usos.push({data:g('perm-uso-data-'+id).value||diaLocal(), qtd, quem:g('perm-uso-quem-'+id).value.trim(), obs:g('perm-uso-obs-'+id).value.trim()});
   permutasRender(); scheduleSave();
 }
 function permutaUsoDel(id,idx){
@@ -16109,7 +16113,7 @@ function releDados(ano,mes){
   return {receitas, despesas, totRec, totDesp, lucro:totRec-totDesp};
 }
 function releMesAno(){
-  const iso=g('rele-mes').value || new Date().toISOString().slice(0,7);
+  const iso=g('rele-mes').value || mesLocal();
   const [ano,mes]=iso.split('-').map(Number);
   return {ano,mes:mes-1};
 }
@@ -16549,11 +16553,11 @@ function renderRadioOps(data){
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
 <script src="lancar.js?v=20261127f"></script>
-<script src="novo.js?v=20261127b"></script>
-<script src="acesso.js?v=20261127d"></script>
+<script src="novo.js?v=20261127aud"></script>
+<script src="acesso.js?v=20261127aud"></script>
 <script src="inicio.js?v=20261127g"></script>
-<script src="faturamento.js?v=20261119b"></script>
-<script src="financeiro.js?v=20261127e"></script>
+<script src="faturamento.js?v=20261127aud"></script>
+<script src="financeiro.js?v=20261127aud"></script>
 <script src="funil.js?v=20261127d"></script>
 <script src="clientes.js?v=20261127e"></script>
 <script src="menu.js?v=20261124"></script>
