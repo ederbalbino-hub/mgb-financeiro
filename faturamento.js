@@ -355,7 +355,7 @@
         '<button type="button" class="fat2-trava-txt" data-fat2="abrir:' + id + '"><b>' + esc(g.cliente) + ' · ' + esc(g.motivo) + '</b><span>' + esc(det) + '</span></button>' +
         '<div class="fat2-trava-acoes">' +
         (venc ? '<button type="button" class="fat2-btn" data-fat2="whats:' + esc(venc.id) + '">Cobrar por WhatsApp</button>' : '') +
-        (g.vencido && !g.semNumero && !g.erro ? '<button type="button" class="fat2-btn2" data-fat2="baixa:' + esc((venc || r0).id) + '">Dar baixa manual</button>' : '<button type="button" class="fat2-btn2" data-fat2="abrir:' + id + '">Abrir</button>') +
+        (g.vencido && !g.semNumero && !g.erro ? '<button type="button" class="fat2-btn2" data-fat2="baixa:' + esc((venc || r0).id) + '">Recebi (Pix/dinheiro)</button>' : '<button type="button" class="fat2-btn2" data-fat2="abrir:' + id + '">Abrir</button>') +
         '</div></div>';
     }).join('');
     var travados = {}; tr.forEach(function (g) { g.linhas.forEach(function (r) { travados[r.id] = 1; }); });
@@ -432,7 +432,7 @@
       (hist.length ? '<section><h4>Histórico</h4><ol class="fat2-hist">' + hist.join('') + '</ol></section>' : '') +
       '<section class="fat2-p-acoes"><h4>Ações</h4>' +
         (r.boletoUrl && r.modo !== 'nota' ? '<button type="button" class="fat2-btn" data-fat2="whats:' + id + '">Enviar boleto por WhatsApp</button><a class="fat2-btn2" href="' + esc(r.boletoUrl) + '" target="_blank" rel="noopener">Abrir boleto</a>' : '') +
-        '<button type="button" class="fat2-btn2" data-fat2="baixa:' + id + '">Dar baixa manual (pagou em dinheiro ou Pix)</button>' +
+        '<button type="button" class="fat2-btn2" data-fat2="baixa:' + id + '">Recebi (Pix/dinheiro)</button>' +
         '<button type="button" class="fat2-btn2" data-fat2="recibo:' + id + '">Gerar recibo</button>' +
         '<button type="button" class="fat2-btn2" data-fat2="editar:' + id + '">Editar dados para a nota</button>' +
         (r.paymentId || r.invoiceId ? '<button type="button" class="fat2-btn2 fat2-perigo" data-fat2="cancelar:' + id + '">Cancelar esta cobrança</button>' : '') +

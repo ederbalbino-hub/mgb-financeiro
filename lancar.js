@@ -686,8 +686,11 @@
       }
       salvar();
       el.querySelector('#lr-feito').innerHTML = '<div class="ok-box" style="margin-top:10px">✔ ' + esc(x.desc) + ' · ' + esc(x.cliente) + ' · ' + brl(x.valor) + '<br>Entrou na receita de <b>' + fmtMes(x.mes) + '</b>.</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="b p" id="lr-outra">Lançar outra</button><button type="button" class="b" data-fechar>Pronto</button></div>';
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' + (global.MGBFluxos && global.MGBFluxos.abrirNotaAvulsa ? '<button type="button" class="b p" id="lr-nota">Emitir a nota agora</button>' : '') +
+        '<button type="button" class="b' + (global.MGBFluxos && global.MGBFluxos.abrirNotaAvulsa ? '' : ' p') + '" id="lr-outra">Lançar outra</button><button type="button" class="b" data-fechar>Pronto</button></div>';
       el.querySelector('#lr-ok').disabled = true;
+      var bn = el.querySelector('#lr-nota');                                                   // 27/11: da receita direto para a nota, com o tomador preenchido
+      if (bn) bn.addEventListener('click', function () { fechar(); global.MGBFluxos.abrirNotaAvulsa(itemReceita(x)); });
       el.querySelector('#lr-outra').addEventListener('click', novaReceita);
       lista();
     });

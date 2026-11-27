@@ -213,3 +213,24 @@ test("Faturamento: filtro Vencidos (Cobrar atrasados)", () => {
   const info = (r) => (r.id === 3 ? { anterior: { st: "vencido" } } : {});
   assert.deepEqual(FT.filtrar(linhas, "vencido", info).map((r) => r.id), [1, 3]);
 });
+
+test("Pix → de quem é: mesmo valor e nome no extrato vêm primeiro", () => {
+  const abertas = [
+    { mod: "radio", item: "Loja A", key: "2026-10", valor: 450, nome: "Loja A", razao: "Supermercado Santarém Ltda" },
+    { mod: "vaapty", item: "Padaria B", key: "2026-10", valor: 450, nome: "Padaria B", razao: "" },
+    { mod: "tv", item: "Clínica C", key: "2026-10", valor: 300, nome: "Clínica C", razao: "" },
+  ];
+  const r = X.candidatosBaixa(450, "PIX RECEBIDO SUPERMERCADO SANTAREM LTDA", abertas);
+  assert.equal(r[0].item, "Loja A"); assert.ok(r[0].pontos > r[1].pontos);
+  assert.equal(r[1].item, "Padaria B", "mesmo valor, sem nome");
+  assert.equal(r[2].pontos, 0);
+  assert.equal(X.candidatosBaixa(300, "", abertas)[0].item, "Clínica C");
+});
+
+test("Contas do mês: o que dá para editar direto", () => {
+  assert.equal(X.tipoLancamento(0), "db"); assert.equal(X.tipoLancamento("3"), "db");
+  assert.equal(X.tipoLancamento("_av_7"), "avulsa"); assert.equal(X.tipoLancamento("_socio_2"), "socio");
+  assert.equal(X.tipoLancamento("dc_4"), "rateio"); assert.equal(X.tipoLancamento("_emp_1"), "fixa");
+  assert.equal(X.tipoLancamento("_imposto"), "calculado"); assert.equal(X.tipoLancamento("_prolabore"), "calculado");
+  assert.equal(X.numBR("1.250,50"), 1250.5); assert.equal(X.numBR("99.9"), 99.9);
+});

@@ -677,6 +677,8 @@
   function chavePag(d, dKey) { return (((ler('despPagamentos', {}) || {})[d.m.id] || {})[d.item] || {})[d.idx] || {}; }
   function estaPago(d, dKey) { var p = chavePag(d)[dKey]; return !!(p && p.pago); }
   function vencimentos() { var dp = ler('despPagamentos', {}) || {}; return dp._contas || {}; }
+  // Lançamentos que dá para editar/apagar direto pelo detalhe (os calculados, como imposto e pró-labore, não)
+  function editavel(d) { return !!(global.MGBFluxos && global.MGBFluxos.tipoLancamento && /^(db|avulsa|socio|rateio)$/.test(global.MGBFluxos.tipoLancamento(d.idx))); }
   function contasDoMes() {
     var s = mesSel('ov-desp-mes-sel', 'ov-desp-ano-sel'), dKey = tenta('despPagKey', s.ano, s.mes) || (s.ano + '-' + s.mes);
     var desp = tenta('coletaDespesasMes', s.ano, s.mes) || [];
@@ -734,7 +736,7 @@
       if (sv) dia += ' ' + chip(sv.txt, sv.tom);
       var det = aberto ? '<div class="fin2-det">' + (g.itens.length > 1 ? g.porModulo.map(function (p) {
           return '<div><span>' + esc(p.rot) + ' · ' + p.n + (p.n === 1 ? ' lançamento' : ' lançamentos') + '</span><span class="fin2-mono">' + brl(p.valor) + '</span></div>'; }).join('') : '') +
-        g.itens.map(function (d) { return '<div class="fin2-det-l"><span>' + esc(moduloRot(d.m)) + ' · ' + esc(d.item) + ' · ' + esc((d.r && d.r.d) || '') + ' <i>' + esc(d.tipoLbl || '') + '</i></span><span class="fin2-mono">' + brl(d.vlrMes) + '</span></div>'; }).join('') +
+        g.itens.map(function (d, di) { var ed = editavel(d); return '<div class="fin2-det-l"><span>' + esc(moduloRot(d.m)) + ' · ' + esc(d.item) + ' · ' + esc((d.r && d.r.d) || '') + ' <i>' + esc(d.tipoLbl || '') + '</i></span><span class="fin2-mono">' + brl(d.vlrMes) + '</span>' + (ed ? '<span class="fin2-ed"><button type="button" class="fin2-link" data-fin2="edl:' + di + '|' + k + '">Editar</button><button type="button" class="fin2-link fin2-vermelho" data-fin2="apl:' + di + '|' + k + '">Apagar</button></span>' : '') + '</div>'; }).join('') +
         '<p class="fin2-sub">Marcar a conta como paga marca os ' + g.itens.length + ' lançamentos. Os valores por módulo continuam no resultado de cada módulo.</p></div>' : '';
       return '<div class="fin2-conta' + (g.pago ? ' fin2-paga' : '') + '"><input type="checkbox" aria-label="Marcar ' + esc(g.titulo) + ' como paga"' + (g.pago ? ' checked' : '') + ' data-fin2-pago="' + k + '">' +
         '<button type="button" class="fin2-conta-txt" data-fin2="abrir:' + k + '" aria-expanded="' + aberto + '"><b>' + esc(g.titulo) + '</b>' + (g.sub ? '<span>' + esc(g.sub) + '</span>' : '') + '</button>' +
@@ -897,6 +899,11 @@
       else if (acao === 'voltar-resumo') { chama('goPage', 'overview'); tenta('switchOvTab', 'visao'); }
       else if (acao === 'filtro') { filtroContas = arg; desenharContas(); }
       else if (acao === 'abrir') { abertas[arg] = !abertas[arg]; desenharContas(); }
+      else if (acao === 'edl' || acao === 'apl') {                // editar/apagar um lançamento pelo detalhe da conta (27/11)
+        var bar = arg.indexOf('|'), di = +arg.slice(0, bar), ch = arg.slice(bar + 1);
+        var gC = contasDoMes().contas.filter(function (x) { return x.chave === ch; })[0], dL = gC && gC.itens[di];
+        if (dL && global.MGBFluxos) Promise.resolve(acao === 'edl' ? global.MGBFluxos.editarLancamento(dL) : global.MGBFluxos.apagarLancamento(dL)).then(function (ok) { if (ok) { tenta('syncFinanceiro'); desenharContas(); } });
+      }
       else if (acao === 'dia') { editandoDia = arg; desenharContas(); }
       else if (acao === 'dia-ok') { var di = doc.getElementById('fin2-dia'); if (editandoDia && di) salvarDia(arg, di.value); }
       else if (acao === 'lancar-despesa') { if (global.MGBLancar && global.MGBLancar.despesa) global.MGBLancar.despesa(); }
@@ -974,6 +981,7 @@
       '.fin2-dia-rot{font-size:13px;color:#5D5868;margin-right:6px}.fin2-dia-ok{margin-left:6px;min-height:36px}' +
       '.fin2-dia{width:56px;height:36px;border:1px solid #4E38B2;border-radius:8px;padding:0 8px;font:15px "DM Mono",monospace}' +
       '.fin2-seta{width:36px;height:36px;border:0;border-radius:8px;background:none;color:#5D5868;cursor:pointer;display:flex;align-items:center;justify-content:center}.fin2-seta:hover{background:#ECE8FA}.fin2-girada svg{transform:rotate(90deg)}' +
+      '.fin2-ed{display:inline-flex;gap:10px;margin-left:12px;flex:none}.fin2-ed .fin2-link{font-size:12.5px}.fin2-det-l{align-items:center}' +
       '.fin2-det{background:#FBFAFE;padding:6px 20px 14px 56px;display:flex;flex-direction:column}.fin2-det>div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #EFEBF7;font-size:14px}.fin2-det-l{color:#5D5868;font-size:13.5px!important}.fin2-det-l i{font-style:normal;font-size:13px;color:#8A8494}.fin2-det p{margin:8px 0 0}' +
       '.fin2-vazio{padding:18px 20px;margin:0;color:#5D5868;font-size:15px}' +
       '.fin2-oculto{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}' +

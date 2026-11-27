@@ -163,7 +163,39 @@
     return n2;
   }
 
-  var regras = { valorReajustado: valorReajustado, pctReajuste: pctReajuste, nomeRenovacao: nomeRenovacao, periodoAditivo: periodoAditivo, documentoAditivo: documentoAditivo, fimDoMes: fimDoMes, reindexarPagamentos: reindexarPagamentos, atualizarMesesAnteriores: atualizarMesesAnteriores, leadDoEndereco: leadDoEndereco,
+  // Tipo do lançamento das Contas do mês pelo idx de coletaDespesasMes
+  function tipoLancamento(idx) {
+    if (typeof idx === 'number') return 'db';
+    var t = String(idx);
+    if (/^\d+$/.test(t)) return 'db';
+    if (/^_av_/.test(t)) return 'avulsa';
+    if (/^_emp_/.test(t)) return 'fixa';
+    if (/^_socio_/.test(t)) return 'socio';
+    if (/^dc_/.test(t)) return 'rateio';
+    return 'calculado';
+  }
+  function numBR(v) { var s = String(v == null ? '' : v).trim().replace(/[^\d,.-]/g, ''); if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.'); var n = parseFloat(s); return isFinite(n) ? n : 0; }
+
+  // Pix que caiu → de quem é: cobranças em aberto ordenadas pela chance de ser aquele Pix (27/11, Usabilidade item 1).
+  // abertas: [{mod,item,key,valor,nome,razao,status}]. Valor igual pesa mais; depois, palavras do nome no extrato.
+  function normTxt(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
+  var PALAVRAS_FRACAS = /^(ltda|me|eireli|epp|sa|comercio|servicos|de|da|do|das|dos|e|the|pix|recebido|transf|ted|doc)$/;
+  function candidatosBaixa(valor, texto, abertas) {
+    var v = Number(valor) || 0, t = ' ' + normTxt(texto) + ' ';
+    return (abertas || []).map(function (a) {
+      var dif = Math.abs((Number(a.valor) || 0) - v), pts = 0;
+      if (v > 0 && dif < 0.01) pts += 3; else if (v > 0 && dif <= v * 0.05) pts += 1;
+      var pal = (normTxt(a.nome) + ' ' + normTxt(a.razao)).split(' ').filter(function (w) { return w.length >= 3 && !PALAVRAS_FRACAS.test(w); });
+      var achou = pal.filter(function (w, i) { return pal.indexOf(w) === i && t.indexOf(' ' + w + ' ') >= 0; }).length;
+      if (achou) pts += Math.min(3, 1 + achou);
+      return Object.assign({}, a, { pontos: pts, dif: dif });
+    }).sort(function (x, y) {
+      var ref = function (k) { var p = String(k).split('-'); return (+p[0]) * 12 + (+p[1] || 0); };
+      return y.pontos - x.pontos || x.dif - y.dif || ((y.status === 'vencido') - (x.status === 'vencido')) || ref(y.key) - ref(x.key);   // empate: vencido e mais recente primeiro
+    });
+  }
+
+  var regras = { candidatosBaixa: candidatosBaixa, tipoLancamento: tipoLancamento, numBR: numBR, valorReajustado: valorReajustado, pctReajuste: pctReajuste, nomeRenovacao: nomeRenovacao, periodoAditivo: periodoAditivo, documentoAditivo: documentoAditivo, fimDoMes: fimDoMes, reindexarPagamentos: reindexarPagamentos, atualizarMesesAnteriores: atualizarMesesAnteriores, leadDoEndereco: leadDoEndereco,
     renomearNoEstado: renomearNoEstado, repasseSocios: repasseSocios, repasseHistorico: repasseHistorico, situacaoAnunciante: situacaoAnunciante };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (typeof document === 'undefined') return;
@@ -491,6 +523,159 @@
     nova.__fluxos = true; global.mgbConferirAssinaturas = nova;
   }
 
+  // ── Editar / apagar um lançamento pelo detalhe das Contas do mês (27/11, Usabilidade item 4) ──
+  function moverFin(valorMes, inicio, meses, sinal) {           // mesmo ajuste do fin que os formulários do hub fazem
+    try { var fin = ler('fin'), p0 = String(inicio).split('-').map(Number); if (!fin || !p0[0]) return;
+      for (var k = 0; k < meses; k++) { var mm = (p0[1] - 1 + k) % 12, aa = p0[0] + Math.floor((p0[1] - 1 + k) / 12); if (!fin[aa] && global.finYear) global.finYear(aa); if (fin[aa] && fin[aa][mm]) fin[aa][mm].despesa = Math.max(0, (fin[aa][mm].despesa || 0) + sinal * valorMes); }
+    } catch (e) {}
+  }
+  function alvoLancamento(d) {
+    var t = tipoLancamento(d.idx), n = String(d.idx).replace(/^(_av_|_socio_|dc_)/, '');
+    if (t === 'db') { var rows = ((ler('db') || {})[d.m.id] || {})[d.item] || []; return { t: t, obj: rows[+d.idx], rows: rows }; }
+    if (t === 'avulsa') return { t: t, obj: (ler('empresaAvulsas') || []).filter(function (x) { return String(x.id) === n; })[0] };
+    if (t === 'socio') return { t: t, obj: (ler('elevInvestimentos') || []).filter(function (x) { return String(x.id) === n; })[0] };
+    if (t === 'rateio') return { t: t, obj: (ler('despesasComp') || []).filter(function (x) { return String(x.id) === n; })[0] };
+    return { t: t };
+  }
+  function campos(a) {
+    var o = a.obj, br = function (v) { return Number(v || 0).toFixed(2).replace('.', ','); };
+    if (a.t === 'db') { var tot = (Number(o.q) || 1) * (Number(o.u) || 0); return { desc: o.d || '', forn: o.f || '', valor: br(tot), rotV: o.t === 'Recorrente' ? 'Valor por mês (R$)' : o.t === 'Parcelado' ? 'Valor total (R$)' : 'Valor (R$)' }; }
+    if (a.t === 'avulsa') return { desc: o.desc || '', forn: o.forn || '', valor: br(o.valor), rotV: 'Valor (R$)' };
+    if (a.t === 'socio') return { desc: o.descricao || '', forn: null, valor: br(o.valor), rotV: 'Valor (R$)' };
+    if (a.t === 'rateio') return { desc: o.nome || '', forn: o.forn || '', valor: br(o.valor), rotV: 'Valor por mês (R$), dividido entre os condomínios' };
+  }
+  function salvarAlteracao() { if (typeof global.scheduleSave === 'function') global.scheduleSave(); }
+  function editarLancamento(d) {
+    var a = alvoLancamento(d); if (!a.obj || typeof global.mgbFormulario !== 'function') return Promise.resolve(false);
+    var c = campos(a), lista = [{ nome: 'desc', rotulo: 'Descrição', valor: c.desc, largo: 1 }];
+    if (c.forn !== null) lista.push({ nome: 'forn', rotulo: 'Fornecedor', valor: c.forn });
+    lista.push({ nome: 'valor', rotulo: c.rotV, valor: c.valor, inputmode: 'decimal' });
+    return global.mgbFormulario({ titulo: 'Editar lançamento', texto: d.item + (a.t === 'db' && a.obj.t !== 'À vista' ? ' · vale para todos os meses deste lançamento' : ''), botao: 'Salvar', campos: lista,
+      validar: function (x) { if (!String(x.desc || '').trim()) return 'Escreva a descrição.'; if (!(numBR(x.valor) > 0)) return 'Valor inválido. Ex.: 1.250,00'; return ''; }
+    }).then(function (v) {
+      if (!v) return false;
+      var o = a.obj, val = Math.round(numBR(v.valor) * 100) / 100, desc = String(v.desc).trim(), forn = String(v.forn || '').trim();
+      if (a.t === 'db') { try { global.applyToFin(o, -1); } catch (e) {} o.d = desc; o.f = forn; o.u = Math.round(val / (Number(o.q) || 1) * 100) / 100; try { global.applyToFin(o, +1); } catch (e) {} }
+      else if (a.t === 'avulsa') { o.desc = desc; o.forn = forn; o.valor = val; }
+      else if (a.t === 'socio') { o.descricao = desc; o.valor = val; }
+      else if (a.t === 'rateio') { moverFin(o.valor, o.inicio, o.meses || 1, -1); o.nome = desc; o.forn = forn; o.valor = val; moverFin(o.valor, o.inicio, o.meses || 1, +1); }
+      try { global.mgbAcao && global.mgbAcao('Editou o lançamento ' + desc + ' (' + d.item + ')'); } catch (e) {}
+      salvarAlteracao(); return true;
+    });
+  }
+  function apagarLancamento(d) {
+    var a = alvoLancamento(d); if (!a.obj) return Promise.resolve(false);
+    var c = campos(a), pergunta = { titulo: 'Apagar lançamento?', texto: c.desc + ' · ' + d.item + (a.t === 'db' && a.obj.t !== 'À vista' ? '\nSai de todos os meses deste lançamento.' : ''), linhas: [['Valor', 'R$ ' + c.valor]], botao: 'Apagar', perigo: true };
+    var conf = typeof global.mgbConfirmar === 'function' ? global.mgbConfirmar(pergunta) : Promise.resolve(global.confirm('Apagar "' + c.desc + '"?'));
+    return Promise.resolve(conf).then(function (ok) {
+      if (!ok) return false;
+      var dp = ler('despPagamentos') || {};
+      if (a.t === 'db') {
+        var i = a.rows.indexOf(a.obj); if (i < 0) return false;
+        try { global.applyToFin(a.obj, -1); } catch (e) {}
+        a.rows.splice(i, 1);
+        if (dp[d.m.id] && dp[d.m.id][d.item]) dp[d.m.id][d.item] = reindexarPagamentos(dp[d.m.id][d.item], i);
+      } else if (a.t === 'avulsa') {
+        global.eval('empresaAvulsas=empresaAvulsas.filter(function(x){return x.id!==' + JSON.stringify(a.obj.id) + '})');
+        try { delete dp._empresa.Empresa['_av_' + a.obj.id]; } catch (e) {}
+      } else if (a.t === 'socio') {
+        global.eval('elevInvestimentos=elevInvestimentos.filter(function(x){return x.id!==' + JSON.stringify(a.obj.id) + '})');
+      } else if (a.t === 'rateio') {
+        moverFin(a.obj.valor, a.obj.inicio, a.obj.meses || 1, -1);
+        global.eval('despesasComp=despesasComp.filter(function(x){return x.id!==' + JSON.stringify(a.obj.id) + '})');
+      }
+      try { global.mgbAcao && global.mgbAcao('Apagou o lançamento ' + c.desc + ' (' + d.item + ')'); } catch (e) {}
+      salvarAlteracao(); return true;
+    });
+  }
+
+  // ── Caiu um Pix → de quem é → dar baixa (um caminho só) ──
+  var MES_L = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  function cobrancasAbertas() {
+    var L = []; try { L = global.MGBClientes && global.MGBClientes.dados ? global.MGBClientes.dados() : []; } catch (e) { L = []; }
+    var out = [];
+    L.forEach(function (g) { g.contratos.forEach(function (c) { c.historico.forEach(function (h) {
+      if (!(h.valor > 0) || h.status === 'pago' || h.status === 'sem cobrança') return;
+      out.push({ mod: c.mod, item: c.item, key: h.ano + '-' + h.mes, ano: h.ano, mes: h.mes, valor: h.valor, nome: g.nome, razao: g.razao || '', status: h.status, modRot: c.modRot });
+    }); }); });
+    return out;
+  }
+  function darBaixa(c, recebido, mov) {
+    var rp = ler('recPagamentos'); if (!rp) return false;
+    var Q = (rp[c.mod] = rp[c.mod] || {}), I = (Q[c.item] = Q[c.item] || {}), pg = I[c.key] || { pago: false, obs: '' };
+    var u = global.MGBAcesso && global.MGBAcesso.usuario ? (global.MGBAcesso.usuario() || {}) : {};
+    I[c.key] = Object.assign({}, pg, { pago: true, fonte: 'manual', baixaEm: new Date().toISOString(), baixaPor: u.nome || '', baixaData: recebido.data, baixaForma: 'Pix direto', baixaValor: recebido.valor || null },
+      recebido.texto ? { baixaObs: 'Extrato: ' + String(recebido.texto).slice(0, 120) } : {}, mov ? { baixaMov: mov.id } : {});
+    try {                                                                   // aviso de pendências do Início respeita a baixa (mesmo que o 💵 do Faturamento)
+      var fat = I._default && I._default.fatId, em = ler('fatEmissoes');
+      if (fat && em && em[fat + '|' + c.ano + '-' + String(c.mes + 1).padStart(2, '0')]) em[fat + '|' + c.ano + '-' + String(c.mes + 1).padStart(2, '0')].pgManual = true;
+    } catch (e) {}
+    if (mov) mov.baixa = { mod: c.mod, item: c.item, key: c.key, em: new Date().toISOString() };
+    try { global.mgbAcao && global.mgbAcao('Baixa pelo Pix de ' + c.item + ' (' + MES_L[c.mes] + '/' + c.ano + ')'); } catch (e) {}
+    if (typeof global.scheduleSave === 'function') global.scheduleSave();
+    try { global.buildLancRec(); } catch (e) {} try { global.buildVisaoEmpresa(); } catch (e) {}
+    redesenharInicio();
+    return true;
+  }
+  function abrirBaixaPix(movId) {
+    var mov = movId != null ? (ler('empresaMovimentos') || []).filter(function (m) { return m.id === movId; })[0] : null;
+    var hojeIso = new Date().toISOString().slice(0, 10);
+    var antigo = document.getElementById('flx-pix'); if (antigo) antigo.remove();
+    var w = document.createElement('div'); w.id = 'flx-pix'; w.className = 'flx-fundo';
+    w.innerHTML = '<div class="flx-caixa flx-larga" role="dialog" aria-modal="true" aria-labelledby="flx-pix-t"><div class="flx-cab"><h2 id="flx-pix-t">Caiu um Pix: de quem é?</h2><button type="button" class="flx-link" data-fp="fechar">Fechar</button></div>' +
+      '<p class="flx-sub">' + (mov ? 'Do extrato do banco.' : 'Digite o que apareceu no banco.') + ' O hub mostra as cobranças em aberto que mais combinam; "Dar baixa" marca como recebido, igual ao "Recebi (Pix/dinheiro)".</p>' +
+      '<div class="flx-campos flx-tres"><label>Valor (R$)<input id="flx-pv" inputmode="decimal" value="' + (mov ? String((mov.valor || 0).toFixed(2)).replace('.', ',') : '') + '"></label>' +
+      '<label>Data<input id="flx-pd" type="date" value="' + esc(mov ? mov.data : hojeIso) + '"></label>' +
+      '<label>Nome no extrato<input id="flx-pn" value="' + esc(mov ? mov.desc : '') + '" placeholder="ex.: PIX RECEBIDO SUPERMERCADO X" autocomplete="off"></label></div>' +
+      '<div id="flx-pc"></div></div>';
+    document.body.appendChild(w);
+    function fechar() { w.remove(); }
+    function lerRec() { return { valor: Math.round(numBR(document.getElementById('flx-pv').value) * 100) / 100, data: document.getElementById('flx-pd').value, texto: document.getElementById('flx-pn').value }; }
+    function lista(msg) {
+      var r = lerRec(), C = candidatosBaixa(r.valor, r.texto, cobrancasAbertas()), bons = C.filter(function (c) { return c.pontos > 0; });
+      var mostrar = (bons.length ? bons : C).slice(0, 8); w.__cand = mostrar;
+      document.getElementById('flx-pc').innerHTML = (msg ? '<div class="flx-prev">' + msg + '</div>' : '') +
+        (mostrar.length ? '<p class="flx-sub" style="margin-top:12px">' + (bons.length ? 'Mais prováveis:' : 'Nenhuma cobrança combina com esse valor ou nome. Todas em aberto:') + '</p><div class="flx-lista">' + mostrar.map(function (c, i) {
+          return '<div class="flx-lin"><div><b>' + esc(c.nome) + (c.item !== c.nome ? ' · ' + esc(c.item) : '') + '</b><span>' + esc(c.modRot) + ' · ' + MES_L[c.mes] + '/' + c.ano + ' · ' + esc(c.status) + ' · ' + brl(c.valor) +
+            (r.valor > 0 && c.dif < 0.01 ? ' · <b class="flx-okv">mesmo valor</b>' : '') + '</span></div><div class="flx-acs"><button type="button" class="flx-btn" data-fp="baixa:' + i + '">Dar baixa</button></div></div>'; }).join('') + '</div>'
+          : '<p class="flx-sub" style="margin-top:12px">Não há cobrança em aberto nos últimos 4 meses.</p>') +
+        (mov ? '<div class="flx-bts" style="margin-top:12px"><button type="button" class="flx-link" data-fp="ignorar">Não é de cliente (não perguntar de novo)</button></div>' : '');
+    }
+    w.addEventListener('input', function (ev) { if (/^flx-p[vn]$/.test(ev.target.id)) lista(); });
+    w.addEventListener('click', function (ev) {
+      if (ev.target === w) return fechar();
+      var b = ev.target.closest('[data-fp]'); if (!b) return;
+      var a = b.getAttribute('data-fp');
+      if (a === 'fechar') fechar();
+      else if (a === 'ignorar') { mov.baixa = { ignorado: true, em: new Date().toISOString() }; if (typeof global.scheduleSave === 'function') global.scheduleSave(); try { global.buildVisaoEmpresa(); } catch (e) {} fechar(); }
+      else if (a.indexOf('baixa:') === 0) {
+        var c = (w.__cand || [])[+a.slice(6)], r = lerRec(); if (!c) return;
+        if (!r.data) { lista('Informe a data do Pix.'); return; }
+        darBaixa(c, r, mov);
+        w.querySelector('.flx-caixa').innerHTML = '<h2>Baixa feita</h2><p class="flx-sub">' + esc(c.item) + ' · ' + MES_L[c.mes] + '/' + c.ano + ' marcado como recebido (Pix de ' + brl(r.valor || c.valor) + ' em ' + esc(brData(r.data)) + ').' +
+          ' Aparece como pago na ficha, na Visão Receita e no Faturamento. Para desfazer, use "Desfazer baixa" na Visão Receita.</p><div class="flx-bts"><button type="button" class="flx-btn" id="flx-pf">Fechar</button></div>';
+        document.getElementById('flx-pf').addEventListener('click', fechar);
+      }
+    });
+    w.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') fechar(); });
+    lista();
+    setTimeout(function () { var f = document.getElementById(mov ? 'flx-pn' : 'flx-pv'); if (f) f.focus(); }, 0);
+  }
+
+  // Nova receita avulsa → "Emitir a nota agora": abre Contabilidade › Nota Fiscal já com a receita escolhida
+  function abrirNotaAvulsa(item, n) {
+    if (n == null) {
+      try { global.goPage('contabilidade'); } catch (e) {}
+      try { var aba = Array.prototype.filter.call(document.querySelectorAll('#page-contabilidade .ferr-tab'), function (t) { return /nota fiscal/i.test(t.textContent); })[0]; global.showContabTab('nota', aba); } catch (e) {}
+      n = 25;
+    }
+    var b = Array.prototype.filter.call(document.querySelectorAll('#f-nota-avulsas [data-it]'), function (x) { return x.getAttribute('data-it') === item; })[0];
+    if (b) { b.click(); try { document.getElementById('ferr-nota').scrollIntoView({ block: 'start' }); } catch (e) {} return; }
+    var sel = document.getElementById('f-nota-cli');
+    if (sel && Array.prototype.some.call(sel.options, function (o) { return o.value === '_avulsa|' + item; }) && n < 20) { sel.value = '_avulsa|' + item; try { global.fNotaCliente(); } catch (e) {} return; }
+    if (n > 0) setTimeout(function () { abrirNotaAvulsa(item, n - 1); }, 200);
+  }
+
   // Lista única de quem falta assinar (27/11, Usabilidade item 9): contratos e aditivos de todos os cadastros
   // (clientes, condomínios, lojas do Mercadão), com dias desde o envio, contato e "Conferir agora".
   var ROT_MOD = { elev: 'Tela Vertical', mercadao: 'Mercadão', radio: 'Rádio interna', tv: 'TV interna', vaapty: 'Vaapty', mb: 'Móveis Brasília', radioops: 'Rádio Moinho', taroba: 'Tarobá' };
@@ -565,6 +750,7 @@
       '.flx-lista{display:flex;flex-direction:column;margin-top:12px;border-top:1px solid #E4DFF0}.flx-lin{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #E4DFF0}' +
       '.flx-lin>div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}.flx-lin b{font-size:15px}.flx-lin span{font-size:13px;color:#5D5868}.flx-velho b::after{content:" · há mais de uma semana";color:#B45309;font-weight:600;font-size:12.5px}' +
       '.flx-acs{display:flex;gap:6px;flex-wrap:wrap}.flx-acs .flx-btn2{padding:7px 12px;font-size:12.5px;text-decoration:none;color:#4E38B2;border-color:#CFC7E6}' +
+      '.flx-tres{grid-template-columns:140px 160px 1fr}@media (max-width:600px){.flx-tres{grid-template-columns:1fr}}.flx-okv{color:#15803D!important}' +
       '.flx-dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media (max-width:480px){.flx-dupla{grid-template-columns:1fr}}' +
       '.flx-caixa .flx-btn{background:#4E38B2}.flx-caixa .flx-btn2{color:#4E38B2;border-color:#CFC7E6}';
     document.head.appendChild(st);
@@ -608,6 +794,6 @@
     andarPagamentosAoRemover('tvCondoDespRemover', function () { return { mod: 'elev', item: ler('tvCondoSel') }; });
   }
 
-  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, formAnuncianteRapido: formAnuncianteRapido, abrirListaAssinaturas: abrirListaAssinaturas, repasseDoMes: repasseDoMes, coberturas: coberturas, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
+  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, formAnuncianteRapido: formAnuncianteRapido, abrirListaAssinaturas: abrirListaAssinaturas, editarLancamento: editarLancamento, apagarLancamento: apagarLancamento, abrirNotaAvulsa: abrirNotaAvulsa, abrirBaixaPix: abrirBaixaPix, repasseDoMes: repasseDoMes, coberturas: coberturas, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -11040,7 +11040,7 @@ function buildVisaoEmpresa(){
           <td style="font-weight:500">${mv.desc}</td>
           <td style="font-size:10px;color:var(--muted)">${mv.conta||'—'}</td>
           <td class="tr mono" style="color:${isRec?'var(--green)':'var(--red)'};font-weight:700">${isRec?'+':'−'}${f(mv.valor||0)}</td>
-          <td><button class="del" onclick="delEmpresaMov(${mv.id})" title="Remover">✕</button></td>
+          <td style="white-space:nowrap">${isRec&&window.MGBFluxos&&MGBFluxos.abrirBaixaPix?(mv.baixa&&mv.baixa.item?'<span style="font-size:11px;color:var(--green);font-weight:600">✓ '+mv.baixa.item+'</span> ':mv.baixa&&mv.baixa.ignorado?'':'<button type="button" class="anunc-btn" onclick="MGBFluxos.abrirBaixaPix('+mv.id+')">De quem é?</button> '):''}<button class="del" onclick="delEmpresaMov(${mv.id})" title="Remover">✕</button></td>
         </tr>`;
       }).join('');
     }
@@ -16587,20 +16587,20 @@ function renderRadioOps(data){
 }
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
-<script src="lancar.js?v=20261127z"></script>
+<script src="lancar.js?v=20261127p"></script>
 <script src="dialogo.js?v=20261127z"></script>
 <script src="novo.js?v=20261127z"></script>
 <script src="acesso.js?v=20261127z"></script>
-<script src="inicio.js?v=20261127z"></script>
-<script src="faturamento.js?v=20261127z"></script>
-<script src="financeiro.js?v=20261127z"></script>
+<script src="inicio.js?v=20261127p"></script>
+<script src="faturamento.js?v=20261127p"></script>
+<script src="financeiro.js?v=20261127p"></script>
 <script src="funil.js?v=20261127z"></script>
 <script src="clientes.js?v=20261127z"></script>
 <script src="menu.js?v=20261127z"></script>
 <script src="telas2.js?v=20261127z"></script>
 <script src="painel.js?v=20261127z"></script>
 <script src="historico.js?v=20261127"></script>
-<script src="fluxos.js?v=20261127z"></script>
+<script src="fluxos.js?v=20261127p"></script>
 <script src="assistente.js?v=20261029b"></script>
 <script src="usabilidade.js?v=20261127z"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261127x">

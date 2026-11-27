@@ -282,6 +282,7 @@
   var ATALHOS = [
     { id: 'fat', nav: 'nav-contabilidade', nome: 'Faturamento', desc: 'dia 5, notas e boletos', ir: function () { global.fatAbrirFaturamento(); } },
     { id: 'cobranca', nav: 'nav-relatorios', nome: 'Repasses e relatórios', desc: 'repasses, prestação de contas', ir: function () { global.goPage('relatorios'); } },
+    { id: 'pix', nav: 'nav-contabilidade', nome: 'Caiu um Pix', desc: 'de quem é e dar baixa', ir: function () { if (global.MGBFluxos && global.MGBFluxos.abrirBaixaPix) global.MGBFluxos.abrirBaixaPix(); } },
     { id: 'atrasados', nav: 'nav-contabilidade', nome: 'Cobrar atrasados', desc: 'boletos vencidos', ir: function () { if (global.MGBFaturamento && global.MGBFaturamento.abrirFiltro) global.MGBFaturamento.abrirFiltro('vencido'); else global.fatAbrirFaturamento(); } },
     { id: 'fin', nav: 'nav-custos', nome: 'Financeiro', desc: 'resumo do mês e módulos', ir: function () { global.goPage('overview'); try { global.switchOvTab('visao'); } catch (e) {} } },
     { id: 'contas', nav: 'nav-custos', nome: 'Contas do mês', desc: 'o que pagar e o que já foi pago', ir: function () { global.goPage('overview'); global.switchOvTab('desp'); } },
