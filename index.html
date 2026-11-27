@@ -6553,12 +6553,16 @@ function copiarSpot() {
           <div><label class="ferr-lbl">Alíquota ISS do mês (%)</label><input id="f-leo-aliq" class="ferr-in" inputmode="decimal" placeholder="ex.: 2,37" oninput="fAliqSalvar(this.value)" title="Mesma alíquota das abas Nota Fiscal e Faturamento — alterar aqui altera nas três"></div>
           <div><label class="ferr-lbl">E-mail de destino (consolidado)</label><input id="f-leo-email-destino" class="ferr-in" placeholder="boletos@leocosmeticosshop.com.br"></div>
         </div>
+        <!-- 27/11 (usabilidade): passos numerados na ordem do mês; o "Resetar" fica separado, longe dos outros -->
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
-          <button class="ferr-btn" onclick="fLeoEmitirTodas()" id="f-leo-btn-emitir">🧴 Emitir as 31 notas</button>
-          <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fLeoConferirTodas()">🔄 Conferir status</button>
-          <button class="ferr-btn" style="background:#0D9488" onclick="fLeoEnviarEmail()" id="f-leo-btn-email">📧 Enviar e-mail consolidado</button>
-          <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fLeoResetar()">↺ Resetar status (novo mês)</button>
+          <button class="ferr-btn" onclick="fLeoEmitirTodas()" id="f-leo-btn-emitir">1 · Emitir as 31 notas</button>
+          <button class="ferr-btn" style="background:transparent;color:var(--purple);border:1px solid var(--purple)" onclick="fLeoConferirTodas()">2 · Conferir se a prefeitura autorizou</button>
+          <button class="ferr-btn" style="background:#0D9488" onclick="fLeoEnviarEmail()" id="f-leo-btn-email">3 · Enviar as notas num e-mail só</button>
           <span id="f-leo-resumo" class="ferr-info"></span>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--border,#E4DFF0);flex-wrap:wrap;align-items:center">
+          <span style="font-size:13px;color:var(--muted,#5D5868)">Virou o mês?</span>
+          <button class="ferr-btn" style="background:transparent;color:#B42318;border:1px solid #E7B4AE" onclick="fLeoResetar()">Zerar o status para o mês novo</button>
         </div>
         <div id="f-leo-status" style="margin-top:10px"></div>
       </div>
@@ -7356,10 +7360,11 @@ async function fNotaEmitir(){
   const retemIss=!!document.getElementById('f-nota-retem').checked;
   const semNota=!!document.getElementById('f-nota-sem-nota').checked;
   const valor=fRecParseValor(g('f-nota-valor'));
-  if(!nome){ alert('Escolha o cliente / preencha o tomador.'); return; }
-  if(!email){ alert('Informe o e-mail do tomador (a Asaas precisa pra enviar o boleto'+(semNota?'':' e a nota')+').'); return; }
-  if(!desc){ alert('Informe a descrição do serviço.'); return; }
-  if(!(valor>0)){ alert('Informe o valor.'); return; }
+  // 27/11 (usabilidade): avisava um campo por vez; agora lista tudo o que falta e marca os campos em vermelho
+  { const falta=[[!nome,'f-nota-tom-nome','o cliente (quem recebe a nota)'],[!email,'f-nota-tom-email','o e-mail do cliente (o Asaas manda a nota e o boleto para ele)'],[!desc,'f-nota-desc','a descrição do serviço'],[!(valor>0),'f-nota-valor','o valor'],[!semNota&&!(iss>0),'f-nota-iss','a alíquota do ISS (%)']];
+    falta.forEach(x=>{ const el=document.getElementById(x[1]); if(el){ el.style.outline=x[0]?'2px solid #B42318':''; if(x[0]) el.addEventListener('input',function(){ this.style.outline=''; },{once:true}); } });
+    const f2=falta.filter(x=>x[0]);
+    if(f2.length){ alert('Falta preencher:\n• '+f2.map(x=>x[2]).join('\n• ')+(f2.some(x=>x[1]==='f-nota-iss')?'\n\nSe quiser só o boleto, marque "sem nota fiscal".':'')); const el=document.getElementById(f2[0][1]); if(el) el.focus(); return; } }
   if(!semNota && !(iss>0)){ alert('Informe a Alíquota ISS (%) antes de emitir — sem ela a Asaas recusa a nota (campo "taxes" obrigatório).\n\nSe quiser só o boleto, marque "sem nota fiscal".'); return; }
   // Endereço do tomador: a NFS-e exige endereço completo no cadastro do cliente da Asaas.
   // Vem da busca de CNPJ na Receita (preferência) ou do cadastro do cliente (clientesInfo).
@@ -12150,6 +12155,8 @@ function tvCondosRender(){
   let h='<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px">'+
     '<div><div style="font:800 18px Syne,sans-serif;color:#16294F">Condomínios</div><div style="font-size:12px;color:#6b6380">'+linhas.filter(l=>!l.breve).length+' no ar · '+totT+' telas · clique no condomínio para ver e lançar as despesas dele</div></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      // 27/11 (usabilidade): os valores ficavam "••••" aqui sem botão para mostrar (só existia em "Mês e sócio")
+      '<button type="button" onclick="togglePrivate();tvCondosRender()" style="font:600 12px \'DM Sans\',sans-serif;padding:7px 10px;border-radius:8px;border:1px solid #E3D8BF;background:#fff;color:#16294F;cursor:pointer;min-height:36px">'+(vis?'🙈 Ocultar valores':'👁️ Mostrar valores')+'</button>'+
       '<label style="font-size:12px;color:#6b6380">Mês <input type="month" value="'+tvpMes+'" onchange="tvpMes=this.value;tvCondosRender()" style="margin-left:6px;padding:6px 8px;border:1px solid #E3D8BF;border-radius:8px;font:inherit"></label>'+
       (temNovo?'<button type="button" onclick="MGBNovo.escolher(\'condominio\')" style="'+btn+'background:linear-gradient(135deg,#16294F,#C0A062);color:#fff;border:0">＋ Novo condomínio</button>':'')+
     '</div></div>';
@@ -15393,8 +15400,8 @@ function relRefresh(){
     const onChg=isMan?`relSetManual(${c.manIdx},'valor',this.value)`:`relSetOverride('${nomeEsc}',this.value)`;
     return `<div style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:7px">
       <input type="checkbox" class="rel-cli-cb" data-i="${i}" checked onchange="relAtualizaResumo()" style="cursor:pointer;width:16px;height:16px;accent-color:#E879B0">
-      <div style="flex:1;display:flex;justify-content:space-between;align-items:center;gap:10px">
-        <div style="flex:1;min-width:0">${nomeCell}</div>
+      <div style="flex:1;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 10px;min-width:0">
+        <div style="flex:1 1 180px;min-width:0">${nomeCell}</div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:11px;color:var(--muted);white-space:nowrap">${isMan?'<span style="color:#D97706">manual</span>':((c.cotas)+(c.cotas===1?' cota':' cotas'))}</span>
           <span style="font-size:12px;color:var(--muted)">R$</span>
@@ -16564,7 +16571,7 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 <script src="clientes.js?v=20261127w"></script>
 <script src="menu.js?v=20261127w"></script>
 <script src="telas2.js?v=20261124"></script>
-<script src="painel.js?v=20261127w"></script>
+<script src="painel.js?v=20261127x"></script>
 <script src="historico.js?v=20261127"></script>
 <script src="fluxos.js?v=20261127h"></script>
 <script src="assistente.js?v=20261029b"></script>

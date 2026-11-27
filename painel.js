@@ -485,14 +485,14 @@
     if (c.forma === 'transf') { if (c.banco) dados.push(['Banco', c.banco]); if (c.agencia) dados.push(['Agência', c.agencia, true]); if (c.conta) dados.push(['Conta', c.conta, true]); }
     if (c.doc) dados.push(['CNPJ/CPF', c.doc, true]);
     if (c.obs) dados.push(['Observação', c.obs]);
-    var form = editRep === id ? '<form class="pnl-rep-form" data-pnl-rep-form="' + id + '" onsubmit="return false">' +
+    var form = editRep === id ? '<form class="pnl-rep-form" data-pnl-rep-form="' + id + '" data-forma="' + esc(c.forma || '') + '" onsubmit="return false">' +
       '<label>Favorecido<input name="favorecido" value="' + esc(c.favorecido || '') + '"></label>' +
       '<label>CNPJ/CPF<input name="doc" value="' + esc(c.doc || '') + '"></label>' +
-      '<label>Forma de repasse<select name="forma">' + ['', 'pix', 'transf', 'boleto', 'dinheiro'].map(function (f) { return '<option value="' + f + '"' + (c.forma === f ? ' selected' : '') + '>' + (f ? FORMAS[f] : 'Escolha…') + '</option>'; }).join('') + '</select></label>' +
-      '<label>Chave PIX<input name="pix" value="' + esc(c.pix || '') + '" placeholder="CNPJ, e-mail, telefone ou chave aleatória"></label>' +
-      '<label>Banco<input name="banco" value="' + esc(c.banco || '') + '"></label>' +
-      '<label>Agência<input name="agencia" value="' + esc(c.agencia || '') + '"></label>' +
-      '<label>Conta<input name="conta" value="' + esc(c.conta || '') + '"></label>' +
+      '<label>Forma de repasse<select name="forma" onchange="this.form.setAttribute(\'data-forma\',this.value)">' + ['', 'pix', 'transf', 'boleto', 'dinheiro'].map(function (f) { return '<option value="' + f + '"' + (c.forma === f ? ' selected' : '') + '>' + (f ? FORMAS[f] : 'Escolha…') + '</option>'; }).join('') + '</select></label>' +
+      '<label data-so="pix">Chave PIX<input name="pix" value="' + esc(c.pix || '') + '" placeholder="CNPJ, e-mail, telefone ou chave aleatória"></label>' +
+      '<label data-so="transf">Banco<input name="banco" value="' + esc(c.banco || '') + '"></label>' +
+      '<label data-so="transf">Agência<input name="agencia" value="' + esc(c.agencia || '') + '"></label>' +
+      '<label data-so="transf">Conta<input name="conta" value="' + esc(c.conta || '') + '"></label>' +
       '<label class="pnl-rep-larga">Observação<input name="obs" value="' + esc(c.obs || '') + '" placeholder="ex.: repasse até o dia 10, mandar comprovante por WhatsApp"></label>' +
       '<div class="pnl-rep-acoes"><button type="button" class="pnl-bt" data-pnl-rep="salvar:' + id + '">Salvar dados</button><button type="button" class="pnl-bt2" data-pnl-rep="cancelar:' + id + '">Cancelar</button></div></form>' : '';
     return '<section class="pnl-rep" aria-label="' + esc(tit) + '"><div class="pnl-rep-cab"><div><span class="pnl-rep-rot">' + esc(tit) + '</span><b>' + esc(c.favorecido || '—') + '</b><small>' + linhaV + '</small></div>' +
@@ -652,7 +652,7 @@
     '.pnl-copiar{position:absolute;right:8px;top:50%;transform:translateY(-50%);min-height:28px;padding:0 9px;border:1px solid #CFC7E6;border-radius:8px;background:#fff;color:#2A1760;font:600 11.5px \"DM Sans\",system-ui,sans-serif;cursor:pointer}' +
     '.pnl-bt,.pnl-bt2{min-height:36px;padding:0 14px;border-radius:10px;font:700 13px \"DM Sans\",system-ui,sans-serif;cursor:pointer}.pnl-bt{border:0;background:#4E38B2;color:#fff}.pnl-bt:hover{background:#2A1760}.pnl-bt2{border:1px solid #CFC7E6;background:#fff;color:#2A1760;font-weight:600}.pnl-bt2:hover{background:#ECE8FA}' +
     '.pnl-rep-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:#FBFAFE;border:1px solid #EFEBF7;border-radius:12px;padding:12px}' +
-    '.pnl-rep-form label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#3A3446}.pnl-rep-form input,.pnl-rep-form select{min-height:38px;border:1px solid #CFC7E6;border-radius:9px;padding:0 10px;font:14px \"DM Sans\",system-ui,sans-serif;background:#fff;color:#241A38}' +
+    '.pnl-rep-form [data-so]{display:none!important}.pnl-rep-form[data-forma=pix] [data-so=pix],.pnl-rep-form[data-forma=transf] [data-so=transf]{display:flex!important}.pnl-rep-form label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#3A3446}.pnl-rep-form input,.pnl-rep-form select{min-height:38px;border:1px solid #CFC7E6;border-radius:9px;padding:0 10px;font:14px \"DM Sans\",system-ui,sans-serif;background:#fff;color:#241A38}' +
     '.pnl-rep-larga{grid-column:1/-1}.pnl-rep-acoes{grid-column:1/-1;display:flex;gap:8px}' +
     '@media (max-width:760px){.pnl-sec-3{grid-template-columns:minmax(0,1fr)!important}.pnl-rep-raiz{padding:0 14px 12px}.pnl-rep-form{grid-template-columns:minmax(0,1fr)}}' +
     '.pnl-tv .page-hdr{background:none!important}.pnl-tv-logo{display:inline-block}' +
