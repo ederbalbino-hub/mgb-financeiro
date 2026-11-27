@@ -1,8 +1,8 @@
-// Carrega funções puras do index.html (sem alterar o repo) num contexto vm, com stubs mínimos.
+// Carrega funções de conta do index.html num contexto vm, com stubs mínimos (testes e docs/auditoria/ferramentas/casos.cjs).
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
-const REPO = path.resolve(__dirname, '../../..');
+const REPO = path.resolve(__dirname, '../../..');  // raiz do repositório (bot/test/apoio → ../../..)
 const SRC = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
 
 function extrair(nome) {
@@ -21,7 +21,7 @@ function linha(nome) { const m = new RegExp('^function ' + nome + '\\s*\\(', 'm'
 
 const FUNCS = ['ymKey', 'impostoIss', 'impostoSimples', 'impostoAliq', 'impostoRotulo', 'pesValorNoMes', 'pesPulou', 'pessoalRecMes', 'pessoalDespMes',
   'anuncRecByTelaMes', 'recOfMes', 'recModMes', 'finYear', 'finGetRecPrevista', 'receitaOficialMes', 'finGetRec', 'despPagKey',
-  'coletaDespesasMes', 'despesaTotalMes', 'despesaTotalMesMod', 'finGetDesp', 'elevInvestTotais', 'elevMesResumo', 'fFatBoleto', 'fFatNoContrato',
+  'coletaDespesasMes', 'despesaTotalMes', 'despesaTotalMesMod', 'finGetDesp', 'elevInvestTotais', 'elevInvestidoDoItem', 'elevMesResumo', 'fFatBoleto', 'fFatNoContrato',
   'relAnualDados', 'despCompIsAtivo', 'contratosLista', 'recTarobaGetMes', 'tarobaRecMap', 'recPagKey', 'recDefault', 'coletaClientesMes'];
 
 function novoCtx(estado) {
@@ -30,7 +30,7 @@ function novoCtx(estado) {
   const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const ctx = Object.assign({
     console, Math, Number, String, Object, Array, JSON, Date, isFinite, parseInt, parseFloat, Set,
-    MGBFinancas, MGBLancar, MESES,
+    MGBFinancas, MGBLancar, MESES, window: {}, ELEV_SOCIO_NO_RESULTADO: true,
     MODULES: [
       { id: 'mb', label: 'MB — Móveis Brasília', items: ['Benjamin', 'Calçadão'] },
       { id: 'elev', label: 'Tela Vertical', items: ['Lagoa Dourada', 'Uptown', 'Spot'] },

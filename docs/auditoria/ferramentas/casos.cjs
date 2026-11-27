@@ -1,5 +1,5 @@
 // Casos de teste das contas do hub. Rodar: node casos.js
-const { novoCtx, linha, REPO } = require('./harness.cjs');
+const { novoCtx, linha, REPO } = require('../../../bot/test/apoio/index-funcoes.cjs');
 const path = require('path');
 let n = 0;
 function caso(titulo, obtido, esperado, nota) {
@@ -162,7 +162,7 @@ const R2 = (v) => Math.round(v * 100) / 100;
 
 // ── 11. Extras: renomear condomínio, despesa sem data "anda" de mês ──
 setTimeout(() => {
-  const { novoCtx } = require('./harness.cjs');
+  const { novoCtx } = require('../../../bot/test/apoio/index-funcoes.cjs');
   const c = novoCtx({ anunciantes: [{ id: 1, nome: 'Padaria', valor: 600, inicio: '2026-11', meses: 6, telas: ['Uptown', 'Spot'] }] });
   // renomear 'Uptown' pelo modal de unidade (index.html ~13177) troca só m.items, não a.telas
   c.MODULES[1].items[1] = 'Uptown Residence';

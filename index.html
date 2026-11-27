@@ -11586,7 +11586,13 @@ function relAnualDados(ano){
     };
   });
   const despPorMes=despesasPorMes.map(lista=>lista.reduce((a,d)=>a+d.vlrMes,0));
-  const recPorMes=MESES.map((_,mi)=>MODULES.reduce((a,m)=>a+recModMes(m.id,ano,mi),0));
+  // Auditoria 27/11: a receita do relatório é a MESMA da Visão Geral (finGetRec: contratos + avulsas + manual,
+  // ou a soma das notas quando o mês está fechado). O que não é de contrato vira uma linha própria,
+  // para as linhas continuarem somando o total. Antes o relatório só somava os contratos.
+  const recPorMes=MESES.map((_,mi)=>finGetRec(ano,mi));
+  const recOutras=MESES.map((_,mi)=>Math.round((recPorMes[mi]-MODULES.reduce((a,m)=>a+recModMes(m.id,ano,mi),0))*100)/100);
+  porModulo.push({ id:'_outras', label:'Avulsas, manual e ajuste do fechamento pelas notas', icon:'🧾',
+    despesas:MESES.map(()=>0), despTotal:0, receitas:recOutras, recTotal:recOutras.reduce((a,b)=>a+b,0) });
   return {
     ano, porModulo, despPorMes, recPorMes,
     despGrandTotal:despPorMes.reduce((a,b)=>a+b,0),
@@ -12127,7 +12133,7 @@ function tvCondosRender(){
   const linhas=m.items.map(item=>{
     const custo=desp.filter(d=>d.item===item).reduce((a,d)=>a+d.vlrMes,0);
     let receita=0; try{ receita=recOfMes('elev',item,ano,mes)||0; }catch(e){}
-    const inv=(typeof elevInvestimentos!=='undefined'?elevInvestimentos:[]).filter(x=>x.item===item).reduce((a,x)=>a+(x.valor||0),0);
+    const inv=elevInvestidoDoItem(item);
     return {item,telas:tvTelasDoItem(item),custo,receita,inv,breve:breve.has(item)};
   });
   const totT=linhas.filter(l=>!l.breve).reduce((a,l)=>a+l.telas,0);
@@ -12286,13 +12292,18 @@ function tvPainelRender(){
       '<div style="display:flex;flex-wrap:wrap;gap:8px">'+bt('＋ Novo anunciante',"MGBNovo.escolher('anunciante')")+bt('＋ Novo condomínio',"MGBNovo.escolher('condominio')")+'</div></div>':'');
 }
 // ── INVESTIMENTO · INSTALAÇÃO (sócios) ───────────────────────────────────────
+// Coluna "Investido" de um condomínio (auditoria 27/11): só investimento. A despesa paga do bolso (gasolina…)
+// já está em "Custo" do mês; somar aqui contava duas vezes. Mesma regra do total de elevInvestTotais.
+function elevInvestidoDoItem(item){
+  return (typeof elevInvestimentos!=='undefined'?elevInvestimentos:[]).filter(x=>x.item===item&&!(ELEV_SOCIO_NO_RESULTADO&&x.tipo==='despesa')).reduce((a,x)=>a+(x.valor||0),0);
+}
 function elevInvestTotais(){
   // CC de cada sócio = tudo que ele pagou do bolso (investimento + despesa). "total" = só investimento.
   // + o que cada um cobriu em meses no vermelho (27/11, Diego: entra na soma do investido) — fluxos.js
   const cob=(window.MGBFluxos&&MGBFluxos.coberturas)?MGBFluxos.coberturas():{eder:0,jadson:0};
   const jadson=elevInvestimentos.filter(x=>x.pagoPor==='jadson').reduce((a,x)=>a+(x.valor||0),0)+(cob.jadson||0);
   const eder=elevInvestimentos.filter(x=>x.pagoPor==='eder').reduce((a,x)=>a+(x.valor||0),0)+(cob.eder||0);
-  const despesas=elevInvestimentos.filter(x=>x.tipo==='despesa').reduce((a,x)=>a+(x.valor||0),0);
+  const despesas=elevInvestimentos.filter(x=>x.tipo==='despesa'&&(x.pagoPor==='jadson'||x.pagoPor==='eder')).reduce((a,x)=>a+(x.valor||0),0); // auditoria 27/11: só desconta o que entrou na soma de um dos dois
   return {jadson,eder,total:ELEV_SOCIO_NO_RESULTADO?jadson+eder-despesas:jadson+eder,despesas,dif:jadson-eder};
 }
 // Excedente: quando a despesa do mês no Elevadores passa da receita, a diferença é custo do Eder (acumula mês a mês).

@@ -172,7 +172,15 @@
       .filter(function (x) { return x.venc; }).sort(function (a, b) { return a.venc.dias - b.venc.dias; });
   }
 
-  var regras = { situacaoVenc: situacaoVenc, agruparContas: agruparContas, chaveConta: chaveConta, contrato: contrato, resumoContratos: resumoContratos, mudancas: mudancas, rotMes: rotMes, escala: escala, fatias: fatias, renovacoes: renovacoes, saudeModulo: saudeModulo };
+  // Receita que não é de contrato (avulsas, receita manual, diferença do mês fechado pelas notas): o topo do
+  // Resumo usa finGetRec e as linhas por módulo só os contratos. Esta linha fecha a tabela com o topo.
+  function linhaOutrasReceitas(rec, linhas) {
+    var v = Math.round(((rec || 0) - linhas.reduce(function (a, l) { return a + (l.r || 0); }, 0)) * 100) / 100;
+    if (Math.abs(v) < 0.01) return null;
+    return { id: '', extra: true, rot: 'Avulsas e ajuste pelas notas', sub: 'locuções, receita manual e diferença do mês fechado', r: v, d: 0 };
+  }
+
+  var regras = { linhaOutrasReceitas: linhaOutrasReceitas, situacaoVenc: situacaoVenc, agruparContas: agruparContas, chaveConta: chaveConta, contrato: contrato, resumoContratos: resumoContratos, mudancas: mudancas, rotMes: rotMes, escala: escala, fatias: fatias, renovacoes: renovacoes, saudeModulo: saudeModulo };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (!doc) return;
 
@@ -339,6 +347,10 @@
     }).sort(function (a, b) { return (b.r - b.d) - (a.r - a.d); });
     var dEmp = tenta('despesaTotalMesMod', '_empresa', ano, mes) || 0;
     if (dEmp) linhas.push({ id: '', rot: 'Empresa (impostos e equipe)', sub: 'imposto, pró-labore, equipe e contador', r: 0, d: dEmp });
+    // Auditoria 27/11: o topo usa finGetRec (contratos + avulsas + manual, ou as notas no mês fechado); as linhas
+    // usam só os contratos. A diferença vira uma linha própria, para a tabela fechar com o total do topo.
+    var outras = linhaOutrasReceitas(rec, linhas);
+    if (outras) linhas.push(outras);
     var tab = linhas.map(function (l) {
       var resL = l.r - l.d, mg = l.r > 0 ? Math.max(0, Math.round(resL / l.r * 100)) : 0;
       return '<tr' + (l.id ? ' data-fin2="modulo:' + esc(l.id) + '" class="fin2-clicavel" tabindex="0"' : '') + '><td><b>' + esc(l.rot) + '</b><br><span class="fin2-sub">' + esc(l.sub) + '</span></td>' +
@@ -370,7 +382,7 @@
     var px2 = new Date(ano, mes + 1, 1), recP = tenta('finGetRec', px2.getFullYear(), px2.getMonth()) || 0, despP = tenta('finGetDesp', px2.getFullYear(), px2.getMonth()) || 0;
     var mg = rec > 0 ? Math.max(0, Math.min(100, res / rec * 100)) : 0;
 
-    var porMod = fatias(linhas.filter(function (l) { return l.id && l.r > 0; }).map(function (l) { return { rot: moduloRot({ label: l.rot }), valor: l.r }; }), 4);
+    var porMod = fatias(linhas.filter(function (l) { return (l.id || l.extra) && l.r > 0; }).map(function (l) { return { rot: moduloRot({ label: l.rot }), valor: l.r }; }), 4);
     var faltaMod = tarobaPend ? '<div class="fin2-falta-l"><i></i><span>Tarobá</span>' + chip('falta lançar', 'atencao') + '</div>' : '';
 
     var dKey = tenta('despPagKey', ano, mes) || (ano + '-' + mes);
