@@ -153,3 +153,21 @@ test("cartão do anunciante: situação do pagamento no mês", () => {
   assert.equal(X.situacaoAnunciante({ asaas: { st: "pendente" } }).txt, "Boleto em aberto");
   assert.equal(X.situacaoAnunciante(undefined).txt, "A emitir");
 });
+
+test("aditivo: novo período começa no dia seguinte ao fim e dura os meses pedidos", () => {
+  assert.deepEqual(X.periodoAditivo("2027-11-19", 12), { de: "2027-11-20", ate: "2028-11-19", meses: 12 });
+  assert.deepEqual(X.periodoAditivo("2026-12-31", 6), { de: "2027-01-01", ate: "2027-06-30", meses: 6 });
+  assert.equal(X.periodoAditivo("", 6), null);
+  assert.equal(X.fimDoMes(2026 * 12 + 1), "2026-02-28");
+});
+
+test("aditivo: documento com partes, prazo, mesmo valor e escape do nome", () => {
+  const h = X.documentoAditivo({ nome: "Loja <Teste>", razao: "Loja Teste Ltda", cnpj: "11.222.333/0001-81", produto: "Rádio Interna", meses: 12, de: "2027-11-20", ate: "2028-11-19", valor: 450, assinadoEm: "2026-11-20T10:00:00Z" });
+  assert.match(h, /Termo Aditivo de Prorrogação/);
+  assert.match(h, /23\.770\.170\/0001-50/);
+  assert.match(h, /Loja Teste Ltda · CNPJ 11\.222\.333\/0001-81/);
+  assert.match(h, /mais <b>12 meses<\/b>, de <b>20\/11\/2027<\/b> a <b>19\/11\/2028<\/b>/);
+  assert.match(h, /R\$ 450,00/);
+  assert.match(h, /assinado em 20\/11\/2026/);
+  assert.match(h, /Loja &lt;Teste&gt;/);
+});

@@ -76,7 +76,7 @@
           meses.push({ ano: a2, mes: m2, valor: v, status: statusMes(pg, v, k > 0), nf: pg && pg.asaas && pg.asaas.nf || '', boletoUrl: pg && pg.asaas && pg.asaas.boletoUrl || '', semNota: semNota });
         }
         g.contratos.push({ mod: m.id, modRot: rotMod(m), item: item, valor: c.valor, doMes: doMes, inicio: c.inicio, meses: c.meses, telas: c.telas,
-          assinadoEm: i.assinadoEm || '', assinafy: !!i.assinafyDocId, issRetido: !!i.issRetido, jornada: i.jornada || [], obs: i.obsFicha || '', historico: meses });
+          assinadoEm: i.assinadoEm || '', assinafy: !!i.assinafyDocId, aditivoPendente: !!(i.aditivo && i.aditivo.docId && !i.aditivo.assinadoEm), modLabel: m.label || m.id, issRetido: !!i.issRetido, jornada: i.jornada || [], obs: i.obsFicha || '', historico: meses });
       });
     });
     (f.leads || []).forEach(function (l) {
@@ -212,6 +212,7 @@
           esc([brl(c.valor) + '/mês', vigencia(c), c.telas.length ? c.telas.join(', ') : '', c.issRetido ? 'ISS retido pelo cliente' : ''].filter(Boolean).join(' · ')) + '</span></div>' +
           pillFim(c) +
           (c.assinadoEm ? pill('Assinado em ' + new Date(c.assinadoEm).toLocaleDateString('pt-BR'), 'ok') : c.assinafy ? pill('Aguardando assinatura', 'atencao') : pill('Sem assinatura no hub', 'neutro')) +
+          (c.aditivoPendente ? pill('Aditivo aguardando assinatura', 'atencao') : podeRenovar(c) ? '<button type="button" class="cli2-btn cli2-peq" data-cli2="renovar:' + esc(c.mod) + '|' + esc(c.item) + '">Renovar (aditivo)</button>' : '') +
           '<button type="button" class="cli2-btn2 cli2-peq" data-cli2="modulo:' + esc(c.mod) + '">Abrir no módulo</button></div>';
       }).join('') + '</section>' +
       '<section class="cli2-bloco"><h3>Faturamento</h3>' + g.contratos.map(function (c) {
@@ -244,6 +245,7 @@
       else if (acao === 'modulo') global.drillMod(arg);
       else if (acao === 'faturamento') { global.fatAbrirFaturamento(); buscarNoFaturamento(arg); }
       else if (acao === 'salvar-obs') salvarObs();
+      else if (acao === 'renovar') renovar(arg);
     } catch (e) { console.error('clientes:', acao, e); }
   }
   // "Ver no Faturamento" já filtrado no cliente: espera a lista nova aparecer e preenche a busca
@@ -258,6 +260,21 @@
     var d = diasAte(f.data), txt = f.data.split('-').reverse().join('/');
     if (d < 0) return pill('Terminou em ' + txt, 'erro');
     return pill('Termina em ' + txt, d <= 60 ? 'atencao' : 'neutro');
+  }
+  // Renovar pela ficha: contrato que termina em até 60 dias (ou terminou há menos de 30) gera o aditivo
+  function podeRenovar(c) {
+    if (!global.MGBFluxos || !global.MGBFluxos.abrirAditivo) return false;
+    var f = fimContrato(c); if (!f) return false;
+    var d = diasAte(f.data); return d <= 60 && d >= -30;
+  }
+  function renovar(arg) {
+    var p = arg.split('|'), mod = p[0], item = p.slice(1).join('|');
+    var g = dados().filter(function (x) { return x.chave === aberto; })[0]; if (!g) return;
+    var c = g.contratos.filter(function (x) { return x.mod === mod && x.item === item; })[0]; if (!c) return;
+    var f = fimContrato(c), info = ((ler('clientesInfo', {}) || {})[mod] || {})[item] || {};
+    var origem = mod === 'elev' ? 'Tela Vertical' : c.modLabel;
+    global.MGBFluxos.abrirAditivo({ origem: origem, nome: item, valor: c.valor, inicio: c.inicio, meses: c.meses, fimKey: f.ref, fimData: f.data },
+      { contato: Object.assign({}, info, { email: info.email || g.email, responsavel: info.responsavel || g.responsavel }), aoEnviar: function () { setTimeout(desenharFicha, 300); } });
   }
   // Abre a ficha pelo nome do item (vindo do funil, do Faturamento…)
   function abrirPorNome(nome) {

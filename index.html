@@ -7664,6 +7664,7 @@ const FAT_RX_LEO=/\bl[eé]o\s+cosm[eé]ticos|^\s*leo[-\s]\d/i;
 function fFatEhLeo(r){ return [r.id,r.cliente,r.apelido,r.hubItem].some(x=>FAT_RX_LEO.test(String(x||''))); }
 // Cliente criado pelo Novo cliente (com ou sem lead do CRM): a jornada registra "Unidade criada no Novo cliente".
 function fFatCriadoNoNovo(info){ return !!(info&&(info.leadId||info.fatLote||(info.jornada||[]).some(j=>/criada no Novo cliente/i.test((j&&j.texto)||'')))); }
+const FAT_ANUNC_TODOS=false; // ver fFatContratosHub (anunciantes sem lead no dia 5) — desligado até a conferência de 05/12
 function fFatContratosHub(rowsPlanilha){
   rowsPlanilha=rowsPlanilha||[]; const out=[];
   const modRot={vaapty:'Vaapty',radio:'Rádio Interna',tv:'TV Interna'};
@@ -7683,8 +7684,12 @@ function fFatContratosHub(rowsPlanilha){
   });
   // Elevadores: anunciantes fechados pelo CRM (lead com itemCriado = nome do anunciante) entram no lote.
   // Os que já estão na planilha (Arfix, LMK…) não têm lead, então não duplicam.
+  // FAT_ANUNC_TODOS (fluxos, 27/11): ligar DEPOIS do faturamento de 05/12 com a conferência limpa. Aí também entram
+  // os anunciantes sem lead que NÃO estão na planilha (mesmo CNPJ ou nome parecido ≥ 0,85 = já está, não duplica).
+  const naPlanilha=an=>{ const info=((clientesInfo||{}).elev||{})[an.nome]||{}, d=String(info.cnpj||'').replace(/\D/g,'');
+    return rowsPlanilha.some(r=>(d.length>=11&&String(r.cnpj||'').replace(/\D/g,'')===d)||fSimNome(r.cliente,an.nome)>=0.85||fSimNome(r.apelido,an.nome)>=0.85||fSimNome(r.cliente,info.razao)>=0.85); };
   (typeof anunciantes!=='undefined'?anunciantes:[]).forEach(an=>{
-    const lead=(typeof leads!=='undefined'?leads:[]).find(l=>l&&l.itemCriado===an.nome); if(!lead) return;
+    const lead=(typeof leads!=='undefined'?leads:[]).find(l=>l&&l.itemCriado===an.nome)||(FAT_ANUNC_TODOS&&!naPlanilha(an)?{id:'-',fiscal:{}}:null); if(!lead) return;
     if(FAT_RX_TREINO.test(an.nome)||!(an.valor>0)||!an.inicio) return;
     const info0=((clientesInfo||{}).elev||{})[an.nome]||{}; const cod=codigoDe('Elevadores');
     // endereço/razão/e-mail do formulário do Novo cliente (rascunho) ou do 🧾 do lead, quando o cadastro do módulo ainda não os tem
@@ -16526,16 +16531,16 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 </script>
 <script src="lancar.js?v=20261127c"></script>
 <script src="novo.js?v=20261127b"></script>
-<script src="acesso.js?v=20261123"></script>
+<script src="acesso.js?v=20261127d"></script>
 <script src="inicio.js?v=20261127c"></script>
 <script src="faturamento.js?v=20261119b"></script>
 <script src="financeiro.js?v=20261127c"></script>
-<script src="funil.js?v=20261127b"></script>
-<script src="clientes.js?v=20261127b"></script>
+<script src="funil.js?v=20261127d"></script>
+<script src="clientes.js?v=20261127d"></script>
 <script src="menu.js?v=20261124"></script>
 <script src="telas2.js?v=20261124"></script>
 <script src="historico.js?v=20261127"></script>
-<script src="fluxos.js?v=20261127c"></script>
+<script src="fluxos.js?v=20261127d"></script>
 <script src="assistente.js?v=20261029b"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261123">
 </body>

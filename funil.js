@@ -75,6 +75,7 @@
     var prox = '';
     if (l.estagio === 'fechado' && (l.produto !== 'condo' || (s && s.txt === 'esperando cadastro'))) prox = s && s.txt === 'esperando cadastro'
       ? '<button type="button" class="fun2-prox" onclick="event.stopPropagation();MGBNovo.abrirLead(' + l.id + ')">Cadastrar cliente</button>'
+      : l.produto === 'radioops' ? '<button type="button" class="fun2-prox fun2-prox2" onclick="event.stopPropagation();goPage(\'radioops\')">Abrir Rádio Ops</button>'
       : '<button type="button" class="fun2-prox fun2-prox2" onclick="event.stopPropagation();MGBClientes.abrirPorNome(' + esc(JSON.stringify(String(l.itemCriado || l.nome))) + ')">Ver ficha</button>';
     return '<div class="lead-card fun2-card' + (venc ? ' overdue' : '') + '" draggable="true" ondragstart="leadCardDragStart(event,' + l.id + ')" ondragend="leadCardDragEnd(event)" ' +
       'onclick="if(!event.target.closest(\'select,a\')) openLeadModal(\'edit\',' + l.id + ')" tabindex="0" role="button" aria-label="Abrir ' + esc(l.nome) + '">' +

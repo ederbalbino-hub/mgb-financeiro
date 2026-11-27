@@ -93,7 +93,7 @@ test("admin vê tudo nas abas", () => {
 });
 
 // ── Renovação por telefone (11/10) ───────────────────────────────────
-test("renovação: Karen vê o que vence neste mês e no próximo; encaminhado sai da lista dela", () => {
+test("renovação: Karen vê o que vence nos próximos meses; encaminhado sai da lista dela", () => {
   const ref = 2026 * 12 + 9; // out/26
   const lista = [
     { origem: "Rádio Interna", nome: "Loja A", fimKey: ref, meses: 12 },
@@ -101,10 +101,13 @@ test("renovação: Karen vê o que vence neste mês e no próximo; encaminhado s
     { origem: "Vaapty", nome: "Loja C", fimKey: ref + 2, meses: 12 },
     { origem: "Elevadores", nome: "Loja D", fimKey: ref - 1, meses: 6 }
   ];
-  assert.deepEqual(A.contratosParaRenovar(lista, ref, {}, false).map((c) => c.nome), ["Loja A", "Loja B"]);
+  assert.deepEqual(A.contratosParaRenovar(lista, ref, {}, false, 1).map((c) => c.nome), ["Loja A", "Loja B"]);
+  // desde 27/11: aviso com cerca de 60 dias (este mês e os 2 próximos)
+  assert.deepEqual(A.contratosParaRenovar(lista, ref, {}, false).map((c) => c.nome), ["Loja A", "Loja B", "Loja C"]);
   const renov = { [A.chaveRenov(lista[0])]: { s: "eder" }, [A.chaveRenov(lista[1])]: { s: "renovado" } };
-  assert.deepEqual(A.contratosParaRenovar(lista, ref, renov, false).map((c) => c.nome), []);
-  assert.deepEqual(A.contratosParaRenovar(lista, ref, renov, true).map((c) => c.nome), ["Loja A"]);
+  assert.deepEqual(A.contratosParaRenovar(lista, ref, renov, false).map((c) => c.nome), ["Loja C"]);
+  assert.deepEqual(A.contratosParaRenovar(lista, ref, renov, true).map((c) => c.nome), ["Loja A", "Loja C"]);
+  assert.deepEqual(A.contratosParaRenovar(lista, ref, { ...renov, [A.chaveRenov(lista[2])]: { s: "aditivo" } }, true).map((c) => c.nome), ["Loja A"], "aditivo enviado sai da lista");
 });
 
 test("renovação: estende pelo mesmo prazo", () => {

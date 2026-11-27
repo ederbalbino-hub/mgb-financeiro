@@ -134,7 +134,9 @@
     return null;
   }
 
-  // ── Renovação por telefone (revisão de 11/10) ──────────────────────────
+  // ── Renovação (revisão de 11/10; aditivo para assinar desde 27/11) ─────
+  // 27/11 (Diego): renovar gera um aditivo de prorrogação que o cliente assina na Assinafy (fluxos.js).
+  // O prazo só aumenta quando o aditivo volta assinado. O fim conta da data da assinatura do contrato.
   // A Karen vê os contratos que vencem neste mês e no próximo e encaminha ao Eder.
   // O Eder liga, marca "Renovado com o cliente" e o contrato ganha o mesmo prazo de novo
   // (sem Assinafy). Cada contrato some da lista assim que é encaminhado ou resolvido.
@@ -143,10 +145,12 @@
   function ehTelaVertical(origem) { return origem === 'Elevadores' || origem === 'Tela Vertical'; }
   function chaveRenov(c) { return [ehTelaVertical(c.origem) ? 'Elevadores' : c.origem, c.nome, c.fimKey].join('|'); }
 
-  function contratosParaRenovar(lista, ref, renov, modoEder) {
+  // janela: quantos meses à frente avisar. Desde 27/11 (Diego) são 2 (cerca de 60 dias); antes era 1.
+  function contratosParaRenovar(lista, ref, renov, modoEder, janela) {
     renov = renov || {};
+    var j = janela == null ? 2 : janela;
     return (lista || []).filter(function (c) {
-      if (c.fimKey == null || c.fimKey < ref || c.fimKey > ref + 1) return false;
+      if (c.fimKey == null || c.fimKey < ref || c.fimKey > ref + j) return false;
       var r = renov[chaveRenov(c)];
       if (!r) return true;
       return modoEder && r.s === 'eder';
@@ -178,7 +182,7 @@
     podeAba: podeAba,
     primeiraAba: primeiraAba,
     alvoDoOnclick: alvoDoOnclick,
-    chaveRenov: chaveRenov,
+    chaveRenov: chaveRenov, ehTelaVertical: ehTelaVertical,
     contratosParaRenovar: contratosParaRenovar,
     estenderContrato: estenderContrato
   };
@@ -421,7 +425,11 @@
     if (temExtra(perfilAtual, 'renovacao') && typeof global.contratosLista === 'function') {
       try {
         var d = new Date(), ref = d.getFullYear() * 12 + d.getMonth();
-        lista = contratosParaRenovar(global.contratosLista(), ref, renovacoes(), eder);
+        var base = global.contratosLista().map(function (c) {                     // fim pela assinatura (27/11)
+          var i = contatoDe(c), f = global.MGBClientes && global.MGBClientes.fimContrato && i.assinadoEm ? global.MGBClientes.fimContrato({ meses: c.meses, inicio: c.inicio, assinadoEm: i.assinadoEm }) : null;
+          return f ? Object.assign({}, c, { fimKey: f.ref, fimData: f.data }) : c;
+        });
+        lista = contratosParaRenovar(base, ref, renovacoes(), eder);
       } catch (e) { lista = []; }
     }
     if (!lista.length || !hubs) { if (el) el.remove(); return; }
@@ -432,19 +440,19 @@
     }
     var renov = renovacoes();
     el.innerHTML = '<b>' + (eder ? 'Renovar por telefone · ' : 'Contratos vencendo · ') + lista.length + '</b>' +
-      '<span>' + (eder ? 'Ligue para o cliente e marque o resultado. Renovado não precisa de Assinafy.' : 'Clique no cliente para encaminhar ao Eder. Ele renova por telefone.') + '</span>' +
+      '<span>' + (eder ? 'Ligue para o cliente. Se renovar, o hub gera o aditivo de prorrogação e manda para ele assinar.' : 'Clique no cliente para encaminhar ao Eder. Ele liga e, se renovar, manda o aditivo para assinatura.') + '</span>' +
       lista.map(function (c, i) {
         var info = contatoDe(c);
         var tel = String(info.tel || '').replace(/\D/g, '');
         var r = renov[chaveRenov(c)];
         var linha = '<div class="rv-lin" data-i="' + i + '"><button type="button" class="rv-nome" data-abre="' + i + '"><b>' + esc(c.nome) + '</b> · ' + esc(c.origem) +
-          ' · vence ' + nomeMes(c.fimKey) + (r && r.s === 'eder' ? ' · <em>a Karen encaminhou</em>' : '') + '</button>' +
+          ' · vence ' + (c.fimData ? c.fimData.split('-').reverse().join('/') : nomeMes(c.fimKey)) + (r && r.s === 'eder' ? ' · <em>a Karen encaminhou</em>' : '') + '</button>' +
           '<div class="rv-caixa" id="rv-caixa-' + i + '" hidden>' +
           (info.responsavel ? '<div>Responsável: ' + esc(info.responsavel) + '</div>' : '') +
           (tel ? '<div>Telefone: <a href="tel:+55' + tel + '">' + esc(info.tel) + '</a> · <a href="https://wa.me/55' + tel + '" target="_blank" rel="noopener">WhatsApp</a></div>' : '') +
           '<div>Contrato de ' + (c.meses || 12) + ' meses' + (c.valor ? ', ' + esc('R$ ' + Number(c.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })) + '/mês' : '') + '.</div>' +
           (eder
-            ? '<div class="rv-bts"><button type="button" class="rv-ok" data-renova="' + i + '">✓ Renovado com o cliente (+' + (c.meses || 12) + ' meses)</button><button type="button" class="rv-nao" data-nao="' + i + '">Não renovou</button></div>'
+            ? '<div class="rv-bts"><button type="button" class="rv-ok" data-renova="' + i + '">' + (global.MGBFluxos && global.MGBFluxos.abrirAditivo ? 'Renovou: gerar aditivo para assinar' : '✓ Renovado com o cliente (+' + (c.meses || 12) + ' meses)') + '</button><button type="button" class="rv-nao" data-nao="' + i + '">Não renovou</button></div>'
             : '<div class="rv-bts"><button type="button" class="rv-ok" data-enc="' + i + '">Encaminhar ao Eder para renovar por telefone</button></div>') +
           '</div></div>';
         return linha;
@@ -464,6 +472,11 @@
     el.querySelectorAll('[data-renova]').forEach(function (b) {
       b.addEventListener('click', function () {
         var i = +b.getAttribute('data-renova'), c = lista[i];
+        if (global.MGBFluxos && global.MGBFluxos.abrirAditivo) {             // aditivo: o prazo aumenta quando o cliente assinar
+          global.MGBFluxos.abrirAditivo(c, { contato: contatoDe(c), contrato: objetoDoContrato(c),
+            aoEnviar: function () { marcarR(i, 'aditivo', { meses: c.meses || 12 }); } });
+          return;
+        }
         var obj = objetoDoContrato(c);
         var novo = estenderContrato(obj, c.meses);
         if (!novo) { b.textContent = 'Não achei o contrato no hub'; return; }
@@ -813,6 +826,6 @@
     }, iniciarAntigo);
   }
 
-  global.MGBAcesso = Object.assign(api, { sair: sair, usuario: function () { return sessao && sessao.usuario ? sessao.usuario : null; }, perfil: function () { return perfilAtual; } });
+  global.MGBAcesso = Object.assign(api, { estenderCustos: estenderCustos, objetoDoContrato: objetoDoContrato, contatoDe: contatoDe, sair: sair, usuario: function () { return sessao && sessao.usuario ? sessao.usuario : null; }, perfil: function () { return perfilAtual; } });
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })(typeof window !== 'undefined' ? window : globalThis);
