@@ -141,13 +141,13 @@
         '.shell.sb-collapsed #sidebar.menu2 .sb-scroll{padding:12px 6px!important}' +
         '.shell.sb-collapsed #sidebar.menu2 .sb-footer{display:none}' +
         '.shell.sb-collapsed #sidebar.menu2 .menu2-varios>.sb-nav-item,.shell.sb-collapsed #sidebar.menu2 .menu2-varios>#sb-modules{display:none!important}' +
-        '.shell.sb-collapsed #sidebar.menu2 .menu2-cab,.shell.sb-collapsed #sidebar.menu2 .menu2-unico>.sb-nav-item:not([data-mgb-bloq]),.shell.sb-collapsed #sidebar.menu2 .sb-grupo-inicio>.sb-nav-item{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:58px;padding:7px 2px!important;margin:0 0 2px;font-size:13px!important;font-weight:600;line-height:1.15;text-align:center;width:100%}' +
+        '.shell.sb-collapsed #sidebar.menu2 .menu2-varios>.menu2-cab,.shell.sb-collapsed #sidebar.menu2 .menu2-unico>.sb-nav-item:not([data-mgb-bloq]),.shell.sb-collapsed #sidebar.menu2 .sb-grupo-inicio>.sb-nav-item{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:58px;padding:7px 2px!important;margin:0 0 2px;font-size:13px!important;font-weight:600;line-height:1.15;text-align:center;width:100%}' +
         '.shell.sb-collapsed #sidebar.menu2 .menu2-cab>span{flex:none;display:block;font-size:13px}.shell.sb-collapsed #sidebar.menu2 .menu2-cab>span .menu2-longo{display:none}.shell.sb-collapsed #sidebar.menu2 .menu2-seta{display:none!important}' +
         '.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.sb-nav-item.on)>.menu2-cab,.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.mod-item.on)>.menu2-cab{background:#ECE8FA;color:#2A1760}' +
         '.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.sb-nav-item.on)>.menu2-cab svg{color:#4E38B2}' +
         '.shell.sb-collapsed #sidebar.menu2>#mgb-pill>button>span:not(.av){display:none}.shell.sb-collapsed #sidebar.menu2>#mgb-pill{padding:8px 4px}' +
         // 27/11 (usabilidade): com o menu recolhido o painel ficava cortado dentro dos 60 px e "Visão geral", "Ver como" e "Sair" não recebiam clique
-        '.shell.sb-collapsed #sidebar.menu2>#mgb-pill #mgb-painel{position:fixed;left:68px;right:auto;bottom:16px;width:260px;z-index:1000}' +
+        '.shell.sb-collapsed #sidebar.menu2>#mgb-pill #mgb-painel{position:fixed;left:100px;right:auto;bottom:16px;width:260px;z-index:1000}' +
       '}';
     doc.head.appendChild(s);
   }
