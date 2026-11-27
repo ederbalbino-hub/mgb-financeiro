@@ -62,8 +62,13 @@
         cab = doc.createElement('button');
         cab.type = 'button';
         cab.className = 'menu2-cab';
-        cab.innerHTML = svg(nome) + '<span>' + nome + '</span><svg class="menu2-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+        var CURTO = { 'Clientes e contratos': 'Clientes', 'Rádio Moinho': 'Rádio' };
+        cab.innerHTML = svg(nome) + '<span>' + (CURTO[nome] ? CURTO[nome] + '<span class="menu2-longo">' + nome.slice(CURTO[nome].length) + '</span>' : nome) + '</span><svg class="menu2-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
         cab.addEventListener('click', function () {
+          var sh = doc.querySelector('.shell');
+          if (sh && sh.classList.contains('sb-collapsed') && typeof global.applySidebarCollapse === 'function' && !(global.matchMedia && global.matchMedia('(max-width: 768px)').matches)) {
+            global.applySidebarCollapse(false); var a0 = ler(); a0[nome] = true; gravar(a0); g.classList.add('menu2-aberto'); cab.setAttribute('aria-expanded', 'true'); return;
+          }
           var a = ler(), aberto = !g.classList.contains('menu2-aberto');
           a[nome] = aberto; gravar(a);
           g.classList.toggle('menu2-aberto', aberto);
@@ -122,7 +127,7 @@
       '#sidebar.menu2 .menu2-unico>.menu2-cab{display:none!important}' +
       // resumo do mês sempre à vista no pé do menu (pedido do Eder, 23/11)
       '#sidebar.menu2 .sb-footer{border-top:1px solid #E4DFF0;margin:0 12px;padding:12px 4px 8px;font-family:"DM Sans",system-ui,sans-serif}' +
-      '#sidebar.menu2 .sb-footer #sb-mes-lbl{font-size:12px!important;font-weight:700;color:#5D5868!important;letter-spacing:.06em!important;margin-bottom:8px!important}' +
+      '#sidebar.menu2 .sb-footer #sb-mes-lbl{font-size:13px!important;font-weight:700;color:#5D5868!important;letter-spacing:.06em!important;margin-bottom:8px!important}' +
       '#sidebar.menu2 .sb-footer span[style*="font-size:9px"]{font-size:13px!important}' +
       '#sidebar.menu2 .sb-footer #sb-rec-mes,#sidebar.menu2 .sb-footer #sb-desp-mes,#sidebar.menu2 .sb-footer #sb-lucro-mes{font-size:14px!important}' +
       '#sidebar.menu2 .sb-footer>div[style*="justify-content"]{margin-bottom:6px!important}' +
@@ -131,10 +136,15 @@
       '#sidebar.menu2>#mgb-pill>button:hover{background:#F6F4FA}#sidebar.menu2>#mgb-pill .av{width:36px;height:36px;background:#2A1760;font-size:14px;flex:none}' +
       '#sidebar.menu2>#mgb-pill #mgb-painel{position:absolute;left:12px;right:12px;bottom:calc(100% + 6px);width:auto}' +
       '@media(min-width:769px){' +
-        '.shell.sb-collapsed #sidebar.menu2 .menu2-cab,.shell.sb-collapsed #sidebar.menu2 .sb-footer{display:none}' +
-        '.shell.sb-collapsed #sidebar.menu2 .menu2-varios>.sb-nav-item:not([data-mgb-bloq]){display:flex;padding:0;justify-content:center}' +
-        '.shell.sb-collapsed #sidebar.menu2 .menu2-varios>.sb-nav-item svg{display:block}' +
-        '.shell.sb-collapsed #sidebar.menu2 .sb-nav-item{justify-content:center;padding:0;font-size:0}' +
+        // Menu recolhido (pedido da Usabilidade, 27/11): as mesmas áreas do menu aberto, com ícone e nome
+        '.shell.sb-collapsed{grid-template-columns:92px 1fr!important}.shell.sb-collapsed .sb-toggle-btn{left:78px!important}' +
+        '.shell.sb-collapsed #sidebar.menu2 .sb-scroll{padding:12px 6px!important}' +
+        '.shell.sb-collapsed #sidebar.menu2 .sb-footer{display:none}' +
+        '.shell.sb-collapsed #sidebar.menu2 .menu2-varios>.sb-nav-item,.shell.sb-collapsed #sidebar.menu2 .menu2-varios>#sb-modules{display:none!important}' +
+        '.shell.sb-collapsed #sidebar.menu2 .menu2-cab,.shell.sb-collapsed #sidebar.menu2 .menu2-unico>.sb-nav-item:not([data-mgb-bloq]),.shell.sb-collapsed #sidebar.menu2 .sb-grupo-inicio>.sb-nav-item{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:58px;padding:7px 2px!important;margin:0 0 2px;font-size:13px!important;font-weight:600;line-height:1.15;text-align:center;width:100%}' +
+        '.shell.sb-collapsed #sidebar.menu2 .menu2-cab>span{flex:none;display:block;font-size:13px}.shell.sb-collapsed #sidebar.menu2 .menu2-cab>span .menu2-longo{display:none}.shell.sb-collapsed #sidebar.menu2 .menu2-seta{display:none!important}' +
+        '.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.sb-nav-item.on)>.menu2-cab,.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.mod-item.on)>.menu2-cab{background:#ECE8FA;color:#2A1760}' +
+        '.shell.sb-collapsed #sidebar.menu2 .menu2-varios:has(.sb-nav-item.on)>.menu2-cab svg{color:#4E38B2}' +
         '.shell.sb-collapsed #sidebar.menu2>#mgb-pill>button>span:not(.av){display:none}.shell.sb-collapsed #sidebar.menu2>#mgb-pill{padding:8px 4px}' +
         // 27/11 (usabilidade): com o menu recolhido o painel ficava cortado dentro dos 60 px e "Visão geral", "Ver como" e "Sair" não recebiam clique
         '.shell.sb-collapsed #sidebar.menu2>#mgb-pill #mgb-painel{position:fixed;left:68px;right:auto;bottom:16px;width:260px;z-index:1000}' +

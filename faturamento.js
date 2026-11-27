@@ -570,7 +570,7 @@
       '.fat2-etapas b.fat2-verde{color:#15803D}.fat2-etapas span.fat2-laranja{color:#8A4B08;font-weight:600}' +
       '.fat2-receb{display:flex;flex-direction:column;gap:12px}.fat2-receb .fat2-progresso{height:10px}.fat2-receb-t{display:flex;justify-content:space-between;align-items:baseline}.fat2-receb-t b{font-size:17px}' +
       '.fat2-receb-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}.fat2-receb-n div{background:#F6F4FA;border-radius:10px;padding:10px 4px;display:flex;flex-direction:column}' +
-      '.fat2-receb-n b{font-size:20px}.fat2-receb-n span{font-size:12px;color:#5D5868}.fat2-receb-n .fat2-ruim{background:#FDECEA}.fat2-receb-n .fat2-ruim b{color:#B42318}.fat2-receb-n .fat2-ruim span{color:#7A1A12}' +
+      '.fat2-receb-n b{font-size:20px}.fat2-receb-n span{font-size:13px;color:#5D5868}.fat2-receb-n .fat2-ruim{background:#FDECEA}.fat2-receb-n .fat2-ruim b{color:#B42318}.fat2-receb-n .fat2-ruim span{color:#7A1A12}' +
       '@media (max-width:700px){.fat2-so-cel{display:flex!important}.fat2-so-pc,#ferr-fat .fat2-etapas,#ferr-fat .fat2-vistas{display:none!important}' +
         '.fat2-acoes [data-fat2=carregar],#fat2-amb{display:none}.fat2-mes{width:100%;justify-content:space-between}.fat2-mes>div{text-align:center}' +
         '.fat2-bloco{padding:16px}.fat2-bloco h3{font-size:18px}.fat2-trava{gap:10px}.fat2-trava-txt{flex-basis:calc(100% - 30px)}.fat2-trava-txt b{font-size:15px}.fat2-trava-acoes{width:100%}.fat2-trava-acoes>*{flex:1}' +
@@ -597,13 +597,13 @@
       '.fat2-aba.fat2-on{background:#4E38B2;border-color:#4E38B2;color:#fff}.fat2-busca{margin-left:auto}.fat2-busca input{min-height:40px;width:220px;border:1px solid #CFC7E6;border-radius:999px;padding:0 16px;font:14px "DM Sans",system-ui,sans-serif}' +
       '.fat2-oculto{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}' +
       '.fat2-tabela{background:#fff;border:1px solid #E4DFF0;border-radius:16px;overflow-x:auto}.fat2-tabela table{width:100%;min-width:880px;border-collapse:collapse;font-size:14px}' +
-      '.fat2-tabela th{text-align:left;padding:12px 8px;color:#5D5868;font-size:12px;text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;background:#fff;z-index:1}' +
+      '.fat2-tabela th{text-align:left;padding:12px 8px;color:#5D5868;font-size:13px;text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;background:#fff;z-index:1}' +
       '.fat2-tabela td{padding:11px 8px;border-top:1px solid #EFEBF7;vertical-align:middle}.fat2-tabela td:first-child,.fat2-tabela th:first-child{padding-left:16px;width:36px}' +
       '.fat2-tabela tr[data-fat2-linha]{cursor:pointer}.fat2-tabela tr[data-fat2-linha]:hover td{background:#FBFAFE}.fat2-tabela tr.fat2-sel td{background:#F7F5FD}.fat2-tabela tr.fat2-aberta td{background:#ECE8FA}' +
       '.fat2-tabela input[type=checkbox]{width:18px;height:18px;accent-color:#4E38B2}.fat2-num{text-align:right}.fat2-mono{font-family:"DM Mono",ui-monospace,monospace}' +
       '.fat2-modo{min-height:36px;border:1px solid #CFC7E6;border-radius:8px;padding:0 8px;font:14px "DM Sans",system-ui,sans-serif;background:#fff;color:#241A38}' +
       '.fat2-valor{width:100px;height:36px;border:1px solid #CFC7E6;border-radius:8px;padding:0 8px;text-align:right;font:14px "DM Mono",ui-monospace,monospace}.fat2-falta{border-color:#E0A458;background:#FDF2E3}' +
-      '.fat2-sit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.fat2-chip{display:inline-block;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}' +
+      '.fat2-sit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.fat2-chip{display:inline-block;font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}' +
       '.fat2-acao{color:#4E38B2;background:#ECE8FA}.fat2-ok{color:#15803D;background:#E8F6EE}.fat2-atencao{color:#8A4B08;background:#FDF2E3}.fat2-erro{color:#B42318;background:#FDECEA}' +
       '.fat2-mais{width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:#5D5868;font-size:22px;cursor:pointer}.fat2-mais:hover{background:#ECE8FA}' +
       '.fat2-vazio{padding:18px;color:#5D5868;font-size:15px}' +
