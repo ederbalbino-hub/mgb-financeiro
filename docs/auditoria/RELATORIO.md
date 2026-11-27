@@ -94,3 +94,17 @@ Regra de cada passo: mover o bloco **inteiro** para `arquivo.js` com `<script sr
 1. **Esta semana (antes do faturamento de 05/12):** itens 1–3, 5 e 6 da seção 1 (números) + mesclar pagamentos por item (nº 4), cada um com teste.
 2. **Em seguida:** ligar a trilha de alterações (precisa do seu OK para criar a tabela no banco); limpar os ~80 KB; não chamar o servidor antes do login; ajustes de celular.
 3. **Planejar:** teste de fumaça → quebra do index.html em módulos → bibliotecas sob demanda → acessibilidade.
+
+---
+
+## Adendo 27/11 — divergências vistas pela conversa de Usabilidade (dados simulados)
+
+A `main` mudou bastante depois desta auditoria (Tela Vertical 50/50, despesa do sócio como despesa + aporte, cobrança mensal em cartões). **Os achados da seção 1 sobre Tela Vertical precisam ser reconferidos na versão nova.**
+
+| # | Divergência | Situação |
+|---|---|---|
+| A | Contratos R$ 27.150 / 17 × Clientes R$ 19.150 / 12 | **Confirmado no código:** `clientes.js:16` ignora "Outros", "Expansão", "Cliente Piloto" e "Franqueado Piloto"; a tela Contratos conta. Decidir uma regra só (sugestão: os dois ignoram, e mostrar "+ 5 itens de previsão" à parte) |
+| B | Contas do mês "21 contas · R$ 29.520" × "Lançamento por lançamento · 62 despesas · R$ 31.493" | A aba "Lançamento por lançamento" mostra a **tabela antiga**, montada por outra função; as contas usam `agruparContas`. A investigar qual item (R$ 1.973) uma tem e a outra não |
+| C | Tela Vertical: banner 15 condomínios/35 telas × licença 16/36; Pizzaria "no ar" e "encerrada"; resumo dos sócios muda após abrir o formulário | A investigar. O "muda ao abrir" indica que uma tela **altera os dados ao desenhar** — prioridade, porque pode ser gravado |
+| D | Cobrança mensal: cartões mudam ao clicar (Tela Vertical 1,4 mil → 2,1 mil; 27.400 → 26.750) | A investigar. Mesmo sintoma do C |
+| E | Baixa manual some do registro do Faturamento | **Confirmado no código:** `fFatGuardar` (`index.html:7857` na main) recria `fatEmissoes[chave]` sem `pgManual`. Ao **sincronizar com o Asaas** (linha 8009) depois de uma baixa em dinheiro, a cobrança volta a aparecer como pendente no aviso da Home. O pagamento no financeiro continua marcado (fica em `recPagamentos`); só o aviso erra. Correção: preservar `pgManual` (e `pg` quando for manual) ao regravar |
