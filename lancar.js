@@ -255,6 +255,11 @@
     var st = d.createElement('style'); st.id = 'mgb-lancar-css';
     st.textContent =
       '#mgb-novo [hidden]{display:none!important}' +
+      // 27/11 (design/usabilidade): no celular o resumo + "Lançar" ficavam lá no fim da página; agora numa barra fixa no rodapé
+      '@media (max-width:680px){#mgb-novo section.lz-pe{position:fixed;left:0;right:0;bottom:0;z-index:9700;margin:0;border-radius:16px 16px 0 0!important;box-shadow:0 -6px 24px rgba(42,23,96,.18);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))!important;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;max-height:60vh;overflow:auto;box-sizing:border-box}' +
+      '#mgb-novo section.lz-pe .sec{display:none}#mgb-novo section.lz-pe .resumo{font-size:13.5px;line-height:1.35;max-height:4.1em;overflow:hidden}#mgb-novo section.lz-pe .resumo .hint{font-size:13px}' +
+      '#mgb-novo section.lz-pe .erros{grid-column:1/-1;order:-1}#mgb-novo section.lz-pe .erros:empty{display:none}#mgb-novo section.lz-pe>.b.p{min-height:48px;padding:0 18px;white-space:nowrap}' +
+      '#mgb-novo section.lz-pe>div[id$="-feito"]{grid-column:1/-1}#mgb-novo section.lz-pe>div[id$="-feito"]:empty{display:none}#mgb-novo .duas:has(.lz-pe){padding-bottom:120px}}' +
       '#mgb-novo .chips{display:flex;flex-wrap:wrap;gap:8px}' +
       '#mgb-novo .chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #d9d1ea;background:#fff;font:600 14px "DM Sans",system-ui,sans-serif;color:#241a38;cursor:pointer}' +
       '#mgb-novo .chip[aria-pressed="true"]{background:#4E38B2;border-color:#4E38B2;color:#fff}' +
@@ -385,7 +390,7 @@
       '<div class="chips" role="group" aria-label="Quem pagou" id="lz-quem"><button type="button" class="chip" data-quem="mgb" aria-pressed="true">Conta da MGB</button><button type="button" class="chip" data-quem="eder" aria-pressed="false" id="lz-quem-eder">Eder pagou (reembolso)</button><button type="button" class="chip" data-quem="jadson" aria-pressed="false" hidden>Jadson pagou (do bolso)</button></div>' +
       '<div class="grupo">Pago com</div><div class="chips" role="group" aria-label="Pago com"><button type="button" class="chip" data-pagto="credito" aria-pressed="false">💳 Crédito</button><button type="button" class="chip" data-pagto="debito" aria-pressed="false">💳 Débito</button><button type="button" class="chip" data-pagto="pix" aria-pressed="false">⚡ PIX</button><button type="button" class="chip" data-pagto="permuta" aria-pressed="false">🔄 Permuta</button></div>' +
       '<p class="sub" id="lz-quem-dica">Eder pagou: a MGB transfere para o Eder e a transferência fica marcada como reembolso, não como pró-labore.</p></section>' +
-      '</main><aside><section class="card"><div class="sec">Vai entrar assim</div><div class="resumo" id="lz-resumo">Escolha para quem é e o que foi.</div>' +
+      '</main><aside><section class="card lz-pe"><div class="sec">Vai entrar assim</div><div class="resumo" id="lz-resumo">Escolha para quem é e o que foi.</div>' +
       '<div class="erros" id="lz-erros" role="alert"></div>' +
       '<button type="button" class="b p" id="lz-ok">Lançar despesa</button><div id="lz-feito" aria-live="polite"></div></section>' +
       '<section class="card"><div class="sec">Últimos lançamentos</div><div id="lz-recentes"></div></section></aside></div>');
@@ -628,7 +633,7 @@
       '</div></section>' +
       '<section class="card"><div class="sec">4 · Recebimento</div><div class="chips"><button type="button" class="chip" data-rcb="0" aria-pressed="true">A receber</button><button type="button" class="chip" data-rcb="1" aria-pressed="false">✔ Já recebido</button></div>' +
       '<p class="sub">Entra na receita do mês e no imposto (Simples). Lembre de emitir a nota.</p></section>' +
-      '</main><aside><section class="card"><div class="sec">Vai entrar assim</div><div class="resumo" id="lr-resumo"></div><div class="erros" id="lr-erros" role="alert"></div>' +
+      '</main><aside><section class="card lz-pe"><div class="sec">Vai entrar assim</div><div class="resumo" id="lr-resumo"></div><div class="erros" id="lr-erros" role="alert"></div>' +
       '<button type="button" class="b p" id="lr-ok">Lançar receita</button><div id="lr-feito" aria-live="polite"></div></section>' +
       '<section class="card"><div class="sec">Últimas receitas avulsas</div><div id="lr-recentes"></div></section></aside></div>');
     function marcar(attr, val) { el.querySelectorAll('[' + attr + ']').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute(attr) === String(val))); }); }
