@@ -9434,11 +9434,12 @@ let despCompId = 1;
 // ── INVESTIMENTO · INSTALAÇÃO (sócios Jadson/Eder — Elevadores/Tela Vertical) ────────────
 // elevInvestimentos = [{id, item, descricao, valor, pagoPor:'jadson'|'eder', data, criadoEm, tipo:'investimento'|'despesa'}]
 // 23/11/2026 (Eder): todo lançamento pago do bolso vai para a conta do sócio (CC). tipo 'despesa' (ex.: gasolina)
-// também entra como despesa do mês da Tela Vertical; 'investimento' (instalar telas) não. Sem tipo = investimento.
+// entrava também como despesa do mês; desde 27/11 (Diego) é só investimento do sócio (ver ELEV_SOCIO_NO_RESULTADO).
 // Substitui a planilha Excel de controle (CC Jadson × CC Eder) — alimentado na mão aqui
 // ou automaticamente pela skill /novo-condominio (ver ELEV_INVEST_NOVOS mais abaixo).
 let elevInvestimentos = [];
 let elevInvestId = 1;
+const ELEV_SOCIO_NO_RESULTADO = false; // 27/11 (Diego): despesa paga do bolso do sócio é investimento dele, não despesa do mês
 let editElevInvestId = null;
 // anunciantes = [{id, nome, valor, inicio, meses, telas:[]}]
 let anunciantes = [];
@@ -10636,8 +10637,9 @@ function coletaDespesasMes(selAno,selMes){
 
   // Despesas compartilhadas (Elevadores): rateio entre condomínios
   const elevMod=MODULES.find(m=>m.id==='elev');
-  // Despesa paga do bolso por um sócio (23/11): entra no mês da data, além de ir para a CC dele
-  if(elevMod){
+  // Despesa paga do bolso por um sócio: 23/11 entrava no mês E na CC; 27/11 (Diego) entra só como investimento
+  // do sócio na CC, sem duplicidade no resultado. Para voltar à regra antiga: ELEV_SOCIO_NO_RESULTADO=true.
+  if(elevMod && ELEV_SOCIO_NO_RESULTADO){
     (typeof elevInvestimentos!=='undefined'?elevInvestimentos:[]).forEach(x=>{
       if(x.tipo!=='despesa'||!x.valor||!/^\d{4}-\d{2}/.test(x.data||'')) return;
       if(+x.data.slice(0,4)!==selAno||+x.data.slice(5,7)-1!==selMes) return;
@@ -12283,7 +12285,7 @@ function elevInvestTotais(){
   const jadson=elevInvestimentos.filter(x=>x.pagoPor==='jadson').reduce((a,x)=>a+(x.valor||0),0);
   const eder=elevInvestimentos.filter(x=>x.pagoPor==='eder').reduce((a,x)=>a+(x.valor||0),0);
   const despesas=elevInvestimentos.filter(x=>x.tipo==='despesa').reduce((a,x)=>a+(x.valor||0),0);
-  return {jadson,eder,total:jadson+eder-despesas,despesas,dif:jadson-eder};
+  return {jadson,eder,total:ELEV_SOCIO_NO_RESULTADO?jadson+eder-despesas:jadson+eder,despesas,dif:jadson-eder};
 }
 // Excedente: quando a despesa do mês no Elevadores passa da receita, a diferença é custo do Eder (acumula mês a mês).
 function elevMesResumo(ano,mes){
@@ -12317,6 +12319,8 @@ function elevRelatorioMensal(anoArg,mesArg){
     '<h2>Conta de cada sócio (investimento + despesas pagas do bolso)</h2><div class="k"><div>Eder<b>'+f(t.eder)+'</b></div><div>Jadson<b>'+f(t.jadson)+'</b></div><div>Total investido<b>'+f(t.total)+'</b></div><div>Despesas pagas pelos sócios<b>'+f(t.despesas)+'</b></div></div>'+
     '<div class="sub">Meta: '+ELEV_TELAS_QTD+' telas × '+f(ELEV_INVEST_POR_TELA)+' = '+f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)+'</div>'+
     '<h2>Resultado de '+NOMES[mes]+'</h2><div class="k"><div>Receita<b>'+f(r.rec)+'</b></div><div>Despesas<b>'+f(r.desp)+'</b></div><div>Resultado<b class="'+(r.resultado>=0?'pos':'neg')+'">'+(r.resultado>=0?'':'−')+f(Math.abs(r.resultado))+'</b></div></div>'+
+    (function(){ const rp=(window.MGBFluxos&&MGBFluxos.repasseSocios)?MGBFluxos.repasseSocios(r.resultado):{sobra:0,eder:0,jadson:0}; // 27/11 (Diego): sobra dividida 50/50
+      return '<h2>Divisão da sobra de '+NOMES[mes]+' (50% para cada sócio)</h2>'+(rp.sobra?'<div class="k"><div>Sobra do mês<b>'+f(rp.sobra)+'</b></div><div class="dest">Eder (50%)<b>'+f(rp.eder)+'</b></div><div class="dest">Jadson (50%)<b>'+f(rp.jadson)+'</b></div></div>':'<div class="sub">Sem sobra no mês: não há repasse. A diferença entra no excedente do Eder.</div>'); })()+
     '<h2>Despesas do mês</h2><table><tr><th>Descrição</th><th>Item</th><th>Tipo</th><th class="n">Valor</th></tr>'+linhasDesp+'</table>'+
     '<h2>Excedente na conta do Eder</h2><div class="k"><div class="dest">Excedente de '+NOMES[mes]+' (despesa acima da receita)<b>'+f(r.excedente)+'</b></div><div class="dest">Acumulado desde '+NOMES[ELEV_EXCEDENTE_DESDE.mes]+'/'+ELEV_EXCEDENTE_DESDE.ano+'<b>'+f(acumTot)+'</b></div></div>'+
     '<div class="sub">Quando a despesa do mês passa da receita, a diferença fica como custo do Eder e vai acumulando mês a mês.</div>'+
@@ -16520,10 +16524,10 @@ function renderRadioOps(data){
 }
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
-<script src="lancar.js"></script>
+<script src="lancar.js?v=20261127c"></script>
 <script src="novo.js?v=20261127b"></script>
 <script src="acesso.js?v=20261123"></script>
-<script src="inicio.js?v=20261127b"></script>
+<script src="inicio.js?v=20261127c"></script>
 <script src="faturamento.js?v=20261119b"></script>
 <script src="financeiro.js?v=20261127c"></script>
 <script src="funil.js?v=20261127b"></script>
@@ -16531,7 +16535,7 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 <script src="menu.js?v=20261124"></script>
 <script src="telas2.js?v=20261124"></script>
 <script src="historico.js?v=20261127"></script>
-<script src="fluxos.js?v=20261127b"></script>
+<script src="fluxos.js?v=20261127c"></script>
 <script src="assistente.js?v=20261029b"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261123">
 </body>

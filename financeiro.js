@@ -151,7 +151,28 @@
     return top.map(function (x) { return Object.assign({}, x, { pct: tot ? x.valor / tot * 100 : 0 }); });
   }
 
-  var regras = { agruparContas: agruparContas, chaveConta: chaveConta, contrato: contrato, resumoContratos: resumoContratos, mudancas: mudancas, rotMes: rotMes, escala: escala, fatias: fatias, renovacoes: renovacoes, saudeModulo: saudeModulo };
+  // Vencimento de uma conta a pagar no mês (ano, mes0) visto de "hoje" (27/11): vencida, vence hoje, vence em
+  // até 7 dias ou nada. Mês já passado e não paga = vencida. Dia 31 em mês curto vira o último dia.
+  function situacaoVenc(dia, ano, mes0, hoje) {
+    var d = parseInt(dia, 10); if (!(d >= 1 && d <= 31)) return null;
+    var h = hoje || new Date(), ult = new Date(ano, mes0 + 1, 0).getDate();
+    var venc = new Date(ano, mes0, Math.min(d, ult)), h0 = new Date(h.getFullYear(), h.getMonth(), h.getDate());
+    var dias = Math.round((venc - h0) / 86400000);
+    if (dias < 0) return { tom: 'erro', txt: 'vencida', dias: dias };
+    if (dias === 0) return { tom: 'erro', txt: 'vence hoje', dias: 0 };
+    if (dias <= 7) return { tom: 'atencao', txt: dias === 1 ? 'vence amanhã' : 'vence em ' + dias + ' dias', dias: dias };
+    return null;
+  }
+  // Para o Início: contas não pagas do mês atual que venceram ou vencem em até 7 dias
+  function contasAvisar(hoje) {
+    var h = hoje || new Date(), ano = h.getFullYear(), mes = h.getMonth();
+    var dKey = tenta('despPagKey', ano, mes) || (ano + '-' + mes);
+    var L = agruparContas(tenta('coletaDespesasMes', ano, mes) || [], function (d) { return estaPago(d, dKey); }, vencimentos());
+    return L.filter(function (g) { return !g.pago; }).map(function (g) { return { titulo: g.titulo, total: g.total, venc: situacaoVenc(g.dia, ano, mes, h) }; })
+      .filter(function (x) { return x.venc; }).sort(function (a, b) { return a.venc.dias - b.venc.dias; });
+  }
+
+  var regras = { situacaoVenc: situacaoVenc, agruparContas: agruparContas, chaveConta: chaveConta, contrato: contrato, resumoContratos: resumoContratos, mudancas: mudancas, rotMes: rotMes, escala: escala, fatias: fatias, renovacoes: renovacoes, saudeModulo: saudeModulo };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (!doc) return;
 
@@ -656,6 +677,8 @@
       var dia = editandoDia === g.chave
         ? '<label class="fin2-oculto" for="fin2-dia">Dia de vencimento de ' + esc(g.titulo) + '</label><input id="fin2-dia" class="fin2-dia" inputmode="numeric" maxlength="2" value="' + (g.dia || '') + '" data-fin2-dia="' + k + '">'
         : '<button type="button" class="fin2-link" data-fin2="dia:' + k + '" aria-label="Dia de vencimento de ' + esc(g.titulo) + '">' + (g.dia ? 'dia ' + g.dia : 'definir dia') + '</button>';
+      var sv = !g.pago && editandoDia !== g.chave ? situacaoVenc(g.dia, s.ano, s.mes) : null;
+      if (sv) dia += ' ' + chip(sv.txt, sv.tom);
       var det = aberto ? '<div class="fin2-det">' + (g.itens.length > 1 ? g.porModulo.map(function (p) {
           return '<div><span>' + esc(p.rot) + ' · ' + p.n + (p.n === 1 ? ' lançamento' : ' lançamentos') + '</span><span class="fin2-mono">' + brl(p.valor) + '</span></div>'; }).join('') : '') +
         g.itens.map(function (d) { return '<div class="fin2-det-l"><span>' + esc(moduloRot(d.m)) + ' · ' + esc(d.item) + ' · ' + esc((d.r && d.r.d) || '') + ' <i>' + esc(d.tipoLbl || '') + '</i></span><span class="fin2-mono">' + brl(d.vlrMes) + '</span></div>'; }).join('') +
@@ -1027,6 +1050,6 @@
     if (t2) t2.textContent = 'Contas do mês';
   }
 
-  global.MGBFinanceiro = Object.assign({ resumo: desenharResumo, contas: desenharContas, modulo: desenharModulo, receita: desenharReceita, empresa: desenharEmpresa }, regras);
+  global.MGBFinanceiro = Object.assign({ resumo: desenharResumo, contas: desenharContas, modulo: desenharModulo, receita: desenharReceita, empresa: desenharEmpresa, contasAvisar: contasAvisar }, regras);
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);

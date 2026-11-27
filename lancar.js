@@ -64,7 +64,23 @@
     if (d.forma === 'parcelado' && !(parseInt(d.parcelas, 10) >= 2)) e.push('Parcelado precisa de 2 parcelas ou mais.');
     if (d.forma === 'mensal' && !(parseInt(d.meses, 10) >= 1)) e.push('Informe por quantos meses.');
     if (d.destino === MGB_DIA && d.forma === 'parcelado') e.push('Despesa da MGB parcelada: lance cada parcela no mês dela, ou lance num cliente.');
+    if (d.quemPagou === 'jadson' && d.destino !== TV) e.push('O Jadson só paga despesa da Tela Vertical.');
+    if (pagaPeloSocio(d) && d.forma !== 'avista') e.push('Despesa paga do bolso do sócio: lance à vista, com a data em que ele pagou.');
     return e;
+  }
+
+  // Tela Vertical paga do bolso de um sócio (Diego, 27/11): vira lançamento na conta do sócio
+  // (elevInvestimentos), e só lá — sem linha em db.elev, para não contar duas vezes.
+  var TV = 'elev';
+  function pagaPeloSocio(d) { return !!d && d.destino === TV && (d.quemPagou === 'eder' || d.quemPagou === 'jadson'); }
+  function lancamentoSocio(d, id) {
+    var c = categoria(d.categoria) || { rotulo: '' };
+    return {
+      id: id, item: d.item || 'Geral', descricao: String(d.descricao).trim() + (String(d.fornecedor || '').trim() ? ' · ' + String(d.fornecedor).trim() : ''),
+      valor: Math.round(numero(d.valor) * 100) / 100, pagoPor: d.quemPagou, data: d.data, tipo: 'despesa',
+      cat: d.categoria, catTxt: c.livre ? String(d.categoriaTxt || '').trim() : '', origem: 'lancar', lancadoPor: d.lancadoPor || '',
+      criadoEm: d.criadoEm || new Date().toISOString()
+    };
   }
 
   // Linha no formato de db[modulo][unidade] (mesmo formato do formulário dos módulos e do bot do WhatsApp).
@@ -195,7 +211,8 @@
     numero: numero, validarDespesa: validarDespesa, linhaDespesa: linhaDespesa, avulsaEmpresa: avulsaEmpresa,
     avulsasDoMes: avulsasDoMes, validarReceita: validarReceita, receitaAvulsa: receitaAvulsa,
     receitasDoMes: receitasDoMes, itemReceita: itemReceita, sugestoes: sugestoes,
-    unirClientes: unirClientes, buscarClientes: buscarClientes, origemCliente: origemCliente
+    unirClientes: unirClientes, buscarClientes: buscarClientes, origemCliente: origemCliente,
+    pagaPeloSocio: pagaPeloSocio, lancamentoSocio: lancamentoSocio
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined') return;
@@ -357,9 +374,9 @@
       '</div><p class="sub" id="lz-forma-dica">À vista: o valor cai no mês da data.</p></section>' +
       '<section class="card"><div class="sec">4 · Pagamento</div>' +
       '<div class="chips" role="group" aria-label="Situação"><button type="button" class="chip" data-paga="1" aria-pressed="true">✔ Já paga</button><button type="button" class="chip" data-paga="0" aria-pressed="false">A pagar</button></div>' +
-      '<div class="chips" role="group" aria-label="Quem pagou" id="lz-quem"><button type="button" class="chip" data-quem="mgb" aria-pressed="true">Conta da MGB</button><button type="button" class="chip" data-quem="eder" aria-pressed="false">Eder pagou (reembolso)</button></div>' +
+      '<div class="chips" role="group" aria-label="Quem pagou" id="lz-quem"><button type="button" class="chip" data-quem="mgb" aria-pressed="true">Conta da MGB</button><button type="button" class="chip" data-quem="eder" aria-pressed="false" id="lz-quem-eder">Eder pagou (reembolso)</button><button type="button" class="chip" data-quem="jadson" aria-pressed="false" hidden>Jadson pagou (do bolso)</button></div>' +
       '<div class="grupo">Pago com</div><div class="chips" role="group" aria-label="Pago com"><button type="button" class="chip" data-pagto="credito" aria-pressed="false">💳 Crédito</button><button type="button" class="chip" data-pagto="debito" aria-pressed="false">💳 Débito</button><button type="button" class="chip" data-pagto="pix" aria-pressed="false">⚡ PIX</button><button type="button" class="chip" data-pagto="permuta" aria-pressed="false">🔄 Permuta</button></div>' +
-      '<p class="sub">Eder pagou: a MGB transfere para o Eder e a transferência fica marcada como reembolso, não como pró-labore.</p></section>' +
+      '<p class="sub" id="lz-quem-dica">Eder pagou: a MGB transfere para o Eder e a transferência fica marcada como reembolso, não como pró-labore.</p></section>' +
       '</main><aside><section class="card"><div class="sec">Vai entrar assim</div><div class="resumo" id="lz-resumo">Escolha para quem é e o que foi.</div>' +
       '<div class="erros" id="lz-erros" role="alert"></div>' +
       '<button type="button" class="b p" id="lz-ok">Lançar despesa</button><div id="lz-feito" aria-live="polite"></div></section>' +
@@ -381,6 +398,12 @@
       var parc = el.querySelector('#lz-forma option[value="parcelado"]'); parc.disabled = area === MGB_DIA;
       if (area === MGB_DIA && estado.forma === 'parcelado') { el.querySelector('#lz-forma').value = 'avista'; estado.forma = 'avista'; formaMudou(); }
       el.querySelector('#lz-rapidas-w').hidden = area !== MGB_DIA;
+      // Tela Vertical: os sócios pagam do bolso (vai para a conta do sócio); nos outros, Eder = reembolso
+      var tv = area === TV, bj = el.querySelector('[data-quem="jadson"]');
+      bj.hidden = !tv; el.querySelector('#lz-quem-eder').textContent = tv ? 'Eder pagou (do bolso)' : 'Eder pagou (reembolso)';
+      el.querySelector('#lz-quem-dica').textContent = tv ? 'Pago do bolso de um sócio: entra só na conta dele como investimento na Tela Vertical, e não como despesa da MGB.'
+        : 'Eder pagou: a MGB transfere para o Eder e a transferência fica marcada como reembolso, não como pró-labore.';
+      if (!tv && estado.quemPagou === 'jadson') { estado.quemPagou = 'mgb'; marcar('data-quem', 'mgb'); }
       resumo();
     }
     // De onde vem a unidade escolhida: cadastrada no hub (pelo Novo cliente, com dados do CRM) e o CNPJ, quando houver.
@@ -420,7 +443,8 @@
         else txt += '<br>' + brl(v) + ' em ' + fmtMes(m);
       }
       var pagtoRot = { credito: 'crédito', debito: 'débito', pix: 'PIX', permuta: 'permuta' }[d.pagto] || '';
-      txt += '<br><span class="hint">' + (d.jaPaga ? 'Já paga' : 'A pagar') + ' · ' + (d.quemPagou === 'eder' ? 'Eder pagou (reembolso)' : 'conta da MGB') + (pagtoRot ? ' · ' + pagtoRot : '') + '</span>';
+      var quemRot = pagaPeloSocio(d) ? (d.quemPagou === 'jadson' ? 'Jadson' : 'Eder') + ' pagou do bolso · vai para a conta dele' : d.quemPagou === 'eder' ? 'Eder pagou (reembolso)' : 'conta da MGB';
+      txt += '<br><span class="hint">' + (pagaPeloSocio(d) ? 'Já paga' : d.jaPaga ? 'Já paga' : 'A pagar') + ' · ' + quemRot + (pagtoRot ? ' · ' + pagtoRot : '') + '</span>';
       el.querySelector('#lz-resumo').innerHTML = txt;
     }
 
@@ -478,7 +502,7 @@
     if (erros.length) { errEl.innerHTML = erros.map(esc).join('<br>'); return; }
     errEl.textContent = '';
     var ano = +d.data.slice(0, 4), mes0 = +d.data.slice(5, 7) - 1, onde;
-    var obs = d.reembolso || d.quemPagou === 'eder' ? 'Eder pagou · reembolso' : '';
+    var obs = !pagaPeloSocio(d) && (d.reembolso || d.quemPagou === 'eder') ? 'Eder pagou · reembolso' : '';
     try {
       if (d.destino === MGB_DIA && d.forma === 'mensal') {
         empresaDespesas.push({ id: empresaDespId++, nome: d.descricao.trim(), valor: Math.round(numero(d.valor) * 100) / 100, inicio: mesDe(d.data), ativo: true, cat: d.categoria, lancadoPor: d.lancadoPor }); // eslint-disable-line no-undef
@@ -488,6 +512,10 @@
         empresaAvulsas.push(a);                                                              // eslint-disable-line no-undef
         if (d.jaPaga) marcarPaga('_empresa', 'Empresa', '_av_' + a.id, ano, mes0, obs);
         onde = 'MGB · dia a dia, ' + fmtMes(a.mes);
+      } else if (pagaPeloSocio(d)) {
+        var ls = lancamentoSocio(d, elevInvestId++);                                         // eslint-disable-line no-undef
+        elevInvestimentos.push(ls);                                                          // eslint-disable-line no-undef
+        onde = 'Tela Vertical › conta do ' + (d.quemPagou === 'jadson' ? 'Jadson' : 'Eder') + ' (investimento do sócio), ' + fmtMes(mesDe(d.data));
       } else {
         var r = linhaDespesa(d);
         if (!db[d.destino]) db[d.destino] = {};                                             // eslint-disable-line no-undef
@@ -518,6 +546,7 @@
         if (r && r.origem === 'lancar') out.push({ tipo: 'db', mod: m, item: it, lid: r.lid, desc: r.d, valor: r.u, em: r.criadoEm, onde: it }); }); }); });
     } catch (e) {}
     try { empresaAvulsas.forEach(function (a) { out.push({ tipo: 'emp', id: a.id, desc: a.desc, valor: a.valor, em: a.criadoEm, onde: 'MGB · dia a dia' }); }); } catch (e) {} // eslint-disable-line no-undef
+    try { elevInvestimentos.forEach(function (x) { if (x && x.origem === 'lancar') out.push({ tipo: 'socio', id: x.id, desc: x.descricao, valor: x.valor, em: x.criadoEm, onde: 'Tela Vertical · conta do ' + (x.pagoPor === 'jadson' ? 'Jadson' : 'Eder') }); }); } catch (e) {} // eslint-disable-line no-undef
     return out.sort(function (a, b) { return String(b.em).localeCompare(String(a.em)); }).slice(0, 8);
   }
   function recentes(el) {
@@ -531,7 +560,9 @@
   }
   function remover(x) {
     if (!x || !global.confirm('Remover "' + x.desc + '"?')) return;
-    if (x.tipo === 'emp') {
+    if (x.tipo === 'socio') {
+      elevInvestimentos = elevInvestimentos.filter(function (a) { return a.id !== x.id; });  // eslint-disable-line no-undef
+    } else if (x.tipo === 'emp') {
       empresaAvulsas = empresaAvulsas.filter(function (a) { return a.id !== x.id; });       // eslint-disable-line no-undef
       try { delete despPagamentos._empresa.Empresa['_av_' + x.id]; } catch (e) {}           // eslint-disable-line no-undef
     } else {

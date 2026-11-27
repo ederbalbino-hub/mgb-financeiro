@@ -94,3 +94,62 @@ test("ficha: mês com boleto emitido e nota sem número aparece marcado", () => 
   }, 2026, 10);
   assert.equal(L[0].contratos[0].historico[0].semNota, true);
 });
+
+const L = require("../../lancar.js");
+const FI = require("../../financeiro.js");
+
+test("despesa da Tela Vertical paga do bolso do sócio vai só para a conta dele", () => {
+  const base = { destino: "elev", item: "Spot", categoria: "combustivel", descricao: "Gasolina instalação", fornecedor: "Posto X", valor: "120,50", data: "2026-11-20", forma: "avista" };
+  assert.equal(L.pagaPeloSocio({ ...base, quemPagou: "jadson" }), true);
+  assert.equal(L.pagaPeloSocio({ ...base, quemPagou: "eder" }), true);
+  assert.equal(L.pagaPeloSocio({ ...base, quemPagou: "mgb" }), false);
+  assert.equal(L.pagaPeloSocio({ ...base, destino: "vaapty", quemPagou: "eder" }), false, "fora da Tela Vertical, Eder continua sendo reembolso");
+  const x = L.lancamentoSocio({ ...base, quemPagou: "jadson", lancadoPor: "Karen" }, 7);
+  assert.equal(x.id, 7); assert.equal(x.item, "Spot"); assert.equal(x.valor, 120.5); assert.equal(x.pagoPor, "jadson");
+  assert.equal(x.tipo, "despesa"); assert.equal(x.data, "2026-11-20"); assert.equal(x.descricao, "Gasolina instalação · Posto X");
+  assert.deepEqual(L.validarDespesa({ ...base, quemPagou: "jadson" }), []);
+  assert.ok(L.validarDespesa({ ...base, quemPagou: "jadson", destino: "vaapty", item: "A" }).some((e) => /Jadson/.test(e)));
+  assert.ok(L.validarDespesa({ ...base, quemPagou: "eder", forma: "mensal", meses: 3 }).some((e) => /à vista/.test(e)));
+});
+
+test("Contas do mês: vencida, vence hoje, vence em poucos dias", () => {
+  const hoje = new Date(2026, 10, 27);
+  assert.equal(FI.situacaoVenc(20, 2026, 10, hoje).txt, "vencida");
+  assert.equal(FI.situacaoVenc(27, 2026, 10, hoje).txt, "vence hoje");
+  assert.equal(FI.situacaoVenc(28, 2026, 10, hoje).txt, "vence amanhã");
+  assert.equal(FI.situacaoVenc(30, 2026, 10, hoje).txt, "vence em 3 dias");
+  assert.equal(FI.situacaoVenc(10, 2026, 11, hoje), null, "dezembro ainda longe");
+  assert.equal(FI.situacaoVenc(5, 2026, 9, hoje).txt, "vencida", "outubro não paga");
+  assert.equal(FI.situacaoVenc(null, 2026, 10, hoje), null);
+  assert.equal(FI.situacaoVenc(31, 2027, 1, new Date(2027, 1, 28)).txt, "vence hoje", "31 em fevereiro = último dia");
+});
+
+test("renomear condomínio leva anunciantes, pagos, cadastro, cobranças e lead", () => {
+  const e = {
+    anunciantes: [{ nome: "Oficina", telas: ["Spot", "Tay"] }], despesasComp: [{ telas: ["Spot"] }], elevInvestimentos: [{ item: "Spot" }, { item: "Tay" }],
+    despPagamentos: { elev: { Spot: { 0: { "2026-10": { pago: true } } } } }, clientesInfo: { elev: { Spot: { cnpj: "1" } } },
+    recPagamentos: { elev: {} }, pagamentos: { elev: { Spot: {} } }, leads: [{ produto: "condo", itemCriado: "Spot" }, { produto: "vaapty", itemCriado: "Spot" }],
+  };
+  const n = X.renomearNoEstado(e, "elev", "Spot", "Ed. Spot");
+  assert.ok(n >= 7);
+  assert.deepEqual(e.anunciantes[0].telas, ["Ed. Spot", "Tay"]);
+  assert.deepEqual(e.despesasComp[0].telas, ["Ed. Spot"]);
+  assert.equal(e.elevInvestimentos[0].item, "Ed. Spot");
+  assert.ok(e.despPagamentos.elev["Ed. Spot"] && !e.despPagamentos.elev.Spot);
+  assert.equal(e.clientesInfo.elev["Ed. Spot"].cnpj, "1");
+  assert.equal(e.leads[0].itemCriado, "Ed. Spot");
+  assert.equal(e.leads[1].itemCriado, "Spot", "lead de outro módulo não muda");
+  assert.equal(X.renomearNoEstado(e, "elev", "A", "A"), 0);
+});
+
+test("repasse da Tela Vertical: 50% da sobra para cada sócio; sem sobra, sem repasse", () => {
+  assert.deepEqual(X.repasseSocios(1000.01), { sobra: 1000.01, eder: 500.01, jadson: 500.01 });
+  assert.deepEqual(X.repasseSocios(-200), { sobra: 0, eder: 0, jadson: 0 });
+});
+
+test("cartão do anunciante: situação do pagamento no mês", () => {
+  assert.equal(X.situacaoAnunciante({ pago: true }).txt, "Pago");
+  assert.equal(X.situacaoAnunciante({ asaas: { st: "vencido" } }).txt, "Boleto vencido");
+  assert.equal(X.situacaoAnunciante({ asaas: { st: "pendente" } }).txt, "Boleto em aberto");
+  assert.equal(X.situacaoAnunciante(undefined).txt, "A emitir");
+});

@@ -148,6 +148,16 @@
     if (assin.length) itens.push(item('#B45309', plural(assin.length, 'contrato aguardando assinatura', 'contratos aguardando assinatura'),
       esc(assin.slice(0, 4).map(function (a) { return a.nome + (a.tipo === 'aditivo' ? ' (aditivo)' : '') + (a.dias != null ? ' · ' + (a.dias === 1 ? '1 dia' : a.dias + ' dias') : ''); }).join(', ')) + (assin.length > 4 ? '…' : '') +
       ' · o hub confere sozinho de tempos em tempos', 'Conferir agora', 'assin'));
+    var contas = []; try { contas = global.MGBFinanceiro && global.MGBFinanceiro.contasAvisar ? global.MGBFinanceiro.contasAvisar(hoje) : []; } catch (e) { contas = []; }
+    var contasVenc = contas.filter(function (c) { return c.venc.dias <= 0; });
+    if (contas.length) itens.push(item(contasVenc.length ? '#B42318' : '#B45309',
+      contasVenc.length ? plural(contasVenc.length, 'conta vencida ou vencendo hoje', 'contas vencidas ou vencendo hoje') + (contas.length > contasVenc.length ? ' e ' + (contas.length - contasVenc.length) + ' na semana' : '')
+        : plural(contas.length, 'conta vence esta semana', 'contas vencem esta semana'),
+      esc(contas.slice(0, 4).map(function (c) { return c.titulo + ' (' + c.venc.txt + ')'; }).join(', ')) + (contas.length > 4 ? '…' : ''), 'Ver contas', 'ir:contas'));
+    // Relatório da Tela Vertical do mês anterior ainda não marcado como enviado ao Jadson (desde nov/2026)
+    var mA = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1), kA = competencia(mA), rel = ler('relAjustes', {}) || {};
+    if (eder && kA >= '2026-11' && !((rel.tvEnviado || {})[kA])) itens.push(item('#4E38B2', 'Relatório da Tela Vertical de ' + MESES[mA.getMonth()] + ' para o Jadson',
+      'Ainda não marcado como enviado · o painel mostra o repasse de 50% para cada sócio', 'Abrir painel', 'tvrel:' + kA));
     if (fat.semNota.length) itens.push(item('#B45309', plural(fat.semNota.length, 'nota de ' + nomeMes + ' sem número', 'notas de ' + nomeMes + ' sem número'),
       esc(fat.semNota.slice(0, 4).join(', ')) + (fat.semNota.length > 4 ? '…' : '') + ' · o boleto saiu, a nota não voltou da prefeitura', 'Conferir', 'fat'));
     if (funil.semCadastro) itens.push(item('#4E38B2', plural(funil.semCadastro, 'cliente fechado esperando cadastro', 'clientes fechados esperando cadastro'),
@@ -264,6 +274,7 @@
       if (acao === 'valores') global.togglePrivate();
       else if (acao === 'fat') global.fatAbrirFaturamento(competencia(hoje));
       else if (acao === 'fatprox') global.fatAbrirFaturamento(proximoFaturamento(hoje).comp);
+      else if (acao.indexOf('tvrel:') === 0) { try { global.eval("tvpMes='" + acao.slice(6).replace(/[^0-9-]/g, '') + "'"); } catch (e) {} global.goOperacional('telavertical', 'tvpainel'); }
       else if (acao.indexOf('fat:') === 0) global.fatAbrirFaturamento(acao.slice(4));
       else if (acao === 'novo') {                       // um só esperando cadastro: abre direto o cadastro dele
         var pend = global.MGBNovo.pendentesCadastro ? global.MGBNovo.pendentesCadastro() : [];
