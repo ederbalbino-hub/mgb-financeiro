@@ -172,21 +172,19 @@ test("aditivo: documento com partes, prazo, mesmo valor e escape do nome", () =>
   assert.match(h, /Loja &lt;Teste&gt;/);
 });
 
-test("repasse: quem cobriu mês no vermelho recebe de volta antes da divisão 50/50", () => {
+test("repasse: sobra vai 50/50; vermelho entra no investido de quem cobriu", () => {
   const meses = [
     { k: "2026-10", resultado: -300 },   // antes de nov/26: do Eder, sem perguntar
     { k: "2026-11", resultado: -200 },   // Jadson cobriu
-    { k: "2026-12", resultado: 400 },    // devolve 300 ao Eder e 100 ao Jadson, nada a dividir
-    { k: "2027-01", resultado: 500 },    // devolve 100 ao Jadson, divide 400
-    { k: "2027-02", resultado: -50 },    // sem marcação: pendente
+    { k: "2026-12", resultado: 401 },    // 50/50, sem devolução
+    { k: "2027-01", resultado: -50 },    // sem marcação: pendente, não entra em ninguém
   ];
   const L = X.repasseHistorico(meses, { "2026-11": "jadson" }, "2026-11");
   assert.equal(L[0].cobre, "eder"); assert.equal(L[0].pendente, false);
-  assert.equal(L[1].cobre, "jadson"); assert.deepEqual(L[1].devendo, { eder: 300, jadson: 200 });
-  assert.deepEqual(L[2].devolve, { eder: 300, jadson: 100 }); assert.equal(L[2].dividir, 0); assert.equal(L[2].eder, 300); assert.equal(L[2].jadson, 100);
-  assert.deepEqual(L[3].devolve, { eder: 0, jadson: 100 }); assert.equal(L[3].dividir, 400); assert.equal(L[3].eder, 200); assert.equal(L[3].jadson, 300);
-  assert.deepEqual(L[3].devendo, { eder: 0, jadson: 0 });
-  assert.equal(L[4].pendente, true);
+  assert.equal(L[1].cobre, "jadson");
+  assert.deepEqual([L[2].eder, L[2].jadson], [200.5, 200.5]);
+  assert.equal(L[3].pendente, true);
+  assert.deepEqual(L[3].investidoCobrindo, { eder: 300, jadson: 200 });
 });
 
 test("aditivo com reajuste: % e novo valor ligados, documento e nome do contrato de renovação", () => {

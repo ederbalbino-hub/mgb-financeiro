@@ -12268,7 +12268,7 @@ function tvPainelRender(){
       k('Receita','<span style="color:#118A5D">'+v(r.rec)+'</span>','anunciantes ativos')+
       k('Despesas',v(r.desp),'licenças + rateadas ('+v(rateadas)+')','#B42318')+
       k('Resultado',v(r.resultado),r.resultado>=0?'sobra do mês':'despesa maior que a receita',r.resultado>=0?'#118A5D':'#B42318')+
-      k('Excedente acumulado',v(acum),'meses no vermelho · volta a quem cobriu')+
+      k('Excedente acumulado',v(acum),'meses no vermelho · somado ao investido de quem cobriu')+
     '</div>'+
     '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px">'+
       k('Investido · Eder',v(t.eder),'instalação')+k('Investido · Jadson',v(t.jadson),'instalação')+k('Total investido',v(t.total),'diferença '+v(Math.abs(t.dif))+(t.dif>0?' a favor do Jadson':t.dif<0?' a favor do Eder':''))+
@@ -12288,8 +12288,10 @@ function tvPainelRender(){
 // ── INVESTIMENTO · INSTALAÇÃO (sócios) ───────────────────────────────────────
 function elevInvestTotais(){
   // CC de cada sócio = tudo que ele pagou do bolso (investimento + despesa). "total" = só investimento.
-  const jadson=elevInvestimentos.filter(x=>x.pagoPor==='jadson').reduce((a,x)=>a+(x.valor||0),0);
-  const eder=elevInvestimentos.filter(x=>x.pagoPor==='eder').reduce((a,x)=>a+(x.valor||0),0);
+  // + o que cada um cobriu em meses no vermelho (27/11, Diego: entra na soma do investido) — fluxos.js
+  const cob=(window.MGBFluxos&&MGBFluxos.coberturas)?MGBFluxos.coberturas():{eder:0,jadson:0};
+  const jadson=elevInvestimentos.filter(x=>x.pagoPor==='jadson').reduce((a,x)=>a+(x.valor||0),0)+(cob.jadson||0);
+  const eder=elevInvestimentos.filter(x=>x.pagoPor==='eder').reduce((a,x)=>a+(x.valor||0),0)+(cob.eder||0);
   const despesas=elevInvestimentos.filter(x=>x.tipo==='despesa').reduce((a,x)=>a+(x.valor||0),0);
   return {jadson,eder,total:ELEV_SOCIO_NO_RESULTADO?jadson+eder-despesas:jadson+eder,despesas,dif:jadson-eder};
 }
@@ -12325,18 +12327,16 @@ function elevRelatorioMensal(anoArg,mesArg){
     '<h2>Conta de cada sócio (investimento + despesas pagas do bolso)</h2><div class="k"><div>Eder<b>'+f(t.eder)+'</b></div><div>Jadson<b>'+f(t.jadson)+'</b></div><div>Total investido<b>'+f(t.total)+'</b></div><div>Despesas pagas pelos sócios<b>'+f(t.despesas)+'</b></div></div>'+
     '<div class="sub">Meta: '+ELEV_TELAS_QTD+' telas × '+f(ELEV_INVEST_POR_TELA)+' = '+f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)+'</div>'+
     '<h2>Resultado de '+NOMES[mes]+'</h2><div class="k"><div>Receita<b>'+f(r.rec)+'</b></div><div>Despesas<b>'+f(r.desp)+'</b></div><div>Resultado<b class="'+(r.resultado>=0?'pos':'neg')+'">'+(r.resultado>=0?'':'−')+f(Math.abs(r.resultado))+'</b></div></div>'+
-    (function(){ const rp=(window.MGBFluxos&&MGBFluxos.repasseDoMes)?MGBFluxos.repasseDoMes(ano,mes):null; if(!rp) return ''; // 27/11 (Diego): devolve a quem cobriu meses no vermelho, depois 50/50
-      const quem=q=>q==='jadson'?'Jadson':'Eder', dv=rp.devolve.eder+rp.devolve.jadson, falta=rp.devendo.eder+rp.devendo.jadson;
+    (function(){ const rp=(window.MGBFluxos&&MGBFluxos.repasseDoMes)?MGBFluxos.repasseDoMes(ano,mes):null; if(!rp) return ''; // 27/11 (Diego): sobra 50/50; vermelho entra no investido de quem cobriu
+      const quem=q=>q==='jadson'?'Jadson':'Eder';
       let h='<h2>Repasse de '+NOMES[mes]+'</h2>';
-      if(rp.resultado<0) h+='<div class="k"><div class="dest">Faltou no mês<b class="neg">'+f(-rp.resultado)+'</b></div><div>Coberto por<b>'+(rp.pendente?'a definir':quem(rp.cobre))+'</b></div></div><div class="sub">Quem cobriu recebe esse valor de volta, antes da divisão, nas próximas sobras.</div>';
-      else if(rp.resultado>0) h+='<div class="k"><div>Sobra do mês<b>'+f(rp.resultado)+'</b></div>'+(dv?'<div>Devolução a quem cobriu meses no vermelho<b>'+f(dv)+'</b></div>':'')+'<div>Dividido 50/50<b>'+f(rp.dividir)+'</b></div></div>'+
-        '<div class="k"><div class="dest">Eder recebe<b>'+f(rp.eder)+'</b></div><div class="dest">Jadson recebe<b>'+f(rp.jadson)+'</b></div></div>';
+      if(rp.resultado<0) h+='<div class="k"><div class="dest">Faltou no mês<b class="neg">'+f(-rp.resultado)+'</b></div><div>Coberto por<b>'+(rp.pendente?'a definir':quem(rp.cobre))+'</b></div></div><div class="sub">O valor coberto entra na soma do que esse sócio investiu na Tela Vertical.</div>';
+      else if(rp.resultado>0) h+='<div class="k"><div>Sobra do mês<b>'+f(rp.resultado)+'</b></div><div class="dest">Eder (50%)<b>'+f(rp.eder)+'</b></div><div class="dest">Jadson (50%)<b>'+f(rp.jadson)+'</b></div></div>';
       else h+='<div class="sub">Mês empatado: sem repasse.</div>';
-      if(falta>0.004) h+='<div class="sub">Ainda a devolver depois deste mês: '+[rp.devendo.eder?'Eder '+f(rp.devendo.eder):'',rp.devendo.jadson?'Jadson '+f(rp.devendo.jadson):''].filter(Boolean).join(' · ')+'.</div>';
       return h; })()+
     '<h2>Despesas do mês</h2><table><tr><th>Descrição</th><th>Item</th><th>Tipo</th><th class="n">Valor</th></tr>'+linhasDesp+'</table>'+
     '<h2>Meses no vermelho (excedente)</h2><div class="k"><div class="dest">Excedente de '+NOMES[mes]+' (despesa acima da receita)<b>'+f(r.excedente)+'</b></div><div class="dest">Acumulado desde '+NOMES[ELEV_EXCEDENTE_DESDE.mes]+'/'+ELEV_EXCEDENTE_DESDE.ano+'<b>'+f(acumTot)+'</b></div></div>'+
-    '<div class="sub">Meses em que a despesa passou da receita. Quem cobriu a diferença recebe de volta nas próximas sobras, antes da divisão 50/50 (ver Repasse).</div>'+
+    '<div class="sub">Meses em que a despesa passou da receita. O valor coberto entra no investido de quem cobriu (já somado na conta de cada sócio acima).</div>'+
     '</body></html>';
   const w=window.open('','_blank'); if(!w){ alert('O navegador bloqueou a janela. Permita pop-ups pra gerar o relatório.'); return; }
   w.document.open(); w.document.write(html); w.document.close(); setTimeout(function(){ try{w.focus();w.print();}catch(e){} },400);
@@ -12360,7 +12360,7 @@ function buildElevInvest(){
     <div class="kpi"><div class="kpi-lbl">CC Jadson</div><div class="kpi-val">${f(t.jadson)}</div></div>
     <div class="kpi"><div class="kpi-lbl">CC Eder</div><div class="kpi-val">${f(t.eder)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Meta ${ELEV_TELAS_QTD} telas × ${f(ELEV_INVEST_POR_TELA)}</div><div class="kpi-val">${f(ELEV_TELAS_QTD*ELEV_INVEST_POR_TELA)}</div></div>
-    <div class="kpi"><div class="kpi-lbl">Meses no vermelho (volta a quem cobriu)</div><div class="kpi-val" style="color:var(--red)">${f(exc.reduce((a,x)=>a+x.excedente,0))}</div></div>`;
+    <div class="kpi"><div class="kpi-lbl">Meses no vermelho (somados ao investido de quem cobriu)</div><div class="kpi-val" style="color:var(--red)">${f(exc.reduce((a,x)=>a+x.excedente,0))}</div></div>`;
   g('einvest-exc').innerHTML=exc.length?'<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="color:var(--muted);font-size:10.5px;text-transform:uppercase"><th style="text-align:left;padding:4px 6px">Mês</th><th style="text-align:right;padding:4px 6px">Receita</th><th style="text-align:right;padding:4px 6px">Despesa</th><th style="text-align:right;padding:4px 6px">Excedente (Eder)</th></tr>'+exc.map(x=>'<tr><td style="padding:5px 6px;border-top:1px solid var(--border2)">'+MESES[x.mes]+'/'+x.ano+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right">'+f(x.rec)+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right">'+f(x.desp)+'</td><td style="padding:5px 6px;border-top:1px solid var(--border2);text-align:right;color:'+(x.excedente>0?'var(--red)':'var(--muted)')+'">'+f(x.excedente)+'</td></tr>').join('')+'</table>':'';
   const grid=g('einvest-grid');
   if(!elevInvestimentos.length){
@@ -16540,7 +16540,7 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 <script src="lancar.js?v=20261127f"></script>
 <script src="novo.js?v=20261127b"></script>
 <script src="acesso.js?v=20261127d"></script>
-<script src="inicio.js?v=20261127f"></script>
+<script src="inicio.js?v=20261127g"></script>
 <script src="faturamento.js?v=20261119b"></script>
 <script src="financeiro.js?v=20261127e"></script>
 <script src="funil.js?v=20261127d"></script>
@@ -16549,7 +16549,7 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 <script src="telas2.js?v=20261124"></script>
 <script src="painel.js?v=20261127c"></script>
 <script src="historico.js?v=20261127"></script>
-<script src="fluxos.js?v=20261127f"></script>
+<script src="fluxos.js?v=20261127g"></script>
 <script src="assistente.js?v=20261029b"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261123">
 </body>

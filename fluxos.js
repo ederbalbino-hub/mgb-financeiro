@@ -88,30 +88,21 @@
     return { sobra: r > 0 ? r : 0, eder: metade, jadson: metade };
   }
 
-  // Repasse com devolução (Diego, 27/11): mês no vermelho → alguém cobre a diferença (Eder ou Jadson, marcado no
-  // painel). Nas sobras seguintes, primeiro devolve a quem cobriu (o mais antigo primeiro); o resto vai 50/50.
+  // Repasse da Tela Vertical (Diego, 27/11): mês com sobra = 50% para cada sócio, sem devolução. Mês no vermelho:
+  // alguém cobre a diferença (Eder ou Jadson, marcado no painel) e esse valor entra na soma do que ele investiu.
   // meses: [{k:'AAAA-MM', resultado}] em ordem; cobre: {k: 'eder'|'jadson'}; antesDe: meses anteriores a esta
-  // competência sem marcação contam como do Eder (regra antiga: excedente na conta do Eder).
+  // competência sem marcação contam como cobertos pelo Eder (regra antiga: excedente na conta do Eder).
+  // Mês no vermelho ainda sem marcação fica "pendente" e não entra em ninguém até alguém marcar.
   function repasseHistorico(meses, cobre, antesDe) {
-    var fila = [], devendo = { eder: 0, jadson: 0 }, r2 = function (x) { return Math.round(x * 100) / 100; };
+    var inv = { eder: 0, jadson: 0 }, r2 = function (x) { return Math.round(x * 100) / 100; };
     return (meses || []).map(function (m) {
-      var res = r2(Number(m.resultado) || 0), o = { k: m.k, resultado: res, deficit: 0, cobre: null, pendente: false, devolve: { eder: 0, jadson: 0 }, dividir: 0, eder: 0, jadson: 0 };
+      var res = r2(Number(m.resultado) || 0), o = { k: m.k, resultado: res, deficit: 0, cobre: null, pendente: false, eder: 0, jadson: 0 };
       if (res < 0) {
-        var quem = (cobre || {})[m.k];
-        o.pendente = !quem && !(antesDe && m.k < antesDe);
-        o.cobre = quem || 'eder'; o.deficit = -res;
-        fila.push({ quem: o.cobre, valor: -res }); devendo[o.cobre] = r2(devendo[o.cobre] - res);
-      } else if (res > 0) {
-        var resto = res;
-        while (resto > 0.004 && fila.length) {
-          var d = fila[0], x = r2(Math.min(d.valor, resto));
-          o.devolve[d.quem] = r2(o.devolve[d.quem] + x); devendo[d.quem] = r2(devendo[d.quem] - x); d.valor = r2(d.valor - x); resto = r2(resto - x);
-          if (d.valor <= 0.004) fila.shift();
-        }
-        o.dividir = resto; var metade = r2(resto / 2);
-        o.eder = r2(o.devolve.eder + metade); o.jadson = r2(o.devolve.jadson + metade);
-      }
-      o.devendo = { eder: devendo.eder, jadson: devendo.jadson };
+        var quem = (cobre || {})[m.k] || (antesDe && m.k < antesDe ? 'eder' : null);
+        o.deficit = -res; o.cobre = quem; o.pendente = !quem;
+        if (quem) inv[quem] = r2(inv[quem] - res);
+      } else if (res > 0) { o.eder = r2(res / 2); o.jadson = r2(res - o.eder); }
+      o.investidoCobrindo = { eder: inv.eder, jadson: inv.jadson };
       return o;
     });
   }
@@ -307,23 +298,27 @@
     var L = repasseHistorico(h.map(function (x) { return { k: x.ano + '-' + String(x.mes + 1).padStart(2, '0'), resultado: x.resultado }; }), tvCobre(), COBRE_DESDE);
     return L.filter(function (x) { return x.k === k; })[0] || null;
   }
+  // Total que cada sócio cobriu em meses no vermelho (entra no "investido" dele: elevInvestTotais)
+  function coberturas() {
+    var h = []; try { h = global.elevExcedenteHistorico(); } catch (e) { return { eder: 0, jadson: 0 }; }
+    var L = repasseHistorico(h.map(function (x) { return { k: x.ano + '-' + String(x.mes + 1).padStart(2, '0'), resultado: x.resultado }; }), tvCobre(), COBRE_DESDE);
+    return L.length ? L[L.length - 1].investidoCobrindo : { eder: 0, jadson: 0 };
+  }
   function tvEnviados() { var r = ler('relAjustes'); if (!r || typeof r !== 'object') return {}; r.tvEnviado = r.tvEnviado || {}; return r.tvEnviado; }
   function decorarPainelTV() {
     var root = document.getElementById('tvp-root'); if (!root || root.querySelector('.flx-socio')) return;
     var mesIso = ler('tvpMes'); var mm = /^(\d{4})-(\d{2})$/.exec(mesIso || ''); if (!mm) return;
     var ano = +mm[1], mes = +mm[2] - 1, r = null; try { r = global.elevMesResumo(ano, mes); } catch (e) { return; }
-    var rep = repasseDoMes(ano, mes) || { resultado: r.resultado, devolve: { eder: 0, jadson: 0 }, dividir: 0, eder: 0, jadson: 0, devendo: { eder: 0, jadson: 0 } }, env = tvEnviados()[mesIso];
+    var rep = repasseDoMes(ano, mes) || { resultado: r.resultado, eder: 0, jadson: 0, pendente: false, cobre: null }, env = tvEnviados()[mesIso];
     var alvo = null; Array.prototype.forEach.call(root.querySelectorAll('div'), function (d) { if (!alvo && d.textContent === 'Para o sócio') alvo = d; });
     var vis = ler('valuesVisible'); var v = function (x) { return vis === false ? 'R$ ••••' : brl(x); };
     var box = document.createElement('div'); box.className = 'flx-socio';
-    var nm = MES_C[mes] + '/' + String(ano).slice(2), dev = rep.devolve.eder + rep.devolve.jadson, txt;
-    if (rep.resultado < 0) txt = 'Mês no vermelho: faltaram ' + v(-rep.resultado) + '. ' + (rep.pendente ? '<b class="flx-alerta">Quem cobriu?</b> ' : 'Coberto por ' + (rep.cobre === 'jadson' ? 'Jadson' : 'Eder') + ' (volta para ele nas próximas sobras). ') +
+    var nm = MES_C[mes] + '/' + String(ano).slice(2), txt;
+    if (rep.resultado < 0) txt = 'Mês no vermelho: faltaram ' + v(-rep.resultado) + '. ' + (rep.pendente ? '<b class="flx-alerta">Quem cobriu?</b> ' : 'Coberto por ' + (rep.cobre === 'jadson' ? 'Jadson' : 'Eder') + ': entra no valor investido dele. ') +
       '<span class="flx-quem">' + ['eder', 'jadson'].map(function (q) { return '<button type="button" class="flx-chip' + (!rep.pendente && rep.cobre === q ? ' flx-on' : '') + '" data-flx="cobre:' + q + '">' + (q === 'eder' ? 'Eder cobriu' : 'Jadson cobriu') + '</button>'; }).join('') + '</span>';
-    else if (rep.resultado > 0) txt = 'Sobra ' + v(rep.resultado) + (dev ? ' → devolve primeiro ' + v(dev) + ' (' + [rep.devolve.eder ? 'Eder ' + v(rep.devolve.eder) : '', rep.devolve.jadson ? 'Jadson ' + v(rep.devolve.jadson) : ''].filter(Boolean).join(' · ') + ', que cobriu meses no vermelho)' : '') +
-      ' → divide ' + v(rep.dividir) + ' em 50/50. <b>Eder recebe ' + v(rep.eder) + ' · Jadson recebe ' + v(rep.jadson) + '</b>';
+    else if (rep.resultado > 0) txt = 'Sobra ' + v(rep.resultado) + ' dividida 50/50: <b>Eder ' + v(rep.eder) + ' · Jadson ' + v(rep.jadson) + '</b>';
     else txt = 'Mês empatado: sem repasse.';
-    var falta = rep.devendo.eder + rep.devendo.jadson;
-    box.innerHTML = '<div><b>Repasse de ' + nm + '</b><span>' + txt + '</span>' + (falta > 0.004 ? '<span>Ainda a devolver depois deste mês: ' + [rep.devendo.eder ? 'Eder ' + v(rep.devendo.eder) : '', rep.devendo.jadson ? 'Jadson ' + v(rep.devendo.jadson) : ''].filter(Boolean).join(' · ') + '</span>' : '') + '</div>' +
+    box.innerHTML = '<div><b>Repasse de ' + nm + '</b><span>' + txt + '</span></div>' +
       (env ? '<span class="flx-ok">Relatório enviado em ' + esc(env.em) + (env.por ? ' por ' + esc(env.por) : '') + ' <button type="button" class="flx-link" data-flx="desenviar">desfazer</button></span>'
         : '<button type="button" class="flx-btn" data-flx="enviado">Marcar relatório como enviado</button>');
     if (alvo && alvo.parentNode) alvo.parentNode.insertBefore(box, alvo.nextSibling); else root.appendChild(box);
@@ -331,7 +326,7 @@
       var b = ev.target.closest('[data-flx]'); if (!b) return;
       var E = tvEnviados(), u = global.MGBAcesso && global.MGBAcesso.usuario ? (global.MGBAcesso.usuario() || {}) : {};
       var acao = b.getAttribute('data-flx');
-      if (acao.indexOf('cobre:') === 0) { tvCobre()[mesIso] = acao.slice(6); }
+      if (acao.indexOf('cobre:') === 0) { tvCobre()[mesIso] = acao.slice(6); try { global.buildElevInvest(); } catch (e) {} }
       else if (acao === 'enviado') E[mesIso] = { em: new Date().toLocaleDateString('pt-BR'), por: u.nome || '' };
       else delete E[mesIso];
       if (typeof global.scheduleSave === 'function') global.scheduleSave();
@@ -555,6 +550,6 @@
     andarPagamentosAoRemover('tvCondoDespRemover', function () { return { mod: 'elev', item: ler('tvCondoSel') }; });
   }
 
-  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, repasseDoMes: repasseDoMes, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
+  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, repasseDoMes: repasseDoMes, coberturas: coberturas, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);
