@@ -125,5 +125,4 @@ A `main` mudou bastante depois desta auditoria (Tela Vertical 50/50, despesa do 
 
 **Ainda em aberto:**
 - **A (Contratos × Clientes):** é decisão de regra — Diego/Eder escolhem se "Expansão", "Pilotos" e "Outros" contam ou não.
-- **B (contas 21 × 62):** as duas telas usam a mesma lista; com dados inventados batem (9 contas / 12 lançamentos, mesmo total). Pedi à conversa de Usabilidade o conjunto de dados que ela usou.
-- **Pizzaria "no ar × encerrada" e cartões da Cobrança mudando:** não reproduzidos com dados inventados. Hipótese para os cartões: o do Mercadão lê os Blocos de rádio do navegador, que chegam do servidor depois da primeira pintura (e o bloco duplicado carrega duas vezes). Aguardando os dados da Usabilidade.
+- **B, Pizzaria, cartões da Cobrança e resumo dos sócios:** reconferidos com os dados simulados da Usabilidade (mesmo conjunto que ela usou), na `main` atual e nesta branch: **não acontecem mais**. Contas: topo e "Lançamento por lançamento" batem (31 lançamentos, R$ 29.520,06); cartões iguais a cada clique; sócios iguais antes/depois do formulário; Pizzaria (mai–out/2026) fora dos ativos de novembro nas duas telas. Foram resolvidos pelas mudanças dos Fluxos de 27/11 já na `main`.
