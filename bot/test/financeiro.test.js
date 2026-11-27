@@ -63,3 +63,18 @@ test("resumo de contratos e maiores mudanças", () => {
   const m = F.mudancas({ rec: [{ tipo: "entra", rot: "x", a: 0, b: 200 }], desp: [{ tipo: "muda", rot: "y", a: 750, b: 125 }, { tipo: "sai", rot: "z", a: 10, b: 0 }] }, 2);
   assert.deepEqual(m.map((o) => [o.x.rot, o.delta]), [["y", -625], ["x", 200]]);
 });
+
+test("gráficos: escala com teto redondo dividido em 3 partes", () => {
+  assert.deepEqual(F.escala(78762.71), { teto: 90000, marcas: [0, 30000, 60000, 90000] });
+  assert.equal(F.escala(9800).teto, 12000);
+  assert.equal(F.escala(123456).teto, 150000);
+  assert.ok(F.escala(0).teto > 0);
+});
+
+test("gráficos: fatias junta o resto em Outros e calcula a porcentagem", () => {
+  const f = F.fatias([{ rot: "MB", valor: 52900 }, { rot: "Rádio", valor: 17400 }, { rot: "TV", valor: 3400 }, { rot: "TVert", valor: 3100 }, { rot: "Vaapty", valor: 465 }, { rot: "Zero", valor: 0 }], 2);
+  assert.deepEqual(f.map((x) => x.rot), ["MB", "Rádio", "Outros (3)"]);
+  assert.equal(Math.round(f[0].pct), 68);
+  assert.equal(Math.round(f.reduce((a, x) => a + x.pct, 0)), 100);
+  assert.deepEqual(F.fatias([{ rot: "A", valor: 2 }, { rot: "B", valor: 1 }], 1).map((x) => x.rot), ["A", "B"]);
+});
