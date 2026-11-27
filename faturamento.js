@@ -457,12 +457,15 @@
     var P = promessas(); if (!P) return;
     var r = linhas().filter(function (x) { return x.id === id; })[0], nome = r ? (r.apelido || r.cliente) : id, k = id + '|' + mesRef;
     if (apagar) {
-      if (!global.confirm('Apagar a promessa de pagamento de ' + nome + '?')) return;
+      if (!salvarPromessa.ok) { // 27/11 (design): janela do hub no lugar do confirm do navegador
+        return perguntar({ titulo: 'Apagar a promessa?', texto: 'A promessa de pagamento de ' + nome + ' some da lista.', botao: 'Apagar', perigo: true },
+          'Apagar a promessa de pagamento de ' + nome + '?').then(function (ok) { if (ok) { salvarPromessa.ok = true; try { salvarPromessa(id, mesRef, apagar); } finally { salvarPromessa.ok = false; } } });
+      }
       delete P[k];
       if (typeof global.mgbAcao === 'function') global.mgbAcao('Apagou a promessa de pagamento de ' + nome);
     } else {
       var d = (doc.getElementById('fat2-prom-data') || {}).value || '';
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { global.alert('Escolha a data em que o cliente prometeu pagar.'); return; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { (global.mgbAviso || global.alert)('Escolha a data em que o cliente prometeu pagar.'); return; }
       var u = null; try { u = global.MGBAcesso && global.MGBAcesso.usuario && global.MGBAcesso.usuario(); } catch (e) {}
       P[k] = { data: d, cliente: nome, por: (u && u.nome) || '', em: new Date().toISOString() };
       if (typeof global.mgbAcao === 'function') global.mgbAcao('Promessa de pagamento de ' + nome + ' para ' + dataBR(d));
@@ -485,7 +488,12 @@
   function reemitir(id) {
     var r = linhas().filter(function (x) { return x.id === id; })[0];
     if (!r || typeof global.fFatEmitirUma !== 'function') return;
-    if (!global.confirm('Emitir de novo a cobrança de ' + (r.apelido || r.cliente) + ' (R$ ' + brl(r.valor) + ')?')) return;
+    perguntar({ titulo: 'Emitir de novo?', texto: 'A cobrança volta para o Asaas com os dados corrigidos.', linhas: [['Cliente', r.apelido || r.cliente], ['Valor', 'R$ ' + brl(r.valor), 1]], botao: 'Emitir de novo' },
+      'Emitir de novo a cobrança de ' + (r.apelido || r.cliente) + ' (R$ ' + brl(r.valor) + ')?').then(function (ok) { if (ok) reemitirJa(r); });
+  }
+  // janela do hub (dialogo.js) quando existir; senão, o confirm do navegador
+  function perguntar(o, texto) { return typeof global.mgbConfirmar === 'function' ? global.mgbConfirmar(o) : Promise.resolve(global.confirm(texto)); }
+  function reemitirJa(r) {
     if (typeof global.mgbAcao === 'function') global.mgbAcao('Emitiu de novo a cobrança de ' + (r.apelido || r.cliente));
     Promise.resolve(global.fFatEmitirUma(r)).then(function (st) {
       if (st === 'aguardando-nota' && typeof global.fFatAguardarAutorizacao === 'function') global.fFatAguardarAutorizacao(r.id);

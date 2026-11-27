@@ -7975,10 +7975,28 @@ async function lancRecConferirAsaas(){
   catch(e){ console.error(e); }
   finally{ if(btn){ btn.disabled=false; btn.textContent='🔄 Conferir com o Asaas'; } try{ buildLancRec(); }catch(e){} }
 }
-function recBaixaManual(modId,item,key){
+// 27/11 (design): janela do hub (dialogo.js) com data, forma e valor no lugar do confirm do navegador
+async function recBaixaManual(modId,item,key,valorPrevisto){
   const P=recPagamentos[modId]||(recPagamentos[modId]={}), Q=P[item]||(P[item]={}); const pg=Q[key]||{pago:false,obs:''};
-  if(pg.fonte==='manual'&&pg.pago){ if(!confirm('Desfazer a baixa manual de '+item+'?')) return; Q[key]={...pg,pago:false,fonte:pg.asaas?'asaas':null}; if(pg.asaas) Q[key].pago=pg.asaas.st==='pago'; }
-  else { if(!confirm('Dar baixa manual em '+item+'? Use só para recebimento fora do Asaas (Pix direto, dinheiro, permuta).')) return; Q[key]={...pg,pago:true,fonte:'manual',baixaEm:new Date().toISOString(),baixaPor:(window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||''}; }
+  const temJanela=typeof mgbConfirmar==='function';
+  if(pg.fonte==='manual'&&pg.pago){
+    const ok=temJanela?await mgbConfirmar({titulo:'Desfazer a baixa manual?',texto:item+' volta a aparecer como não recebido.',linhas:[['Recebido em',pg.baixaData?pg.baixaData.split('-').reverse().join('/'):(pg.baixaEm?new Date(pg.baixaEm).toLocaleDateString('pt-BR'):'—')],['Forma',pg.baixaForma||'—'],['Valor',pg.baixaValor!=null?f(pg.baixaValor):'—',1]],botao:'Desfazer baixa',perigo:true}):confirm('Desfazer a baixa manual de '+item+'?');
+    if(!ok) return; Q[key]={...pg,pago:false,fonte:pg.asaas?'asaas':null}; if(pg.asaas) Q[key].pago=pg.asaas.st==='pago';
+  } else {
+    const quem=(window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||'';
+    let extra={};
+    if(temJanela&&typeof mgbFormulario==='function'){
+      const hoje=new Date(), iso=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
+      const v=await mgbFormulario({titulo:'Registrar recebimento',texto:item+'\nUse só para dinheiro que entrou fora do Asaas.',botao:'Dar baixa',
+        campos:[{nome:'data',rotulo:'Recebido em',tipo:'date',valor:iso},{nome:'forma',rotulo:'Forma',tipo:'select',valor:'Pix direto',opcoes:['Pix direto','Transferência','Dinheiro','Permuta','Outro']},
+          {nome:'valor',rotulo:'Valor recebido (R$)',inputmode:'decimal',valor:Number(valorPrevisto)>0?String(Number(valorPrevisto).toFixed(2)).replace('.',','):'',largo:1},{nome:'obs',rotulo:'Observação (opcional)',largo:1}],
+        validar:x=>{ if(!x.data) return 'Informe a data do recebimento.'; const n=Number(String(x.valor).replace(/\./g,'').replace(',','.')); if(x.valor&&!(n>0)) return 'Valor inválido. Ex.: 1.250,00'; return ''; }});
+      if(!v) return;
+      const n=Number(String(v.valor).replace(/\./g,'').replace(',','.'));
+      extra={baixaData:v.data,baixaForma:v.forma,baixaValor:n>0?n:null}; if(v.obs) extra.baixaObs=v.obs;
+    } else if(!confirm('Dar baixa manual em '+item+'? Use só para recebimento fora do Asaas (Pix direto, dinheiro, permuta).')) return;
+    Q[key]={...pg,pago:true,fonte:'manual',baixaEm:new Date().toISOString(),baixaPor:quem,...extra};
+  }
   buildLancRec(); scheduleSave();
 }
 // Conferência automática com o Asaas: ao abrir o Hub, ao voltar pra aba e de 10 em 10 min (fluxos.js), no máx. 1×/hora
@@ -8497,15 +8515,23 @@ async function fFatAguardarAutorizacao(id, tentativas){
 async function fFatEmitirSelecionados(){
   const selecionados=fatLinhas.filter(r=>r.selecionado&&r.status!=='emitida'&&r.status!=='aguardando-nota');
   const semValor=selecionados.filter(r=>!(Number(r.valor)>0));
-  if(semValor.length){ alert('Informe o valor de: '+semValor.map(r=>r.cliente).join(', ')+'.'); return; }
-  if(!selecionados.length){ alert('Marque pelo menos um cliente.'); return; }
-  if(notaConfig.aliquotaMes==null){ alert('Configure a alíquota ISS do mês na aba Nota Fiscal antes de emitir.'); return; }
+  if(semValor.length){ (typeof mgbAviso==='function'?mgbAviso:alert)('Informe o valor de: '+semValor.map(r=>r.cliente).join(', ')+'.'); return; }
+  if(!selecionados.length){ (typeof mgbAviso==='function'?mgbAviso:alert)('Marque pelo menos um cliente.'); return; }
+  if(notaConfig.aliquotaMes==null){ (typeof mgbAviso==='function'?mgbAviso:alert)('Configure a alíquota ISS do mês na aba Nota Fiscal antes de emitir.'); return; }
   const ambiente=document.getElementById('f-fat-amb').value||'producao';
   const nAmbos=selecionados.filter(r=>(r.modo||'ambos')==='ambos').length, nNota=selecionados.filter(r=>r.modo==='nota').length, nBol=selecionados.filter(r=>r.modo==='boleto').length;
   // vencimento de CADA cliente (dia próprio na coluna "Dia venc."), não o 15 padrão
   const _vc={}; selecionados.filter(r=>r.modo!=='nota').forEach(r=>{ const v=fFatVenc(r).br; (_vc[v]=_vc[v]||[]).push(r.apelido||r.cliente); });
   const _vtxt=Object.keys(_vc).length?Object.keys(_vc).map(v=>'   · '+v+': '+_vc[v].join(', ')).join('\n'):'   · (nenhum boleto)';
-  if(!confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' as cobranças de '+selecionados.length+(selecionados.length===1?' cliente':' clientes')+':\n• '+nAmbos+' nota + boleto\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nVencimentos:\n'+_vtxt+'\n\nTotal em boletos: '+f(selecionados.filter(r=>r.modo!=='nota').reduce((a,r)=>a+fFatBoleto(r),0))+' (líquido do ISS retido, só nos que têm nota)\n\nConfirma?')) return;
+  const _totBol=selecionados.filter(r=>r.modo!=='nota').reduce((a,r)=>a+fFatBoleto(r),0);
+  // 27/11 (design): resumo numa janela do hub (dialogo.js); sem ela, cai no confirm antigo
+  const _ok=typeof mgbConfirmar==='function'
+    ? await mgbConfirmar({titulo:'Emitir '+selecionados.length+(selecionados.length===1?' cobrança':' cobranças')+(ambiente==='producao'?' de verdade?':' de teste?'),
+        texto:ambiente==='producao'?'Vai para o Asaas em PRODUÇÃO: os clientes recebem nota e boleto.':'Ambiente de teste (sandbox): nada chega aos clientes.',
+        linhas:[['Nota + boleto',nAmbos],['Só nota (sem boleto)',nNota],['Só boleto (sem nota)',nBol]].filter(x=>x[1]).concat(Object.keys(_vc).map(v=>['Vence '+v,_vc[v].join(', ')]),[['Total em boletos',f(_totBol),1]]),
+        nota:'O total é líquido do ISS retido (só nos que têm nota).',botao:ambiente==='producao'?'Emitir agora':'Emitir teste',focoCancelar:ambiente==='producao'})
+    : confirm('Emitir em '+(ambiente==='producao'?'PRODUÇÃO (de verdade)':'sandbox (teste)')+' as cobranças de '+selecionados.length+(selecionados.length===1?' cliente':' clientes')+':\n• '+nAmbos+' nota + boleto\n• '+nNota+' só nota (sem boleto)\n• '+nBol+' só boleto (sem nota)\n\nVencimentos:\n'+_vtxt+'\n\nTotal em boletos: '+f(_totBol)+' (líquido do ISS retido, só nos que têm nota)\n\nConfirma?');
+  if(!_ok) return;
   const btn=document.getElementById('f-fat-btn-emitir'); const st=document.getElementById('f-fat-status');
   btn.disabled=true; btn.style.opacity='.6';
   let ok=0, falhas=0;
@@ -10428,7 +10454,7 @@ function recStatusAsaas(l){
   else h=chip('rgba(148,140,170,.12)','var(--hint)','Fora da planilha de faturamento','Este cliente não está na planilha "MGB Faturamento - Clientes", então não tem boleto/nota no dia 5. Se ele deve pagar por boleto, inclua na planilha (ou lance pelo Novo cliente).');
   if(a&&a.boletoUrl) h+=` <a href="${a.boletoUrl}" target="_blank" rel="noopener" style="font-size:10px">boleto</a>`;
   // 27/11 (usabilidade): era um link cinza de 9 px ("baixa manual") que a Karen não achava
-  if(!(a&&a.st==='pago') && !(l.pago&&l.fonte!=='manual')) h+=` <button type="button" class="usab-recebi${l.fonte==='manual'&&l.pago?' desfazer':''}" onclick="recBaixaManual('${l.modId}','${it}','${l.key}')">${l.fonte==='manual'&&l.pago?'Desfazer baixa':'Recebi (Pix/dinheiro)'}</button>`;
+  if(!(a&&a.st==='pago') && !(l.pago&&l.fonte!=='manual')) h+=` <button type="button" class="usab-recebi${l.fonte==='manual'&&l.pago?' desfazer':''}" onclick="recBaixaManual('${l.modId}','${it}','${l.key}',${Number(l.valor)||0})">${l.fonte==='manual'&&l.pago?'Desfazer baixa':'Recebi (Pix/dinheiro)'}</button>`;
   return h;
 }
 function toggleRecPago(modId,item,key,idx){
@@ -16562,10 +16588,11 @@ function renderRadioOps(data){
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
 <script src="lancar.js?v=20261127w"></script>
+<script src="dialogo.js?v=20261127z"></script>
 <script src="novo.js?v=20261127h"></script>
 <script src="acesso.js?v=20261127x"></script>
 <script src="inicio.js?v=20261127w"></script>
-<script src="faturamento.js?v=20261127x"></script>
+<script src="faturamento.js?v=20261127z"></script>
 <script src="financeiro.js?v=20261127y"></script>
 <script src="funil.js?v=20261127x"></script>
 <script src="clientes.js?v=20261127x"></script>
@@ -16575,7 +16602,7 @@ function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC
 <script src="historico.js?v=20261127"></script>
 <script src="fluxos.js?v=20261127h"></script>
 <script src="assistente.js?v=20261029b"></script>
-<script src="usabilidade.js?v=20261127y"></script>
+<script src="usabilidade.js?v=20261127z"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261127x">
 </body>
 </html>
