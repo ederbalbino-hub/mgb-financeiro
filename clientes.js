@@ -307,6 +307,7 @@
     doc.addEventListener('keydown', function (ev) { var t = ev.target; if (ev.key === 'Enter' && t && t.classList && t.classList.contains('cli2-linha')) t.click(); });
   }
 
-  global.MGBClientes = Object.assign({ desenhar: desenhar, abrir: function (chave) { aberto = chave; global.goPage('clientes'); } }, regras);
+  global.MGBClientes = Object.assign({ desenhar: desenhar, abrir: function (chave) { aberto = chave; global.goPage('clientes'); },
+    fichaAberta: function () { return aberto; }, fechar: function () { aberto = null; } }, regras);
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);
