@@ -108,3 +108,22 @@ A `main` mudou bastante depois desta auditoria (Tela Vertical 50/50, despesa do 
 | C | Tela Vertical: banner 15 condomínios/35 telas × licença 16/36; Pizzaria "no ar" e "encerrada"; resumo dos sócios muda após abrir o formulário | A investigar. O "muda ao abrir" indica que uma tela **altera os dados ao desenhar** — prioridade, porque pode ser gravado |
 | D | Cobrança mensal: cartões mudam ao clicar (Tela Vertical 1,4 mil → 2,1 mil; 27.400 → 26.750) | A investigar. Mesmo sintoma do C |
 | E | Baixa manual some do registro do Faturamento | **Confirmado no código:** `fFatGuardar` (`index.html:7857` na main) recria `fatEmissoes[chave]` sem `pgManual`. Ao **sincronizar com o Asaas** (linha 8009) depois de uma baixa em dinheiro, a cobrança volta a aparecer como pendente no aviso da Home. O pagamento no financeiro continua marcado (fica em `recPagamentos`); só o aviso erra. Correção: preservar `pgManual` (e `pg` quando for manual) ao regravar |
+
+---
+
+## Correções feitas em 27/11 (branch `claude/auditoria-hub`, não publicado)
+
+| Achado | O que mudou | Prova |
+|---|---|---|
+| Relatório anual sem avulsas / mês fechado | Usa a mesma receita da Visão Geral; linha "Avulsas, manual e ajuste do fechamento pelas notas" | `bot/test/contas.test.js` |
+| Tabela "Por módulo" ≠ topo | Linha "Avulsas e ajuste pelas notas" fecha com o total (`financeiro.js` `linhaOutrasReceitas`) | `contas.test.js` |
+| "Investido" com gasolina / total da CC | Investido só com investimento (`elevInvestidoDoItem`); despesa sem "pago por" não é descontada | `contas.test.js` + tela conferida no navegador (Uptown 800, não 920,50) |
+| Mês em UTC (39 lugares) | `mesLocal()`/`diaLocal()` no topo do index.html; módulos com a conta local | teste de 30/11 21h30 + teste-guarda contra o jeito antigo |
+| Baixa manual sumindo (E) | `fFatGuardar` mantém `pgManual` | `contas.test.js` |
+| Telas que mudam os dados só de abrir (C, D) | `syncAnuncReceita` não regrava mais `rec.elev`; `fluxos.js` não cria chaves vazias em `relAjustes`; Receitas do módulo Tela Vertical calcula pelo mês | `docs/auditoria/ferramentas/telas-sem-efeito.cjs`: na main acusa 2 telas, aqui 0 de 26 |
+| Licença 16/36 × banner 15/35 (C) | Tabela da licença usa a linha mais recente, marca "ainda fora do ar" e diz no resumo quantos são | conferido no navegador |
+
+**Ainda em aberto:**
+- **A (Contratos × Clientes):** é decisão de regra — Diego/Eder escolhem se "Expansão", "Pilotos" e "Outros" contam ou não.
+- **B (contas 21 × 62):** as duas telas usam a mesma lista; com dados inventados batem (9 contas / 12 lançamentos, mesmo total). Pedi à conversa de Usabilidade o conjunto de dados que ela usou.
+- **Pizzaria "no ar × encerrada" e cartões da Cobrança mudando:** não reproduzidos com dados inventados. Hipótese para os cartões: o do Mercadão lê os Blocos de rádio do navegador, que chegam do servidor depois da primeira pintura (e o bloco duplicado carrega duas vezes). Aguardando os dados da Usabilidade.
