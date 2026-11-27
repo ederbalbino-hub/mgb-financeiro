@@ -356,6 +356,78 @@
     };
   };
 
+  // ── Cartões de seção no lugar das abas (Tela Vertical, Contratos, Estúdio — 27/11) ──
+  function ico(nome) {
+    var I = (global.MGBTelas2 && global.MGBTelas2.icones) || {};
+    if (nome === 'proximo') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (I[nome] || I.documento || '') + '</svg>';
+  }
+  function secoesDoGrupo(g) {
+    var H = hoje();
+    if (g === 'telavertical') {
+      var r = tenta('elevMesResumo', H.ano, H.mes) || { resultado: 0, rec: 0, desp: 0 }, condos = tenta('tvRedeHub') || [], telas = tenta('tvTelasAtivas') || 0;
+      var inv = tenta('elevInvestTotais') || { total: 0 }, meta = (ler('ELEV_TELAS_QTD', 0) || 0) * (ler('ELEV_INVEST_POR_TELA', 0) || 0);
+      var an = (ler('anunciantes', []) || []).filter(function (a) { if (!a.inicio || !a.valor) return false; var i = mesDe(a.inicio), n = Number(a.meses) || 1; return i != null && H.ref >= i && H.ref < i + n; });
+      var anV = an.reduce(function (a, x) { return a + (Number(x.valor) || 0); }, 0);
+      var renovar = an.filter(function (a) { return mesDe(a.inicio) + (Number(a.meses) || 1) - 1 - H.ref <= 1; }).length;
+      return [
+        { grupo: 'Gestão da rede', tab: 'tvpainel', ico: 'financeiro', nome: 'Mês e sócio', fato: (r.resultado < 0 ? '−' : '') + 'R$ ' + curto(Math.abs(r.resultado)), sub: 'resultado de ' + MESES_N[H.mes], tom: r.resultado < 0 ? 'erro' : 'ok' },
+        { grupo: 'Gestão da rede', tab: 'tvcondos', ico: 'empresa', nome: 'Condomínios', fato: String(condos.length), sub: telas + ' telas no ar' },
+        { grupo: 'Gestão da rede', tab: 'tvanunc', ico: 'comercial', nome: 'Anunciantes', fato: String(an.length), sub: 'R$ ' + curto(anV) + '/mês', chip: renovar ? [renovar + ' a renovar', 'atencao'] : null },
+        { grupo: 'Gestão da rede', tab: 'tvdespesas', ico: 'despesa', nome: 'Despesas gerais', fato: 'R$ ' + curto(inv.total), sub: meta ? 'investido de ' + curto(meta) : 'e investimento dos sócios' },
+        { grupo: 'Vender e fechar', tab: 'elevador', ico: 'contrato', nome: 'Contrato Anunciante', fato: '', sub: 'gerar o contrato de anúncio' },
+        { grupo: 'Vender e fechar', tab: 'parceria', ico: 'clientes', nome: 'Contrato Condomínio', fato: '', sub: 'parceria com o condomínio' },
+        { grupo: 'Vender e fechar', tab: 'tvproposta', ico: 'tela-vertical', nome: 'Proposta Elevadores', fato: '', sub: 'mídia kit para anunciantes' },
+        { grupo: 'Vender e fechar', tab: 'tvsindicos', ico: 'documento', nome: 'Proposta Síndicos', fato: '', sub: 'apresentação para síndicos' }
+      ];
+    }
+    if (g === 'estudio') return [
+      { grupo: 'Estúdio', tab: 'gerador', ico: 'spot', nome: 'Gerador de Spots', fato: '', sub: 'texto do spot com IA a partir do briefing' },
+      { grupo: 'Estúdio', tab: 'blocos', ico: 'radio', nome: 'Blocos Rádio', fato: '', sub: 'grade de blocos das rádios' }
+    ];
+    var L = tenta('contratosLista') || [], noAr = L.filter(function (c) { return c.fimKey != null && c.fimKey >= H.ref && (c.iniKey == null || c.iniKey <= H.ref); });
+    return [
+      { grupo: 'Contratos', tab: 'mercadao', ico: 'radio', nome: 'Contrato Mercadão', fato: '', sub: 'rádio indoor do Mercadão' },
+      { grupo: 'Contratos', tab: 'vaapty', ico: 'contrato', nome: 'Contrato Vaapty', fato: '', sub: 'franqueados: comodato e gestão' },
+      { grupo: 'Contratos', tab: 'pasta', ico: 'pasta', nome: 'Contratos salvos', fato: String(noAr.length), sub: 'contratos no ar' }
+    ];
+  }
+  function secoes() {
+    var pg = doc.getElementById('page-operacional');
+    if (!pg || pg.style.display === 'none') return;
+    var g = ler('curOpGroup', 'contratos'), nav = pg.querySelector('.hub-nav');
+    if (!nav) return;
+    var ativa = (pg.querySelector('.hub-tab.active') || { getAttribute: function () { return ''; } }).getAttribute('data-tab');
+    var L = secoesDoGrupo(g), box = pg.querySelector('.pnl-secoes');
+    if (!box) { box = doc.createElement('div'); box.className = 'pnl-secoes'; nav.parentNode.insertBefore(box, nav); }
+    pg.classList.add('pnl-com-secoes'); pg.classList.toggle('pnl-tv', g === 'telavertical');
+    var grupos = []; L.forEach(function (c) { if (grupos.indexOf(c.grupo) === -1) grupos.push(c.grupo); });
+    box.innerHTML = grupos.map(function (gr) {
+      return '<div class="pnl-sec-grupo">' + (grupos.length > 1 ? '<span class="pnl-sec-rot">' + esc(gr) + '</span>' : '') + '<div class="pnl-sec-grade">' + L.filter(function (c) { return c.grupo === gr; }).map(function (c) {
+        var on = c.tab === ativa;
+        return '<button type="button" class="pnl-sec' + (on ? ' pnl-sec-on' : '') + '" data-pnl-secao="' + esc(c.tab) + '" aria-pressed="' + on + '">' +
+          '<span class="pnl-sec-ico">' + ico(c.ico) + '</span><span class="pnl-sec-txt"><b>' + esc(c.nome) + '</b><small>' + esc(c.sub) + '</small></span>' +
+          (c.fato ? '<span class="pnl-sec-fato pnl-mono' + (c.tom === 'erro' ? ' pnl-vermelho' : '') + '">' + esc(c.fato) + '</span>' : '<span class="pnl-sec-seta">' + ico('proximo') + '</span>') +
+          (c.chip ? '<span class="pnl-sec-chip">' + chip(c.chip[0], c.chip[1]) + '</span>' : '') + '</button>';
+      }).join('') + '</div></div>';
+    }).join('');
+    // cabeçalho da Tela Vertical no visual do hub (logo azul-marinho, sem a faixa azul e dourada)
+    var hdr = pg.querySelector('.page-hdr'), ttl = doc.getElementById('op-hub-title'), sub = doc.getElementById('op-hub-sub');
+    if (g === 'telavertical' && ttl) {
+      if (hdr) hdr.style.background = '';
+      var logo = ler('TV_LOGO_NAVY', '');
+      if (logo && !ttl.querySelector('.pnl-tv-logo')) ttl.innerHTML = '<span class="pnl-tv-logo">' + logo.replace('<svg ', '<svg style="height:42px;width:auto;display:block" ') + '</span>';
+      var condos = tenta('tvRedeHub') || [];
+      if (sub) { sub.style.color = ''; sub.textContent = 'Rede de telas em elevadores · ' + condos.length + ' condomínios · ' + (tenta('tvTelasAtivas') || 0) + ' telas'; }
+    }
+  }
+  function cliqueSecao(ev) {
+    var b = ev.target.closest && ev.target.closest('[data-pnl-secao]');
+    if (!b) return;
+    var t = b.getAttribute('data-pnl-secao'), el = doc.querySelector('#page-operacional .hub-tab[data-tab="' + t + '"]');
+    if (typeof global.showOpPanel === 'function') global.showOpPanel(t, el);
+  }
+
   // ── colocar na tela ──────────────────────────────────────────────────────
   var ONDE = {
     leads: function (pg) { return pg.querySelector(':scope>.page-hdr') || pg.firstElementChild; },
@@ -382,6 +454,7 @@
   function atual() {
     var p = ler('curPage', '');
     if (AREAS[p]) desenhar(p);
+    if (p === 'operacional') { try { secoes(); } catch (e) {} }
     // no celular os gráficos mês a mês abrem nos meses mais recentes
     Array.prototype.forEach.call(doc.querySelectorAll('.pnl-g-rolar,.fin2-g-rolar'), function (el) { if (!el.scrollLeft && el.scrollWidth > el.clientWidth) el.scrollLeft = el.scrollWidth; });
   }
@@ -431,6 +504,19 @@
     '.pnl-bh{display:flex;flex-direction:column}.pnl-bh>div{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 70px;align-items:center;gap:10px;padding:4px 0}.pnl-bh span{font-size:12.5px;min-width:0;display:flex;flex-direction:column;overflow:hidden}.pnl-bh span small{font-size:11px;color:#5D5868}' +
     '.pnl-bh-t{position:relative;height:12px;background:#F6F4FA;border-radius:6px;overflow:hidden}.pnl-bh-t i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}.pnl-bh b{font-size:12px;font-weight:500;text-align:right;white-space:nowrap}' +
     '.pnl-vazio{margin:0;font-size:12.5px;color:#5D5868}' +
+    '.pnl-com-secoes .hub-nav{display:none!important}.pnl-secoes{font-family:\"DM Sans\",system-ui,sans-serif;max-width:1240px;margin:0 auto;padding:6px 22px 4px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}' +
+    '.pnl-sec-grupo{display:flex;flex-direction:column;gap:6px}.pnl-sec-rot{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5D5868}' +
+    '.pnl-sec-grade{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}' +
+    '.pnl-sec{all:unset;box-sizing:border-box;position:relative;cursor:pointer;display:flex;align-items:center;gap:11px;min-height:66px;padding:11px 13px;border:1px solid #E4DFF0;border-radius:14px;background:#fff;color:#241A38;font-family:\"DM Sans\",system-ui,sans-serif;min-width:0}' +
+    '.pnl-sec:hover{border-color:#CFC7E6;box-shadow:0 4px 14px rgba(42,23,96,.08)}.pnl-sec:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
+    '.pnl-sec-on{border-color:#4E38B2;background:#F3F0FD;box-shadow:inset 0 0 0 1px #4E38B2}' +
+    '.pnl-sec-ico{width:38px;height:38px;border-radius:11px;background:#ECE8FA;color:#4E38B2;display:flex;align-items:center;justify-content:center;flex:none}.pnl-sec-ico svg{width:20px;height:20px}.pnl-sec-on .pnl-sec-ico{background:#4E38B2;color:#fff}' +
+    '.pnl-sec-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.pnl-sec-txt b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pnl-sec-txt small{font-size:11.5px;color:#5D5868;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.pnl-sec-fato{font-size:16px;font-weight:500;white-space:nowrap}.pnl-vermelho{color:#B42318}.pnl-sec-seta{color:#8B7BE0;display:flex}.pnl-sec-seta svg{width:16px;height:16px}' +
+    '.pnl-sec-chip{position:absolute;top:-8px;right:10px}' +
+    '.pnl-tv .page-hdr{background:none!important}.pnl-tv-logo{display:inline-block}' +
+    '@media (max-width:1000px){.pnl-sec-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+    '@media (max-width:520px){.pnl-secoes{padding:6px 14px 4px}.pnl-sec-grade{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.pnl-sec{flex-wrap:wrap;min-height:0;padding:10px}.pnl-sec-fato{width:100%;font-size:15px}.pnl-sec-seta{display:none}.pnl-sec-txt b,.pnl-sec-txt small{white-space:normal}.pnl-sec-ico{width:32px;height:32px}}' +
     '@media (max-width:760px){.pnl-raiz{padding:12px 14px 4px}.pnl-g2,.pnl-g3{grid-template-columns:minmax(0,1fr)!important}.pnl-hero{padding:16px 18px}.pnl-hero h3{font-size:20px}.pnl-hero-nums{grid-template-columns:repeat(2,minmax(0,1fr))!important}.pnl-hero-meta{align-items:flex-start}.pnl-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.pnl-bh>div{grid-template-columns:minmax(0,1fr) 70px}.pnl-bh>div>span{grid-column:1/-1}}' +
     '@media (max-width:760px){#mod-tabs{overflow-x:auto;flex-wrap:nowrap!important;scrollbar-width:none}#mod-tabs>.mtab{flex:none}}' +
     '#page-operacional:has(.pnl-raiz) #tvp-root>div:nth-child(2),#page-operacional:has(.pnl-raiz) #tvp-root>div:nth-child(3){display:none!important}' +
@@ -438,12 +524,13 @@
 
   function ligar() {
     if (!doc.getElementById('pnl-css')) { var st = doc.createElement('style'); st.id = 'pnl-css'; st.textContent = CSS; (doc.body || doc.head).appendChild(st); }
-    ['goPage', 'goOperacional', 'showOpPanel', 'showContabTab', 'showFerrTab', 'showRelTab', 'buildLeads', 'aplicarEstado', 'buildAll'].forEach(envolver);
+    ['goPage', 'goOperacional', 'showOpPanel', 'applyOpGroup', 'showContabTab', 'showFerrTab', 'showRelTab', 'buildLeads', 'aplicarEstado', 'buildAll'].forEach(envolver);
     if (global.MGBClientes && typeof global.MGBClientes.desenhar === 'function' && !global.MGBClientes.desenhar.__pnl) {
       var od = global.MGBClientes.desenhar, nd = function () { var r = od.apply(this, arguments); agendar(); return r; }; nd.__pnl = true; global.MGBClientes.desenhar = nd;
     }
     doc.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('#page-clientes [data-cli2], #page-leads')) agendar(); }, true);
     doc.addEventListener('click', clique);
+    doc.addEventListener('click', cliqueSecao);
     agendar();
   }
 
