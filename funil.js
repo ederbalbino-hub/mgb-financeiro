@@ -30,7 +30,20 @@
     });
     return r;
   }
-  var regras = { situacaoLead: situacaoLead, resumoFunil: resumoFunil };
+  // Cadastro (clientesInfo) do cliente que veio deste lead. O módulo nem sempre é o produto do lead:
+  // lead de condomínio vira cadastro na Tela Vertical (elev), lead de rádio pode virar Mercadão. Procura
+  // primeiro no módulo esperado e depois nos outros; entre vários, prefere o que tem contrato na Assinafy.
+  function cadastroDoLead(l, info) {
+    if (!l || !info) return null;
+    var nome = (l.itemCriado && l.itemCriado !== 'None') ? l.itemCriado : l.nome;
+    if (!nome) return null;
+    var primeiro = l.produto === 'condo' ? 'elev' : l.produto;
+    var mods = [primeiro].concat(Object.keys(info).filter(function (m) { return m !== primeiro && m.charAt(0) !== '_'; }));
+    var achados = mods.map(function (m) { return info[m] && info[m][nome]; }).filter(function (x) { return x && typeof x === 'object'; });
+    return achados.filter(function (x) { return x.assinadoEm || x.assinafyDocId; })[0] || achados[0] || null;
+  }
+
+  var regras = { situacaoLead: situacaoLead, resumoFunil: resumoFunil, cadastroDoLead: cadastroDoLead };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (!doc) return;
 
@@ -50,7 +63,7 @@
     var s = situacaoLead(l, venc);
     var avisos = '';
     try {
-      var inf = (((ler('clientesInfo', {}) || {})[l.produto] || {})[l.itemCriado]) || null;
+      var inf = l.estagio === 'fechado' ? cadastroDoLead(l, ler('clientesInfo', {})) : null;
       if (inf && inf.assinadoEm) avisos += '<span class="fun2-av fun2-ok">Contrato assinado em ' + new Date(inf.assinadoEm).toLocaleDateString('pt-BR') + '</span>';
       else if (inf && inf.assinafyDocId) avisos += '<span class="fun2-av">Aguardando assinatura</span>';
     } catch (e) {}

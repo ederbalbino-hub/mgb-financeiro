@@ -56,7 +56,7 @@
     (lista || []).forEach(function (l) {
       if (!l) return;
       if (c[l.estagio] !== undefined) c[l.estagio]++;
-      if (l.estagio === 'fechado' && !l.itemCriado) c.semCadastro++;
+      if (l.estagio === 'fechado' && (!l.itemCriado || l.itemCriado === 'None')) c.semCadastro++;
     });
     return c;
   }

@@ -4412,6 +4412,7 @@ window.mgbContratoEnviado=function(mod,nome,docId){
     const info=clientesInfo[mod][key]; info.assinafyDocId=docId; info.assinadoEm=null;
     (info.jornada=info.jornada||[]).push({em:new Date().toISOString(),texto:'Contrato enviado para assinatura (Assinafy)'});
     scheduleSave(); try{ buildLeads(); }catch(e){}
+    return info;
   }catch(e){ console.warn('mgbContratoEnviado',e); }
 };
 async function mgbConferirAssinaturas(){
@@ -4429,6 +4430,7 @@ async function mgbConferirAssinaturas(){
   if(n){ try{ scheduleSave(); }catch(e){} try{ buildLeads(); }catch(e){} try{ leadToast('✅ Contrato assinado: '+nomes.join(', ')); }catch(e){} }
   return n;
 }
+window.mgbConferirAssinaturas=mgbConferirAssinaturas; // fluxos.js: "Conferir agora" e conferência de tempos em tempos
 window.mgbSalvarContrato=function(tipo,dados){
   const d=load();if(!d[tipo])d[tipo]=[];
   dados._id=Date.now();
@@ -7174,10 +7176,12 @@ function fNotaCliente(){
   // Rádio Moinho (Bureau): a Nota MGB do mês já vem calculada sozinha no Rádio Ops (fee+comissão+Connectmix) — puxa automático
   const modEl=document.getElementById('f-nota-mod'), valorEl=document.getElementById('f-nota-valor');
   if(mod==='radioops' && item==='Famiglia Venturelli' && valorEl && !valorEl.value){
-    const hoje=new Date(); const rf=(typeof ropsFinMes==='function')?ropsFinMes(hoje.getFullYear(),hoje.getMonth()):{receita:0};
+    // Começo do mês: a nota é do mês que fechou. Sem valor no mês atual, usa o anterior e diz qual (27/11)
+    const hoje=new Date(); let hA=hoje.getFullYear(), hM=hoje.getMonth(); let rf=(typeof ropsFinMes==='function')?ropsFinMes(hA,hM):{receita:0};
+    if(!(rf.receita>0) && typeof ropsFinMes==='function'){ const pA=hM?hA:hA-1, pM=hM?hM-1:11, ra=ropsFinMes(pA,pM); if(ra.receita>0){ rf=ra; hA=pA; hM=pM; } }
     if(rf.receita>0){
       valorEl.value=fRecNum(rf.receita);
-      modEl.innerHTML='Módulo: '+(m.label||mod)+' · <span style="color:var(--green)">✓ Nota MGB de '+MESES[hoje.getMonth()]+'/'+hoje.getFullYear()+' puxada do Rádio Ops</span>';
+      modEl.innerHTML='Módulo: '+(m.label||mod)+' · <span style="color:var(--green)">✓ Nota MGB de '+MESES[hM]+'/'+hA+' puxada do Rádio Ops</span>';
     }else{
       modEl.innerHTML='Módulo: '+(m.label||mod)+' · <span style="color:#B45309">⚠ não achei a Nota MGB deste mês no Rádio Ops — confira lá (aba Financeiro) e digite o valor manual</span>';
     }
@@ -16516,16 +16520,17 @@ function renderRadioOps(data){
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
 <script src="lancar.js"></script>
-<script src="novo.js?v=20261103"></script>
+<script src="novo.js?v=20261127"></script>
 <script src="acesso.js?v=20261123"></script>
-<script src="inicio.js?v=20261123"></script>
+<script src="inicio.js?v=20261127"></script>
 <script src="faturamento.js?v=20261119b"></script>
 <script src="financeiro.js?v=20261127c"></script>
-<script src="funil.js?v=20261123"></script>
+<script src="funil.js?v=20261127"></script>
 <script src="clientes.js?v=20261127"></script>
 <script src="menu.js?v=20261124"></script>
 <script src="telas2.js?v=20261124"></script>
 <script src="historico.js?v=20261127"></script>
+<script src="fluxos.js?v=20261127"></script>
 <script src="assistente.js?v=20261029b"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261123">
 </body>
