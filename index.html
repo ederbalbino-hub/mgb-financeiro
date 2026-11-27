@@ -7071,8 +7071,10 @@ function fRecGerar(){
   if(rec&&rec.cliente!==r.cliente&&!confirm('Já existe o recibo '+r.numero+' pra '+rec.cliente+'. Sobrescrever?')) return;
   if(!rec){ rec={id:reciboId++}; recibos.push(rec); }
   Object.assign(rec, r, {ts:Date.now()});
+  if(window.mgbAcao) mgbAcao('Recibo '+rec.numero+' de '+rec.cliente+' ('+f(rec.valor)+')');
   try{ scheduleSave(); }catch(e){}
   fRecLista(); fRecAbrirImpressao(rec);
+  try{ fRecLimpar(); }catch(e){} // 27/11 (usabilidade): o formulário ficava com o mesmo número; para reabrir, use "editar" na lista
 }
 function fRecLimpar(){ ['f-rec-pagador','f-rec-doc','f-rec-desc','f-rec-valor','f-rec-obs'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); document.getElementById('f-rec-cli').value=''; document.getElementById('f-rec-cli').dataset.livre=''; if(_cpForm.rec) _cpForm.rec.limpar(); document.getElementById('f-rec-mod').textContent=''; document.getElementById('f-rec-hint').textContent=''; document.getElementById('f-rec-num').value=fRecProximoNum(); fRecPreview(); }
 function fRecLista(){
@@ -11340,7 +11342,9 @@ function toggleEmpresaDesp(id){
 }
 
 function delEmpresaDesp(id){
-  if(!confirm('Remover essa despesa?')) return;
+  const _d=empresaDespesas.find(x=>x.id===id);
+  if(!confirm(_d?'Remover a despesa fixa "'+_d.nome+'" ('+f(_d.valor)+'/mês)?':'Remover essa despesa?')) return;
+  if(_d&&window.mgbAcao) mgbAcao('Removeu a despesa fixa '+_d.nome);
   empresaDespesas=empresaDespesas.filter(x=>x.id!==id);
   buildVisaoEmpresa();
   buildSidebar();
@@ -16550,7 +16554,7 @@ function renderRadioOps(data){
 }
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
-<script src="lancar.js?v=20261127f"></script>
+<script src="lancar.js?v=20261127u"></script>
 <script src="novo.js?v=20261127b"></script>
 <script src="acesso.js?v=20261127u"></script>
 <script src="inicio.js?v=20261127v"></script>

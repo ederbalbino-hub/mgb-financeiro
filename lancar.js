@@ -362,7 +362,7 @@
       '<label class="f" for="lz-cat-txt" id="lz-cat-txt-w" hidden>O que foi?<input id="lz-cat-txt" placeholder="ex.: Conserto do carro, curso, brinde de cliente" autocomplete="off"></label>' +
       '</section>' +
       '<section class="card"><div class="sec">3 · Detalhes</div><div class="campos">' +
-      '<label class="f" for="lz-desc">Descrição<input id="lz-desc" list="lz-desc-l" placeholder="ex.: Gasolina ida a Curitiba" autocomplete="off"></label>' +
+      '<label class="f" for="lz-desc">Descrição (se ficar em branco, usa a categoria)<input id="lz-desc" list="lz-desc-l" placeholder="ex.: Gasolina ida a Curitiba" autocomplete="off"></label>' +
       '<datalist id="lz-desc-l">' + Object.keys(sug.descricoes).sort().map(function (d) { return '<option value="' + esc(d) + '">'; }).join('') + '</datalist>' +
       '<label class="f" for="lz-forn">Fornecedor ou lugar<input id="lz-forn" list="lz-forn-l" placeholder="ex.: Posto Graal" autocomplete="off"></label>' +
       '<datalist id="lz-forn-l">' + sug.fornecedores.map(function (d) { return '<option value="' + esc(d) + '">'; }).join('') + '</datalist>' +
@@ -425,9 +425,14 @@
         estado.forma === 'mensal' ? 'Todo mês: informe o valor de UM mês; repete a partir do mês da data.' : 'À vista: o valor cai no mês da data.';
       resumo();
     }
+    function descDaCategoria() {
+      var c = categoria(estado.categoria); if (!c) return '';
+      return c.livre ? el.querySelector('#lz-cat-txt').value.trim() : String(c.rotulo || '').replace(/^[^A-Za-zÀ-ú]+/, '').trim();
+    }
     function dados() {
       return { destino: estado.destino, item: estado.destino === MGB_DIA ? '' : el.querySelector('#lz-item').value, categoria: estado.categoria, categoriaTxt: el.querySelector('#lz-cat-txt').value,
-        descricao: el.querySelector('#lz-desc').value, fornecedor: el.querySelector('#lz-forn').value, valor: el.querySelector('#lz-valor').value,
+        // 27/11 (usabilidade): sem descrição, usa o nome da categoria (ex.: "Combustível") em vez de travar o lançamento
+        descricao: el.querySelector('#lz-desc').value.trim() || descDaCategoria(), fornecedor: el.querySelector('#lz-forn').value, valor: el.querySelector('#lz-valor').value,
         data: el.querySelector('#lz-data').value, forma: estado.forma, parcelas: el.querySelector('#lz-parc').value, meses: el.querySelector('#lz-meses').value,
         quemPagou: estado.quemPagou, jaPaga: estado.jaPaga, pagto: estado.pagto || '', lancadoPor: quem() };
     }

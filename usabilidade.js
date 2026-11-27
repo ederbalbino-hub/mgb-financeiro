@@ -53,7 +53,8 @@
       '@media (max-width:760px){#usab-salvo{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}' +
       '@media (prefers-reduced-motion:reduce){#usab-salvo{transition:none}}' +
       // Tela Vertical › Investimento e despesas: no celular o formulário estourava a largura (551 px) e cortava o botão
-      '@media (max-width:760px){#acc-hdr-einvest,#acc-hdr-einvest>div{flex-wrap:wrap;gap:8px!important}' +
+      '@media (max-width:760px){#acc-hdr-einvest,#acc-hdr-einvest>div,#panel-tvdespesas .acc-hdr,#panel-tvdespesas .acc-hdr>div{flex-wrap:wrap;gap:8px!important;min-width:0}' +
+        '#tv-sistema-grid{overflow-x:auto;max-width:100%}#panel-tvdespesas{max-width:100%;overflow-x:hidden}' +
         '#einvest-form .anunc-form-row{flex-wrap:wrap}#einvest-form .anunc-form-field{width:100%!important;min-width:0!important;flex:1 1 100%!important}' +
         '#einvest-form .anunc-form-inp{width:100%!important;min-height:44px;font-size:16px}#elev-invest-section{max-width:100%;overflow-x:hidden}}' +
       // Visão Receita: botão "Recebi" no lugar do link de 9 px, busca e filtro
