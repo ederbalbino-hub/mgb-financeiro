@@ -52,9 +52,10 @@
   function cartoes(lista) {
     if (!lista || !lista.length) return '';
     return '<div class="pnl-cards">' + lista.map(function (c) {
-      return '<div class="pnl-card pnl-card-' + (c.tom || 'neutro') + '"' + (c.dica ? ' title="' + esc(c.dica) + '"' : '') + '><span class="pnl-card-cab"><b>' + esc(c.titulo) + '</b>' + (c.chip ? chip(c.chip[0], c.chip[1]) : '') + '</span>' +
+      var tag = c.ir ? 'button type="button" data-pnl-ir="' + esc(c.ir) + '" aria-label="' + esc('Abrir ' + c.titulo) + '"' : 'div';
+      return '<' + tag + ' class="pnl-card pnl-card-' + (c.tom || 'neutro') + (c.ir ? ' pnl-card-ir' : '') + '"' + (c.dica ? ' title="' + esc(c.dica) + '"' : '') + '><span class="pnl-card-cab"><b>' + esc(c.titulo) + '</b>' + (c.chip ? chip(c.chip[0], c.chip[1]) : '') + '</span>' +
         '<span class="pnl-card-v pnl-mono">' + c.valor + '</span>' + (c.sub ? '<small>' + esc(c.sub) + '</small>' : '') +
-        (c.barra ? '<span class="pnl-card-b" aria-hidden="true"><i style="width:' + Math.max(0, Math.min(100, c.barra[0])).toFixed(0) + '%;background:' + (c.barra[1] || '#4E38B2') + '"></i>' + (c.marca != null ? '<u style="left:' + Math.max(0, Math.min(100, c.marca)).toFixed(0) + '%"></u>' : '') + '</span>' : '') + '</div>';
+        (c.barra ? '<span class="pnl-card-b" aria-hidden="true"><i style="width:' + Math.max(0, Math.min(100, c.barra[0])).toFixed(0) + '%;background:' + (c.barra[1] || '#4E38B2') + '"></i>' + (c.marca != null ? '<u style="left:' + Math.max(0, Math.min(100, c.marca)).toFixed(0) + '%"></u>' : '') + '</span>' : '') + (c.ir ? '</button>' : '</div>');
     }).join('') + '</div>';
   }
   // serie: [{rot, a, b?, atual, prev}] — a = barra roxa, b = barra laranja (opcional), linha = a-b (opcional)
@@ -137,6 +138,19 @@
       (p.blocos && p.blocos.length ? '<div class="pnl-g3" style="grid-template-columns:repeat(' + Math.min(3, p.blocos.length) + ',minmax(0,1fr))">' + p.blocos.join('') + '</div>' : '');
   }
 
+  // id do módulo a partir do id ou do nome ("MB — Móveis Brasília", "Rádio Interna"…)
+  function idModulo(x) {
+    var mods = ler('MODULES', []) || [], n = String(x || '').split('—')[0].trim().toLowerCase();
+    var m = mods.filter(function (mm) { return mm.id === x || String(mm.label).toLowerCase() === String(x).toLowerCase() || String(mm.label).split('—')[0].trim().toLowerCase() === n; })[0];
+    return m ? m.id : '';
+  }
+  function clique(ev) {
+    var b = ev.target.closest && ev.target.closest('[data-pnl-ir]');
+    if (!b) return;
+    var v = b.getAttribute('data-pnl-ir');
+    if (v.indexOf('mod:') === 0) { var id = v.slice(4); if (typeof global.drillMod === 'function') { global.drillMod(id); global.scrollTo(0, 0); } }
+  }
+
   // ── adaptadores por área ─────────────────────────────────────────────────
   var AREAS = {};
 
@@ -193,14 +207,14 @@
     var venc = D.filter(function (c) { return c.vencidos; }), emAb = venc.reduce(function (a, c) { return a + c.emAberto; }, 0);
     var top = ativos.slice().sort(function (a, b) { return b.pagaPorMes - a.pagaPorMes; });
     var conc = pct(top.slice(0, 5).reduce(function (a, c) { return a + c.pagaPorMes; }, 0), mensal);
-    var porMod = {}; ativos.forEach(function (c) { (c.contratos || []).forEach(function (ct) { var r = ct.modRot || 'Outros'; porMod[r] = (porMod[r] || 0) + (ct.doMes || 0); }); });
-    var mods = Object.keys(porMod).map(function (r) { return { rot: r, valor: porMod[r] }; }).filter(function (x) { return x.valor > 0; }).sort(function (a, b) { return b.valor - a.valor; });
+    var porMod = {}; ativos.forEach(function (c) { (c.contratos || []).forEach(function (ct) { var id = ct.mod || ct.modRot || 'outros'; porMod[id] = porMod[id] || { rot: ct.modRot || 'Outros', valor: 0, n: 0 }; porMod[id].valor += ct.doMes || 0; if (ct.doMes) porMod[id].n++; }); });
+    var mods = Object.keys(porMod).map(function (id) { return { id: id, rot: porMod[id].rot, valor: porMod[id].valor, n: porMod[id].n }; }).filter(function (x) { return x.valor > 0; }).sort(function (a, b) { return b.valor - a.valor; });
     var ticket = ativos.length ? mensal / ativos.length : 0;
     return {
       hero: { chip: 'Carteira de clientes', titulo: 'Carteira', valor: 'R$ ' + brl(mensal) + '<small>/mês</small>', frase: ativos.length + ' clientes pagando este mês' + (venc.length ? ' · ' + venc.length + ' com boleto vencido' : ' · ninguém com boleto vencido') + '.',
         nums: [['clientes ativos', String(ativos.length)], ['ticket médio', curto(ticket)], ['em aberto vencido', curto(emAb)], ['cadastrados', String(D.length)]],
         anel: [pct(ativos.length - venc.length, ativos.length), 'em dia'] },
-      cartoes: mods.slice(0, 6).map(function (m) { return { titulo: m.rot, valor: curto(m.valor), sub: Math.round(pct(m.valor, mensal)) + '% da carteira', tom: 'neutro', barra: [pct(m.valor, mods[0].valor), '#4E38B2'] }; }),
+      cartoes: mods.slice(0, 6).map(function (m) { return { titulo: m.rot, valor: curto(m.valor), sub: Math.round(pct(m.valor, mensal)) + '% da carteira · ' + m.n + (m.n === 1 ? ' cliente' : ' clientes'), tom: 'neutro', barra: [pct(m.valor, mods[0].valor), '#4E38B2'], ir: idModulo(m.id) ? 'mod:' + idModulo(m.id) : '' }; }),
       blocos: [
         bloco('Maiores clientes', '<span class="pnl-sub">por mês</span>', barrasH(top.slice(0, 7).map(function (c) { return { rot: c.nome, valor: c.pagaPorMes, cor: c.vencidos ? '#B42318' : '#4E38B2' }; }))),
         bloco('Concentração', chip(Math.round(conc) + '% nos 5 maiores', conc > 60 ? 'atencao' : 'ok'), rosca(top.slice(0, 5).map(function (c) { return { rot: c.nome, valor: c.pagaPorMes }; }).concat(top.length > 5 ? [{ rot: 'Demais ' + (top.length - 5), valor: top.slice(5).reduce(function (a, c) { return a + c.pagaPorMes; }, 0), cor: '#E4DFF0' }] : []), curto(mensal), 'por mês')),
@@ -249,7 +263,7 @@
       hero: { chip: 'Contratos no ar · ' + MESES_N[H.mes], titulo: 'Contratos somam', valor: 'R$ ' + brl(mensal) + '<small>/mês</small>', frase: noAr.length + ' contratos no ar' + (ren.length ? ' · ' + ren.length + ' vencem nos próximos 90 dias (R$ ' + brl(renV) + '/mês a defender).' : ' · nenhum vence nos próximos 90 dias.'),
         nums: [['no ar', String(noAr.length)], ['vencem em 90 dias', String(ren.length), curto(renV) + '/mês'], ['sem data para acabar', String(semFim)], ['encerrados', String(enc.length)]],
         anel: [pct(mensal - renV, mensal), 'garantido 90 dias'] },
-      cartoes: ors.slice(0, 6).map(function (o) { return { titulo: o.rot, valor: curto(o.valor), sub: o.n + (o.n === 1 ? ' contrato' : ' contratos') + ' · ' + Math.round(pct(o.valor, mensal)) + '%', tom: 'neutro', barra: [pct(o.valor, ors[0].valor), '#4E38B2'] }; }),
+      cartoes: ors.slice(0, 6).map(function (o) { var id = idModulo(o.rot); return { titulo: o.rot, valor: curto(o.valor), sub: o.n + (o.n === 1 ? ' contrato' : ' contratos') + ' · ' + Math.round(pct(o.valor, mensal)) + '%', tom: 'neutro', barra: [pct(o.valor, ors[0].valor), '#4E38B2'], ir: id ? 'mod:' + id : '' }; }),
       blocos: [
         bloco('Valor por área', '', rosca(ors, curto(mensal), 'por mês')),
         bloco('Renovações 90 dias', ren.length ? chip(ren.length + ' contratos', 'atencao') : chip('nenhuma', 'ok'), ren.length ? '<div class="pnl-itens">' + ren.slice(0, 7).map(function (c) { return '<div><i style="background:' + (c.fimKey === H.ref ? '#B42318' : '#B45309') + '"></i><span>' + esc(c.nome) + '<small>vence ' + rotM(c.fimKey) + '</small></span><b class="pnl-mono">' + curto(c.valor) + '</b></div>'; }).join('') + '</div>' : vazio('Nenhum contrato vence nos próximos 90 dias.')),
@@ -311,14 +325,14 @@
   // Cobrança mensal (relatórios de repasse)
   AREAS.relatorios = function () {
     var H = hoje(), mods = ler('MODULES', []) || [];
-    var linhas = mods.filter(function (m) { return m.id !== 'taroba'; }).map(function (m) { return { rot: String(m.label).split('—')[0].trim(), valor: tenta('recModMes', m.id, H.ano, H.mes) || 0, n: (m.items || []).filter(function (i) { return (tenta('recOfMes', m.id, i, H.ano, H.mes) || 0) > 0; }).length }; }).filter(function (x) { return x.valor > 0; }).sort(function (a, b) { return b.valor - a.valor; });
+    var linhas = mods.filter(function (m) { return m.id !== 'taroba'; }).map(function (m) { return { id: m.id, rot: String(m.label).split('—')[0].trim(), valor: tenta('recModMes', m.id, H.ano, H.mes) || 0, n: (m.items || []).filter(function (i) { return (tenta('recOfMes', m.id, i, H.ano, H.mes) || 0) > 0; }).length }; }).filter(function (x) { return x.valor > 0; }).sort(function (a, b) { return b.valor - a.valor; });
     var cli = tenta('coletaClientesMes', H.ano, H.mes) || [], prev = cli.reduce(function (a, l) { return a + (l.valor || 0); }, 0), pago = cli.filter(function (l) { return l.pago; }).reduce(function (a, l) { return a + l.valor; }, 0);
     var venc = cli.filter(function (l) { return !l.pago && l.asaas && l.asaas.st === 'vencido'; });
     return {
       hero: { chip: 'Cobrança mensal · ' + MESES_N[H.mes], titulo: 'Recebido', valor: 'R$ ' + brl(pago), frase: 'de R$ ' + brl(prev) + ' cobrados de ' + cli.length + ' clientes neste mês.',
         nums: [['a receber', curto(prev - pago)], ['vencidos', String(venc.length), curto(venc.reduce(function (a, l) { return a + l.valor; }, 0))], ['clientes', String(cli.length)]],
         anel: [pct(pago, prev), 'recebido'] },
-      cartoes: linhas.slice(0, 6).map(function (x) { return { titulo: x.rot, valor: curto(x.valor), sub: x.n + ' clientes com receita', tom: 'neutro', barra: [pct(x.valor, linhas[0].valor), '#4E38B2'] }; }),
+      cartoes: linhas.slice(0, 6).map(function (x) { return { titulo: x.rot, valor: curto(x.valor), sub: x.n + ' clientes com receita', tom: 'neutro', barra: [pct(x.valor, linhas[0].valor), '#4E38B2'], ir: 'mod:' + x.id }; }),
       blocos: []
     };
   };
@@ -397,6 +411,7 @@
     '.pnl-anel b{font:500 22px "DM Mono",ui-monospace,monospace}.pnl-anel span{font-size:11px;max-width:80px;line-height:1.2}' +
     '.pnl-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}' +
     '.pnl-card{display:flex;flex-direction:column;gap:3px;padding:11px 13px 13px;border-radius:14px;border:1px solid #E4DFF0;border-top:3px solid #CFC7E6;background:#fff;min-width:0}' +
+    '.pnl-card-ir{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}.pnl-card-ir:hover{border-color:#CFC7E6;box-shadow:0 4px 14px rgba(42,23,96,.08)}.pnl-card-ir:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
     '.pnl-card-saudavel{border-top-color:#15803D;background:#F6FBF8}.pnl-card-atencao{border-top-color:#B45309;background:#FFFAF2}.pnl-card-critico{border-top-color:#B42318;background:#FEF6F5}' +
     '.pnl-card-cab{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}.pnl-card-cab b{font-size:13px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '.pnl-card-v{font-size:21px;font-weight:500;letter-spacing:-.02em}.pnl-card small{font-size:11.5px;color:#5D5868;line-height:1.35}' +
@@ -428,6 +443,7 @@
       var od = global.MGBClientes.desenhar, nd = function () { var r = od.apply(this, arguments); agendar(); return r; }; nd.__pnl = true; global.MGBClientes.desenhar = nd;
     }
     doc.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('#page-clientes [data-cli2], #page-leads')) agendar(); }, true);
+    doc.addEventListener('click', clique);
     agendar();
   }
 
