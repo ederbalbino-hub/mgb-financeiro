@@ -131,6 +131,16 @@
     return '<section class="pnl-bloco"><div class="pnl-bloco-cab"><h3>' + esc(titulo) + '</h3>' + (extra || '') + '</div>' + corpo + (nota ? '<span class="pnl-nota">' + esc(nota) + '</span>' : '') + '</section>';
   }
   function vazio(t) { return '<p class="pnl-vazio">' + esc(t) + '</p>'; }
+  // Faixa compacta (trabalho primeiro — Usabilidade 27/11): os números principais numa linha e o
+  // painel completo num botão. Lembra a escolha por área neste navegador.
+  function abertoArea(area) { try { return global.localStorage.getItem('mgb_pnl_' + area) === '1'; } catch (e) { return false; } }
+  function faixa(area, h) {
+    return '<section class="pnl-faixa" aria-label="' + esc(h.titulo) + '"><div class="pnl-faixa-t">' + (h.chip ? '<span>' + esc(h.chip) + '</span>' : '') +
+      '<b>' + esc(h.titulo) + ' <em class="pnl-mono" style="color:' + (h.cor || DEST) + '">' + h.valor + '</em></b></div>' +
+      (h.nums && h.nums.length ? '<div class="pnl-faixa-n">' + h.nums.map(function (n) { return '<div><b class="pnl-mono">' + n[1] + '</b><small>' + esc(n[0]) + '</small></div>'; }).join('') + '</div>' : '') +
+      (h.anel ? '<div class="pnl-faixa-anel">' + anel(h.anel[0], 56, 6, '#FFFFFF', 'rgba(255,255,255,0.18)', '#FFFFFF', '', h.anel[1]) + '<small>' + esc(h.anel[1]) + '</small></div>' : '') +
+      '<button type="button" class="pnl-faixa-bt" data-pnl-toggle="' + esc(area) + '" aria-expanded="false">Ver painel completo</button></section>';
+  }
   // monta o painel: {hero, cartoes, grafico:{titulo,extra,corpo}, pulso, blocos:[html]}
   function montar(p) {
     return (p.hero ? hero(p.hero) : '') + cartoes(p.cartoes) +
@@ -145,6 +155,8 @@
     return m ? m.id : '';
   }
   function clique(ev) {
+    var tg = ev.target.closest && ev.target.closest('[data-pnl-toggle]');
+    if (tg) { var ar = tg.getAttribute('data-pnl-toggle'); try { global.localStorage.setItem('mgb_pnl_' + ar, abertoArea(ar) ? '0' : '1'); } catch (e) {} desenhar(ar); return; }
     var b = ev.target.closest && ev.target.closest('[data-pnl-ir]');
     if (!b) return;
     var v = b.getAttribute('data-pnl-ir');
@@ -483,14 +495,14 @@
     if (c.forma === 'transf') { if (c.banco) dados.push(['Banco', c.banco]); if (c.agencia) dados.push(['Agência', c.agencia, true]); if (c.conta) dados.push(['Conta', c.conta, true]); }
     if (c.doc) dados.push(['CNPJ/CPF', c.doc, true]);
     if (c.obs) dados.push(['Observação', c.obs]);
-    var form = editRep === id ? '<form class="pnl-rep-form" data-pnl-rep-form="' + id + '" onsubmit="return false">' +
+    var form = editRep === id ? '<form class="pnl-rep-form" data-pnl-rep-form="' + id + '" data-forma="' + esc(c.forma || '') + '" onsubmit="return false">' +
       '<label>Favorecido<input name="favorecido" value="' + esc(c.favorecido || '') + '"></label>' +
       '<label>CNPJ/CPF<input name="doc" value="' + esc(c.doc || '') + '"></label>' +
-      '<label>Forma de repasse<select name="forma">' + ['', 'pix', 'transf', 'boleto', 'dinheiro'].map(function (f) { return '<option value="' + f + '"' + (c.forma === f ? ' selected' : '') + '>' + (f ? FORMAS[f] : 'Escolha…') + '</option>'; }).join('') + '</select></label>' +
-      '<label>Chave PIX<input name="pix" value="' + esc(c.pix || '') + '" placeholder="CNPJ, e-mail, telefone ou chave aleatória"></label>' +
-      '<label>Banco<input name="banco" value="' + esc(c.banco || '') + '"></label>' +
-      '<label>Agência<input name="agencia" value="' + esc(c.agencia || '') + '"></label>' +
-      '<label>Conta<input name="conta" value="' + esc(c.conta || '') + '"></label>' +
+      '<label>Forma de repasse<select name="forma" onchange="this.form.setAttribute(\'data-forma\',this.value)">' + ['', 'pix', 'transf', 'boleto', 'dinheiro'].map(function (f) { return '<option value="' + f + '"' + (c.forma === f ? ' selected' : '') + '>' + (f ? FORMAS[f] : 'Escolha…') + '</option>'; }).join('') + '</select></label>' +
+      '<label data-so="pix">Chave PIX<input name="pix" value="' + esc(c.pix || '') + '" placeholder="CNPJ, e-mail, telefone ou chave aleatória"></label>' +
+      '<label data-so="transf">Banco<input name="banco" value="' + esc(c.banco || '') + '"></label>' +
+      '<label data-so="transf">Agência<input name="agencia" value="' + esc(c.agencia || '') + '"></label>' +
+      '<label data-so="transf">Conta<input name="conta" value="' + esc(c.conta || '') + '"></label>' +
       '<label class="pnl-rep-larga">Observação<input name="obs" value="' + esc(c.obs || '') + '" placeholder="ex.: repasse até o dia 10, mandar comprovante por WhatsApp"></label>' +
       '<div class="pnl-rep-acoes"><button type="button" class="pnl-bt" data-pnl-rep="salvar:' + id + '">Salvar dados</button><button type="button" class="pnl-bt2" data-pnl-rep="cancelar:' + id + '">Cancelar</button></div></form>' : '';
     return '<section class="pnl-rep" aria-label="' + esc(tit) + '"><div class="pnl-rep-cab"><div><span class="pnl-rep-rot">' + esc(tit) + '</span><b>' + esc(c.favorecido || '—') + '</b><small>' + linhaV + '</small></div>' +
@@ -574,7 +586,8 @@
       if (ref && ref.parentNode) ref.parentNode.insertBefore(box, ref.nextSibling); else pg.insertBefore(box, pg.firstChild);
     }
     box.setAttribute('data-area', area);
-    box.innerHTML = montar(dados);
+    if (dados.hero && !abertoArea(area)) box.innerHTML = faixa(area, dados.hero);
+    else box.innerHTML = montar(dados) + (dados.hero ? '<div class="pnl-recolher"><button type="button" class="pnl-bt2" data-pnl-toggle="' + esc(area) + '" aria-expanded="true">Recolher painel</button></div>' : '');
   }
   function atual() {
     var p = ler('curPage', '');
@@ -608,6 +621,13 @@
     '.pnl-hero-meta{display:flex;flex-direction:column;align-items:flex-end;position:relative}.pnl-hero-meta span{font-size:13px;letter-spacing:.12em;color:#C9C0E6;font-weight:700}.pnl-hero-meta b{font-size:36px;font-weight:500;line-height:1}' +
     '.pnl-hero-anel{flex:0 0 auto;position:relative}.pnl-anel{position:relative;flex:none}.pnl-anel svg{display:block}.pnl-anel>div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}' +
     '.pnl-anel b{font:500 22px "DM Mono",ui-monospace,monospace}.pnl-anel span{font-size:13px;max-width:80px;line-height:1.2}' +
+    '.pnl-faixa{background:linear-gradient(135deg,#2A1760 0%,#3B2386 100%);color:#fff;border-radius:14px;padding:10px 14px 10px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;box-shadow:0 6px 18px rgba(42,23,96,.14)}' +
+    '.pnl-faixa-t{display:flex;flex-direction:column;gap:1px;min-width:0;flex:0 1 auto}.pnl-faixa-t span{font-size:13px;color:#C9C0E6}.pnl-faixa-t b{font-size:17px;font-weight:700;white-space:nowrap}.pnl-faixa-t em{font-style:normal;font-weight:500}.pnl-faixa-t em small{font-size:13px;color:#C9C0E6}' +
+    '.pnl-faixa-n{display:flex;flex-wrap:wrap;gap:6px 20px;flex:1 1 300px;min-width:0}.pnl-faixa-n>div{display:flex;flex-direction:column;min-width:0}.pnl-faixa-n b{font-size:15px;font-weight:500}.pnl-faixa-n small{font-size:13px;color:#C9C0E6;white-space:nowrap}' +
+    '.pnl-faixa-anel{display:flex;align-items:center;gap:6px}.pnl-faixa-anel .pnl-anel b{font-size:13px}.pnl-faixa-anel>small{font-size:13px;color:#C9C0E6;max-width:90px;line-height:1.2}' +
+    '.pnl-faixa-bt{min-height:36px;padding:0 14px;border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font:600 13px \"DM Sans\",system-ui,sans-serif;cursor:pointer;white-space:nowrap}.pnl-faixa-bt:hover{background:rgba(255,255,255,.24)}.pnl-faixa-bt:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+    '.pnl-recolher{display:flex;justify-content:flex-end}' +
+    '@media (max-width:760px){.pnl-faixa{padding:10px 12px;gap:8px 14px}.pnl-faixa-t b{font-size:15px;white-space:normal}.pnl-faixa-n{flex-basis:100%;gap:6px 14px}.pnl-faixa-anel{display:none}.pnl-faixa-n>div:nth-child(n+3){display:none}.pnl-faixa-bt{width:100%}}' +
     '.pnl-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}' +
     '.pnl-card{display:flex;flex-direction:column;gap:3px;padding:11px 13px 13px;border-radius:14px;border:1px solid #E4DFF0;border-top:3px solid #CFC7E6;background:#fff;min-width:0}' +
     '.pnl-card-ir{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}.pnl-card-ir:hover{border-color:#CFC7E6;box-shadow:0 4px 14px rgba(42,23,96,.08)}.pnl-card-ir:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
@@ -650,6 +670,7 @@
     '.pnl-copiar{position:absolute;right:8px;top:50%;transform:translateY(-50%);min-height:28px;padding:0 9px;border:1px solid #CFC7E6;border-radius:8px;background:#fff;color:#2A1760;font:600 13px \"DM Sans\",system-ui,sans-serif;cursor:pointer}' +
     '.pnl-bt,.pnl-bt2{min-height:36px;padding:0 14px;border-radius:10px;font:700 13px \"DM Sans\",system-ui,sans-serif;cursor:pointer}.pnl-bt{border:0;background:#4E38B2;color:#fff}.pnl-bt:hover{background:#2A1760}.pnl-bt2{border:1px solid #CFC7E6;background:#fff;color:#2A1760;font-weight:600}.pnl-bt2:hover{background:#ECE8FA}' +
     '.pnl-rep-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:#FBFAFE;border:1px solid #EFEBF7;border-radius:12px;padding:12px}' +
+      '.pnl-rep-form [data-so]{display:none!important}.pnl-rep-form[data-forma=pix] [data-so=pix],.pnl-rep-form[data-forma=transf] [data-so=transf]{display:flex!important}' +
     '.pnl-rep-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3A3446}.pnl-rep-form input,.pnl-rep-form select{min-height:38px;border:1px solid #CFC7E6;border-radius:9px;padding:0 10px;font:14px \"DM Sans\",system-ui,sans-serif;background:#fff;color:#241A38}' +
     '.pnl-rep-larga{grid-column:1/-1}.pnl-rep-acoes{grid-column:1/-1;display:flex;gap:8px}' +
     '@media (max-width:760px){.pnl-sec-3{grid-template-columns:minmax(0,1fr)!important}.pnl-rep-raiz{padding:0 14px 12px}.pnl-rep-form{grid-template-columns:minmax(0,1fr)}}' +

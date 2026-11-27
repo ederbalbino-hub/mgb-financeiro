@@ -640,13 +640,14 @@
         'de R$ ' + brl(total) + ' em ' + nLanc + ' lançamentos.',
         [['A pagar', brl(total - pago), aPagar.length + (aPagar.length === 1 ? ' conta' : ' contas')], ['Vencidas', String(vencidas), vencidas ? 'R$ ' + brl(vencV) : 'nenhuma'], ['Vencem em 7 dias', String(semana), 'contas'], ['Maior conta', maior ? curto(maior.total) : '—', maior ? maior.titulo : '']],
         p, 'pago') +
+      '<details class="fin2-mais"><summary>Ver gráficos das contas</summary>' +
       '<div class="fin2-g2c">' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Despesa mês a mês</h3><span class="fin2-sub">' + s.ano + '</span></div>' +
           '<div class="fin2-g-rolar">' + graficoMeses(serie, { soReceita: true, H: 230 }) + '</div>' +
           legenda([['background:#4E38B2', 'mês escolhido'], ['background:#8B7BE0', 'outros meses'], ['background:#8B7BE0;opacity:.4', 'previsto']]) + '</section>' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Por módulo</h3></div>' + rosca(mods, total).replace('<span>receita</span>', '<span>despesa</span>') + '</section>' +
       '</div>' +
-      '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Maiores contas</h3><span class="fin2-sub fin2-mono">R$ ' + brl(total) + '</span></div>' + (fat.length ? aneisDespesa(fat).replace('fin2-aneis', 'fin2-aneis fin2-aneis-3') : '<p class="fin2-sub">Nenhuma conta neste mês.</p>') + '</section>';
+      '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Maiores contas</h3><span class="fin2-sub fin2-mono">R$ ' + brl(total) + '</span></div>' + (fat.length ? aneisDespesa(fat).replace('fin2-aneis', 'fin2-aneis fin2-aneis-3') : '<p class="fin2-sub">Nenhuma conta neste mês.</p>') + '</section></details>';
   }
   function painelModulo(m, s, recMes, custoMes, noAr, cli, forn, todos) {
     var hoje = new Date(), refHoje = hoje.getFullYear() * 12 + hoje.getMonth(), res = recMes - custoMes, mgM = recMes > 0 ? Math.max(0, Math.min(100, res / recMes * 100)) : 0;
@@ -661,14 +662,14 @@
         'Receita R$ ' + brl(recMes) + ' · custo R$ ' + brl(custoMes) + (forn.length ? ' (' + forn.slice(0, 3).join(', ') + (forn.length > 3 ? '…' : '') + ')' : '') + '.',
         [['Clientes no ar', String(noAr), termina ? termina + ' termina' + (termina > 1 ? 'm' : '') + ' este mês' : 'nenhum termina'], ['Ticket médio', curto(ticket), 'por cliente'], ['Receita', brl(recMes), 'no mês'], ['Custo', brl(custoMes), 'no mês']],
         mgM, 'de margem') +
-      '<div class="fin2-g2c">' +
+      '<details class="fin2-mais"><summary>Ver gráficos do módulo</summary><div class="fin2-g2c">' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Receita e custo mês a mês</h3><span class="fin2-sub">' + s.ano + '</span></div>' +
           '<div class="fin2-g-rolar">' + graficoMeses(serie, { H: 230 }) + '</div>' +
           legenda([['background:#4E38B2', 'receita'], ['background:#E0A458', 'custo'], ['height:0;border-top:2.5px solid #15803D;width:18px;border-radius:0', 'resultado']]) + '</section>' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Maiores clientes</h3><span class="fin2-sub">por mês</span></div>' +
           (top.length ? '<div class="fin2-top fin2-top-c">' + top.map(function (c) { return '<div><span>' + esc(c.item) + '</span><div class="fin2-top-t" aria-hidden="true"><i style="width:' + Math.max(2, c.valor / vmax * 100).toFixed(1) + '%"></i></div><b class="fin2-mono">' + curto(c.valor) + '</b><em style="background:' + (c.estado === 'termina' ? '#B45309' : '#15803D') + '" title="' + (c.estado === 'termina' ? 'termina este mês' : 'no ar') + '"></em></div>'; }).join('') + '</div>' : '<p class="fin2-sub">Nenhum cliente no ar.</p>') +
           (fat.length ? '<div class="fin2-bloco-cab fin2-sub-cab"><h3>Custos</h3></div><div class="fin2-rosca-l">' + fat.map(function (f, i) { return '<div><i style="background:' + PAL[i % PAL.length] + '"></i><span>' + esc(f.rot) + '</span><b class="fin2-mono">' + curto(f.valor) + '</b><small>' + Math.round(f.pct) + '%</small></div>'; }).join('') + '</div>' : '') + '</section>' +
-      '</div>';
+      '</div></details>';
   }
 
   // ── 2. Contas do mês ─────────────────────────────────────────────────────
@@ -1070,6 +1071,9 @@
       '#fin2-empresa .fin2-aneis,#fin2-receita .fin2-aneis{gap:10px}' +
       '.fin2-aneis-3{grid-template-columns:repeat(3,minmax(0,1fr))!important}.fin2-top-c>div{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 70px 10px!important;padding:4px 0!important}.fin2-top-c span{font-size:13px!important}' +
       '#fin2-contas,#fin2-modulo{max-width:1240px;gap:14px}#fin2-contas .fin2-hero-anel .fin2-anel,#fin2-modulo .fin2-hero-anel .fin2-anel{transform:scale(.75);margin:-20px}' +
+      '.fin2-mais{border:0}.fin2-mais>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border:1px solid #CFC7E6;border-radius:999px;background:#fff;color:#2A1760;font:600 13px "DM Sans",system-ui,sans-serif}' +
+      '.fin2-mais>summary::-webkit-details-marker{display:none}.fin2-mais>summary:before{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s}.fin2-mais[open]>summary:before{transform:rotate(45deg)}' +
+      '.fin2-mais>summary:hover{background:#ECE8FA}.fin2-mais>summary:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}.fin2-mais[open]{display:flex;flex-direction:column;gap:14px}' +
       '.fin2-ctt-linha{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}.fin2-ctt-linha>span{display:flex;flex-wrap:wrap;gap:6px}' +
       '@media (max-width:760px){.fin2{padding:18px 14px 8px}.fin2-g2,.fin2-g3,.fin2-aneis{grid-template-columns:minmax(0,1fr)}.fin2-hero{padding:22px 20px;gap:20px}.fin2-hero h3{font-size:27px}.fin2-hero-nums{grid-template-columns:repeat(2,minmax(0,1fr))!important}.fin2-hero-anel .fin2-anel{transform:scale(.85)}.fin2-topo h2{font-size:32px}.fin2-div>div{grid-template-columns:minmax(0,1fr) 84px}.fin2-div span{grid-column:1/-1}.fin2-top>div{grid-template-columns:minmax(0,1fr) 84px 10px}.fin2-top>div>span{grid-column:1/-1}.fin2-caixa>div:not(.fin2-caixa-tot){grid-template-columns:minmax(0,1fr) 110px}.fin2-caixa>div:not(.fin2-caixa-tot)>span{grid-column:1/-1}.fin2-linha-txt{flex-basis:calc(100% - 30px)!important}.fin2-g2b,.fin2-g2c,.fin2-g3c,.fin2-aneis-3{grid-template-columns:minmax(0,1fr)!important}.fin2-hero-4{grid-template-columns:repeat(2,minmax(0,1fr))}.fin2-hero-meta{align-items:flex-start}.fin2-hero-meta b{font-size:32px}.fin2-prox{gap:6px}.fin2-prox>div{padding:9px 10px}.fin2-prox b{font-size:16px}.fin2-prox small{display:none}.fin2-mods{grid-template-columns:repeat(2,minmax(0,1fr))}.fin2-mod-v{font-size:19px}#page-overview div:has(>.mtab){overflow-x:auto;scrollbar-width:none}#page-overview div:has(>.mtab)>.mtab{flex:none}.fin2 h2{font-size:22px}.fin2-nums{grid-template-columns:1fr}.fin2-num b{font-size:22px}.fin2-duas{grid-template-columns:1fr}' +
         '.fin2-conta{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"c t v" ". d s"}.fin2-conta>input{grid-area:c}.fin2-conta-txt{grid-area:t}.fin2-valor{grid-area:v}.fin2-venc{grid-area:d}.fin2-seta{grid-area:s;justify-self:end}.fin2-conta-cab{display:none}' +

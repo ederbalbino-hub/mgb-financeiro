@@ -282,13 +282,14 @@
         var antes = null;
         try { antes = JSON.stringify(((recPagamentos[modId] || {})[item] || {})[key] || null); } catch (e) {}
         var r = baixa.apply(this, arguments);
-        try {
+        function registrar() { try {
           var pg = ((recPagamentos[modId] || {})[item] || {})[key] || {};
           if (JSON.stringify(pg) !== antes) {
             var p = String(key).split('-'), mes = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+p[1]] || '';
             global.mgbAcao((pg.pago ? 'Baixa manual de ' : 'Desfez a baixa manual de ') + item + (mes ? ' (' + mes + '/' + p[0] + ')' : ''));
           }
-        } catch (e) {}
+        } catch (e) {} }
+        if (r && typeof r.then === 'function') r.then(registrar); else registrar(); // 27/11: agora abre janela do hub (assíncrona)
         return r;
       };
       nb.__usab = true; global.recBaixaManual = nb;
