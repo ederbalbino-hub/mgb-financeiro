@@ -494,7 +494,7 @@
     return '<section class="fin2-hero" aria-label="' + esc(rotulo) + '"><div class="fin2-hero-txt">' +
       '<span class="fin2-hero-chip">' + esc(chipTxt) + '</span>' +
       '<div><h3>' + esc(titulo) + ' <span class="fin2-mono" style="color:' + cor + '">' + valorTxt + '</span></h3><p>' + esc(frase) + '</p></div>' +
-      '<div class="fin2-hero-nums">' + nums.map(function (n) { return '<div><span>' + esc(n[0]) + '</span><b class="fin2-mono">' + n[1] + '</b><small>' + esc(n[2]) + '</small></div>'; }).join('') + '</div></div>' +
+      '<div class="fin2-hero-nums" style="grid-template-columns:repeat(' + nums.length + ',minmax(0,1fr))">' + nums.map(function (n) { return '<div><span>' + esc(n[0]) + '</span><b class="fin2-mono">' + n[1] + '</b><small>' + esc(n[2]) + '</small></div>'; }).join('') + '</div></div>' +
       '<div class="fin2-hero-anel">' + anel(pct, 168, 14, DESTAQUE, 'rgba(255,255,255,0.14)', '#FFFFFF', '#D9D2F2', rotAnel) + '</div></section>';
   }
   function situacaoCobranca(l) {
@@ -625,6 +625,52 @@
     var rolar = box.querySelector('.fin2-g-rolar'); if (rolar) rolar.scrollLeft = rolar.scrollWidth;
   }
 
+  // ── Painéis de gestão à vista: Contas do mês e Módulo (27/11) ────────────
+  function painelContas(s, L, total, pago, nLanc, aPagar, pagas, C) {
+    var hoje = new Date(), refHoje = hoje.getFullYear() * 12 + hoje.getMonth(), diaHoje = hoje.getDate();
+    var p = total ? pago / total * 100 : 0;
+    var serie = MES_CURTO.map(function (rotM, k) { return { rot: rotM, rec: tenta('finGetDesp', s.ano, k) || 0, desp: 0, prev: s.ano * 12 + k > refHoje, atual: k === s.mes }; });
+    var vencidas = 0, semana = 0, vencV = 0;
+    if (s.ano * 12 + s.mes === refHoje) aPagar.forEach(function (g) { if (g.dia && g.dia < diaHoje) { vencidas++; vencV += g.total; } else if (g.dia && g.dia <= diaHoje + 7) semana++; });
+    var fat = fatias(L.map(function (g) { return { rot: g.titulo, valor: g.total, det: g.itens.length > 1 ? g.itens.length + ' lançamentos' : '' }; }), 5);
+    var maior = L.slice().sort(function (a, b) { return b.total - a.total; })[0];
+    var porMod = {}; L.forEach(function (g) { g.itens.forEach(function (d) { var r = moduloRot(d.m) || 'Empresa'; porMod[r] = (porMod[r] || 0) + d.vlrMes; }); });
+    var mods = fatias(Object.keys(porMod).map(function (r) { return { rot: r, valor: porMod[r] }; }), 4);
+    return heroBloco('Contas de ' + MESES_N[s.mes], 'Contas de ' + MESES_N[s.mes] + ' · ' + L.length + ' contas', 'Pago', 'R$ ' + brl(pago), pago >= total && total ? '#4ADE80' : DESTAQUE,
+        'de R$ ' + brl(total) + ' em ' + nLanc + ' lançamentos.',
+        [['A pagar', brl(total - pago), aPagar.length + (aPagar.length === 1 ? ' conta' : ' contas')], ['Vencidas', String(vencidas), vencidas ? 'R$ ' + brl(vencV) : 'nenhuma'], ['Vencem em 7 dias', String(semana), 'contas'], ['Maior conta', maior ? curto(maior.total) : '—', maior ? maior.titulo : '']],
+        p, 'pago') +
+      '<div class="fin2-g2c">' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Despesa mês a mês</h3><span class="fin2-sub">' + s.ano + '</span></div>' +
+          '<div class="fin2-g-rolar">' + graficoMeses(serie, { soReceita: true, H: 230 }) + '</div>' +
+          legenda([['background:#4E38B2', 'mês escolhido'], ['background:#8B7BE0', 'outros meses'], ['background:#8B7BE0;opacity:.4', 'previsto']]) + '</section>' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Por módulo</h3></div>' + rosca(mods, total).replace('<span>receita</span>', '<span>despesa</span>') + '</section>' +
+      '</div>' +
+      '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Maiores contas</h3><span class="fin2-sub fin2-mono">R$ ' + brl(total) + '</span></div>' + (fat.length ? aneisDespesa(fat).replace('fin2-aneis', 'fin2-aneis fin2-aneis-3') : '<p class="fin2-sub">Nenhuma conta neste mês.</p>') + '</section>';
+  }
+  function painelModulo(m, s, recMes, custoMes, noAr, cli, forn, todos) {
+    var hoje = new Date(), refHoje = hoje.getFullYear() * 12 + hoje.getMonth(), res = recMes - custoMes, mgM = recMes > 0 ? Math.max(0, Math.min(100, res / recMes * 100)) : 0;
+    var serie = MES_CURTO.map(function (rotM, k) { return { rot: rotM, rec: tenta('recModMes', m.id, s.ano, k) || 0, desp: tenta('despesaTotalMesMod', m.id, s.ano, k) || 0, prev: s.ano * 12 + k > refHoje, atual: k === s.mes }; });
+    var ativos = cli.filter(function (c) { return c.estado === 'ativo' || c.estado === 'termina'; });
+    var termina = cli.filter(function (c) { return c.estado === 'termina'; }).length;
+    var ticket = ativos.length ? ativos.reduce(function (a, c) { return a + c.valor; }, 0) / ativos.length : 0;
+    var top = ativos.slice().sort(function (a, b) { return b.valor - a.valor; }).slice(0, 8), vmax = top.length ? top[0].valor : 1;
+    var custoF = {}; todos.forEach(function (d) { var f = (d.r && d.r.f && d.r.f !== '—') ? d.r.f : (d.r && d.r.d) || 'Outros'; custoF[f] = (custoF[f] || 0) + d.vlrMes; });
+    var fat = fatias(Object.keys(custoF).map(function (f) { return { rot: f, valor: custoF[f] }; }), 3);
+    return heroBloco(moduloRot(m) + ' em ' + MESES_N[s.mes], moduloRot(m) + ' · ' + MESES_N[s.mes] + ' de ' + s.ano, res >= 0 ? 'Resultado' : 'Prejuízo', (res < 0 ? '−' : '') + 'R$ ' + brl(Math.abs(res)), res >= 0 ? DESTAQUE : '#FCA5A5',
+        'Receita R$ ' + brl(recMes) + ' · custo R$ ' + brl(custoMes) + (forn.length ? ' (' + forn.slice(0, 3).join(', ') + (forn.length > 3 ? '…' : '') + ')' : '') + '.',
+        [['Clientes no ar', String(noAr), termina ? termina + ' termina' + (termina > 1 ? 'm' : '') + ' este mês' : 'nenhum termina'], ['Ticket médio', curto(ticket), 'por cliente'], ['Receita', brl(recMes), 'no mês'], ['Custo', brl(custoMes), 'no mês']],
+        mgM, 'de margem') +
+      '<div class="fin2-g2c">' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Receita e custo mês a mês</h3><span class="fin2-sub">' + s.ano + '</span></div>' +
+          '<div class="fin2-g-rolar">' + graficoMeses(serie, { H: 230 }) + '</div>' +
+          legenda([['background:#4E38B2', 'receita'], ['background:#E0A458', 'custo'], ['height:0;border-top:2.5px solid #15803D;width:18px;border-radius:0', 'resultado']]) + '</section>' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Maiores clientes</h3><span class="fin2-sub">por mês</span></div>' +
+          (top.length ? '<div class="fin2-top fin2-top-c">' + top.map(function (c) { return '<div><span>' + esc(c.item) + '</span><div class="fin2-top-t" aria-hidden="true"><i style="width:' + Math.max(2, c.valor / vmax * 100).toFixed(1) + '%"></i></div><b class="fin2-mono">' + curto(c.valor) + '</b><em style="background:' + (c.estado === 'termina' ? '#B45309' : '#15803D') + '" title="' + (c.estado === 'termina' ? 'termina este mês' : 'no ar') + '"></em></div>'; }).join('') + '</div>' : '<p class="fin2-sub">Nenhum cliente no ar.</p>') +
+          (fat.length ? '<div class="fin2-bloco-cab fin2-sub-cab"><h3>Custos</h3></div><div class="fin2-rosca-l">' + fat.map(function (f, i) { return '<div><i style="background:' + PAL[i % PAL.length] + '"></i><span>' + esc(f.rot) + '</span><b class="fin2-mono">' + curto(f.valor) + '</b><small>' + Math.round(f.pct) + '%</small></div>'; }).join('') + '</div>' : '') + '</section>' +
+      '</div>';
+  }
+
   // ── 2. Contas do mês ─────────────────────────────────────────────────────
   var filtroContas = 'pagar', abertas = {}, editandoDia = null;
   function chavePag(d, dKey) { return (((ler('despPagamentos', {}) || {})[d.m.id] || {})[d.item] || {})[d.idx] || {}; }
@@ -690,8 +736,7 @@
     }).join('');
     box.innerHTML = cabecalho('Financeiro MGB', 'Contas de ' + MESES_N[s.mes], 'mes-contas',
         '<button type="button" class="fin2-btn" data-fin2="lancar-despesa">Lançar despesa</button>') +
-      '<section class="fin2-bloco fin2-progresso-bloco"><div class="fin2-bloco-cab"><b>Pago R$ ' + brl(pago) + ' de R$ ' + brl(total) + '</b><span class="fin2-sub">' + nLanc + ' lançamentos em ' + L.length + ' contas</span></div>' +
-        '<div class="fin2-barra" role="img" aria-label="' + Math.round(pct) + '% pago"><i style="width:' + pct + '%"></i></div></section>' +
+      painelContas(s, L, total, pago, nLanc, aPagar, pagas, C) +
       '<div class="fin2-abas" role="tablist" aria-label="Filtrar contas">' +
         [['pagar', 'A pagar · ' + aPagar.length], ['pagas', 'Pagas · ' + pagas.length], ['todos', 'Lançamento por lançamento']].map(function (a) {
           return '<button type="button" role="tab" aria-selected="' + (filtroContas === a[0]) + '" class="fin2-aba' + (filtroContas === a[0] ? ' fin2-on' : '') + '" data-fin2="filtro:' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>' +
@@ -744,11 +789,7 @@
         '<div><span class="fin2-sub">Financeiro MGB › Módulos</span><h2>' + esc(moduloRot(m)) + ' · ' + MESES_N[s.mes] + '</h2></div>' +
         '<button type="button" class="fin2-icone" data-fin2="mes-modulo:1" aria-label="Próximo mês">' + SETA_D + '</button></div>' +
         '<div class="fin2-acoes"><button type="button" class="fin2-btn2" data-fin2="voltar-resumo">Resumo do mês</button></div></header>' +
-      '<div class="fin2-nums">' +
-        numero('Receita do mês', brl(recMes), noAr + (noAr === 1 ? ' cliente no ar' : ' clientes no ar')) +
-        numero('Custo do mês', brl(custoMes), forn.length ? forn.slice(0, 3).join(', ') + (forn.length > 3 ? '…' : '') : 'nenhum custo lançado') +
-        numero('Resultado', (res < 0 ? '−' : '') + brl(Math.abs(res)), recMes > 0 ? Math.round(res / recMes * 100) + '% da receita' : '', res >= 0 ? 'fin2-verde' : 'fin2-vermelho') +
-      '</div>' +
+      painelModulo(m, s, recMes, custoMes, noAr, cli, forn, todos) +
       '<section class="fin2-bloco fin2-sem-pad" aria-labelledby="fin2-cli"><div class="fin2-bloco-cab"><h3 id="fin2-cli">Clientes</h3><button type="button" class="fin2-btn2" data-fin2="novo-item">Novo cliente no módulo</button></div>' +
         '<div class="fin2-rolar"><table class="fin2-tab"><thead><tr><th scope="col">Cliente</th><th scope="col" class="fin2-n">Por mês</th><th scope="col">Desde</th><th scope="col">Até</th><th scope="col" class="fin2-n">Custo no mês</th><th scope="col">Situação</th></tr></thead><tbody>' +
         visiveis.map(function (c) {
@@ -1019,8 +1060,10 @@
       '#fin2-receita .fin2-g2,#fin2-empresa .fin2-g2,#fin2-receita .fin2-g3,#fin2-empresa .fin2-g3{gap:14px}' +
       '#fin2-receita .fin2-top>div,#fin2-receita .fin2-rosca-l>div,#fin2-empresa .fin2-rosca-l>div,#fin2-empresa .fin2-caixa>div{padding:4px 0;font-size:13px}#fin2-receita .fin2-top span{font-size:13px}' +
       '#fin2-empresa .fin2-aneis,#fin2-receita .fin2-aneis{gap:10px}' +
+      '.fin2-aneis-3{grid-template-columns:repeat(3,minmax(0,1fr))!important}.fin2-top-c>div{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 70px 10px!important;padding:4px 0!important}.fin2-top-c span{font-size:12.5px!important}' +
+      '#fin2-contas,#fin2-modulo{max-width:1240px;gap:14px}#fin2-contas .fin2-hero-anel .fin2-anel,#fin2-modulo .fin2-hero-anel .fin2-anel{transform:scale(.75);margin:-20px}' +
       '.fin2-ctt-linha{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}.fin2-ctt-linha>span{display:flex;flex-wrap:wrap;gap:6px}' +
-      '@media (max-width:760px){.fin2{padding:18px 14px 8px}.fin2-g2,.fin2-g3,.fin2-aneis{grid-template-columns:minmax(0,1fr)}.fin2-hero{padding:22px 20px;gap:20px}.fin2-hero h3{font-size:27px}.fin2-hero-nums{grid-template-columns:minmax(0,1fr)}.fin2-hero-anel .fin2-anel{transform:scale(.85)}.fin2-topo h2{font-size:32px}.fin2-div>div{grid-template-columns:minmax(0,1fr) 84px}.fin2-div span{grid-column:1/-1}.fin2-top>div{grid-template-columns:minmax(0,1fr) 84px 10px}.fin2-top>div>span{grid-column:1/-1}.fin2-caixa>div:not(.fin2-caixa-tot){grid-template-columns:minmax(0,1fr) 110px}.fin2-caixa>div:not(.fin2-caixa-tot)>span{grid-column:1/-1}.fin2-linha-txt{flex-basis:calc(100% - 30px)!important}.fin2-g2b,.fin2-g2c,.fin2-g3c{grid-template-columns:minmax(0,1fr)}.fin2-hero-4{grid-template-columns:repeat(2,minmax(0,1fr))}.fin2-hero-meta{align-items:flex-start}.fin2-hero-meta b{font-size:32px}.fin2-prox{gap:6px}.fin2-prox>div{padding:9px 10px}.fin2-prox b{font-size:16px}.fin2-prox small{display:none}.fin2-mods{grid-template-columns:repeat(2,minmax(0,1fr))}.fin2-mod-v{font-size:19px}#page-overview div:has(>.mtab){overflow-x:auto;scrollbar-width:none}#page-overview div:has(>.mtab)>.mtab{flex:none}.fin2 h2{font-size:22px}.fin2-nums{grid-template-columns:1fr}.fin2-num b{font-size:22px}.fin2-duas{grid-template-columns:1fr}' +
+      '@media (max-width:760px){.fin2{padding:18px 14px 8px}.fin2-g2,.fin2-g3,.fin2-aneis{grid-template-columns:minmax(0,1fr)}.fin2-hero{padding:22px 20px;gap:20px}.fin2-hero h3{font-size:27px}.fin2-hero-nums{grid-template-columns:repeat(2,minmax(0,1fr))!important}.fin2-hero-anel .fin2-anel{transform:scale(.85)}.fin2-topo h2{font-size:32px}.fin2-div>div{grid-template-columns:minmax(0,1fr) 84px}.fin2-div span{grid-column:1/-1}.fin2-top>div{grid-template-columns:minmax(0,1fr) 84px 10px}.fin2-top>div>span{grid-column:1/-1}.fin2-caixa>div:not(.fin2-caixa-tot){grid-template-columns:minmax(0,1fr) 110px}.fin2-caixa>div:not(.fin2-caixa-tot)>span{grid-column:1/-1}.fin2-linha-txt{flex-basis:calc(100% - 30px)!important}.fin2-g2b,.fin2-g2c,.fin2-g3c,.fin2-aneis-3{grid-template-columns:minmax(0,1fr)!important}.fin2-hero-4{grid-template-columns:repeat(2,minmax(0,1fr))}.fin2-hero-meta{align-items:flex-start}.fin2-hero-meta b{font-size:32px}.fin2-prox{gap:6px}.fin2-prox>div{padding:9px 10px}.fin2-prox b{font-size:16px}.fin2-prox small{display:none}.fin2-mods{grid-template-columns:repeat(2,minmax(0,1fr))}.fin2-mod-v{font-size:19px}#page-overview div:has(>.mtab){overflow-x:auto;scrollbar-width:none}#page-overview div:has(>.mtab)>.mtab{flex:none}.fin2 h2{font-size:22px}.fin2-nums{grid-template-columns:1fr}.fin2-num b{font-size:22px}.fin2-duas{grid-template-columns:1fr}' +
         '.fin2-conta{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"c t v" ". d s"}.fin2-conta>input{grid-area:c}.fin2-conta-txt{grid-area:t}.fin2-valor{grid-area:v}.fin2-venc{grid-area:d}.fin2-seta{grid-area:s;justify-self:end}.fin2-conta-cab{display:none}' +
         '.fin2-mes{width:100%;justify-content:space-between}.fin2-mes>div{text-align:center}.fin2-det{padding-left:20px}#fin2-painel.fin2{padding:20px}}';
     doc.head.appendChild(s);

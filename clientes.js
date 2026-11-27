@@ -361,6 +361,6 @@
   }
 
   global.MGBClientes = Object.assign({ desenhar: desenhar, abrir: function (chave) { aberto = chave; global.goPage('clientes'); },
-    fichaAberta: function () { return aberto; }, fechar: function () { aberto = null; }, abrirPorNome: abrirPorNome }, regras);
+    fichaAberta: function () { return aberto; }, fechar: function () { aberto = null; }, abrirPorNome: abrirPorNome, dados: function () { try { return dados(); } catch (e) { return []; } } }, regras);
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);
