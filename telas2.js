@@ -160,7 +160,7 @@
       for (var a = 0; a < abas.length; a++) { try { iconeAba(abas[a]); } catch (e) {} }
     }
   }
-  function agendar() { if (agendado) return; agendado = true; (global.requestAnimationFrame || setTimeout)(passar, 60); }
+  function agendar() { if (agendado) return; agendado = true; (global.requestAnimationFrame || setTimeout)(function () { passar(); tingirContratos(); }, 60); }
 
   // ── Estilo: Design System sobre as telas antigas ────────────────────────
   var S = ESCOPO.split(',');
@@ -169,7 +169,7 @@
     // ícones e chips
     '.t2-ico{width:18px;height:18px;flex:none;vertical-align:-3px;margin-right:6px}' +
     '.t2-vazio{display:none!important}' +
-    '.t2-chip{display:inline-flex!important;align-items:center;gap:5px;font:600 12.5px/16px "DM Sans",system-ui,sans-serif!important;padding:4px 10px!important;border-radius:999px!important;white-space:nowrap;width:auto!important}' +
+    '.t2-chip{display:inline-flex!important;align-items:center;gap:5px;font:600 13px/16px "DM Sans",system-ui,sans-serif!important;padding:4px 10px!important;border-radius:999px!important;white-space:nowrap;width:auto!important}' +
     '.t2-chip .t2-ico-chip{width:14px;height:14px;margin:0;vertical-align:0}' +
     '.t2-chip.t2-ok{color:#15803D!important;background:#E8F6EE!important}.t2-chip.t2-atencao{color:#8A4B08!important;background:#FDF2E3!important}.t2-chip.t2-erro{color:#B42318!important;background:#FDECEA!important}' +
     // abas com ícone
@@ -186,7 +186,7 @@
     // números (KPIs)
     em('.kpi,.fstat,.bwstat') + '{border-radius:18px!important;border:1px solid #E4DFF0!important;background:#fff!important;box-shadow:none!important}' +
     em('.kpi-val,.fstat-n,.bwstat-n') + '{font-family:"DM Mono",ui-monospace,monospace!important;font-weight:600!important;color:#241A38}' +
-    em('.kpi-lbl,.fstat-l,.bwstat-l') + '{font:600 12px "DM Sans",system-ui,sans-serif!important;letter-spacing:.05em!important;text-transform:uppercase;color:#5D5868!important}' +
+    em('.kpi-lbl,.fstat-l,.bwstat-l') + '{font:600 13px "DM Sans",system-ui,sans-serif!important;letter-spacing:.05em!important;text-transform:uppercase;color:#5D5868!important}' +
     // botões: principal roxo, secundário branco, sem degradê
     em('.badd,.ferr-btn:not([style*="background:transparent"]),.scard-btn,.ci-btn') + '{background:#4E38B2!important;color:#fff!important;border:0!important;border-radius:10px!important;min-height:40px;font:700 14px "DM Sans",system-ui,sans-serif!important;box-shadow:none!important}' +
     em('.badd:hover,.ferr-btn:not([style*="background:transparent"]):hover') + '{background:#2A1760!important;filter:none!important}' +
@@ -205,7 +205,7 @@
     em('input[type=file]::file-selector-button') + '{font:600 13px "DM Sans",system-ui,sans-serif;border:1px solid #CFC7E6;background:#fff;color:#2A1760;border-radius:8px;padding:7px 12px;margin-right:10px;cursor:pointer}' +
     // tabelas
     em('table') + '{font-variant-numeric:tabular-nums}' +
-    em('th') + '{font:700 12px/16px "DM Sans",system-ui,sans-serif!important;letter-spacing:.05em!important;text-transform:uppercase;color:#5D5868!important;background:#fff!important}' +
+    em('th') + '{font:700 13px/16px "DM Sans",system-ui,sans-serif!important;letter-spacing:.05em!important;text-transform:uppercase;color:#5D5868!important;background:#fff!important}' +
     em('td') + '{border-top-color:#EFEBF7!important}' +
     em('details>summary') + '{cursor:pointer}' +
     // resumos "por que muda" da Visão Receita / Empresa: avisos do Design System
@@ -224,7 +224,7 @@
     '#page-operacional button[style*="color:#16294F"]{color:#2A1760!important;border-color:#CFC7E6!important}' +
     '#page-operacional button[style*="#E3D8BF"]:hover{background:#ECE8FA!important}' +
     '#page-operacional input[style*="#E3D8BF"],#page-operacional select[style*="#E3D8BF"]{border-color:#CFC7E6!important;border-radius:10px!important;min-height:38px}' +
-    '#page-operacional .tv-gestao [style*="font-size:10px"][style*="uppercase"],#tvp-root [style*="font-size:10px"][style*="uppercase"],#tvc-root [style*="font-size:10px"]{font-size:12px!important;letter-spacing:.05em!important;color:#5D5868!important}' +
+    '#page-operacional .tv-gestao [style*="font-size:10px"][style*="uppercase"],#tvp-root [style*="font-size:10px"][style*="uppercase"],#tvc-root [style*="font-size:10px"]{font-size:13px!important;letter-spacing:.05em!important;color:#5D5868!important}' +
     '#tvp-root [style*="min-width:150px"] > div:nth-child(2),#tvc-root td[style*="text-align:right"]{font-family:"DM Mono",ui-monospace,monospace!important}' +
     '#tvp-root [style*="min-width:150px"]{border-radius:18px!important;padding:16px 18px!important}' +
     // Cobrança mensal: abas e cabeçalho
@@ -247,12 +247,32 @@
   }
   IC.menu = '<path d="M4 6h16M4 12h16M4 18h16"/>';
 
+  // Formulários de contrato rosas (Mercadão e Vaapty, em iframes): cores do hub só na tela.
+  // A impressão do contrato (window.print) não muda. O contrato de Anunciante (Tela Vertical) mantém a marca.
+  var TINTA = '@media screen{:root{--purple:#4E38B2;--magenta:#4E38B2;--pink:#8B7BE0;--lilac:#C9BEFA;--deep:#2A1760;--amber:#4E38B2;--amber2:#8B7BE0;--bg:#F6F4FA;--border:#E4DFF0;--text:#241A38;--muted:#5D5868}' +
+    'body{font-family:"DM Sans",system-ui,sans-serif!important}input,select,textarea,button{font-family:"DM Sans",system-ui,sans-serif!important}' +
+    '.header{background:#2A1760!important;box-shadow:none!important}input,select,textarea{background:#fff!important;border-color:#CFC7E6!important}}';
+  function tingir(fr) {
+    try {
+      var d = fr.contentDocument; if (!d || !d.head || d.getElementById('t2-tinta')) return;
+      var l = d.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&display=swap'; d.head.appendChild(l);
+      var st = d.createElement('style'); st.id = 't2-tinta'; st.textContent = TINTA; d.head.appendChild(st);
+    } catch (e) {}
+  }
+  function tingirContratos() {
+    ['frame-mercadao', 'frame-vaapty'].forEach(function (id) {
+      var fr = doc.getElementById(id); if (!fr) return;
+      if (!fr.__t2) { fr.__t2 = true; fr.addEventListener('load', function () { tingir(fr); }); }
+      tingir(fr);
+    });
+  }
+
   function ligar() {
     if (!doc.getElementById('telas2-css')) {
       var s = doc.createElement('style'); s.id = 'telas2-css'; s.textContent = '@media screen{' + CSS + '}';
       (doc.body || doc.head).appendChild(s);
     }
-    passar(); barraCelular();
+    passar(); barraCelular(); tingirContratos();
     try { new MutationObserver(agendar).observe(doc.body, { childList: true, subtree: true, characterData: false }); } catch (e) {}
     // trocar de tela/aba também refaz a passada
     doc.addEventListener('click', function () { setTimeout(agendar, 30); }, true);

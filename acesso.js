@@ -238,7 +238,7 @@
       '#mgb-login input:focus{outline:2px solid #6C55DB;outline-offset:1px;border-color:#6C55DB}' +
       '#mgb-login button{min-height:48px;border:0;border-radius:10px;background:#4E38B2;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}#mgb-login button:hover{background:#2A1760}' +
       '#mgb-login button[disabled]{opacity:.6;cursor:wait}#mgb-login .erro:not(:empty){color:#B42318;background:#FDECEA;border-radius:10px;padding:10px 12px;font-size:14px}' +
-      '@media (max-width:640px){#mgb-login .mgb-marca{padding:28px 24px;min-height:0}#mgb-login .mgb-marca h2{font-size:28px}#mgb-login form{padding:28px 22px}}' +
+      '@media (max-width:640px){#mgb-login{align-content:flex-start}#mgb-login .mgb-lado{padding:20px 16px;align-items:flex-start}#mgb-login .mgb-marca{padding:14px 20px;min-height:0;gap:10px;flex:0 0 100%;width:100%;flex-direction:row;align-items:center;justify-content:flex-start}#mgb-login .mgb-marca img{width:84px;height:auto}#mgb-login .mgb-marca h2{font-size:17px}#mgb-login .mgb-marca p,#mgb-login .mgb-marca small{display:none}#mgb-login form{padding:24px 20px}}' +
       '#mgb-login .ok{color:#15803D;background:#E8F6EE;border-radius:10px;padding:10px 12px;font-size:14px}#mgb-login .link{background:none;border:0;min-height:0;height:auto;padding:0;color:#4E38B2;font-weight:600;font-size:13px;text-decoration:underline;cursor:pointer;align-self:flex-start}' +
       '#mgb-pill{position:fixed;right:16px;bottom:16px;z-index:9000;font-family:"DM Sans",system-ui,sans-serif}' +
       '@media (max-width:768px){#mgb-pill{bottom:84px;right:12px}}' +
