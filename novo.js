@@ -544,8 +544,15 @@
         '</section>' +
         (g.outros.length ? '<section class="card"><h3>Fechados em outros produtos</h3>' + g.outros.map(function (l) { return linhaLead(l, [acao]); }).join('') + '</section>' : '');
     }
+    // Anunciante que não passou pelo CRM (27/11): a Karen não cria lead; sem esta saída, ficava travada no "Peça ao Eder"
+    var rapido = acao === 'anunciante' && global.MGBFluxos && typeof global.MGBFluxos.formAnuncianteRapido === 'function';
+    if (rapido) corpo += '<section class="card"><h3>Não está no CRM?</h3><p class="sub">Cadastre pelo formulário rápido da Tela Vertical: nome, valor, telas e período. ' +
+      'Ele não gera contrato nem entra sozinho no Faturamento; nesse caso, inclua o anunciante na planilha do Faturamento.</p>' +
+      '<button type="button" class="b" id="nv-sem-crm">Cadastrar pelo formulário rápido</button></section>';
     var el = moldura(ROTULO_ACAO[acao] + ' · escolher cliente', corpo, true);
     ligarAcoes(el);
+    var br = el.querySelector('#nv-sem-crm');
+    if (br) br.addEventListener('click', function () { fechar(); global.MGBFluxos.formAnuncianteRapido(); });
   }
 
   // Busca o CNPJ (mesmas fontes que os contratos do hub usam) e completa os campos vazios.

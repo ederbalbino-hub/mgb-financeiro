@@ -197,3 +197,19 @@ test("aditivo com reajuste: % e novo valor ligados, documento e nome do contrato
   assert.match(h, /A partir de <b>01\/01\/2027<\/b>, o valor mensal passa de R\$ 450,00 para <b>R\$ 495,00<\/b> \(reajuste de 10%\)/);
   assert.match(X.documentoAditivo({ nome: "Loja", produto: "Rádio", meses: 12, de: "2027-01-01", ate: "2027-12-31", valor: 450, valorNovo: 450 }), /continua <b>R\$ 450,00<\/b>/);
 });
+
+const FT = require("../../faturamento.js");
+
+test("Tela Vertical · geral: despesa paga pela MGB vira rateio entre os condomínios", () => {
+  const base = { destino: "elev", item: L.TV_GERAL, categoria: "licenca", descricao: "Sistema", fornecedor: "4Yousee", data: "2026-11-10", lancadoPor: "Karen" };
+  const a = L.despesaRateada({ ...base, valor: "300", forma: "avista" }, 5, ["A", "B", "C"]);
+  assert.deepEqual([a.id, a.valor, a.meses, a.inicio, a.telas.length, a.forn], [5, 300, 1, "2026-11", 3, "4Yousee"]);
+  assert.deepEqual([L.despesaRateada({ ...base, valor: "1200", forma: "parcelado", parcelas: 4 }, 6, ["A"]).valor, L.despesaRateada({ ...base, valor: "1200", forma: "parcelado", parcelas: 4 }, 6, ["A"]).meses], [300, 4]);
+  assert.equal(L.lancamentoSocio({ ...base, valor: "50", forma: "avista", quemPagou: "eder" }, 1).item, "Geral");
+});
+
+test("Faturamento: filtro Vencidos (Cobrar atrasados)", () => {
+  const linhas = [{ id: 1, statusPagamento: "vencido" }, { id: 2, statusPagamento: "pago" }, { id: 3 }];
+  const info = (r) => (r.id === 3 ? { anterior: { st: "vencido" } } : {});
+  assert.deepEqual(FT.filtrar(linhas, "vencido", info).map((r) => r.id), [1, 3]);
+});

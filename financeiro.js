@@ -1101,6 +1101,8 @@
     if (t2) t2.textContent = 'Contas do mês';
   }
 
-  global.MGBFinanceiro = Object.assign({ resumo: desenharResumo, contas: desenharContas, modulo: desenharModulo, receita: desenharReceita, empresa: desenharEmpresa, contasAvisar: contasAvisar }, regras);
+  global.MGBFinanceiro = Object.assign({ resumo: desenharResumo, contas: desenharContas, modulo: desenharModulo, receita: desenharReceita, empresa: desenharEmpresa, contasAvisar: contasAvisar,
+    // Abre o módulo já com o painel do cliente (botão "Abrir no módulo" da ficha, 27/11)
+    abrirCliente: function (item) { aberto = item; try { desenharModulo(); desenharPainel(); } catch (e) { console.error('financeiro:', e); } } }, regras);
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);

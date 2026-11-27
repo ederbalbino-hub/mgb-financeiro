@@ -217,7 +217,7 @@
           pillFim(c) +
           (c.assinadoEm ? pill('Assinado em ' + new Date(c.assinadoEm).toLocaleDateString('pt-BR'), 'ok') : c.assinafy ? pill('Aguardando assinatura', 'atencao') : pill('Sem assinatura no hub', 'neutro')) +
           (c.aditivoPendente ? pill('Aditivo aguardando assinatura', 'atencao') : podeRenovar(c) ? '<button type="button" class="cli2-btn cli2-peq" data-cli2="renovar:' + esc(c.mod) + '|' + esc(c.item) + '">Renovar (aditivo)</button>' : '') +
-          '<button type="button" class="cli2-btn2 cli2-peq" data-cli2="modulo:' + esc(c.mod) + '">Abrir no módulo</button></div>';
+          '<button type="button" class="cli2-btn2 cli2-peq" data-cli2="modulo:' + esc(c.mod) + '|' + esc(c.item) + '">Abrir no módulo</button></div>';
       }).join('') + '</section>' +
       '<section class="cli2-bloco"><h3>Faturamento</h3>' + g.contratos.map(function (c) {
         return (g.contratos.length > 1 ? '<h4>' + esc(c.modRot) + '</h4>' : '') + c.historico.map(function (x) {
@@ -259,7 +259,7 @@
       else if (acao === 'contratos') global.goOperacional('contratos');
       else if (acao === 'novo') global.MGBNovo.abrir();
       else if (acao === 'lead') { global.goPage('leads'); setTimeout(function () { try { global.openLeadModal('edit', isNaN(+arg) ? arg : +arg); } catch (e) {} }, 150); }
-      else if (acao === 'modulo') global.drillMod(arg);
+      else if (acao === 'modulo') abrirNoModulo(arg);
       else if (acao === 'faturamento') { global.fatAbrirFaturamento(); buscarNoFaturamento(arg); }
       else if (acao === 'salvar-obs') salvarObs();
       else if (acao === 'renovar') renovar(arg);
@@ -277,6 +277,15 @@
     var d = diasAte(f.data), txt = f.data.split('-').reverse().join('/');
     if (d < 0) return pill('Terminou em ' + txt, 'erro');
     return pill('Termina em ' + txt, d <= 60 ? 'atencao' : 'neutro');
+  }
+  // "Abrir no módulo" já no cliente (27/11): antes caía no painel do módulo, na primeira unidade
+  function abrirNoModulo(arg) {
+    var p = arg.split('|'), mod = p[0], item = p.slice(1).join('|');
+    if (mod === 'elev') { global.goOperacional('telavertical', 'tvanunc'); return; }    // anunciante: aba Anunciantes
+    global.drillMod(mod);
+    if (!item || mod === 'radioops') return;
+    try { if (typeof global.switchItem === 'function') global.switchItem(item); } catch (e) {}
+    setTimeout(function () { try { if (global.MGBFinanceiro && global.MGBFinanceiro.abrirCliente) global.MGBFinanceiro.abrirCliente(item); } catch (e) {} }, 150);
   }
   // Renovar pela ficha: contrato que termina em até 60 dias (ou terminou há menos de 30) gera o aditivo
   function podeRenovar(c) {
