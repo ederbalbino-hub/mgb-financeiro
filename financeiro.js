@@ -119,6 +119,19 @@
     return out.slice(0, n || 5);
   }
 
+  // Contratos que terminam entre o mês ref e os próximos n-1 meses (a renovar), do mais próximo ao mais distante
+  function renovacoes(lista, ref, n) {
+    var l = lista.filter(function (c) { return c.fimKey != null && c.fimKey >= ref && c.fimKey < ref + n && (Number(c.valor) || 0) > 0 && !(c.meses >= SEM_FIM); })
+      .sort(function (a, b) { return (a.fimKey - b.fimKey) || (b.valor - a.valor); });
+    return { qtd: l.length, valor: l.reduce(function (a, c) { return a + (Number(c.valor) || 0); }, 0), lista: l };
+  }
+  // Situação de um módulo pela margem: saudável, atenção ou crítico
+  function saudeModulo(r, d) {
+    if (!r && !d) return 'vazio';
+    if (r <= 0) return 'critico';
+    var m = (r - d) / r * 100;
+    return m >= 60 ? 'saudavel' : m >= 20 ? 'atencao' : 'critico';
+  }
   // Teto "redondo" do eixo dos gráficos e as 4 marcas (0, 1/3, 2/3, teto)
   function escala(max) {
     max = Math.max(Number(max) || 0, 1);
@@ -138,7 +151,7 @@
     return top.map(function (x) { return Object.assign({}, x, { pct: tot ? x.valor / tot * 100 : 0 }); });
   }
 
-  var regras = { agruparContas: agruparContas, chaveConta: chaveConta, contrato: contrato, resumoContratos: resumoContratos, mudancas: mudancas, rotMes: rotMes, escala: escala, fatias: fatias };
+  var regras = { agruparContas: agruparContas, chaveConta: chaveConta, contrato: contrato, resumoContratos: resumoContratos, mudancas: mudancas, rotMes: rotMes, escala: escala, fatias: fatias, renovacoes: renovacoes, saudeModulo: saudeModulo };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (!doc) return;
 
@@ -188,7 +201,7 @@
   // Barras de receita e despesa por mês + linha do resultado. serie: [{rot, rec, desp, prev, atual}]
   function graficoMeses(serie, opc) {
     opc = opc || {};
-    var W = 640, H = 300, L = 46, R = 8, T = 22, B = 30, pw = W - L - R, ph = H - T - B;
+    var W = 640, H = opc.H || 300, L = 46, R = 8, T = 22, B = 30, pw = W - L - R, ph = H - T - B;
     var max = 0; serie.forEach(function (m) { max = Math.max(max, m.rec, m.desp); });
     var e = escala(max), y = function (v) { return T + ph - Math.max(0, v) / e.teto * ph; };
     var slot = pw / serie.length, bw = opc.soReceita ? Math.min(26, slot - 12) : Math.min(18, slot / 2 - 4), o = [];
@@ -351,6 +364,36 @@
       (falta.length ? ' e ' + falta.length + (falta.length === 1 ? ' coisa' : ' coisas') + ' para lançar antes de fechar o mês.' : '.')) : 'Ainda não há lançamentos neste mês.';
     var faltaTxt = falta.length ? (tarobaPend ? 'faltam as comissões da Tarobá' : 'falta lançar ' + falta.length) : 'tudo lançado';
 
+    // dados extras do painel compacto (27/11, referência do painel do Eder)
+    var cli = tenta('coletaClientesMes', ano, mes) || [];
+    var recebido = cli.filter(function (l) { return l.pago; }).reduce(function (x, l) { return x + l.valor; }, 0);
+    var prevCli = cli.reduce(function (x, l) { return x + (l.valor || 0); }, 0);
+    var vencidos = cli.filter(function (l) { return !l.pago && l.asaas && l.asaas.st === 'vencido'; });
+    var vencV = vencidos.reduce(function (x, l) { return x + l.valor; }, 0);
+    var notas = 0; try { notas = chama('mesFechamentoNotas', ano + '-' + String(mes + 1).padStart(2, '0')).total || 0; } catch (e) {}
+    var listaCtt = tenta('contratosLista') || [];
+    var ren = renovacoes(listaCtt, ref, 3);
+    var ticket = cli.length ? prevCli / cli.length : 0;
+    var proximos = [1, 2, 3].map(function (k) { var d = new Date(ano, mes + k, 1), r = tenta('finGetRec', d.getFullYear(), d.getMonth()) || 0, dd = tenta('finGetDesp', d.getFullYear(), d.getMonth()) || 0; return { rot: MES_CURTO[d.getMonth()] + '/' + String(d.getFullYear()).slice(2), r: r, d: dd }; });
+    var spark = serie.filter(function (m) { return !m.prev && (m.rec || m.desp); }).map(function (m) { return m.rec - m.desp; });
+    var mods = linhas.filter(function (l) { return l.id && (l.r || l.d || l.falta); });
+    var SAUDE = { saudavel: ['saudável', 'ok', '#15803D'], atencao: ['atenção', 'atencao', '#B45309'], critico: ['crítico', 'erro', '#B42318'], vazio: ['sem receita', 'neutro', '#CFC7E6'] };
+    function sparkline(v) {
+      if (v.length < 2) return '';
+      var W = 300, H = 46, mn = Math.min.apply(null, v), mx = Math.max.apply(null, v), sp = mx - mn || 1;
+      var pts = v.map(function (x, i) { return (i / (v.length - 1) * (W - 8) + 4).toFixed(1) + ',' + (H - 6 - (x - mn) / sp * (H - 12)).toFixed(1); });
+      return '<svg class="fin2-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts.join(' ') + '" fill="none" stroke="#4ADE80" stroke-width="2" stroke-linejoin="round"/><circle cx="' + pts[pts.length - 1].split(',')[0] + '" cy="' + pts[pts.length - 1].split(',')[1] + '" r="3.5" fill="#4ADE80"/></svg>';
+    }
+    function tile(rot, val, cor, extra) { return '<div class="fin2-tile"><span>' + esc(rot) + '</span><b class="fin2-mono"' + (cor ? ' style="color:' + cor + '"' : '') + '>' + val + '</b>' + (extra ? '<small>' + esc(extra) + '</small>' : '') + '</div>'; }
+    var cartoesMod = mods.map(function (l) {
+      var sd = l.falta ? 'atencao' : saudeModulo(l.r, l.d), S = SAUDE[sd], mgL = l.r > 0 ? Math.max(0, Math.round((l.r - l.d) / l.r * 100)) : 0;
+      return '<button type="button" class="fin2-mod fin2-mod-' + sd + '" data-fin2="modulo:' + esc(l.id) + '">' +
+        '<span class="fin2-mod-cab"><b title="' + esc(l.rot) + '">' + esc(moduloRot({ label: l.rot }).replace(/\s*\(.*\)$/, '')) + '</b>' + chip(l.falta ? 'falta lançar' : S[0], S[1]) + '</span>' +
+        '<span class="fin2-mod-v fin2-mono">' + (l.falta ? '—' : curto(l.r)) + '</span>' +
+        '<small>resultado ' + (l.r || l.d ? curto(l.r - l.d) : '—') + ' · ' + mgL + '% de margem</small>' +
+        '<span class="fin2-mod-b" aria-hidden="true"><i style="width:' + mgL + '%;background:' + S[2] + '"></i><u style="left:' + Math.round(mg) + '%"></u></span></button>';
+    }).join('');
+
     primeiro = true;
     box.innerHTML =
       '<header class="fin2-topo"><div><span class="fin2-sub"><b>Financeiro MGB</b> · ' + esc(cap(MESES_N[mes])) + ' de ' + ano + '</span>' +
@@ -362,43 +405,60 @@
       '<section class="fin2-hero" aria-label="Resultado de ' + esc(MESES_N[mes]) + '"><div class="fin2-hero-txt">' +
         '<span class="fin2-hero-chip">Resultado de ' + esc(MESES_N[mes]) + ' · ' + esc(faltaTxt) + '</span>' +
         '<div><h3>' + (azul ? 'Sobraram ' : 'Faltaram ') + '<span class="fin2-mono" style="color:' + (azul ? DESTAQUE : '#FCA5A5') + '">R$ ' + brl(Math.abs(res)) + '</span></h3>' +
-        '<p>' + (rec > 0 && azul ? Math.round(mg) + ' de cada 100 reais que entraram ficaram na MGB.' : rec > 0 ? 'A despesa passou da receita neste mês.' : 'Sem receita lançada neste mês.') + '</p></div>' +
-        '<div class="fin2-hero-nums">' +
-          '<div><span>Receita</span><b class="fin2-mono">' + brl(rec) + '</b><small>' + esc(dif(recA, rec)) + '</small></div>' +
-          '<div><span>Despesa</span><b class="fin2-mono">' + brl(desp) + '</b><small>' + esc(dif(despA, desp)) + '</small></div>' +
-          '<div><span>' + esc(cap(MESES_N[px2.getMonth()])) + ' previsto</span><b class="fin2-mono">' + (recP - despP < 0 ? '−' : '') + brl(Math.abs(recP - despP)) + '</b><small>pelos contratos que seguem</small></div>' +
+        '<p>Receita <b>R$ ' + brl(rec) + '</b> · despesa <b>R$ ' + brl(desp) + '</b> · ' + esc(dif(recA, rec)) + '</p></div>' +
+        '<div class="fin2-hero-nums fin2-hero-4">' +
+          '<div><b class="fin2-mono">' + curto(recebido) + '</b><small>recebido de ' + curto(prevCli) + '</small></div>' +
+          '<div><b class="fin2-mono">' + curto(notas) + '</b><small>em notas emitidas</small></div>' +
+          '<div><b class="fin2-mono">' + curto(pagoC) + '</b><small>contas pagas de ' + curto(totC) + '</small></div>' +
+          '<div><b class="fin2-mono">' + (recP - despP < 0 ? '−' : '') + curto(Math.abs(recP - despP)) + '</b><small>' + esc(MESES_N[px2.getMonth()]) + ' previsto</small></div>' +
         '</div></div>' +
-        '<div class="fin2-hero-anel">' + anel(mg, 168, 14, DESTAQUE, 'rgba(255,255,255,0.14)', '#FFFFFF', '#D9D2F2', 'de margem') + '</div></section>' +
+        '<div class="fin2-hero-meta"><span>RESULTADO DO MÊS</span><b class="fin2-mono" style="color:' + (azul ? DESTAQUE : '#FCA5A5') + '">' + curto(res) + '</b></div>' +
+        '<div class="fin2-hero-anel">' + anel(mg, 120, 11, '#FFFFFF', 'rgba(255,255,255,0.16)', '#FFFFFF', '#D9D2F2', 'de margem') + '</div></section>' +
 
-      '<div class="fin2-g2">' +
+      (cartoesMod ? '<div class="fin2-mods">' + cartoesMod + '</div>' : '') +
+
+      '<div class="fin2-g2b">' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Próximos meses</h3><span class="fin2-sub">previsão pelos contratos que seguem</span></div>' +
+          '<div class="fin2-prox">' + proximos.map(function (p) {
+            var rp = p.r - p.d;
+            return '<div><span>' + p.rot.toUpperCase() + '</span><b class="fin2-mono">' + curto(p.r) + '</b><small>receita · despesa ' + curto(p.d) + '</small>' +
+              '<em class="fin2-mono' + (rp < 0 ? ' fin2-vermelho' : ' fin2-verde') + '">' + (rp < 0 ? '' : '+') + curto(rp) + '</em><i aria-hidden="true"><u style="width:' + (p.r ? Math.max(0, Math.min(100, rp / p.r * 100)) : 0).toFixed(0) + '%"></u></i></div>';
+          }).join('') + '</div></section>' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3 class="fin2-cap">Renovações 90 dias</h3>' + chip(ren.qtd + (ren.qtd === 1 ? ' contrato' : ' contratos'), ren.qtd ? 'atencao' : 'ok') + '</div>' +
+          '<b class="fin2-grande fin2-mono">' + curto(ren.valor) + '<small>/mês</small></b><span class="fin2-sub fin2-peq">a defender' + (ren.qtd ? ' · 1º vence em ' + rotMes(ren.lista[0].fimKey) : '') + '</span>' +
+          '<div class="fin2-ren">' + ren.lista.slice(0, 3).map(function (c) { return '<div><span>' + esc(c.nome) + '</span><small>' + rotMes(c.fimKey) + '</small><b class="fin2-mono">' + curto(c.valor) + '</b></div>'; }).join('') + '</div>' +
+          '<button type="button" class="fin2-link" data-fin2="contratos">Ver contratos</button></section>' +
+      '</div>' +
+
+      '<div class="fin2-g2c">' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Receita e despesa mês a mês</h3><span class="fin2-sub">' + ano + '</span></div>' +
-          '<div class="fin2-g-rolar">' + graficoMeses(serie) + '</div>' +
-          legenda([['background:#4E38B2', 'receita'], ['background:#E0A458', 'despesa'], ['height:0;border-top:2.5px solid #15803D;width:18px;border-radius:0', 'resultado']].concat(temPrev ? [['background:#4E38B2;opacity:.4', 'previsto pelos contratos']] : [])) + '</section>' +
-        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>De onde vem a receita</h3></div>' + rosca(porMod, rec, faltaMod) + '</section>' +
+          '<div class="fin2-g-rolar">' + graficoMeses(serie, { H: 250 }) + '</div>' +
+          legenda([['background:#4E38B2', 'receita'], ['background:#E0A458', 'despesa'], ['height:0;border-top:2.5px solid #15803D;width:18px;border-radius:0', 'resultado']].concat(temPrev ? [['background:#4E38B2;opacity:.4', 'previsto']] : [])) + '</section>' +
+        '<section class="fin2-pulso" aria-label="Pulso do mês"><div class="fin2-pulso-cab"><span class="fin2-pulso-ic">' + esc(cap(MESES_N[mes]).slice(0, 2)) + '</span><div><b>Pulso de ' + esc(MESES_N[mes]) + '</b><small>resultado mês a mês até aqui</small></div></div>' +
+          sparkline(spark) +
+          '<div class="fin2-tiles">' +
+            tile('RECEBIDO', Math.round(prevCli ? recebido / prevCli * 100 : 0) + '%', '#4ADE80', curto(recebido) + ' de ' + curto(prevCli)) +
+            tile('VENCIDO', curto(vencV), vencV ? '#FCA5A5' : '#FFFFFF', vencidos.length + (vencidos.length === 1 ? ' boleto' : ' boletos')) +
+            tile('MARGEM', Math.round(mg) + '%', DESTAQUE, 'resultado ÷ receita') +
+            tile('TICKET MÉDIO', curto(ticket), '#C9BEFA', cli.length + ' clientes no mês') +
+            tile('CONTRATOS', String(C.ativo), '#FFFFFF', C.termina ? C.termina + ' terminam este mês' : 'no ar') +
+            tile('CONTAS PAGAS', pctPago + '%', pctPago >= 100 ? '#4ADE80' : '#FFFFFF', contas.length + ' contas') +
+          '</div><button type="button" class="fin2-pulso-bt" data-fin2="aba:lanc">Ver receita</button></section>' +
       '</div>' +
 
-      '<div class="fin2-g3">' +
-        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Resultado por módulo</h3><span class="fin2-sub">tocar abre clientes e custos</span></div>' +
-          barrasModulos(linhas) + '<span class="fin2-sub fin2-peq">A linha cinza é o zero. Empresa reúne imposto, equipe e contador, que não pertencem a um módulo só.</span></section>' +
-        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Para onde vai a despesa</h3><span class="fin2-sub fin2-mono">R$ ' + brl(totC) + '</span></div>' +
+      '<div class="fin2-g3c">' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Para onde vai a despesa</h3>' + chip('R$ ' + curto(totC), 'neutro') + '</div>' +
           (porConta.length ? aneisDespesa(porConta) : '<p class="fin2-sub">Nenhuma despesa lançada neste mês.</p>') +
-          '<div><button type="button" class="fin2-link" data-fin2="aba:desp">Ver contas do mês</button></div></section>' +
-      '</div>' +
-
-      '<div class="fin2-g3">' +
-        '<section class="fin2-bloco fin2-graf" aria-labelledby="fin2-falta"><div class="fin2-bloco-cab"><h3 id="fin2-falta">Falta lançar</h3>' + (falta.length ? chip(falta.length + (falta.length === 1 ? ' pendência' : ' pendências'), 'atencao') : chip('tudo lançado', 'ok')) + '</div>' +
-          (falta.length ? '<div>' + falta.map(function (p) {
-            var bt = p.acao ? '<button type="button" class="' + (primeiro ? 'fin2-btn' : 'fin2-btn2') + '" data-fin2="' + p.acao + '">' + (/tarob/i.test(p.txt) ? 'Lançar' : 'Abrir') + '</button>' : '';
-            if (p.acao) primeiro = false;
-            return '<div class="fin2-linha"><span class="fin2-ponto" style="background:#B45309"></span><div class="fin2-linha-txt"><b>' + esc(p.txt) + '</b><span>' + esc(p.det) + '</span></div>' + bt + '</div>';
-          }).join('') + '</div>' : '<p class="fin2-sub">Nada pendente: o resultado de ' + MESES_N[mes] + ' está completo.</p>') +
-          '<div class="fin2-pago"><div><b>Pago R$ ' + brl(pagoC) + ' de R$ ' + brl(totC) + '</b><span class="fin2-sub">' + contas.length + (contas.length === 1 ? ' conta' : ' contas') + '</span></div>' +
-          '<div class="fin2-barra" role="img" aria-label="' + pctPago + '% das contas pagas"><i style="width:' + pctPago + '%"></i></div><span class="fin2-sub fin2-peq">Marcar pago em Contas do mês enche esta barra.</span></div></section>' +
-        '<section class="fin2-bloco fin2-graf" aria-labelledby="fin2-mud"><div class="fin2-bloco-cab"><h3 id="fin2-mud">O que mudou</h3><span class="fin2-sub">de ' + nomeAnt + ' para ' + MESES_N[mes] + '</span></div>' +
-          (mudHtml ? '<ul class="fin2-mud">' + mudHtml + '</ul>' : '<p class="fin2-sub">Nada mudou entre os dois meses.</p>') +
-          (prox ? '<div class="fin2-nota">' + esc(prox) + '</div>' : '') +
-          '<div class="fin2-ctt-linha"><span>' + chip(C.ativo + ' no ar', 'ok') + (C.termina ? chip(C.termina + (C.termina === 1 ? ' termina' : ' terminam') + ' este mês', 'atencao') : '') + '</span><button type="button" class="fin2-link" data-fin2="contratos">Ver contratos</button></div>' +
-          (C.terminaNomes.length ? '<span class="fin2-sub fin2-peq">' + esc(C.terminaNomes.slice(0, 4).join(', ')) + (C.terminaNomes.length > 4 ? '…' : '') + ' ' + (C.termina === 1 ? 'termina' : 'terminam') + ' em ' + MESES_N[mes] + '.</span>' : '') + '</section>' +
+          '<button type="button" class="fin2-link" data-fin2="aba:desp">Ver contas do mês</button></section>' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>De onde vem a receita</h3>' + chip(porMod.length + ' módulos', 'acao') + '</div>' + rosca(porMod, rec, faltaMod) + '</section>' +
+        '<section class="fin2-bloco fin2-graf" aria-labelledby="fin2-falta"><div class="fin2-bloco-cab"><h3 id="fin2-falta">Falta lançar</h3>' + (falta.length ? chip(String(falta.length), 'atencao') : chip('tudo lançado', 'ok')) + '</div>' +
+          (falta.length ? '<div class="fin2-lista-c">' + falta.map(function (p) {
+            var bt = p.acao ? '<button type="button" class="fin2-chip-bt" data-fin2="' + p.acao + '">' + (/tarob/i.test(p.txt) ? 'Lançar' : 'Abrir') + '</button>' : '';
+            return '<div><span class="fin2-ponto" style="background:#B45309"></span><span><b>' + esc(p.txt) + '</b><small>' + esc(p.det) + '</small></span>' + bt + '</div>';
+          }).join('') + '</div>' : '<p class="fin2-sub fin2-peq">Nada pendente: o resultado está completo.</p>') +
+          '<div class="fin2-bloco-cab fin2-sub-cab"><h3>O que mudou</h3><span class="fin2-sub">de ' + nomeAnt + '</span></div>' +
+          (mudHtml ? '<ul class="fin2-mud fin2-mud-c">' + mudHtml + '</ul>' : '<p class="fin2-sub fin2-peq">Nada mudou entre os dois meses.</p>') +
+          (prox ? '<span class="fin2-sub fin2-peq">' + esc(prox) + '</span>' : '') + '</section>' +
       '</div>';
     var rolar = box.querySelector('.fin2-g-rolar'); if (rolar) rolar.scrollLeft = rolar.scrollWidth; // no celular, mostra os meses mais recentes
   }
@@ -464,7 +524,7 @@
         pct, 'recebido') +
       '<div class="fin2-g2">' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Receita mês a mês</h3><span class="fin2-sub">' + ano + '</span></div>' +
-          '<div class="fin2-g-rolar">' + graficoMeses(serie, { soReceita: true }) + '</div>' +
+          '<div class="fin2-g-rolar">' + graficoMeses(serie, { soReceita: true, H: 240 }) + '</div>' +
           legenda([['background:#4E38B2', 'mês escolhido'], ['background:#8B7BE0', 'outros meses']].concat(serie.some(function (m) { return m.prev && m.rec; }) ? [['background:#8B7BE0;opacity:.4', 'previsto pelos contratos']] : [])) + '</section>' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>De onde vem a receita</h3></div>' + rosca(fat, prev) + '</section>' +
       '</div>' +
@@ -523,7 +583,7 @@
         pctNotas, 'em notas') +
       '<div class="fin2-g2">' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Receita e custo da empresa</h3><span class="fin2-sub">' + ano + '</span></div>' +
-          '<div class="fin2-g-rolar">' + graficoMeses(serie) + '</div>' +
+          '<div class="fin2-g-rolar">' + graficoMeses(serie, { H: 240 }) + '</div>' +
           legenda([['background:#4E38B2', 'receita'], ['background:#E0A458', 'custo da empresa'], ['height:0;border-top:2.5px solid #15803D;width:18px;border-radius:0', 'receita menos custo da empresa']]) + '</section>' +
         '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Notas do mês</h3><span class="fin2-sub">' + (fechado ? 'fechado' : 'aberto') + '</span></div>' +
           '<div class="fin2-notas">' + anel(pctNotas, 150, 14, '#4E38B2', '#EFEBF7', '#241A38', '#5D5868', 'emitido') + '</div>' +
@@ -892,8 +952,52 @@
       '.fin2-top b,.fin2-caixa b{font-size:13.5px;font-weight:500;text-align:right;white-space:nowrap}.fin2-top em{width:10px;height:10px;border-radius:50%}' +
       '.fin2-caixa-tot{border-top:1px solid #E4DFF0;margin-top:6px;padding-top:12px!important;grid-template-columns:1fr auto!important}.fin2-caixa-tot span{font-weight:700;font-size:15px}.fin2-caixa-tot b{font-size:18px}' +
       '.fin2-notas{display:flex;justify-content:center}.fin2-notas .fin2-anel b{font-size:26px}' +
+      // Painel compacto (27/11): letras menores, mais informação por tela
+      '#fin2-resumo,#fin2-receita,#fin2-empresa{max-width:1240px;padding:20px 22px 8px;gap:14px}' +
+      '#fin2-resumo .fin2-topo h2,#fin2-receita .fin2-topo h2,#fin2-empresa .fin2-topo h2{font-size:30px}.fin2-topo p{font-size:13.5px!important}.fin2-topo .fin2-sub{font-size:12.5px}' +
+      '#fin2-resumo .fin2-icone,#fin2-receita .fin2-icone,#fin2-empresa .fin2-icone{width:38px;height:38px}#fin2-resumo .fin2-acoes .fin2-btn,#fin2-receita .fin2-acoes .fin2-btn,#fin2-empresa .fin2-acoes .fin2-btn{min-height:38px;font-size:13px}' +
+      '.fin2-hero{padding:20px 24px;gap:22px;border-radius:18px;background:linear-gradient(135deg,#2A1760 0%,#3B2386 100%);box-shadow:0 10px 30px rgba(42,23,96,.18)}' +
+      '.fin2-hero-txt{gap:10px}.fin2-hero h3{font-size:24px}.fin2-hero p{font-size:13px;margin-top:2px}.fin2-hero p b{color:#fff;font-weight:600}.fin2-hero-chip{font-size:11.5px;padding:4px 10px}' +
+      '.fin2-hero-nums{gap:12px}.fin2-hero-nums b{font-size:17px}.fin2-hero-nums span,.fin2-hero-nums small{font-size:11.5px}.fin2-hero-4{grid-template-columns:repeat(4,minmax(0,1fr))}' +
+      '.fin2-hero-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;position:relative}.fin2-hero-meta span{font-size:11px;letter-spacing:.12em;color:#C9C0E6;font-weight:700}.fin2-hero-meta b{font-size:40px;font-weight:500;letter-spacing:-.03em;line-height:1}' +
+      '.fin2-hero-anel{flex:0 0 auto}.fin2-hero-anel .fin2-anel b{font-size:24px}' +
+      '.fin2-bloco.fin2-graf{padding:16px 18px;gap:10px;border-radius:16px}.fin2-graf h3{font-size:15.5px!important}.fin2-graf .fin2-sub{font-size:12.5px}.fin2-peq{font-size:12px!important}' +
+      '.fin2-graf .fin2-bloco-cab{gap:8px}.fin2-graf .fin2-chip{font-size:11.5px;padding:3px 9px}.fin2-leg{font-size:12px}' +
+      '.fin2-chip.fin2-erro{color:#B42318;background:#FDECEA}.fin2-chip.fin2-neutro{color:#5D5868;background:#EFEBF7}' +
+      '.fin2-mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.fin2-graf>.fin2-link{align-self:flex-start}' +
+      '.fin2-mod{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:12px 14px 14px;border-radius:14px;border:1px solid #E4DFF0;border-top:3px solid #CFC7E6;background:#fff;font-family:"DM Sans",system-ui,sans-serif;color:#241A38;min-width:0}' +
+      '.fin2-mod:hover{border-color:#CFC7E6;box-shadow:0 4px 14px rgba(42,23,96,.08)}.fin2-mod:focus-visible{outline:3px solid #6C55DB;outline-offset:2px}' +
+      '.fin2-mod-saudavel{border-top-color:#15803D;background:#F6FBF8}.fin2-mod-atencao{border-top-color:#B45309;background:#FFFAF2}.fin2-mod-critico{border-top-color:#B42318;background:#FEF6F5}' +
+      '.fin2-mod-cab{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;width:100%}.fin2-mod-cab b{font-size:13.5px;line-height:1.25;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fin2-mod .fin2-chip{font-size:11px;padding:2px 8px}' +
+      '.fin2-mod-v{font-size:22px;font-weight:500;letter-spacing:-.02em}.fin2-mod small{font-size:11.5px;color:#5D5868;line-height:1.35}' +
+      '.fin2-mod-b{position:relative;height:5px;border-radius:999px;background:#E9E5F3;margin-top:6px}.fin2-mod-b i{position:absolute;left:0;top:0;bottom:0;border-radius:999px}.fin2-mod-b u{position:absolute;top:-3px;bottom:-3px;width:2px;background:#241A38;border-radius:2px}' +
+      '.fin2-g2b{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);gap:14px}.fin2-g2c{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:14px}.fin2-g3c{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}' +
+      '.fin2-prox{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.fin2-prox>div{background:#F3F0FA;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}' +
+      '.fin2-prox span{font-size:11px;letter-spacing:.08em;font-weight:700;color:#5D5868}.fin2-prox b{font-size:21px;font-weight:500}.fin2-prox small{font-size:11.5px;color:#5D5868}.fin2-prox em{font-style:normal;font-size:12.5px;font-weight:500}' +
+      '.fin2-prox i{display:block;height:4px;border-radius:999px;background:#E2DCF2;margin-top:4px;overflow:hidden}.fin2-prox i u{display:block;height:100%;background:#4E38B2}' +
+      '.fin2-cap{font-size:12px!important;letter-spacing:.08em;text-transform:uppercase;color:#5D5868}.fin2-grande{font-size:28px;font-weight:500;letter-spacing:-.02em;line-height:1.1}.fin2-grande small{font-size:13px;color:#5D5868;margin-left:3px}' +
+      '.fin2-ren{display:flex;flex-direction:column}.fin2-ren>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid #EFEBF7;font-size:12.5px}' +
+      '.fin2-ren span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fin2-ren small{color:#5D5868;font-size:11.5px}.fin2-ren b{font-weight:500}' +
+      '.fin2-pulso{background:linear-gradient(160deg,#2A1760,#1E1048);color:#fff;border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:0 10px 30px rgba(42,23,96,.2)}' +
+      '.fin2-pulso-cab{display:flex;align-items:center;gap:10px}.fin2-pulso-cab>div{display:flex;flex-direction:column}.fin2-pulso-cab b{font-size:14.5px}.fin2-pulso-cab small{font-size:11.5px;color:#C9C0E6}' +
+      '.fin2-pulso-ic{width:34px;height:34px;border-radius:50%;background:#4E38B2;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px}' +
+      '.fin2-spark{width:100%;height:46px;display:block}' +
+      '.fin2-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.fin2-tile{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 11px;display:flex;flex-direction:column;gap:1px;min-width:0}' +
+      '.fin2-tile span{font-size:10.5px;letter-spacing:.08em;font-weight:700;color:#C9C0E6}.fin2-tile b{font-size:19px;font-weight:500;color:#fff}.fin2-tile small{font-size:11px;color:#C9C0E6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.fin2-pulso-bt{align-self:flex-end;min-height:34px;padding:0 14px;border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font:600 12.5px "DM Sans",system-ui,sans-serif;cursor:pointer}.fin2-pulso-bt:hover{background:rgba(255,255,255,.24)}' +
+      '.fin2-g3c .fin2-aneis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 10px}.fin2-g3c .fin2-aneis>div{gap:8px}.fin2-g3c .fin2-aneis .fin2-anel{transform:scale(.82);margin:-5px}' +
+      '.fin2-g3c .fin2-aneis b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fin2-g3c .fin2-aneis .fin2-mono{font-size:12px}.fin2-g3c .fin2-aneis small{font-size:11px}' +
+      '.fin2-g3c .fin2-rosca{width:150px;height:150px}.fin2-g3c .fin2-rosca svg{width:150px;height:150px}.fin2-g3c .fin2-rosca b{font-size:18px}.fin2-g3c .fin2-rosca-l>div{padding:5px 0;font-size:12.5px}.fin2-g3c .fin2-rosca-l b{font-size:12px}.fin2-g3c .fin2-rosca-l small{font-size:11.5px;width:34px}' +
+      '.fin2-lista-c>div{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-top:1px solid #EFEBF7}.fin2-lista-c .fin2-ponto{margin-top:5px;width:8px;height:8px}.fin2-lista-c>div>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}' +
+      '.fin2-lista-c b{font-size:12.5px;font-weight:600}.fin2-lista-c small{font-size:11.5px;color:#5D5868}' +
+      '.fin2-chip-bt{flex:none;min-height:28px;padding:0 10px;border-radius:999px;border:1px solid #CFC7E6;background:#fff;color:#2A1760;font:600 12px "DM Sans",system-ui,sans-serif;cursor:pointer}.fin2-chip-bt:hover{background:#ECE8FA}' +
+      '.fin2-sub-cab{margin-top:6px}.fin2-mud-c li{font-size:12.5px!important;padding:6px 0!important;gap:8px!important}.fin2-mud-c .fin2-mono{font-size:12px}' +
+      '#fin2-receita .fin2-hero-anel .fin2-anel,#fin2-empresa .fin2-hero-anel .fin2-anel{transform:scale(.75);margin:-20px}' +
+      '#fin2-receita .fin2-g2,#fin2-empresa .fin2-g2,#fin2-receita .fin2-g3,#fin2-empresa .fin2-g3{gap:14px}' +
+      '#fin2-receita .fin2-top>div,#fin2-receita .fin2-rosca-l>div,#fin2-empresa .fin2-rosca-l>div,#fin2-empresa .fin2-caixa>div{padding:4px 0;font-size:13px}#fin2-receita .fin2-top span{font-size:13px}' +
+      '#fin2-empresa .fin2-aneis,#fin2-receita .fin2-aneis{gap:10px}' +
       '.fin2-ctt-linha{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}.fin2-ctt-linha>span{display:flex;flex-wrap:wrap;gap:6px}' +
-      '@media (max-width:760px){.fin2{padding:18px 14px 8px}.fin2-g2,.fin2-g3,.fin2-aneis{grid-template-columns:minmax(0,1fr)}.fin2-hero{padding:22px 20px;gap:20px}.fin2-hero h3{font-size:27px}.fin2-hero-nums{grid-template-columns:minmax(0,1fr)}.fin2-hero-anel .fin2-anel{transform:scale(.85)}.fin2-topo h2{font-size:32px}.fin2-div>div{grid-template-columns:minmax(0,1fr) 84px}.fin2-div span{grid-column:1/-1}.fin2-top>div{grid-template-columns:minmax(0,1fr) 84px 10px}.fin2-top>div>span{grid-column:1/-1}.fin2-caixa>div:not(.fin2-caixa-tot){grid-template-columns:minmax(0,1fr) 110px}.fin2-caixa>div:not(.fin2-caixa-tot)>span{grid-column:1/-1}.fin2-linha-txt{flex-basis:calc(100% - 30px)!important}#page-overview div:has(>.mtab){overflow-x:auto;scrollbar-width:none}#page-overview div:has(>.mtab)>.mtab{flex:none}.fin2 h2{font-size:22px}.fin2-nums{grid-template-columns:1fr}.fin2-num b{font-size:22px}.fin2-duas{grid-template-columns:1fr}' +
+      '@media (max-width:760px){.fin2{padding:18px 14px 8px}.fin2-g2,.fin2-g3,.fin2-aneis{grid-template-columns:minmax(0,1fr)}.fin2-hero{padding:22px 20px;gap:20px}.fin2-hero h3{font-size:27px}.fin2-hero-nums{grid-template-columns:minmax(0,1fr)}.fin2-hero-anel .fin2-anel{transform:scale(.85)}.fin2-topo h2{font-size:32px}.fin2-div>div{grid-template-columns:minmax(0,1fr) 84px}.fin2-div span{grid-column:1/-1}.fin2-top>div{grid-template-columns:minmax(0,1fr) 84px 10px}.fin2-top>div>span{grid-column:1/-1}.fin2-caixa>div:not(.fin2-caixa-tot){grid-template-columns:minmax(0,1fr) 110px}.fin2-caixa>div:not(.fin2-caixa-tot)>span{grid-column:1/-1}.fin2-linha-txt{flex-basis:calc(100% - 30px)!important}.fin2-g2b,.fin2-g2c,.fin2-g3c{grid-template-columns:minmax(0,1fr)}.fin2-hero-4{grid-template-columns:repeat(2,minmax(0,1fr))}.fin2-hero-meta{align-items:flex-start}.fin2-hero-meta b{font-size:32px}.fin2-prox{gap:6px}.fin2-prox>div{padding:9px 10px}.fin2-prox b{font-size:16px}.fin2-prox small{display:none}.fin2-mods{grid-template-columns:repeat(2,minmax(0,1fr))}.fin2-mod-v{font-size:19px}#page-overview div:has(>.mtab){overflow-x:auto;scrollbar-width:none}#page-overview div:has(>.mtab)>.mtab{flex:none}.fin2 h2{font-size:22px}.fin2-nums{grid-template-columns:1fr}.fin2-num b{font-size:22px}.fin2-duas{grid-template-columns:1fr}' +
         '.fin2-conta{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"c t v" ". d s"}.fin2-conta>input{grid-area:c}.fin2-conta-txt{grid-area:t}.fin2-valor{grid-area:v}.fin2-venc{grid-area:d}.fin2-seta{grid-area:s;justify-self:end}.fin2-conta-cab{display:none}' +
         '.fin2-mes{width:100%;justify-content:space-between}.fin2-mes>div{text-align:center}.fin2-det{padding-left:20px}#fin2-painel.fin2{padding:20px}}';
     doc.head.appendChild(s);

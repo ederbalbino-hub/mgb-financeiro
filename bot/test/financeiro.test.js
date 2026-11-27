@@ -78,3 +78,25 @@ test("gráficos: fatias junta o resto em Outros e calcula a porcentagem", () => 
   assert.equal(Math.round(f.reduce((a, x) => a + x.pct, 0)), 100);
   assert.deepEqual(F.fatias([{ rot: "A", valor: 2 }, { rot: "B", valor: 1 }], 1).map((x) => x.rot), ["A", "B"]);
 });
+
+test("painel: renovações dos próximos 3 meses, do mais próximo ao mais distante, sem contratos sem fim", () => {
+  const ref = 2026 * 12 + 10; // nov/26
+  const l = [
+    { nome: "Neoville", valor: 2210, fimKey: ref + 2, meses: 12 },
+    { nome: "Eletran", valor: 200, fimKey: ref, meses: 12 },
+    { nome: "Muffato", valor: 6116, fimKey: ref + 5, meses: 18 },
+    { nome: "Antigo", valor: 900, fimKey: ref - 1, meses: 12 },
+    { nome: "Arfix", valor: 2900, fimKey: ref + 1, meses: 120 },
+  ];
+  const r = F.renovacoes(l, ref, 3);
+  assert.deepEqual(r.lista.map((c) => c.nome), ["Eletran", "Neoville"]);
+  assert.equal(r.valor, 2410);
+});
+
+test("painel: situação do módulo pela margem", () => {
+  assert.equal(F.saudeModulo(52900, 627), "saudavel");
+  assert.equal(F.saudeModulo(3100, 2500), "critico");
+  assert.equal(F.saudeModulo(1000, 600), "atencao");
+  assert.equal(F.saudeModulo(0, 125), "critico");
+  assert.equal(F.saudeModulo(0, 0), "vazio");
+});
