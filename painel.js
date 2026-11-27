@@ -428,13 +428,125 @@
     if (typeof global.showOpPanel === 'function') global.showOpPanel(t, el);
   }
 
+  // ── Cobrança mensal: cartões no lugar das abas + forma de repasse de cada fluxo (27/11) ──
+  var REP_PADRAO = {
+    mercadao: { favorecido: 'Mercadão Prochet', doc: '12.578.708/0001-03', forma: '', origemDoc: 'CNPJ do cadastro do Mercadão Prochet no hub' },
+    vaapty: { favorecido: 'Franqueadora Vaapty (VA Vaapty Gestão de Franquias)', doc: '', forma: '' },
+    elev: { favorecido: 'Jadson (sócio da Tela Vertical)', doc: '', forma: '' }
+  };
+  var FORMAS = { pix: 'PIX', transf: 'Transferência bancária', boleto: 'Boleto', dinheiro: 'Dinheiro' };
+  function repCfg(id) {
+    var nc = ler('notaConfig', null); if (!nc) return Object.assign({}, REP_PADRAO[id]);
+    nc.repasses = nc.repasses || {};
+    return Object.assign({}, REP_PADRAO[id], nc.repasses[id] || {});
+  }
+  function repSalvar(id, dados) {
+    var nc = ler('notaConfig', null); if (!nc) return false;
+    nc.repasses = nc.repasses || {};
+    nc.repasses[id] = Object.assign({}, nc.repasses[id] || {}, dados, { atualizadoEm: new Date().toISOString() });
+    try { global.scheduleSave(); } catch (e) {}
+    return true;
+  }
+  function repValor(id) {
+    var H = hoje();
+    if (id === 'mercadao') {
+      var dados = {}; try { dados = JSON.parse(global.localStorage.getItem('mgb_blocos_v4') || '{}') || {}; } catch (e) {}
+      var r = tenta('mercRepasseCalc', dados) || { base: 0, pct: (tenta('mercCfg') || {}).pct || 20, valor: 0 };
+      return { valor: r.valor, base: r.base, pct: r.pct, sobre: 'das cotas dos anunciantes do mês' };
+    }
+    if (id === 'vaapty') { var v = tenta('vaaptyRepasseMes', H.ano, H.mes) || { valor: 0, base: 0, pct: 15 }; return { valor: v.valor, base: v.base, pct: v.pct, sobre: 'da receita das unidades Vaapty' }; }
+    var e = tenta('elevMesResumo', H.ano, H.mes) || { rec: 0, resultado: 0 };
+    return { valor: e.resultado, base: e.rec, pct: null, sobre: 'resultado do mês (receita − despesas)' };
+  }
+  var editRep = null;
+  function repasseHtml(id) {
+    var c = repCfg(id), v = repValor(id), H = hoje(), dadosOk = c.forma && (c.forma !== 'pix' || c.pix) && (c.forma !== 'transf' || (c.banco && c.conta));
+    var tit = id === 'elev' ? 'Prestação de contas ao sócio' : 'Repasse de ' + MESES_N[H.mes];
+    var linhaV = id === 'elev' ? 'Resultado do mês: <b class="pnl-mono">' + (v.valor < 0 ? '−' : '') + 'R$ ' + brl(Math.abs(v.valor)) + '</b> · receita R$ ' + brl(v.base)
+      : '<b class="pnl-mono">R$ ' + brl(v.valor) + '</b> = ' + (v.pct || 0) + '% de R$ ' + brl(v.base) + ' ' + esc(v.sobre);
+    var dados = [];
+    if (c.forma) dados.push(['Forma', FORMAS[c.forma] || c.forma]);
+    if (c.forma === 'pix' && c.pix) dados.push(['Chave PIX', c.pix, true]);
+    if (c.forma === 'transf') { if (c.banco) dados.push(['Banco', c.banco]); if (c.agencia) dados.push(['Agência', c.agencia, true]); if (c.conta) dados.push(['Conta', c.conta, true]); }
+    if (c.doc) dados.push(['CNPJ/CPF', c.doc, true]);
+    if (c.obs) dados.push(['Observação', c.obs]);
+    var form = editRep === id ? '<form class="pnl-rep-form" data-pnl-rep-form="' + id + '" onsubmit="return false">' +
+      '<label>Favorecido<input name="favorecido" value="' + esc(c.favorecido || '') + '"></label>' +
+      '<label>CNPJ/CPF<input name="doc" value="' + esc(c.doc || '') + '"></label>' +
+      '<label>Forma de repasse<select name="forma">' + ['', 'pix', 'transf', 'boleto', 'dinheiro'].map(function (f) { return '<option value="' + f + '"' + (c.forma === f ? ' selected' : '') + '>' + (f ? FORMAS[f] : 'Escolha…') + '</option>'; }).join('') + '</select></label>' +
+      '<label>Chave PIX<input name="pix" value="' + esc(c.pix || '') + '" placeholder="CNPJ, e-mail, telefone ou chave aleatória"></label>' +
+      '<label>Banco<input name="banco" value="' + esc(c.banco || '') + '"></label>' +
+      '<label>Agência<input name="agencia" value="' + esc(c.agencia || '') + '"></label>' +
+      '<label>Conta<input name="conta" value="' + esc(c.conta || '') + '"></label>' +
+      '<label class="pnl-rep-larga">Observação<input name="obs" value="' + esc(c.obs || '') + '" placeholder="ex.: repasse até o dia 10, mandar comprovante por WhatsApp"></label>' +
+      '<div class="pnl-rep-acoes"><button type="button" class="pnl-bt" data-pnl-rep="salvar:' + id + '">Salvar dados</button><button type="button" class="pnl-bt2" data-pnl-rep="cancelar:' + id + '">Cancelar</button></div></form>' : '';
+    return '<section class="pnl-rep" aria-label="' + esc(tit) + '"><div class="pnl-rep-cab"><div><span class="pnl-rep-rot">' + esc(tit) + '</span><b>' + esc(c.favorecido || '—') + '</b><small>' + linhaV + '</small></div>' +
+      (dadosOk ? chip('dados de pagamento ok', 'ok') : chip('falta a forma de repasse', 'atencao')) + '</div>' +
+      (dados.length ? '<div class="pnl-rep-dados">' + dados.map(function (d) { return '<div><span>' + esc(d[0]) + '</span><b' + (d[2] ? ' class="pnl-mono"' : '') + '>' + esc(d[1]) + '</b>' + (d[2] ? '<button type="button" class="pnl-copiar" data-pnl-copiar="' + esc(d[1]) + '" aria-label="Copiar ' + esc(d[0]) + '">Copiar</button>' : '') + '</div>'; }).join('') + '</div>'
+        : '<p class="pnl-vazio">Ainda não há forma de repasse cadastrada para ' + esc(c.favorecido) + '. Clique em "Preencher dados" e informe PIX ou conta.</p>') +
+      (c.origemDoc && c.doc && !c.atualizadoEm ? '<span class="pnl-nota">CNPJ: ' + esc(c.origemDoc) + '. Confira antes do primeiro repasse.</span>' : '') +
+      (editRep === id ? form : '<div><button type="button" class="pnl-bt2" data-pnl-rep="editar:' + id + '">' + (dados.length > 1 ? 'Editar dados de pagamento' : 'Preencher dados') + '</button></div>') + '</section>';
+  }
+  function cobranca() {
+    var pg = doc.getElementById('page-relatorios');
+    if (!pg || pg.style.display === 'none') return;
+    var abas = pg.querySelector('.rel-tab'); abas = abas && abas.parentNode;
+    if (!abas) return;
+    var ativa = (pg.querySelector('.rel-tab.active') || { getAttribute: function () { return 'mercadao'; } }).getAttribute('data-reltab');
+    var H = hoje(), vm = repValor('mercadao'), vv = repValor('vaapty'), ve = repValor('elev');
+    var L = [
+      { tab: 'mercadao', ico: 'radio', nome: 'Mercadão', sub: 'repasse ' + (vm.pct || 0) + '% ao Mercadão Prochet', fato: 'R$ ' + curto(vm.valor), cfg: repCfg('mercadao') },
+      { tab: 'vaapty', ico: 'contrato', nome: 'Vaapty', sub: 'repasse ' + (vv.pct || 0) + '% à franqueadora', fato: 'R$ ' + curto(vv.valor), cfg: repCfg('vaapty') },
+      { tab: 'elev', ico: 'tela-vertical', nome: 'Tela Vertical', sub: 'prestação de contas ao sócio', fato: (ve.valor < 0 ? '−' : '') + 'R$ ' + curto(Math.abs(ve.valor)), tom: ve.valor < 0 ? 'erro' : '', cfg: repCfg('elev') }
+    ];
+    var box = pg.querySelector('.pnl-secoes');
+    if (!box) { box = doc.createElement('div'); box.className = 'pnl-secoes'; abas.parentNode.insertBefore(box, abas); }
+    abas.classList.add('pnl-abas-ocultas');
+    box.innerHTML = '<div class="pnl-sec-grupo"><span class="pnl-sec-rot">Fluxos de repasse · ' + MESES_N[H.mes] + '</span><div class="pnl-sec-grade pnl-sec-3">' + L.map(function (c) {
+      var on = c.tab === ativa, ok = c.cfg.forma;
+      return '<button type="button" class="pnl-sec' + (on ? ' pnl-sec-on' : '') + '" data-pnl-rel="' + c.tab + '" aria-pressed="' + on + '"><span class="pnl-sec-ico">' + ico(c.ico) + '</span><span class="pnl-sec-txt"><b>' + esc(c.nome) + '</b><small>' + esc(c.sub) + '</small></span>' +
+        '<span class="pnl-sec-fato pnl-mono' + (c.tom === 'erro' ? ' pnl-vermelho' : '') + '">' + esc(c.fato) + '</span>' +
+        '<span class="pnl-sec-chip">' + (ok ? chip(FORMAS[c.cfg.forma] || c.cfg.forma, 'ok') : chip('sem forma de repasse', 'atencao')) + '</span></button>';
+    }).join('') + '</div></div>';
+    // bloco da forma de repasse no topo do fluxo aberto
+    ['mercadao', 'vaapty', 'elev'].forEach(function (id) {
+      var sub = doc.getElementById('rel-sub-' + id); if (!sub) return;
+      var b = sub.querySelector(':scope>.pnl-rep-raiz');
+      if (id !== ativa) { if (b) b.remove(); return; }
+      if (!b) { b = doc.createElement('div'); b.className = 'pnl-rep-raiz'; sub.insertBefore(b, sub.firstChild); }
+      b.innerHTML = repasseHtml(id);
+    });
+  }
+  function cliqueCobranca(ev) {
+    var t = ev.target.closest && ev.target.closest('[data-pnl-rel],[data-pnl-rep],[data-pnl-copiar]');
+    if (!t) return;
+    if (t.hasAttribute('data-pnl-rel')) {
+      var id = t.getAttribute('data-pnl-rel'), el = doc.querySelector('#page-relatorios .rel-tab[data-reltab="' + id + '"]');
+      editRep = null; if (typeof global.showRelTab === 'function') global.showRelTab(id, el); return;
+    }
+    if (t.hasAttribute('data-pnl-copiar')) {
+      var txt = t.getAttribute('data-pnl-copiar');
+      try { global.navigator.clipboard.writeText(txt).then(function () { t.textContent = 'Copiado'; setTimeout(function () { t.textContent = 'Copiar'; }, 1500); }); } catch (e) {}
+      return;
+    }
+    var a = t.getAttribute('data-pnl-rep').split(':'), ac = a[0], rid = a[1];
+    if (ac === 'editar') editRep = rid;
+    else if (ac === 'cancelar') editRep = null;
+    else if (ac === 'salvar') {
+      var f = doc.querySelector('[data-pnl-rep-form="' + rid + '"]'), d = {};
+      if (f) Array.prototype.forEach.call(f.elements, function (el) { if (el.name) d[el.name] = String(el.value || '').trim(); });
+      if (repSalvar(rid, d)) editRep = null;
+    }
+    cobranca();
+  }
+
   // ── colocar na tela ──────────────────────────────────────────────────────
   var ONDE = {
     leads: function (pg) { return pg.querySelector(':scope>.page-hdr') || pg.firstElementChild; },
     clientes: function (pg) { return pg.querySelector(':scope>header'); },
     operacional: function (pg) { return pg.querySelector(':scope .hub-nav'); },
     contabilidade: function (pg) { return pg.querySelector(':scope>.page-hdr'); },
-    relatorios: function (pg) { return pg.querySelector(':scope>.page-hdr'); },
+    relatorios: function (pg) { var t = pg.querySelector('.rel-tab'); return (t && t.parentNode) || pg.querySelector(':scope>.page-hdr'); },
     ferramentas: function (pg) { return pg.querySelector(':scope>.page-hdr'); }
   };
   function desenhar(area) {
@@ -455,6 +567,7 @@
     var p = ler('curPage', '');
     if (AREAS[p]) desenhar(p);
     if (p === 'operacional') { try { secoes(); } catch (e) {} }
+    if (p === 'relatorios') { try { cobranca(); } catch (e) {} }
     // no celular os gráficos mês a mês abrem nos meses mais recentes
     Array.prototype.forEach.call(doc.querySelectorAll('.pnl-g-rolar,.fin2-g-rolar'), function (el) { if (!el.scrollLeft && el.scrollWidth > el.clientWidth) el.scrollLeft = el.scrollWidth; });
   }
@@ -514,6 +627,19 @@
     '.pnl-sec-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.pnl-sec-txt b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pnl-sec-txt small{font-size:11.5px;color:#5D5868;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '.pnl-sec-fato{font-size:16px;font-weight:500;white-space:nowrap}.pnl-vermelho{color:#B42318}.pnl-sec-seta{color:#8B7BE0;display:flex}.pnl-sec-seta svg{width:16px;height:16px}' +
     '.pnl-sec-chip{position:absolute;top:-8px;right:10px}' +
+    '.pnl-abas-ocultas{display:none!important}.pnl-sec-3{grid-template-columns:repeat(3,minmax(0,1fr))}#page-relatorios .pnl-secoes{padding-top:2px;padding-bottom:10px}#page-relatorios .pnl-sec{min-height:74px;padding-top:15px}' +
+    '.pnl-rep-raiz{padding:0 22px 14px;max-width:1240px;margin:0 auto;box-sizing:border-box;font-family:\"DM Sans\",system-ui,sans-serif;color:#241A38}' +
+    '.pnl-rep{background:#fff;border:1px solid #E4DFF0;border-left:0;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 0 rgba(42,23,96,.02)}' +
+    '.pnl-rep-cab{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px}.pnl-rep-cab>div{display:flex;flex-direction:column;gap:2px;min-width:0}' +
+    '.pnl-rep-rot{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5D5868}.pnl-rep-cab b{font-size:15.5px}.pnl-rep-cab small{font-size:13px;color:#5D5868}.pnl-rep-cab small b{font-size:13.5px;color:#241A38;font-weight:500}' +
+    '.pnl-rep-dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.pnl-rep-dados>div{background:#F6F4FA;border-radius:10px;padding:8px 11px;display:flex;flex-direction:column;gap:1px;position:relative;min-width:0}' +
+    '.pnl-rep-dados span{font-size:11px;color:#5D5868}.pnl-rep-dados b{font-size:13.5px;font-weight:600;overflow-wrap:anywhere;padding-right:56px}.pnl-rep-dados b.pnl-mono{font-weight:500}' +
+    '.pnl-copiar{position:absolute;right:8px;top:50%;transform:translateY(-50%);min-height:28px;padding:0 9px;border:1px solid #CFC7E6;border-radius:8px;background:#fff;color:#2A1760;font:600 11.5px \"DM Sans\",system-ui,sans-serif;cursor:pointer}' +
+    '.pnl-bt,.pnl-bt2{min-height:36px;padding:0 14px;border-radius:10px;font:700 13px \"DM Sans\",system-ui,sans-serif;cursor:pointer}.pnl-bt{border:0;background:#4E38B2;color:#fff}.pnl-bt:hover{background:#2A1760}.pnl-bt2{border:1px solid #CFC7E6;background:#fff;color:#2A1760;font-weight:600}.pnl-bt2:hover{background:#ECE8FA}' +
+    '.pnl-rep-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:#FBFAFE;border:1px solid #EFEBF7;border-radius:12px;padding:12px}' +
+    '.pnl-rep-form label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#3A3446}.pnl-rep-form input,.pnl-rep-form select{min-height:38px;border:1px solid #CFC7E6;border-radius:9px;padding:0 10px;font:14px \"DM Sans\",system-ui,sans-serif;background:#fff;color:#241A38}' +
+    '.pnl-rep-larga{grid-column:1/-1}.pnl-rep-acoes{grid-column:1/-1;display:flex;gap:8px}' +
+    '@media (max-width:760px){.pnl-sec-3{grid-template-columns:minmax(0,1fr)!important}.pnl-rep-raiz{padding:0 14px 12px}.pnl-rep-form{grid-template-columns:minmax(0,1fr)}}' +
     '.pnl-tv .page-hdr{background:none!important}.pnl-tv-logo{display:inline-block}' +
     '@media (max-width:1000px){.pnl-sec-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
     '@media (max-width:520px){.pnl-secoes{padding:6px 14px 4px}.pnl-sec-grade{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.pnl-sec{flex-wrap:wrap;min-height:0;padding:10px}.pnl-sec-fato{width:100%;font-size:15px}.pnl-sec-seta{display:none}.pnl-sec-txt b,.pnl-sec-txt small{white-space:normal}.pnl-sec-ico{width:32px;height:32px}}' +
@@ -531,6 +657,7 @@
     doc.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('#page-clientes [data-cli2], #page-leads')) agendar(); }, true);
     doc.addEventListener('click', clique);
     doc.addEventListener('click', cliqueSecao);
+    doc.addEventListener('click', cliqueCobranca);
     agendar();
   }
 
