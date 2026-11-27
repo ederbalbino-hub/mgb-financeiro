@@ -329,7 +329,7 @@
     var cli = tenta('coletaClientesMes', H.ano, H.mes) || [], prev = cli.reduce(function (a, l) { return a + (l.valor || 0); }, 0), pago = cli.filter(function (l) { return l.pago; }).reduce(function (a, l) { return a + l.valor; }, 0);
     var venc = cli.filter(function (l) { return !l.pago && l.asaas && l.asaas.st === 'vencido'; });
     return {
-      hero: { chip: 'Cobrança mensal · ' + MESES_N[H.mes], titulo: 'Recebido', valor: 'R$ ' + brl(pago), frase: 'de R$ ' + brl(prev) + ' cobrados de ' + cli.length + ' clientes neste mês.',
+      hero: { chip: 'Repasses e relatórios · ' + MESES_N[H.mes], titulo: 'Recebido', valor: 'R$ ' + brl(pago), frase: 'de R$ ' + brl(prev) + ' cobrados de ' + cli.length + ' clientes neste mês.',
         nums: [['a receber', curto(prev - pago)], ['vencidos', String(venc.length), curto(venc.reduce(function (a, l) { return a + l.valor; }, 0))], ['clientes', String(cli.length)]],
         anel: [pct(pago, prev), 'recebido'] },
       cartoes: linhas.slice(0, 6).map(function (x) { return { titulo: x.rot, valor: curto(x.valor), sub: x.n + ' clientes com receita', tom: 'neutro', barra: [pct(x.valor, linhas[0].valor), '#4E38B2'], ir: 'mod:' + x.id }; }),

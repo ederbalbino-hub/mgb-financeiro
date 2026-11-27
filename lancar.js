@@ -72,11 +72,19 @@
   // Tela Vertical paga do bolso de um sócio (Diego, 27/11): um lançamento só, em elevInvestimentos (tipo despesa).
   // Ele entra como despesa do mês da Tela Vertical e como aporte na conta do sócio; sem linha em db.elev.
   var TV = 'elev';
+  var TV_GERAL = '__geral';   // "Geral (rateia entre os condomínios)" — despesasComp com todos os condomínios
+  // Despesa da Tela Vertical "geral", paga pela MGB: vira despesa compartilhada (rateio entre os condomínios).
+  // À vista = 1 mês; mensal = N meses com o valor do mês; parcelado = N meses com valor/N.
+  function despesaRateada(d, id, condominios) {
+    var v = Math.round(numero(d.valor) * 100) / 100, n = d.forma === 'parcelado' ? parseInt(d.parcelas, 10) || 2 : d.forma === 'mensal' ? parseInt(d.meses, 10) || 1 : 1;
+    return { id: id, nome: String(d.descricao).trim(), forn: String(d.fornecedor || '').trim(), valor: d.forma === 'parcelado' ? Math.round(v / n * 100) / 100 : v,
+      meses: n, inicio: mesDe(d.data), telas: (condominios || []).slice(), origem: 'lancar', criadoEm: d.criadoEm || new Date().toISOString(), lancadoPor: d.lancadoPor || '' };
+  }
   function pagaPeloSocio(d) { return !!d && d.destino === TV && (d.quemPagou === 'eder' || d.quemPagou === 'jadson'); }
   function lancamentoSocio(d, id) {
     var c = categoria(d.categoria) || { rotulo: '' };
     return {
-      id: id, item: d.item || 'Geral', descricao: String(d.descricao).trim() + (String(d.fornecedor || '').trim() ? ' · ' + String(d.fornecedor).trim() : ''),
+      id: id, item: d.item && d.item !== TV_GERAL ? d.item : 'Geral', descricao: String(d.descricao).trim() + (String(d.fornecedor || '').trim() ? ' · ' + String(d.fornecedor).trim() : ''),
       valor: Math.round(numero(d.valor) * 100) / 100, pagoPor: d.quemPagou, data: d.data, tipo: 'despesa',
       cat: d.categoria, catTxt: c.livre ? String(d.categoriaTxt || '').trim() : '', origem: 'lancar', lancadoPor: d.lancadoPor || '',
       criadoEm: d.criadoEm || new Date().toISOString()
@@ -212,7 +220,7 @@
     avulsasDoMes: avulsasDoMes, validarReceita: validarReceita, receitaAvulsa: receitaAvulsa,
     receitasDoMes: receitasDoMes, itemReceita: itemReceita, sugestoes: sugestoes,
     unirClientes: unirClientes, buscarClientes: buscarClientes, origemCliente: origemCliente,
-    pagaPeloSocio: pagaPeloSocio, lancamentoSocio: lancamentoSocio
+    pagaPeloSocio: pagaPeloSocio, lancamentoSocio: lancamentoSocio, despesaRateada: despesaRateada, TV_GERAL: TV_GERAL
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined') return;
@@ -390,7 +398,8 @@
       if (area === MGB_DIA) { w.hidden = true; estado.item = ''; }
       else {
         var it = itensDe(area);
-        s.innerHTML = (it.length > 1 ? '<option value="">Escolha…</option>' : '') + it.map(function (i) { return '<option>' + esc(i) + '</option>'; }).join('');
+        s.innerHTML = (it.length > 1 ? '<option value="">Escolha…</option>' : '') + (area === TV ? '<option value="' + TV_GERAL + '">Geral (rateia entre os condomínios)</option>' : '') +
+          it.map(function (i) { return '<option>' + esc(i) + '</option>'; }).join('');
         if (estado.item && it.indexOf(estado.item) >= 0) s.value = estado.item;
         estado.item = s.value; w.hidden = false;
       }
@@ -410,6 +419,7 @@
     function origemUnidade() {
       var o = el.querySelector('#lz-origem'), area = estado.destino, it = el.querySelector('#lz-item').value;
       if (area === MGB_DIA || !area) { o.hidden = true; return; }
+      if (it === TV_GERAL) { o.hidden = false; o.innerHTML = 'Despesa de toda a Tela Vertical: o valor é dividido entre os ' + itensDe(TV).length + ' condomínios.'; return; }
       if (!it) { o.hidden = false; o.innerHTML = 'A lista mostra as unidades já cadastradas no hub. Cliente novo? Feche em <b>Novo cliente</b>, que puxa do CRM, e ele aparece aqui.'; return; }
       var info = {}; try { info = (clientesInfo[area] || {})[it] || {}; } catch (e) {}       // eslint-disable-line no-undef
       var c = clientesDoHub().filter(function (x) { return normaliza(x.nome) === normaliza(info.fantasia || it) || normaliza(x.nome) === normaliza(it); })[0];
@@ -435,7 +445,7 @@
       var d = dados(), v = numero(d.valor), m = mesDe(d.data), alvo;
       if (!d.destino) { el.querySelector('#lz-resumo').textContent = 'Escolha para quem é e o que foi.'; return; }
       var mod = modulos().filter(function (x) { return x.id === d.destino; })[0];
-      alvo = d.destino === MGB_DIA ? 'MGB · dia a dia' : (mod ? rotMod(mod) : '') + (d.item ? ' › ' + d.item : '');
+      alvo = d.destino === MGB_DIA ? 'MGB · dia a dia' : (mod ? rotMod(mod) : '') + (d.item ? ' › ' + (d.item === TV_GERAL ? 'Geral (rateio)' : d.item) : '');
       var c = categoria(d.categoria), txt = '<b>' + esc(alvo) + '</b>' + (c ? '<br>' + esc(c.livre ? '✏️ ' + (d.categoriaTxt || 'Outro') : c.rotulo) : '');
       if (v > 0 && m) {
         if (d.forma === 'parcelado') { var n = parseInt(d.parcelas, 10) || 2; txt += '<br>' + n + 'x de ' + brl(v / n) + ' a partir de ' + fmtMes(m) + ' (total ' + brl(v) + ')'; }
@@ -516,6 +526,16 @@
         var ls = lancamentoSocio(d, elevInvestId++);                                         // eslint-disable-line no-undef
         elevInvestimentos.push(ls);                                                          // eslint-disable-line no-undef
         onde = 'Tela Vertical › ' + (d.item || 'Geral') + ', despesa de ' + fmtMes(mesDe(d.data)) + ', e aporte na conta do ' + (d.quemPagou === 'jadson' ? 'Jadson' : 'Eder');
+      } else if (d.destino === TV && d.item === TV_GERAL) {
+        var conds = modulos().filter(function (x) { return x.id === TV; })[0];
+        var dc = despesaRateada(d, despCompId++, conds ? conds.items : []);                       // eslint-disable-line no-undef
+        despesasComp.push(dc);                                                                     // eslint-disable-line no-undef
+        try {                                                                                       // mesmo efeito no fin que o formulário de despesas compartilhadas
+          var p0 = dc.inicio.split('-').map(Number);
+          for (var k = 0; k < dc.meses; k++) { var mm = (p0[1] - 1 + k) % 12, aa = p0[0] + Math.floor((p0[1] - 1 + k) / 12); if (!fin[aa]) finYear(aa); fin[aa][mm].despesa = (fin[aa][mm].despesa || 0) + dc.valor; } // eslint-disable-line no-undef
+        } catch (e) {}
+        if (d.jaPaga && d.forma === 'avista') marcarPaga(TV, 'Rateio ' + dc.telas.length + ' condomínio(s)', 'dc_' + dc.id, ano, mes0, obs);
+        onde = 'Tela Vertical · geral, rateada entre ' + dc.telas.length + ' condomínios, ' + fmtMes(dc.inicio) + (dc.meses > 1 ? ' (' + dc.meses + ' meses)' : '');
       } else {
         var r = linhaDespesa(d);
         if (!db[d.destino]) db[d.destino] = {};                                             // eslint-disable-line no-undef
@@ -546,6 +566,7 @@
         if (r && r.origem === 'lancar') out.push({ tipo: 'db', mod: m, item: it, lid: r.lid, desc: r.d, valor: r.u, em: r.criadoEm, onde: it }); }); }); });
     } catch (e) {}
     try { empresaAvulsas.forEach(function (a) { out.push({ tipo: 'emp', id: a.id, desc: a.desc, valor: a.valor, em: a.criadoEm, onde: 'MGB · dia a dia' }); }); } catch (e) {} // eslint-disable-line no-undef
+    try { despesasComp.forEach(function (x) { if (x && x.origem === 'lancar') out.push({ tipo: 'rateio', id: x.id, desc: x.nome, valor: x.valor, em: x.criadoEm, onde: 'Tela Vertical · geral (rateio)' }); }); } catch (e) {} // eslint-disable-line no-undef
     try { elevInvestimentos.forEach(function (x) { if (x && x.origem === 'lancar') out.push({ tipo: 'socio', id: x.id, desc: x.descricao, valor: x.valor, em: x.criadoEm, onde: 'Tela Vertical · conta do ' + (x.pagoPor === 'jadson' ? 'Jadson' : 'Eder') }); }); } catch (e) {} // eslint-disable-line no-undef
     return out.sort(function (a, b) { return String(b.em).localeCompare(String(a.em)); }).slice(0, 8);
   }
@@ -560,7 +581,11 @@
   }
   function remover(x) {
     if (!x || !global.confirm('Remover "' + x.desc + '"?')) return;
-    if (x.tipo === 'socio') {
+    if (x.tipo === 'rateio') {
+      var dc = despesasComp.filter(function (a) { return a.id === x.id; })[0];                    // eslint-disable-line no-undef
+      try { if (dc) { var p0 = dc.inicio.split('-').map(Number); for (var k = 0; k < dc.meses; k++) { var mm = (p0[1] - 1 + k) % 12, aa = p0[0] + Math.floor((p0[1] - 1 + k) / 12); if (fin[aa] && fin[aa][mm]) fin[aa][mm].despesa = Math.max(0, (fin[aa][mm].despesa || 0) - dc.valor); } } } catch (e) {} // eslint-disable-line no-undef
+      despesasComp = despesasComp.filter(function (a) { return a.id !== x.id; });                  // eslint-disable-line no-undef
+    } else if (x.tipo === 'socio') {
       elevInvestimentos = elevInvestimentos.filter(function (a) { return a.id !== x.id; });  // eslint-disable-line no-undef
     } else if (x.tipo === 'emp') {
       empresaAvulsas = empresaAvulsas.filter(function (a) { return a.id !== x.id; });       // eslint-disable-line no-undef

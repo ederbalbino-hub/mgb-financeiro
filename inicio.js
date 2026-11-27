@@ -139,11 +139,11 @@
     // Precisa de você hoje
     var itens = [];
     if (fat.vencidos) itens.push(item('#B42318', plural(fat.vencidos, 'boleto de ' + nomeMes + ' vencido', 'boletos de ' + nomeMes + ' vencidos'),
-      'Cobrar ou dar baixa se o cliente pagou por fora · ' + esc(fat.vencidosNomes.slice(0, 4).join(', ')) + (fat.vencidosNomes.length > 4 ? '…' : ''), 'Ver boletos', 'fat', true));
+      'Cobrar ou dar baixa se o cliente pagou por fora · ' + esc(fat.vencidosNomes.slice(0, 4).join(', ')) + (fat.vencidosNomes.length > 4 ? '…' : ''), 'Cobrar', 'atrasados', true));
     var antes = vencidosAnteriores(emissoes, comp, 3);
     if (antes.length) itens.push(item('#B42318', plural(antes.length, 'boleto vencido de mês anterior', 'boletos vencidos de meses anteriores'),
       esc(antes.slice(0, 4).map(function (v) { return v.cliente + ' (' + MESES[+v.comp.slice(5) - 1] + ')'; }).join(', ')) + (antes.length > 4 ? '…' : '') + ' · ainda sem pagamento no Asaas',
-      'Ver boletos', 'fat:' + antes[0].comp, !fat.vencidos));
+      'Cobrar', 'fatv:' + antes[0].comp, !fat.vencidos));
     var assin = aguardandoAssinatura(ler('clientesInfo', {}), hoje);
     if (assin.length) itens.push(item('#B45309', plural(assin.length, 'contrato aguardando assinatura', 'contratos aguardando assinatura'),
       esc(assin.slice(0, 4).map(function (a) { return a.nome + (a.tipo === 'aditivo' ? ' (aditivo)' : '') + (a.dias != null ? ' · ' + (a.dias === 1 ? '1 dia' : a.dias + ' dias') : ''); }).join(', ')) + (assin.length > 4 ? '…' : '') +
@@ -257,7 +257,8 @@
 
   var ATALHOS = [
     { id: 'fat', nav: 'nav-contabilidade', nome: 'Faturamento', desc: 'dia 5, notas e boletos', ir: function () { global.fatAbrirFaturamento(); } },
-    { id: 'cobranca', nav: 'nav-relatorios', nome: 'Cobrança mensal', desc: 'relatório dos anunciantes', ir: function () { global.goPage('relatorios'); } },
+    { id: 'cobranca', nav: 'nav-relatorios', nome: 'Repasses e relatórios', desc: 'repasses, prestação de contas', ir: function () { global.goPage('relatorios'); } },
+    { id: 'atrasados', nav: 'nav-contabilidade', nome: 'Cobrar atrasados', desc: 'boletos vencidos', ir: function () { if (global.MGBFaturamento && global.MGBFaturamento.abrirFiltro) global.MGBFaturamento.abrirFiltro('vencido'); else global.fatAbrirFaturamento(); } },
     { id: 'fin', nav: 'nav-custos', nome: 'Financeiro', desc: 'resumo do mês e módulos', ir: function () { global.goPage('overview'); try { global.switchOvTab('visao'); } catch (e) {} } },
     { id: 'contas', nav: 'nav-custos', nome: 'Contas do mês', desc: 'o que pagar e o que já foi pago', ir: function () { global.goPage('overview'); global.switchOvTab('desp'); } },
     { id: 'caixa', nav: 'nav-pessoal', nome: 'Plano de Caixa', desc: 'caixa e pessoal', ir: function () { global.goPage('planocaixa'); } },
@@ -278,6 +279,8 @@
       else if (acao === 'fat') global.fatAbrirFaturamento(competencia(hoje));
       else if (acao === 'fatprox') global.fatAbrirFaturamento(proximoFaturamento(hoje).comp);
       else if (acao.indexOf('tvrel:') === 0) { try { global.eval("tvpMes='" + acao.slice(6).replace(/[^0-9-]/g, '') + "'"); } catch (e) {} global.goOperacional('telavertical', 'tvpainel'); }
+      else if (acao === 'atrasados') { if (global.MGBFaturamento && global.MGBFaturamento.abrirFiltro) global.MGBFaturamento.abrirFiltro('vencido', competencia(hoje)); else global.fatAbrirFaturamento(competencia(hoje)); }
+      else if (acao.indexOf('fatv:') === 0) { if (global.MGBFaturamento && global.MGBFaturamento.abrirFiltro) global.MGBFaturamento.abrirFiltro('vencido', acao.slice(5)); else global.fatAbrirFaturamento(acao.slice(5)); }
       else if (acao.indexOf('fat:') === 0) global.fatAbrirFaturamento(acao.slice(4));
       else if (acao === 'novo') {                       // um só esperando cadastro: abre direto o cadastro dele
         var pend = global.MGBNovo.pendentesCadastro ? global.MGBNovo.pendentesCadastro() : [];

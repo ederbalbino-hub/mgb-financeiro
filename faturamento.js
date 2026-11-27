@@ -40,6 +40,7 @@
       var i = info(r);
       if (filtro === 'emitir') return !emitido(r);
       if (filtro === 'nota') return r.status === 'aguardando-nota' || r.status === 'boleto-emitido';
+      if (filtro === 'vencido') return r.statusPagamento === 'vencido' || !!(i.anterior && i.anterior.st === 'vencido');   // "Cobrar atrasados" (27/11)
       if (filtro === 'problema') return r.status === 'erro' || r.statusPagamento === 'vencido' || (i.anterior && i.anterior.st === 'vencido') || faltaValor(r, i.manual);
       return true;
     });
@@ -251,7 +252,7 @@
     var fi = doc.getElementById('fat2-abas');
     if (fi) {
       var n = function (f) { return filtrar(L, f, info).length; };
-      var abas = [['todos', 'Todos', L.length], ['emitir', 'A emitir', n('emitir')], ['nota', 'Aguardando nota', n('nota')], ['problema', 'Com problema', n('problema')]];
+      var abas = [['todos', 'Todos', L.length], ['emitir', 'A emitir', n('emitir')], ['nota', 'Aguardando nota', n('nota')], ['problema', 'Com problema', n('problema')], ['vencido', 'Vencidos', n('vencido')]];
       fi.innerHTML = abas.map(function (a) {
         return '<button type="button" role="tab" aria-selected="' + (filtro === a[0]) + '" class="fat2-aba' + (filtro === a[0] ? ' fat2-on' : '') + '" data-fat2="filtro:' + a[0] + '">' + a[1] + ' · ' + a[2] + '</button>';
       }).join('');
@@ -607,6 +608,12 @@
     if (host) { host.addEventListener('change', mudou); host.addEventListener('click', clique); }
   }
 
-  global.MGBFaturamento = Object.assign({ desenhar: desenharLista }, regras);
+  // Abre o Faturamento num filtro (ex.: "Cobrar atrasados" → vencidos), esperando a lista nova aparecer
+  function abrirFiltro(f, comp, n) {
+    if (n == null) { try { global.fatAbrirFaturamento(comp); } catch (e) {} n = 25; }
+    if (doc.getElementById('fat2-abas')) { filtro = f; desenharLista(); return; }
+    if (n > 0) setTimeout(function () { abrirFiltro(f, comp, n - 1); }, 200);
+  }
+  global.MGBFaturamento = Object.assign({ desenhar: desenharLista, abrirFiltro: abrirFiltro }, regras);
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);

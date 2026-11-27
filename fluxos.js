@@ -491,6 +491,17 @@
     nova.__fluxos = true; global.mgbConferirAssinaturas = nova;
   }
 
+  // Formulário rápido de anunciante (sem CRM), aberto pelo Novo cliente → "Não está no CRM?"
+  var formDireto = false;
+  function formAnuncianteRapido() {
+    try { global.goOperacional('telavertical', 'tvanunc'); } catch (e) {}
+    setTimeout(function () {
+      var form = document.getElementById('anunc-form'); if (!form) return;
+      if (!form.classList.contains('open')) { formDireto = true; global.toggleAnuncForm(); }
+      try { form.scrollIntoView({ block: 'start', behavior: 'smooth' }); var n = document.getElementById('an-nome'); if (n) n.focus(); } catch (e) {}
+    }, 300);
+  }
+
   function estilos() {
     if (document.getElementById('flx-css')) return;
     var st = document.createElement('style'); st.id = 'flx-css';
@@ -532,6 +543,7 @@
     // Porta única: "+ Novo anunciante" da aba Anunciantes abre o Novo cliente (contrato, cadastro, faturamento)
     envelopar('toggleAnuncForm', function () {}, function () {
       var form = document.getElementById('anunc-form');
+      if (formDireto) { formDireto = false; return; }
       if (form && !form.classList.contains('open') && temNovo()) { global.MGBNovo.escolher('anunciante'); return false; }
     });
     // Renomear unidade leva junto anunciantes, pagos, cadastro, cobranças e lead
@@ -550,6 +562,6 @@
     andarPagamentosAoRemover('tvCondoDespRemover', function () { return { mod: 'elev', item: ler('tvCondoSel') }; });
   }
 
-  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, repasseDoMes: repasseDoMes, coberturas: coberturas, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
+  global.MGBFluxos = Object.assign({ ligar: ligar, abrirAditivo: abrirAditivo, formAnuncianteRapido: formAnuncianteRapido, repasseDoMes: repasseDoMes, coberturas: coberturas, cobertoPor: function (k) { return tvCobre()[k] || null; }, COBRE_DESDE: COBRE_DESDE }, regras);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);
