@@ -7965,10 +7965,11 @@ function recBaixaManual(modId,item,key){
   else { if(!confirm('Dar baixa manual em '+item+'? Use só para recebimento fora do Asaas (Pix direto, dinheiro, permuta).')) return; Q[key]={...pg,pago:true,fonte:'manual',baixaEm:new Date().toISOString(),baixaPor:(window.MGBAcesso&&MGBAcesso.usuario&&(MGBAcesso.usuario()||{}).nome)||''}; }
   buildLancRec(); scheduleSave();
 }
-// Conferência automática com o Asaas: ao abrir o Hub e ao voltar pra aba, no máx. a cada 6 h (≈ 2–4×/dia). Não mexe se o Faturamento estiver na tela.
+// Conferência automática com o Asaas: ao abrir o Hub, ao voltar pra aba e de 10 em 10 min (fluxos.js), no máx. 1×/hora
+// (era 6 h até 27/11: o pago demorava a aparecer no Início e na ficha). Não mexe se o Faturamento estiver na tela.
 async function fFatRotinaAuto(){
   if(!_cargaSheetsOk) return;
-  try{ if(Date.now()-(+localStorage.getItem('fat_auto_ts')||0) < 6*3600*1000) return; }catch(e){}
+  try{ if(Date.now()-(+localStorage.getItem('fat_auto_ts')||0) < 1*3600*1000) return; }catch(e){}
   const vis=document.getElementById('ferr-fat'); if(vis && vis.offsetParent!==null) return;
   try{ fFatInit(); await fFatCarregar(true); }catch(e){ console.error('fFatRotinaAuto',e); }
 }
@@ -16520,17 +16521,17 @@ function renderRadioOps(data){
 function ropsAbrirRelatorio(mes){ var k=ropsChave(); if(k) window.open(ROPS_EXEC+'?rel=1&chave='+encodeURIComponent(k)+'&mes='+mes,'_blank'); }
 </script>
 <script src="lancar.js"></script>
-<script src="novo.js?v=20261127"></script>
+<script src="novo.js?v=20261127b"></script>
 <script src="acesso.js?v=20261123"></script>
-<script src="inicio.js?v=20261127"></script>
+<script src="inicio.js?v=20261127b"></script>
 <script src="faturamento.js?v=20261119b"></script>
 <script src="financeiro.js?v=20261127c"></script>
-<script src="funil.js?v=20261127"></script>
-<script src="clientes.js?v=20261127"></script>
+<script src="funil.js?v=20261127b"></script>
+<script src="clientes.js?v=20261127b"></script>
 <script src="menu.js?v=20261124"></script>
 <script src="telas2.js?v=20261124"></script>
 <script src="historico.js?v=20261127"></script>
-<script src="fluxos.js?v=20261127"></script>
+<script src="fluxos.js?v=20261127b"></script>
 <script src="assistente.js?v=20261029b"></script>
 <link rel="stylesheet" id="tema-v2" href="tema.css?v=20261123">
 </body>

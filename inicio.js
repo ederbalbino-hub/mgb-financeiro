@@ -61,9 +61,43 @@
     return c;
   }
 
+  // Boletos vencidos dos meses anteriores (até 3 meses), que o resumo do mês não mostra (27/11).
+  function vencidosAnteriores(emissoes, comp, quantos) {
+    var lim = quantos || 3, out = [];
+    var mm = /^(\d{4})-(\d{2})$/.exec(comp || ''); if (!mm) return out;
+    var ref = +mm[1] * 12 + (+mm[2] - 1);
+    Object.keys(emissoes || {}).forEach(function (k) {
+      var i = k.lastIndexOf('|'), c = /^(\d{4})-(\d{2})$/.exec(i < 0 ? '' : k.slice(i + 1)); if (!c) return;
+      var d = ref - (+c[1] * 12 + (+c[2] - 1)); if (d < 1 || d > lim) return;
+      var e = emissoes[k] || {};
+      if (!e.pgManual && e.pg === 'vencido' && e.status !== 'cancelada') out.push({ cliente: e.cliente || k.slice(0, i), comp: k.slice(i + 1), valor: Number(e.valor) || 0 });
+    });
+    return out.sort(function (a, b) { return a.comp < b.comp ? -1 : a.comp > b.comp ? 1 : a.cliente.localeCompare(b.cliente, 'pt-BR'); });
+  }
+
+  // Contratos enviados à Assinafy que ainda não voltaram assinados (contrato e aditivo de renovação).
+  function aguardandoAssinatura(info, agora) {
+    var out = [], t = (agora || new Date()).getTime();
+    Object.keys(info || {}).forEach(function (mod) {
+      if (mod.charAt(0) === '_') return;
+      Object.keys(info[mod] || {}).forEach(function (nome) {
+        var i = info[mod][nome]; if (!i || typeof i !== 'object') return;
+        var pend = [];
+        if (i.assinafyDocId && !i.assinadoEm) pend.push({ tipo: 'contrato', em: i.assinafyEnviadoEm });
+        if (i.aditivo && i.aditivo.docId && !i.aditivo.assinadoEm) pend.push({ tipo: 'aditivo', em: i.aditivo.enviadoEm });
+        pend.forEach(function (p) {
+          var dias = p.em ? Math.max(0, Math.floor((t - new Date(p.em).getTime()) / 86400000)) : null;
+          out.push({ mod: mod, nome: nome, tipo: p.tipo, dias: dias });
+        });
+      });
+    });
+    return out.sort(function (a, b) { return (b.dias || 0) - (a.dias || 0) || a.nome.localeCompare(b.nome, 'pt-BR'); });
+  }
+
   function saudacao(hora) { return hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'; }
 
-  var regras = { resumoFaturamento: resumoFaturamento, proximoFaturamento: proximoFaturamento, contarFunil: contarFunil, saudacao: saudacao };
+  var regras = { resumoFaturamento: resumoFaturamento, proximoFaturamento: proximoFaturamento, contarFunil: contarFunil, saudacao: saudacao,
+    vencidosAnteriores: vencidosAnteriores, aguardandoAssinatura: aguardandoAssinatura };
   if (typeof module !== 'undefined' && module.exports) module.exports = regras;
   if (!doc) return;
 
@@ -106,6 +140,14 @@
     var itens = [];
     if (fat.vencidos) itens.push(item('#B42318', plural(fat.vencidos, 'boleto de ' + nomeMes + ' vencido', 'boletos de ' + nomeMes + ' vencidos'),
       'Cobrar ou dar baixa se o cliente pagou por fora · ' + esc(fat.vencidosNomes.slice(0, 4).join(', ')) + (fat.vencidosNomes.length > 4 ? '…' : ''), 'Ver boletos', 'fat', true));
+    var antes = vencidosAnteriores(emissoes, comp, 3);
+    if (antes.length) itens.push(item('#B42318', plural(antes.length, 'boleto vencido de mês anterior', 'boletos vencidos de meses anteriores'),
+      esc(antes.slice(0, 4).map(function (v) { return v.cliente + ' (' + MESES[+v.comp.slice(5) - 1] + ')'; }).join(', ')) + (antes.length > 4 ? '…' : '') + ' · ainda sem pagamento no Asaas',
+      'Ver boletos', 'fat:' + antes[0].comp, !fat.vencidos));
+    var assin = aguardandoAssinatura(ler('clientesInfo', {}), hoje);
+    if (assin.length) itens.push(item('#B45309', plural(assin.length, 'contrato aguardando assinatura', 'contratos aguardando assinatura'),
+      esc(assin.slice(0, 4).map(function (a) { return a.nome + (a.tipo === 'aditivo' ? ' (aditivo)' : '') + (a.dias != null ? ' · ' + (a.dias === 1 ? '1 dia' : a.dias + ' dias') : ''); }).join(', ')) + (assin.length > 4 ? '…' : '') +
+      ' · o hub confere sozinho de tempos em tempos', 'Conferir agora', 'assin'));
     if (fat.semNota.length) itens.push(item('#B45309', plural(fat.semNota.length, 'nota de ' + nomeMes + ' sem número', 'notas de ' + nomeMes + ' sem número'),
       esc(fat.semNota.slice(0, 4).join(', ')) + (fat.semNota.length > 4 ? '…' : '') + ' · o boleto saiu, a nota não voltou da prefeitura', 'Conferir', 'fat'));
     if (funil.semCadastro) itens.push(item('#4E38B2', plural(funil.semCadastro, 'cliente fechado esperando cadastro', 'clientes fechados esperando cadastro'),
@@ -222,7 +264,16 @@
       if (acao === 'valores') global.togglePrivate();
       else if (acao === 'fat') global.fatAbrirFaturamento(competencia(hoje));
       else if (acao === 'fatprox') global.fatAbrirFaturamento(proximoFaturamento(hoje).comp);
-      else if (acao === 'novo') global.MGBNovo.abrir();
+      else if (acao.indexOf('fat:') === 0) global.fatAbrirFaturamento(acao.slice(4));
+      else if (acao === 'novo') {                       // um só esperando cadastro: abre direto o cadastro dele
+        var pend = global.MGBNovo.pendentesCadastro ? global.MGBNovo.pendentesCadastro() : [];
+        if (pend.length === 1 && global.MGBNovo.abrirLead) global.MGBNovo.abrirLead(pend[0].id); else global.MGBNovo.abrir();
+      }
+      else if (acao === 'assin') {
+        b.disabled = true; b.textContent = 'Conferindo…';
+        var fim = function (n) { b.disabled = false; b.textContent = n ? (n === 1 ? '1 assinado' : n + ' assinados') : 'Nenhum novo'; setTimeout(function () { try { montar(); } catch (e) {} }, n ? 400 : 2500); };
+        Promise.resolve(global.mgbConferirAssinaturas ? global.mgbConferirAssinaturas() : 0).then(fim, function () { fim(0); });
+      }
       else if (acao === 'funil') global.goPage('leads');
       else if (acao === 'lead') { global.goPage('leads'); setTimeout(function () { try { global.openLeadModal(); } catch (e) {} }, 150); }
       else if (acao === 'despesa') global.MGBLancar.despesa();

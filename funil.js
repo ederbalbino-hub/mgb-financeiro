@@ -71,13 +71,18 @@
     try { if (l.estagio === 'fechado' && l.produto !== 'condo' && (l.criado || '') >= '2026-11-03' && !global.leadFiscalCompleto(l)) avisos += '<span class="fun2-av fun2-erro">Endereço da nota incompleto</span>'; } catch (e) {}
     var etapas = (ler('LEAD_STAGES', []) || []).map(function (st) { return '<option value="' + st.id + '"' + (st.id === l.estagio ? ' selected' : '') + '>' + esc(String(st.label).replace(/\s*[✅❌]/g, '')) + '</option>'; }).join('');
     var tel = String(l.tel || '').replace(/\D/g, '');
+    // Próxima etapa (27/11): fechado sem cadastro → Novo cliente já com este lead; cadastrado → ficha do cliente
+    var prox = '';
+    if (l.estagio === 'fechado' && (l.produto !== 'condo' || (s && s.txt === 'esperando cadastro'))) prox = s && s.txt === 'esperando cadastro'
+      ? '<button type="button" class="fun2-prox" onclick="event.stopPropagation();MGBNovo.abrirLead(' + l.id + ')">Cadastrar cliente</button>'
+      : '<button type="button" class="fun2-prox fun2-prox2" onclick="event.stopPropagation();MGBClientes.abrirPorNome(' + esc(JSON.stringify(String(l.itemCriado || l.nome))) + ')">Ver ficha</button>';
     return '<div class="lead-card fun2-card' + (venc ? ' overdue' : '') + '" draggable="true" ondragstart="leadCardDragStart(event,' + l.id + ')" ondragend="leadCardDragEnd(event)" ' +
       'onclick="if(!event.target.closest(\'select,a\')) openLeadModal(\'edit\',' + l.id + ')" tabindex="0" role="button" aria-label="Abrir ' + esc(l.nome) + '">' +
       '<b class="fun2-nome">' + esc(l.nome) + '</b>' +
       (l.responsavel ? '<span class="fun2-resp">' + esc(l.responsavel) + (l.funcao ? ' · ' + esc(l.funcao) : '') + '</span>' : '') +
       '<div class="fun2-linha">' + pill(l.produto) + '<span class="fun2-valor">' + (l.valor ? brl(l.valor) : '—') + (l.formaPg === 'permuta' ? ' · permuta' : '') + '</span></div>' +
       (s ? '<span class="fun2-sit fun2-' + s.tom + '">' + (ICO_SIT[s.tom] || '') + esc(s.tom === 'erro' ? s.txt.replace(/^Retorno /, 'Retorno era ') : s.txt) + (l.lembrete && String(l.lembrete).indexOf('T') > 0 && s.txt.indexOf('Retorno') === 0 ? ' às ' + esc(String(l.lembrete).slice(11, 16)) : '') + '</span>' : '') +
-      avisos +
+      avisos + prox +
       '<div class="fun2-acoes"><label class="fun2-oculto" for="fun2-st-' + l.id + '">Mover ' + esc(l.nome) + '</label><select id="fun2-st-' + l.id + '" class="fun2-mover" onclick="event.stopPropagation()" onchange="leadChangeStage(' + l.id + ',this.value)">' + etapas + '</select>' +
       (tel ? '<a class="fun2-wa" href="https://wa.me/55' + tel + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">WhatsApp</a>' : '') + '</div></div>';
   }
@@ -185,6 +190,8 @@
       '.fun2-acoes{display:flex;gap:6px;align-items:center;margin-top:2px}' +
       '.fun2-mover{flex:1;min-width:0;height:32px!important;min-height:32px!important;padding:0 6px!important;font-size:12.5px!important;border:1px solid #E4DFF0!important;border-radius:8px!important;color:#5D5868!important;background:#fff!important}' +
       '.fun2-wa{font-size:12.5px;font-weight:600;color:#15803D;text-decoration:none;padding:6px 8px;border-radius:8px}.fun2-wa:hover{background:#E8F6EE}' +
+      '.fun2-prox{display:block;width:100%;margin-top:8px;min-height:34px;border:0;border-radius:8px;background:#4E38B2;color:#fff;font:700 13px "DM Sans",system-ui,sans-serif;cursor:pointer}' +
+      '.fun2-prox2{background:#fff;color:#4E38B2;border:1px solid #CFC7E6}.fun2-prox:focus-visible{outline:2px solid #2A1760;outline-offset:2px}' +
       '.fun2-oculto{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}' +
       '@media (hover:hover) and (min-width:900px){.fun2-mover{opacity:.0;transition:opacity .15s}.fun2-card:hover .fun2-mover,.fun2-mover:focus{opacity:1}}' +
       '@media (max-width:760px){#fun2-barra,#page-leads.fun2 #leads-hoje{padding-left:16px;padding-right:16px;margin-left:0!important;margin-right:0!important}#page-leads.fun2 .leads-board{padding:8px 16px 24px!important}.fun2-resumo{margin-left:0;width:100%}}';
