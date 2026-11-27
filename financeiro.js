@@ -186,11 +186,12 @@
       '</svg><div><b style="color:' + txt + '">' + Math.round(pct) + '%</b>' + (sub ? '<span style="color:' + sub + '">' + esc(rot) + '</span>' : '') + '</div></div>';
   }
   // Barras de receita e despesa por mês + linha do resultado. serie: [{rot, rec, desp, prev, atual}]
-  function graficoMeses(serie) {
+  function graficoMeses(serie, opc) {
+    opc = opc || {};
     var W = 640, H = 300, L = 46, R = 8, T = 22, B = 30, pw = W - L - R, ph = H - T - B;
     var max = 0; serie.forEach(function (m) { max = Math.max(max, m.rec, m.desp); });
     var e = escala(max), y = function (v) { return T + ph - Math.max(0, v) / e.teto * ph; };
-    var slot = pw / serie.length, bw = Math.min(18, slot / 2 - 4), o = [];
+    var slot = pw / serie.length, bw = opc.soReceita ? Math.min(26, slot - 12) : Math.min(18, slot / 2 - 4), o = [];
     e.marcas.forEach(function (g) {
       o.push('<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '" stroke="#EFEBF7"/>');
       o.push('<text x="' + (L - 8) + '" y="' + (y(g) + 4).toFixed(1) + '" text-anchor="end" class="fin2-g-eixo">' + kCurto(g) + '</text>');
@@ -200,6 +201,7 @@
       var cx = L + slot * i + slot / 2, op = m.prev ? ' fill-opacity="0.4"' : '';
       o.push('<text x="' + cx.toFixed(1) + '" y="' + (H - 9) + '" text-anchor="middle" class="fin2-g-mes' + (m.atual ? ' fin2-g-atual' : '') + '">' + m.rot + '</text>');
       if (!m.rec && !m.desp) return;
+      if (opc.soReceita) { o.push('<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + y(m.rec).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (T + ph - y(m.rec)).toFixed(1) + '" rx="5" fill="' + (m.atual ? '#4E38B2' : '#8B7BE0') + '"' + (m.prev ? ' fill-opacity="0.4"' : '') + '><title>' + esc(m.rot + ' · R$ ' + brl(m.rec)) + '</title></rect>'); if (m.atual) o.push('<text x="' + cx.toFixed(1) + '" y="' + (y(m.rec) - 7).toFixed(1) + '" text-anchor="middle" class="fin2-g-res" style="fill:#2A1760">' + kCurto(m.rec) + '</text>'); return; }
       o.push('<rect x="' + (cx - bw - 1.5).toFixed(1) + '" y="' + y(m.rec).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (T + ph - y(m.rec)).toFixed(1) + '" rx="4" fill="#4E38B2"' + op + '><title>' + esc(m.rot + ' · receita R$ ' + brl(m.rec)) + '</title></rect>');
       o.push('<rect x="' + (cx + 1.5).toFixed(1) + '" y="' + y(m.desp).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (T + ph - y(m.desp)).toFixed(1) + '" rx="4" fill="#E0A458"' + op + '><title>' + esc(m.rot + ' · despesa R$ ' + brl(m.desp)) + '</title></rect>');
       pts.push({ x: cx, y: y(m.rec - m.desp), prev: m.prev, atual: m.atual, v: m.rec - m.desp });
@@ -399,6 +401,147 @@
           (C.terminaNomes.length ? '<span class="fin2-sub fin2-peq">' + esc(C.terminaNomes.slice(0, 4).join(', ')) + (C.terminaNomes.length > 4 ? '…' : '') + ' ' + (C.termina === 1 ? 'termina' : 'terminam') + ' em ' + MESES_N[mes] + '.</span>' : '') + '</section>' +
       '</div>';
     var rolar = box.querySelector('.fin2-g-rolar'); if (rolar) rolar.scrollLeft = rolar.scrollWidth; // no celular, mostra os meses mais recentes
+  }
+
+  // ── 1b. Visão Receita com gráficos (mesmo estilo do Resumo, 27/11) ────────
+  function topo(sub, titulo, linha, acaoMes, direita) {
+    return '<header class="fin2-topo"><div><span class="fin2-sub"><b>Financeiro MGB</b> · ' + esc(sub) + '</span><h2>' + esc(titulo) + '</h2>' + (linha ? '<p class="fin2-sub">' + esc(linha) + '</p>' : '') + '</div>' +
+      '<div class="fin2-acoes"><button type="button" class="fin2-icone" data-fin2="' + acaoMes + ':-1" aria-label="Mês anterior">' + SETA_E + '</button>' +
+      '<button type="button" class="fin2-icone" data-fin2="' + acaoMes + ':1" aria-label="Próximo mês">' + SETA_D + '</button>' + (direita || '') + '</div></header>';
+  }
+  function heroBloco(rotulo, chipTxt, titulo, valorTxt, cor, frase, nums, pct, rotAnel) {
+    return '<section class="fin2-hero" aria-label="' + esc(rotulo) + '"><div class="fin2-hero-txt">' +
+      '<span class="fin2-hero-chip">' + esc(chipTxt) + '</span>' +
+      '<div><h3>' + esc(titulo) + ' <span class="fin2-mono" style="color:' + cor + '">' + valorTxt + '</span></h3><p>' + esc(frase) + '</p></div>' +
+      '<div class="fin2-hero-nums">' + nums.map(function (n) { return '<div><span>' + esc(n[0]) + '</span><b class="fin2-mono">' + n[1] + '</b><small>' + esc(n[2]) + '</small></div>'; }).join('') + '</div></div>' +
+      '<div class="fin2-hero-anel">' + anel(pct, 168, 14, DESTAQUE, 'rgba(255,255,255,0.14)', '#FFFFFF', '#D9D2F2', rotAnel) + '</div></section>';
+  }
+  function situacaoCobranca(l) {
+    var a = l.asaas;
+    if (l.pago) return 'pago';
+    if (a && a.st === 'vencido') return 'vencido';
+    if (a && a.st === 'cancelado') return 'cancelado';
+    if (a && a.st === 'nota') return 'nota';
+    if (a) return 'aberto';
+    return 'sem';
+  }
+  var SIT_COB = [
+    ['pago', 'Recebido', '#15803D'], ['aberto', 'Boleto em aberto', '#E0A458'], ['vencido', 'Vencido', '#B42318'],
+    ['nota', 'Só nota emitida', '#8B7BE0'], ['sem', 'Ainda sem cobrança', '#CFC7E6'], ['cancelado', 'Cancelado', '#5D5868']
+  ];
+  function esconderAntigo(sub, seletores) {
+    var raiz = doc.getElementById(sub); if (!raiz) return;
+    raiz.classList.add('fin2-ativo-v');
+    seletores.forEach(function (sel) {
+      var el = sel.charAt(0) === '!' ? (doc.getElementById(sel.slice(1)) || {}).closest && doc.getElementById(sel.slice(1)).closest('#' + sub + '>div') : raiz.querySelector(':scope>' + sel);
+      if (el && el !== raiz) el.classList.add('fin2-esconde');
+    });
+  }
+  function desenharReceita() {
+    var box = container('ov-sub-lanc', 'fin2-receita');
+    if (!box) return;
+    esconderAntigo('ov-sub-lanc', ['.page-hdr', '#aviso-virada-rec', '!lancRecChart']);
+    var s = mesSel('lanc-mes-sel2', 'lanc-ano-sel2'), ano = s.ano, mes = s.mes;
+    var linhas = tenta('coletaClientesMes', ano, mes) || [];
+    var prev = linhas.reduce(function (a, l) { return a + (l.valor || 0); }, 0);
+    var pago = linhas.filter(function (l) { return l.pago; }).reduce(function (a, l) { return a + l.valor; }, 0);
+    var pend = prev - pago, pct = prev ? pago / prev * 100 : 0;
+    var nPago = linhas.filter(function (l) { return l.pago; }).length;
+    var porSit = {}; linhas.forEach(function (l) { var k = situacaoCobranca(l); porSit[k] = porSit[k] || { n: 0, v: 0 }; porSit[k].n++; porSit[k].v += l.valor || 0; });
+    var venc = porSit.vencido || { n: 0, v: 0 };
+    var hoje = new Date(), refHoje = hoje.getFullYear() * 12 + hoje.getMonth();
+    var serie = MES_CURTO.map(function (rotM, k) { return { rot: rotM, rec: tenta('finGetRec', ano, k) || 0, desp: 0, prev: ano * 12 + k > refHoje, atual: k === mes }; });
+    var porMod = {}; linhas.forEach(function (l) { var r = String(l.modLabel || '').split('—')[0].trim() || 'Outros'; porMod[r] = (porMod[r] || 0) + (l.valor || 0); });
+    var fat = fatias(Object.keys(porMod).map(function (k) { return { rot: k, valor: porMod[k] }; }), 4);
+    var maiores = linhas.slice().sort(function (a, b) { return b.valor - a.valor; }).slice(0, 8), vmax = maiores.length ? maiores[0].valor : 1;
+    var barraSit = SIT_COB.filter(function (x) { return porSit[x[0]] && porSit[x[0]].v > 0; });
+
+    box.innerHTML = topo('Visão Receita', 'Receita de ' + MESES_N[mes], linhas.length ? nPago + ' de ' + linhas.length + ' clientes já pagaram' + (venc.n ? ' · ' + venc.n + ' com boleto vencido' : '') + '.' : 'Nenhum cliente com receita neste mês.', 'mes-receita',
+        '<button type="button" class="fin2-btn fin2-btn-escuro" data-fin2="asaas">Conferir com o Asaas</button>') +
+      heroBloco('Recebimento de ' + MESES_N[mes], 'Receita de ' + MESES_N[mes] + ' de ' + ano, 'Recebido', 'R$ ' + brl(pago), DESTAQUE,
+        prev ? 'de R$ ' + brl(prev) + ' previstos para o mês.' : 'Sem receita prevista neste mês.',
+        [['Previsto', brl(prev), linhas.length + ' clientes'], ['Falta receber', brl(pend), (linhas.length - nPago) + ' clientes'], ['Vencido', brl(venc.v), venc.n ? venc.n + (venc.n === 1 ? ' boleto' : ' boletos') : 'nenhum boleto vencido']],
+        pct, 'recebido') +
+      '<div class="fin2-g2">' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Receita mês a mês</h3><span class="fin2-sub">' + ano + '</span></div>' +
+          '<div class="fin2-g-rolar">' + graficoMeses(serie, { soReceita: true }) + '</div>' +
+          legenda([['background:#4E38B2', 'mês escolhido'], ['background:#8B7BE0', 'outros meses']].concat(serie.some(function (m) { return m.prev && m.rec; }) ? [['background:#8B7BE0;opacity:.4', 'previsto pelos contratos']] : [])) + '</section>' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>De onde vem a receita</h3></div>' + rosca(fat, prev) + '</section>' +
+      '</div>' +
+      '<div class="fin2-g3">' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Situação das cobranças</h3><span class="fin2-sub">espelho do Asaas</span></div>' +
+          '<div class="fin2-pilha" role="img" aria-label="' + esc(barraSit.map(function (x) { return x[1] + ' ' + porSit[x[0]].n; }).join(', ')) + '">' + barraSit.map(function (x) { return '<i style="flex:' + porSit[x[0]].v.toFixed(2) + ';background:' + x[2] + '"></i>'; }).join('') + '</div>' +
+          '<div class="fin2-rosca-l">' + (barraSit.length ? barraSit.map(function (x) { var q = porSit[x[0]]; return '<div><i style="background:' + x[2] + '"></i><span>' + x[1] + ' · ' + q.n + '</span><b class="fin2-mono">' + curto(q.v) + '</b><small>' + Math.round(prev ? q.v / prev * 100 : 0) + '%</small></div>'; }).join('') : '<p class="fin2-sub">Nada para cobrar neste mês.</p>') + '</div>' +
+          '<span class="fin2-sub fin2-peq">"Conferir com o Asaas" lê as cobranças do mês e atualiza esta conta.</span></section>' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Maiores clientes do mês</h3><span class="fin2-sub">' + Math.min(8, linhas.length) + ' de ' + linhas.length + '</span></div>' +
+          '<div class="fin2-top">' + (maiores.length ? maiores.map(function (l) {
+            var k = situacaoCobranca(l), cor = (SIT_COB.filter(function (x) { return x[0] === k; })[0] || [])[2] || '#CFC7E6';
+            return '<div><span>' + esc(l.item) + '<small>' + esc(String(l.modLabel || '').split('—')[0].trim()) + '</small></span><div class="fin2-top-t" aria-hidden="true"><i style="width:' + Math.max(2, l.valor / vmax * 100).toFixed(1) + '%"></i></div><b class="fin2-mono">' + curto(l.valor) + '</b><em title="' + esc((SIT_COB.filter(function (x) { return x[0] === k; })[0] || [])[1] || '') + '" style="background:' + cor + '"></em></div>';
+          }).join('') : '<p class="fin2-sub">Nenhum cliente com receita neste mês.</p>') + '</div>' +
+          '<span class="fin2-sub fin2-peq">A bolinha mostra a situação da cobrança. A lista completa, com NF e observações, está logo abaixo.</span></section>' +
+      '</div>';
+    var rolar = box.querySelector('.fin2-g-rolar'); if (rolar) rolar.scrollLeft = rolar.scrollWidth;
+  }
+
+  // ── 1c. Empresa com gráficos ─────────────────────────────────────────────
+  function desenharEmpresa() {
+    var box = container('ov-sub-emp', 'fin2-empresa');
+    if (!box) return;
+    esconderAntigo('ov-sub-emp', ['.page-hdr', '#aviso-virada-emp', '#ov-emp-kpis']);
+    var s = mesSel('ov-emp-mes-sel', 'ov-emp-ano-sel'), ano = s.ano, mes = s.mes;
+    var recOf = tenta('receitaOficialMes', ano, mes) || { valor: 0, fonte: 'prevista' };
+    var rec = recOf.valor || 0, fechado = recOf.fonte === 'notas';
+    var aliq = tenta('impostoAliq') || 0, imposto = rec * aliq;
+    var despMes = tenta('coletaDespesasMes', ano, mes) || [];
+    var despTot = despMes.reduce(function (a, d) { return a + d.vlrMes; }, 0);
+    var empD = despMes.filter(function (d) { return d.m && d.m.id === '_empresa'; });
+    var custoEmp = empD.reduce(function (a, d) { return a + d.vlrMes; }, 0);
+    var dKey = tenta('despPagKey', ano, mes) || (ano + '-' + mes);
+    var despPagas = despMes.filter(function (d) { return estaPago(d, dKey); }).reduce(function (a, d) { return a + d.vlrMes; }, 0);
+    var recebido = (tenta('coletaClientesMes', ano, mes) || []).filter(function (l) { return l.pago; }).reduce(function (a, l) { return a + l.valor; }, 0);
+    var aportes = (ler('empresaReceitas', []) || []).filter(function (er) { if (er.ativo === false || !er.valor || !er.inicio) return false; var p = er.inicio.split('-').map(Number); return p[0] === ano && p[1] - 1 === mes; }).reduce(function (a, er) { return a + er.valor; }, 0);
+    var resultado = rec - despTot, caixa = recebido + aportes - despPagas;
+    var comp = ano + '-' + String(mes + 1).padStart(2, '0');
+    var notas = 0; try { notas = chama('mesFechamentoNotas', comp).total || 0; } catch (e) {}
+    var pctNotas = rec ? Math.min(100, notas / rec * 100) : 0;
+    var hoje = new Date(), refHoje = hoje.getFullYear() * 12 + hoje.getMonth();
+    var serie = MES_CURTO.map(function (rotM, k) {
+      return { rot: rotM, rec: tenta('finGetRec', ano, k) || 0, desp: tenta('despesaTotalMesMod', '_empresa', ano, k) || 0, prev: ano * 12 + k > refHoje, atual: k === mes };
+    });
+    var contas = agruparContas(empD, function (d) { return estaPago(d, dKey); }, vencimentos());
+    var porConta = fatias(contas.map(function (g) { return { rot: g.titulo, valor: g.total, det: g.itens.length > 1 ? g.itens.length + ' lançamentos' : '' }; }), 5);
+    var cx = [['Recebido dos clientes', recebido, '#15803D'], ['Aportes', aportes, '#8B7BE0'], ['Despesas pagas', -despPagas, '#B42318']];
+    var cxMax = Math.max(1, recebido, aportes, despPagas, Math.abs(caixa));
+    var rotImp = tenta('impostoRotulo') || '';
+
+    box.innerHTML = topo('Empresa', 'Empresa em ' + MESES_N[mes], 'Imposto, equipe e contador: o que não pertence a um módulo só.', 'mes-empresa',
+        '<button type="button" class="fin2-btn" data-fin2="lancar-despesa">Lançar despesa</button>') +
+      heroBloco('Resultado de ' + MESES_N[mes], (fechado ? 'Mês fechado pelas notas' : 'Mês aberto · receita prevista pelos contratos'), resultado >= 0 ? 'Resultado' : 'Prejuízo',
+        (resultado < 0 ? '−' : '') + 'R$ ' + brl(Math.abs(resultado)), resultado >= 0 ? DESTAQUE : '#FCA5A5',
+        'Receita de R$ ' + brl(rec) + ' menos todas as despesas do mês.',
+        [['Imposto ' + rotImp, brl(imposto), 'sobre a receita'], ['Custo da empresa', brl(custoEmp), 'imposto, equipe e contador'], ['Caixa realizado', (caixa < 0 ? '−' : '') + brl(Math.abs(caixa)), 'recebido + aportes − pagas']],
+        pctNotas, 'em notas') +
+      '<div class="fin2-g2">' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Receita e custo da empresa</h3><span class="fin2-sub">' + ano + '</span></div>' +
+          '<div class="fin2-g-rolar">' + graficoMeses(serie) + '</div>' +
+          legenda([['background:#4E38B2', 'receita'], ['background:#E0A458', 'custo da empresa'], ['height:0;border-top:2.5px solid #15803D;width:18px;border-radius:0', 'receita menos custo da empresa']]) + '</section>' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Notas do mês</h3><span class="fin2-sub">' + (fechado ? 'fechado' : 'aberto') + '</span></div>' +
+          '<div class="fin2-notas">' + anel(pctNotas, 150, 14, '#4E38B2', '#EFEBF7', '#241A38', '#5D5868', 'emitido') + '</div>' +
+          '<div class="fin2-rosca-l"><div><i style="background:#4E38B2"></i><span>Notas emitidas</span><b class="fin2-mono">' + brl(notas) + '</b></div>' +
+          '<div><i style="background:#EFEBF7"></i><span>Receita do mês</span><b class="fin2-mono">' + brl(rec) + '</b></div></div>' +
+          '<span class="fin2-sub fin2-peq">O resultado oficial fecha pelas notas emitidas no Faturamento.</span></section>' +
+      '</div>' +
+      '<div class="fin2-g3">' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Para onde vai o custo da empresa</h3><span class="fin2-sub fin2-mono">R$ ' + brl(custoEmp) + '</span></div>' +
+          (porConta.length ? aneisDespesa(porConta) : '<p class="fin2-sub">Nenhuma despesa da empresa neste mês.</p>') + '</section>' +
+        '<section class="fin2-bloco fin2-graf"><div class="fin2-bloco-cab"><h3>Caixa do mês</h3><span class="fin2-sub">o que de fato entrou e saiu</span></div>' +
+          '<div class="fin2-caixa">' + cx.map(function (x) {
+            return '<div><span>' + x[0] + '</span><div class="fin2-top-t" aria-hidden="true"><i style="width:' + Math.max(x[1] ? 2 : 0, Math.abs(x[1]) / cxMax * 100).toFixed(1) + '%;background:' + x[2] + '"></i></div><b class="fin2-mono' + (x[1] < 0 ? ' fin2-vermelho' : '') + '">' + (x[1] < 0 ? '−' : x[1] > 0 ? '+' : '') + brl(Math.abs(x[1])) + '</b></div>';
+          }).join('') +
+          '<div class="fin2-caixa-tot"><span>Caixa realizado</span><b class="fin2-mono' + (caixa < 0 ? ' fin2-vermelho' : ' fin2-verde') + '">' + (caixa < 0 ? '−' : '') + 'R$ ' + brl(Math.abs(caixa)) + '</b></div></div>' +
+          '<span class="fin2-sub fin2-peq">Conta só o que foi marcado como recebido (Visão Receita) e como pago (Contas do mês).</span></section>' +
+      '</div>';
+    var rolar = box.querySelector('.fin2-g-rolar'); if (rolar) rolar.scrollLeft = rolar.scrollWidth;
   }
 
   // ── 2. Contas do mês ─────────────────────────────────────────────────────
@@ -616,6 +759,10 @@
       else if (acao === 'modulo') chama('drillMod', arg);
       else if (acao === 'pagina') chama('goPage', arg);
       else if (acao === 'aba') chama('switchOvTab', arg);
+      else if (acao === 'mes-receita') mudarMes('lanc-mes-sel2', 'lanc-ano-sel2', +arg, function () { chama('buildLancRec'); });
+      else if (acao === 'mes-empresa') mudarMes('ov-emp-mes-sel', 'ov-emp-ano-sel', +arg, function () { chama('buildVisaoEmpresa'); });
+      else if (acao === 'asaas') chama('lancRecConferirAsaas');
+      else if (acao === 'lancar-despesa') { if (global.MGBLancar && global.MGBLancar.despesa) global.MGBLancar.despesa(); }
       else if (acao === 'voltar-resumo') { chama('goPage', 'overview'); tenta('switchOvTab', 'visao'); }
       else if (acao === 'filtro') { filtroContas = arg; desenharContas(); }
       else if (acao === 'abrir') { abertas[arg] = !abertas[arg]; desenharContas(); }
@@ -737,8 +884,16 @@
       '.fin2-aneis>div>div:last-child{display:flex;flex-direction:column;gap:1px;min-width:0}.fin2-aneis b{font-size:15px}.fin2-aneis .fin2-mono{font-size:13.5px}.fin2-aneis small{font-size:13px;color:#5D5868}' +
       '.fin2-pago{display:flex;flex-direction:column;gap:8px;margin-top:6px}.fin2-pago>div:first-child{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.fin2-pago b{font-size:15px}' +
       '.fin2-nota{background:#F6F4FA;border-radius:12px;padding:12px 14px;font-size:14px;color:#3A3446}' +
+      '.fin2-ativo-v>.fin2-esconde{display:none!important}#fin2-receita,#fin2-empresa{padding-bottom:18px}' +
+      '.fin2-pilha{display:flex;gap:3px;height:16px;border-radius:999px;overflow:hidden;background:#EFEBF7}.fin2-pilha i{display:block;min-width:4px}' +
+      '.fin2-top,.fin2-caixa{display:flex;flex-direction:column}.fin2-top>div,.fin2-caixa>div{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) 84px 10px;align-items:center;gap:12px;padding:6px 0}' +
+      '.fin2-caixa>div{grid-template-columns:minmax(0,170px) minmax(0,1fr) 110px}.fin2-top span,.fin2-caixa span{font-size:14px;min-width:0;display:flex;flex-direction:column}.fin2-top small{font-size:12.5px;color:#5D5868}' +
+      '.fin2-top-t{position:relative;height:14px;background:#F6F4FA;border-radius:6px;overflow:hidden}.fin2-top-t i{position:absolute;left:0;top:0;bottom:0;background:#4E38B2;border-radius:6px}' +
+      '.fin2-top b,.fin2-caixa b{font-size:13.5px;font-weight:500;text-align:right;white-space:nowrap}.fin2-top em{width:10px;height:10px;border-radius:50%}' +
+      '.fin2-caixa-tot{border-top:1px solid #E4DFF0;margin-top:6px;padding-top:12px!important;grid-template-columns:1fr auto!important}.fin2-caixa-tot span{font-weight:700;font-size:15px}.fin2-caixa-tot b{font-size:18px}' +
+      '.fin2-notas{display:flex;justify-content:center}.fin2-notas .fin2-anel b{font-size:26px}' +
       '.fin2-ctt-linha{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}.fin2-ctt-linha>span{display:flex;flex-wrap:wrap;gap:6px}' +
-      '@media (max-width:760px){.fin2{padding:18px 14px 8px}.fin2-g2,.fin2-g3,.fin2-aneis{grid-template-columns:minmax(0,1fr)}.fin2-hero{padding:22px 20px;gap:20px}.fin2-hero h3{font-size:27px}.fin2-hero-nums{grid-template-columns:minmax(0,1fr)}.fin2-hero-anel .fin2-anel{transform:scale(.85)}.fin2-topo h2{font-size:32px}.fin2-div>div{grid-template-columns:minmax(0,1fr) 84px}.fin2-div span{grid-column:1/-1}.fin2-linha-txt{flex-basis:calc(100% - 30px)!important}#page-overview div:has(>.mtab){overflow-x:auto;scrollbar-width:none}#page-overview div:has(>.mtab)>.mtab{flex:none}.fin2 h2{font-size:22px}.fin2-nums{grid-template-columns:1fr}.fin2-num b{font-size:22px}.fin2-duas{grid-template-columns:1fr}' +
+      '@media (max-width:760px){.fin2{padding:18px 14px 8px}.fin2-g2,.fin2-g3,.fin2-aneis{grid-template-columns:minmax(0,1fr)}.fin2-hero{padding:22px 20px;gap:20px}.fin2-hero h3{font-size:27px}.fin2-hero-nums{grid-template-columns:minmax(0,1fr)}.fin2-hero-anel .fin2-anel{transform:scale(.85)}.fin2-topo h2{font-size:32px}.fin2-div>div{grid-template-columns:minmax(0,1fr) 84px}.fin2-div span{grid-column:1/-1}.fin2-top>div{grid-template-columns:minmax(0,1fr) 84px 10px}.fin2-top>div>span{grid-column:1/-1}.fin2-caixa>div:not(.fin2-caixa-tot){grid-template-columns:minmax(0,1fr) 110px}.fin2-caixa>div:not(.fin2-caixa-tot)>span{grid-column:1/-1}.fin2-linha-txt{flex-basis:calc(100% - 30px)!important}#page-overview div:has(>.mtab){overflow-x:auto;scrollbar-width:none}#page-overview div:has(>.mtab)>.mtab{flex:none}.fin2 h2{font-size:22px}.fin2-nums{grid-template-columns:1fr}.fin2-num b{font-size:22px}.fin2-duas{grid-template-columns:1fr}' +
         '.fin2-conta{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"c t v" ". d s"}.fin2-conta>input{grid-area:c}.fin2-conta-txt{grid-area:t}.fin2-valor{grid-area:v}.fin2-venc{grid-area:d}.fin2-seta{grid-area:s;justify-self:end}.fin2-conta-cab{display:none}' +
         '.fin2-mes{width:100%;justify-content:space-between}.fin2-mes>div{text-align:center}.fin2-det{padding-left:20px}#fin2-painel.fin2{padding:20px}}';
     doc.head.appendChild(s);
@@ -759,23 +914,15 @@
     envolver('buildReceitas', function () { if (doc.getElementById('fin2-modulo')) desenharModulo(); });
     envolver('goPage', function (p) { if (p !== 'custos') fecharPainel(); });
     envolver('switchMod', function () { fecharPainel(); desenharModulo(); });
-    // Empresa: botão de lançar despesa (pedido do Eder, 23/11)
-    envolver('buildVisaoEmpresa', function () {
-      var hdr = doc.querySelector('#ov-sub-emp .page-hdr');
-      if (!hdr || doc.getElementById('fin2-emp-lancar')) return;
-      var b = doc.createElement('button');
-      b.type = 'button'; b.id = 'fin2-emp-lancar'; b.className = 'fin2-btn'; b.textContent = 'Lançar despesa';
-      b.style.fontFamily = '"DM Sans",system-ui,sans-serif';
-      b.addEventListener('click', function () { if (global.MGBLancar && global.MGBLancar.despesa) global.MGBLancar.despesa(); });
-      var alvo = hdr.lastElementChild && hdr.children.length > 1 ? hdr.lastElementChild : hdr;
-      alvo.appendChild(b);
-    });
+    // Visão Receita e Empresa com gráficos (o botão Lançar despesa da Empresa, pedido de 23/11, fica no topo novo)
+    envolver('buildLancRec', desenharReceita);
+    envolver('buildVisaoEmpresa', desenharEmpresa);
     // nomes das abas do Financeiro MGB
     var t1 = doc.getElementById('ov-tab-visao'), t2 = doc.getElementById('ov-tab-desp');
     if (t1) t1.textContent = 'Resumo do mês';
     if (t2) t2.textContent = 'Contas do mês';
   }
 
-  global.MGBFinanceiro = Object.assign({ resumo: desenharResumo, contas: desenharContas, modulo: desenharModulo }, regras);
+  global.MGBFinanceiro = Object.assign({ resumo: desenharResumo, contas: desenharContas, modulo: desenharModulo, receita: desenharReceita, empresa: desenharEmpresa }, regras);
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligar); else ligar();
 })(typeof window !== 'undefined' ? window : globalThis);
